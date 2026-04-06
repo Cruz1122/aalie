@@ -50,4 +50,3 @@ RESPONSE LANGUAGE (CRITICAL)
 - ALWAYS respond in English.
 - Keep wording simple and instructional.`,
 };
-

@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aalie.dev/schemas/content/space.schema.json",
+  "title": "AALIE Content Space",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schemaVersion",
+    "spaceId",
+    "slug",
+    "kind",
+    "title",
+    "locale",
+    "version",
+    "status",
+    "search",
+    "progress"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aalie.content.space"
+    },
+    "schemaVersion": {
+      "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/semver"
+    },
+    "spaceId": {
+      "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+    },
+    "slug": {
+      "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["guide", "theory", "reference", "mixed"]
+    },
+    "title": {
+      "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+    },
+    "description": {
+      "type": "string"
+    },
+    "locale": {
+      "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/locale"
+    },
+    "version": {
+      "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/semver"
+    },
+    "status": {
+      "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/status"
+    },
+    "search": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "indexText",
+        "indexStructure",
+        "indexTerms",
+        "indexReferences",
+        "indexCaptions"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "indexText": {
+          "type": "boolean"
+        },
+        "indexStructure": {
+          "type": "boolean"
+        },
+        "indexTerms": {
+          "type": "boolean"
+        },
+        "indexReferences": {
+          "type": "boolean"
+        },
+        "indexCaptions": {
+          "type": "boolean"
+        }
+      }
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit"],
+      "properties": {
+        "unit": {
+          "const": "section"
+        },
+        "paginationUnit": {
+          "const": "section"
+        }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "icon": {
+          "type": "string"
+        },
+        "accentColor": {
+          "type": "string",
+          "pattern": "^#([A-Fa-f0-9]{6})$"
+        }
+      }
+    }
+  }
+}

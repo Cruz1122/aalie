@@ -23,39 +23,6 @@ export function errorsToMarkers(
 }
 
 /**
- * Crea un proveedor de hover para mostrar información de errores en el editor.
- * @param errors - Array de errores de parseo
- * @returns Proveedor de hover de Monaco
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-export function createHoverProvider(
-  errors: ParseError[],
-): Monaco.languages.HoverProvider {
-  return {
-    provideHover: (model, position) => {
-      // Buscar error en esta posición
-      const error = errors.find(
-        (e) =>
-          e.line === position.lineNumber &&
-          e.column >= position.column - 1 &&
-          e.column <= position.column + 1,
-      );
-
-      if (error) {
-        return {
-          contents: [
-            { value: "**Error de sintaxis**" },
-            { value: error.message },
-          ],
-        };
-      }
-
-      return null;
-    },
-  };
-}
-
-/**
  * Registra el lenguaje pseudocódigo en Monaco Editor.
  * Configura keywords, operadores, tokenizer y tema personalizado.
  * @param monaco - Instancia de Monaco Editor

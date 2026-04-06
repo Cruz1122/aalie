@@ -153,7 +153,9 @@ export default async function AboutPage({ params }: Props) {
                 privacy_tip
               </span>
             </div>
-            <h3 className="text-white font-bold mb-2 text-sm sm:text-base">{t("noSignup")}</h3>
+            <h3 className="text-white font-bold mb-2 text-sm sm:text-base">
+              {t("noSignup")}
+            </h3>
             <p className="text-dark-text text-xs sm:text-sm">
               {t("noSignupDesc")}
             </p>
@@ -165,7 +167,9 @@ export default async function AboutPage({ params }: Props) {
                 school
               </span>
             </div>
-            <h3 className="text-white font-bold mb-2 text-sm sm:text-base">{t("educational")}</h3>
+            <h3 className="text-white font-bold mb-2 text-sm sm:text-base">
+              {t("educational")}
+            </h3>
             <p className="text-dark-text text-xs sm:text-sm">
               {t("educationalDesc")}
             </p>
@@ -177,7 +181,9 @@ export default async function AboutPage({ params }: Props) {
                 speed
               </span>
             </div>
-            <h3 className="text-white font-bold mb-2 text-sm sm:text-base">{t("realtime")}</h3>
+            <h3 className="text-white font-bold mb-2 text-sm sm:text-base">
+              {t("realtime")}
+            </h3>
             <p className="text-dark-text text-xs sm:text-sm">
               {t("realtimeDesc")}
             </p>
@@ -193,7 +199,9 @@ export default async function AboutPage({ params }: Props) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             <div className="text-center p-3 rounded-lg hover:bg-white/5 transition-colors">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
-                <span className="text-primary font-bold text-sm sm:text-base">1</span>
+                <span className="text-primary font-bold text-sm sm:text-base">
+                  1
+                </span>
               </div>
               <h3 className="text-white font-semibold mb-1 text-xs sm:text-sm">
                 {t("step1Title")}
@@ -205,7 +213,9 @@ export default async function AboutPage({ params }: Props) {
 
             <div className="text-center p-3 rounded-lg hover:bg-white/5 transition-colors">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
-                <span className="text-primary font-bold text-sm sm:text-base">2</span>
+                <span className="text-primary font-bold text-sm sm:text-base">
+                  2
+                </span>
               </div>
               <h3 className="text-white font-semibold mb-1 text-xs sm:text-sm">
                 {t("step2Title")}
@@ -217,7 +227,9 @@ export default async function AboutPage({ params }: Props) {
 
             <div className="text-center p-3 rounded-lg hover:bg-white/5 transition-colors">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
-                <span className="text-primary font-bold text-sm sm:text-base">3</span>
+                <span className="text-primary font-bold text-sm sm:text-base">
+                  3
+                </span>
               </div>
               <h3 className="text-white font-semibold mb-1 text-xs sm:text-sm">
                 {t("step3Title")}
@@ -229,7 +241,9 @@ export default async function AboutPage({ params }: Props) {
 
             <div className="text-center p-3 rounded-lg hover:bg-white/5 transition-colors">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
-                <span className="text-primary font-bold text-sm sm:text-base">4</span>
+                <span className="text-primary font-bold text-sm sm:text-base">
+                  4
+                </span>
               </div>
               <h3 className="text-white font-semibold mb-1 text-xs sm:text-sm">
                 {t("step4Title")}
@@ -249,7 +263,9 @@ export default async function AboutPage({ params }: Props) {
                 contact_mail
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">{t("contactTitle")}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+              {t("contactTitle")}
+            </h2>
             <p className="text-dark-text text-xs sm:text-sm max-w-2xl mx-auto">
               {t("contactDesc")}
             </p>
@@ -267,11 +283,15 @@ export default async function AboutPage({ params }: Props) {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-semibold mb-1">{t("email")}</h3>
+                  <h3 className="text-white font-semibold mb-1">
+                    {t("email")}
+                  </h3>
                   <p className="text-dark-text text-sm truncate">
                     juan.cruz37552@ucaldas.edu.co
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">{t("contactName")}</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {t("contactName")}
+                  </p>
                 </div>
               </div>
             </a>
@@ -289,9 +309,13 @@ export default async function AboutPage({ params }: Props) {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-semibold mb-1">{t("github")}</h3>
+                  <h3 className="text-white font-semibold mb-1">
+                    {t("github")}
+                  </h3>
                   <p className="text-dark-text text-sm">@Cruz1122</p>
-                  <p className="text-xs text-slate-400 mt-1">{t("githubSub")}</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {t("githubSub")}
+                  </p>
                 </div>
               </div>
             </a>
@@ -300,7 +324,9 @@ export default async function AboutPage({ params }: Props) {
 
         {/* Enlaces Rápidos */}
         <div className="text-center glass-secondary p-6 sm:p-8 rounded-xl border border-white/5">
-          <h3 className="text-xl font-bold text-white mb-6">{t("linksTitle")}</h3>
+          <h3 className="text-xl font-bold text-white mb-6">
+            {t("linksTitle")}
+          </h3>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <NavigationLink
               href="/"
@@ -326,9 +352,7 @@ export default async function AboutPage({ params }: Props) {
               {t("apiStatus")}
             </a>
           </div>
-          <p className="text-xs text-dark-text mt-6">
-            {t("projectTitle")}
-          </p>
+          <p className="text-xs text-dark-text mt-6">{t("projectTitle")}</p>
         </div>
       </main>
 

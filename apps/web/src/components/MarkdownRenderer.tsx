@@ -11,9 +11,18 @@ import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
-import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+
+import {
+  resolveInlineCodeMathMode,
+  resolveInlineMarkdownMathMode,
+  type InlineCodeMathMode,
+  type InlineMarkdownMathMode,
+} from "@/lib/inline-math";
+
+import Formula from "./Formula";
+import InlineCodeMath from "./InlineCodeMath";
 import "../styles/highlight.css";
 
 /**
@@ -30,6 +39,10 @@ interface MarkdownRendererProps {
   readonly hideHorizontalRules?: boolean;
   /** Clases opcionales para código inline (`code`) */
   readonly inlineCodeClassName?: string;
+  /** Política para backticks que contienen notación matemática */
+  readonly inlineCodeMathMode?: InlineCodeMathMode;
+  /** Política para matemática inline de Markdown (`$...$`) */
+  readonly inlineMathMode?: InlineMarkdownMathMode;
 }
 
 interface CopyButtonProps {
@@ -189,19 +202,92 @@ const CustomOl = (props: any) => (
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLi = (props: any) => (
-  <li className="text-white text-[11px] leading-relaxed mb-0.5 break-words min-w-0 max-w-full" {...props}>
+  <li
+    className="text-white text-[11px] leading-relaxed mb-0.5 break-words min-w-0 max-w-full"
+    {...props}
+  >
     {props.children}
   </li>
 );
 
-const createCustomCode = (inlineCodeClassName?: string) => {
+function extractInlineCodeText(children: React.ReactNode): string {
+  if (typeof children === "string") {
+    return children;
+  }
+
+  if (typeof children === "number") {
+    return String(children);
+  }
+
+  if (Array.isArray(children)) {
+    return children.map((child) => extractInlineCodeText(child)).join("");
+  }
+
+  if (React.isValidElement(children)) {
+    return extractInlineCodeText(children.props.children);
+  }
+
+  return "";
+}
+
+function hasClassToken(value: unknown, token: string): boolean {
+  return (
+    typeof value === "string" &&
+    value.split(/\s+/).some((entry) => entry.trim() === token)
+  );
+}
+
+const createCustomCode = (
+  inlineCodeClassName?: string,
+  inlineCodeMathMode: InlineCodeMathMode = "auto",
+  inlineMathMode: InlineMarkdownMathMode = "auto",
+) => {
   const inlineClass =
-    inlineCodeClassName || "bg-slate-700 text-cyan-300 px-1 py-0.5 rounded text-[10px] font-mono";
+    inlineCodeClassName ||
+    "bg-slate-700 text-cyan-300 px-1 py-0.5 rounded text-[10px] font-mono";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomCodeComponent = (props: any) => {
-    const isInline = !props.className;
+    const rawInlineText = extractInlineCodeText(props.children);
+    if (hasClassToken(props.className, "math-inline")) {
+      const mathRender = resolveInlineMarkdownMathMode(
+        rawInlineText,
+        inlineMathMode,
+      );
+
+      if (mathRender.renderAs === "latex") {
+        return (
+          <Formula latex={mathRender.normalized} className="align-middle" />
+        );
+      }
+
+      return (
+        <InlineCodeMath
+          value={mathRender.normalized}
+          asCode
+          className={`${inlineClass} inline-flex max-w-full items-center overflow-x-auto align-middle leading-none not-italic`}
+        />
+      );
+    }
+
+    const isInline =
+      typeof props.inline === "boolean" ? props.inline : !props.className;
     if (isInline) {
+      const mathRender = resolveInlineCodeMathMode(
+        rawInlineText,
+        inlineCodeMathMode,
+      );
+
+      if (mathRender.renderAs === "hybrid" && mathRender.normalized) {
+        return (
+          <InlineCodeMath
+            value={mathRender.normalized}
+            asCode
+            className={`${inlineClass} inline-flex max-w-full items-center overflow-x-auto align-middle leading-none not-italic`}
+          />
+        );
+      }
+
       return (
         <code className={inlineClass} {...props}>
           {props.children}
@@ -249,7 +335,51 @@ const CustomPre = (props: any) => {
     return "";
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const extractCodeClassName = (node: any): string | null => {
+    if (!node) {
+      return null;
+    }
+
+    if (Array.isArray(node)) {
+      for (const child of node) {
+        const childClassName = extractCodeClassName(child);
+        if (childClassName) {
+          return childClassName;
+        }
+      }
+      return null;
+    }
+
+    if (React.isValidElement(node)) {
+      const element = node as React.ReactElement<{
+        className?: string;
+        children?: React.ReactNode;
+      }>;
+
+      if (typeof element.props.className === "string") {
+        return element.props.className;
+      }
+      return extractCodeClassName(element.props.children);
+    }
+
+    if (typeof node === "object") {
+      if (typeof node.className === "string") {
+        return node.className;
+      }
+      if ("props" in node && node.props) {
+        return extractCodeClassName(node.props);
+      }
+      if ("children" in node) {
+        return extractCodeClassName(node.children);
+      }
+    }
+
+    return null;
+  };
+
   const codeContent = extractTextContent(props.children);
+  const codeClassName = extractCodeClassName(props.children);
   // Obtener onAnalyzeCode del contexto (se pasa desde MarkdownRenderer)
   const onAnalyzeCode = (props as { onAnalyzeCode?: (code: string) => void })
     .onAnalyzeCode;
@@ -300,7 +430,12 @@ const CustomPre = (props: any) => {
       let i = 0;
       while (i < text.length) {
         let best:
-          | { kind: (typeof patterns)[number]["kind"]; start: number; end: number; value: string }
+          | {
+              kind: (typeof patterns)[number]["kind"];
+              start: number;
+              end: number;
+              value: string;
+            }
           | undefined;
 
         for (const p of patterns) {
@@ -371,15 +506,21 @@ const CustomPre = (props: any) => {
     });
   }, [codeContent, isPseudocode]);
 
+  if (hasClassToken(codeClassName, "math-display")) {
+    return (
+      <div className="my-1 max-w-full overflow-x-auto">
+        <Formula latex={codeContent} display className="min-w-max" />
+      </div>
+    );
+  }
+
   return (
     <div className="relative group w-full max-w-full min-w-0">
       <div
         ref={scrollRef}
         className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[300px] overflow-y-auto mb-1.5 max-w-[min(100%,420px)] min-w-0 overflow-hidden"
       >
-        <pre
-          className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed m-0"
-        >
+        <pre className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed m-0">
           {renderedCode}
         </pre>
       </div>
@@ -498,15 +639,23 @@ export default function MarkdownRenderer({
   onAnalyzeCode,
   hideHorizontalRules = false,
   inlineCodeClassName,
+  inlineCodeMathMode = "auto",
+  inlineMathMode = "auto",
 }: MarkdownRendererProps) {
   const PreWithAnalyze = createPreWithAnalyze(onAnalyzeCode);
-  const CustomCode = createCustomCode(inlineCodeClassName);
+  const CustomCode = createCustomCode(
+    inlineCodeClassName,
+    inlineCodeMathMode,
+    inlineMathMode,
+  );
 
   return (
-    <div className={`min-w-0 max-w-full overflow-hidden ${className ?? ""}`.trim()}>
+    <div
+      className={`min-w-0 max-w-full overflow-hidden ${className ?? ""}`.trim()}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeHighlight, rehypeKatex]}
+        rehypePlugins={[rehypeHighlight]}
         components={{
           h1: CustomH1,
           h2: CustomH2,

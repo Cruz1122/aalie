@@ -7,7 +7,8 @@ export const GPU_CPU_TEXTS = {
     summary: {
       gpu: "Due to the number of loops and the little conditional logic within them, this algorithm presents a fairly regular and repetitive execution pattern, typical of tasks that can be parallelized over large amounts of data.",
       cpu: "This algorithm combines recursion and decisions within loops, which produces a more irregular control flow and tends to fit better on a CPU.",
-      mixed: "The algorithm structure is intermediate: it has loops and some recursion or branching, so it could benefit from both a good CPU and some degree of parallelism, depending on the implementation.",
+      mixed:
+        "The algorithm structure is intermediate: it has loops and some recursion or branching, so it could benefit from both a good CPU and some degree of parallelism, depending on the implementation.",
     },
     explanation: {
       loopsDetected: (n: number) =>
@@ -23,20 +24,25 @@ export const GPU_CPU_TEXTS = {
         `• ${c} conditional${c !== 1 ? "s" : ""} found within loops (ratio: ${r}%), with a moderate level of decisions`,
       conditionalsLow: (c: number, r: string) =>
         `• ${c} conditional${c !== 1 ? "s" : ""} found within loops (ratio: ${r}%), indicating loops with relatively simple logic`,
-      noConditionals: "• No conditionals detected within loops, suggesting a very regular execution pattern",
+      noConditionals:
+        "• No conditionals detected within loops, suggesting a very regular execution pattern",
       noLoops: "• No loops detected in the algorithm",
-      recursiveOne: "• The algorithm is recursive with one recursive call detected, indicating a self-call pattern",
+      recursiveOne:
+        "• The algorithm is recursive with one recursive call detected, indicating a self-call pattern",
       recursiveMany: (n: number) =>
         `• The algorithm is recursive with ${n} recursive calls detected, suggesting a complex recursive pattern`,
-      recursiveUnknown: "• The algorithm presents recursion, although not all recursive calls could be counted",
-      noRecursion: "• No recursion detected in the algorithm, indicating an iterative execution pattern",
+      recursiveUnknown:
+        "• The algorithm presents recursion, although not all recursive calls could be counted",
+      noRecursion:
+        "• No recursion detected in the algorithm, indicating an iterative execution pattern",
       arrayIntensive: (n: number) =>
         `• ${n} access${n !== 1 ? "es" : ""} to indexed structures detected, indicating intensive block data processing`,
       arrayMultiple: (n: number) =>
         `• ${n} access${n !== 1 ? "es" : ""} to indexed structures detected, with multiple accesses per iteration`,
       arrayDetected: (n: number) =>
         `• ${n} access${n !== 1 ? "es" : ""} to indexed structures detected`,
-      noArrayAccess: "• No accesses to indexed structures (arrays or lists) detected",
+      noArrayAccess:
+        "• No accesses to indexed structures (arrays or lists) detected",
       callsHigh: (n: number) =>
         `• ${n} function call${n !== 1 ? "s" : ""} within loops, which can introduce significant overhead`,
       callsDetected: (n: number) =>
@@ -72,7 +78,8 @@ export const GPU_CPU_TEXTS = {
     summary: {
       gpu: "Por la cantidad de bucles y la poca lógica condicional dentro de ellos, este algoritmo presenta un patrón de ejecución bastante regular y repetitivo, típico de tareas que se pueden paralelizar sobre muchos datos.",
       cpu: "Este algoritmo combina recursión y decisiones dentro de los bucles, lo que produce un flujo de control más irregular y suele ajustarse mejor a una CPU.",
-      mixed: "La estructura del algoritmo es intermedia: tiene bucles y algo de recursión o branching, por lo que podría beneficiarse tanto de una buena CPU como de cierto grado de paralelismo, según la implementación.",
+      mixed:
+        "La estructura del algoritmo es intermedia: tiene bucles y algo de recursión o branching, por lo que podría beneficiarse tanto de una buena CPU como de cierto grado de paralelismo, según la implementación.",
     },
     explanation: {
       loopsDetected: (n: number) =>
@@ -88,20 +95,25 @@ export const GPU_CPU_TEXTS = {
         `• Se encontraron ${c} condicional${c !== 1 ? "es" : ""} dentro de los bucles (ratio: ${r}%), con un nivel moderado de decisiones`,
       conditionalsLow: (c: number, r: string) =>
         `• Se encontraron ${c} condicional${c !== 1 ? "es" : ""} dentro de los bucles (ratio: ${r}%), indicando bucles con lógica relativamente simple`,
-      noConditionals: "• No se detectaron condicionales dentro de los bucles, lo que sugiere un patrón de ejecución muy regular",
+      noConditionals:
+        "• No se detectaron condicionales dentro de los bucles, lo que sugiere un patrón de ejecución muy regular",
       noLoops: "• No se detectaron bucles en el algoritmo",
-      recursiveOne: "• El algoritmo es recursivo con una llamada recursiva detectada, lo que indica un patrón de auto-llamadas",
+      recursiveOne:
+        "• El algoritmo es recursivo con una llamada recursiva detectada, lo que indica un patrón de auto-llamadas",
       recursiveMany: (n: number) =>
         `• El algoritmo es recursivo con ${n} llamadas recursivas detectadas, sugiriendo un patrón recursivo complejo`,
-      recursiveUnknown: "• El algoritmo presenta recursión, aunque no se pudieron contar todas las llamadas recursivas",
-      noRecursion: "• No se detectó recursión en el algoritmo, lo que indica un patrón de ejecución iterativo",
+      recursiveUnknown:
+        "• El algoritmo presenta recursión, aunque no se pudieron contar todas las llamadas recursivas",
+      noRecursion:
+        "• No se detectó recursión en el algoritmo, lo que indica un patrón de ejecución iterativo",
       arrayIntensive: (n: number) =>
         `• Se detectaron ${n} acceso${n !== 1 ? "s" : ""} a estructuras indexadas, lo que indica un procesamiento intensivo de datos en bloque`,
       arrayMultiple: (n: number) =>
         `• Se detectaron ${n} acceso${n !== 1 ? "s" : ""} a estructuras indexadas, con múltiples accesos por iteración`,
       arrayDetected: (n: number) =>
         `• Se detectaron ${n} acceso${n !== 1 ? "s" : ""} a estructuras indexadas`,
-      noArrayAccess: "• No se detectaron accesos a estructuras indexadas (arrays o listas)",
+      noArrayAccess:
+        "• No se detectaron accesos a estructuras indexadas (arrays o listas)",
       callsHigh: (n: number) =>
         `• Se realizan ${n} llamada${n !== 1 ? "s" : ""} a funciones dentro de los bucles, lo que puede introducir overhead significativo`,
       callsDetected: (n: number) =>

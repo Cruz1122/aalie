@@ -1,6 +1,12 @@
 import { NextRequest } from "next/server";
 
 import {
+  buildAssistantSystemSupplement,
+  formatAssistantContextForPrompt,
+} from "@/lib/assistant/context-format";
+import type { AssistantContext } from "@/lib/assistant/types";
+
+import {
   getJobConfig,
   GEMINI_ENDPOINT_BASE,
   JobResolvedConfig,
@@ -117,6 +123,7 @@ export async function POST(req: NextRequest) {
       prompt,
       schema,
       context,
+      assistantContext,
       chatHistory,
       apiKey,
       locale,
@@ -145,19 +152,37 @@ export async function POST(req: NextRequest) {
     }
 
     const config = getJobConfig(job, locale);
-    const userPrompt = context
-      ? `Contexto adicional: ${context}\n\n${prompt}`
-      : prompt;
-    const messages = [{ role: "system", content: config.systemPrompt }];
+    const resolvedAssistantContext = assistantContext as
+      | AssistantContext
+      | undefined;
+    const effectiveConfig: JobResolvedConfig = resolvedAssistantContext
+      ? {
+          ...config,
+          systemPrompt: `${config.systemPrompt}\n\n${buildAssistantSystemSupplement(
+            resolvedAssistantContext,
+          )}`,
+        }
+      : config;
+    const promptBlocks = [
+      resolvedAssistantContext
+        ? formatAssistantContextForPrompt(resolvedAssistantContext)
+        : null,
+      context ? `Contexto adicional: ${context}` : null,
+      prompt,
+    ].filter((entry): entry is string => Boolean(entry));
+    const userPrompt = promptBlocks.join("\n\n");
+    const messages = [
+      { role: "system", content: effectiveConfig.systemPrompt },
+    ];
     if (chatHistory && Array.isArray(chatHistory)) {
       messages.push(...chatHistory.slice(-10));
     }
     messages.push({ role: "user", content: userPrompt });
 
     // Usar schema del job si está definido, o el schema del request
-    const finalSchema = config.schema || schema;
+    const finalSchema = effectiveConfig.schema || schema;
     const data = await callGeminiLLM(
-      config,
+      effectiveConfig,
       messages,
       geminiApiKey,
       finalSchema,
@@ -168,7 +193,7 @@ export async function POST(req: NextRequest) {
       JSON.stringify({
         ok: true,
         data,
-        model: config.model,
+        model: effectiveConfig.model,
       }),
       {
         status: 200,

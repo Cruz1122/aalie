@@ -6,7 +6,11 @@
 import type { AnalyzeOpenResponse, ParseResponse } from "@aa/types";
 import type React from "react";
 
-import type { MethodMetadataMap, MethodPrecision, MethodType } from "@/components/MethodSelector";
+import type {
+  MethodMetadataMap,
+  MethodPrecision,
+  MethodType,
+} from "@/components/MethodSelector";
 
 export interface AnalysisError {
   message: string;
@@ -49,6 +53,11 @@ interface DetectionRecurrenceInfo {
   a?: number;
   b?: number;
   f?: string;
+  strategy_family?: {
+    key?: string;
+    label?: string;
+    description?: string;
+  };
 }
 
 const ALL_METHODS: MethodType[] = [
@@ -77,7 +86,7 @@ const getPrecisionByMethod = (
   if (recommended) return "high";
   if (info?.type === "divide_conquer") {
     if (method === "master" || method === "recursion_tree") return "high";
-    if (method === "iteration") return "medium";
+    if (method === "iteration") return "low";
     return "low";
   }
   if (info?.type === "linear_shift") {
@@ -85,8 +94,60 @@ const getPrecisionByMethod = (
     if (method === "iteration") return "medium";
     return "low";
   }
-  if (method === "master" || method === "characteristic_equation") return "medium";
+  if (method === "master" || method === "characteristic_equation")
+    return "medium";
   return "low";
+};
+
+const getApplicableReason = (
+  method: MethodType,
+  info: DetectionRecurrenceInfo | undefined,
+  recommended: boolean,
+  locale: SupportedLocale,
+): string => {
+  const divideConquer = info?.type === "divide_conquer";
+  const linearShift = info?.type === "linear_shift";
+  const isSingleBranchDivideConquer =
+    divideConquer && Number(info?.a ?? 0) === 1;
+  const familyLabel =
+    info?.strategy_family?.label ||
+    (divideConquer
+      ? "Divide y Vencerás"
+      : linearShift
+        ? "Resta y Vencerás"
+        : "");
+
+  if (recommended) {
+    return locale === "es"
+      ? `${familyLabel ? `La recurrencia cae en ${familyLabel}. ` : ""}Este método modela la estructura matemática de forma más directa y, por eso, normalmente produce una derivación más corta y estable.`
+      : `${familyLabel ? `The recurrence falls into ${familyLabel}. ` : ""}This method matches the mathematical structure most directly, so it usually yields a shorter and more stable derivation.`;
+  }
+
+  if (divideConquer && method === "recursion_tree") {
+    return locale === "es"
+      ? "Útil para Divide y Vencerás: permite ver costo por nivel (raíz, intermedios, hojas) y entender visualmente por qué aparece la cota final."
+      : "Useful for Divide y Vencerás: it exposes per-level cost (root, internal levels, leaves) and makes the final bound visually clear.";
+  }
+
+  if (divideConquer && method === "iteration") {
+    return isSingleBranchDivideConquer
+      ? locale === "es"
+        ? "Aplica en la variante de rama única: se puede desplegar geométricamente y llegar a la cota, aunque suele requerir más manipulación algebraica que Master o árbol."
+        : "It applies for the single-branch variant: geometric unrolling can reach the bound, though it usually needs more algebraic manipulation than Master or tree."
+      : locale === "es"
+        ? "Es viable, pero en Divide y Vencerás con varias ramas suele ser más largo y menos transparente que resolver por casos de Master o por niveles del árbol."
+        : "It is viable, but for multi-branch Divide y Vencerás it is usually longer and less transparent than solving by Master cases or tree levels.";
+  }
+
+  if (linearShift && method === "iteration") {
+    return locale === "es"
+      ? "En Resta y Vencerás funciona bien para mostrar cómo se acumula el costo paso a paso; es una buena vía pedagógica aunque no siempre la más compacta."
+      : "In Resta y Vencerás it works well to show step-by-step cost accumulation; pedagogically strong, though not always the most compact path.";
+  }
+
+  return locale === "es"
+    ? "Este método es compatible con la forma detectada y puede llegar a una cota válida, pero no ofrece la ruta más clara para este patrón."
+    : "This method is compatible with the detected shape and can reach a valid bound, but it is not the clearest path for this pattern.";
 };
 
 const getNotApplicableReason = (
@@ -101,14 +162,14 @@ const getNotApplicableReason = (
     return naturalJoin(
       [
         locale === "es"
-          ? "El Teorema Maestro se usa para dividir el problema en subproblemas de tamano proporcional"
-          : "Master Theorem is intended for recurrences that split the problem into proportional subproblems",
+          ? "Teorema Maestro es para Divide y Vencerás, donde el tamaño baja por razón (n/b)"
+          : "Master Theorem is for Divide y Vencerás, where size shrinks by ratio (n/b)",
         locale === "es"
-          ? "en este caso la recurrencia reduce por desplazamientos constantes como n-1 o n-k"
-          : "in this case the recurrence decreases through constant shifts such as n-1 or n-k",
+          ? "aquí estamos en una familia de Resta y Vencerás/Resta y Serás Vencido, con decrementos tipo n-1 o n-k"
+          : "here we are in a Resta y Vencerás/Resta y Serás Vencido family with decrements like n-1 or n-k",
         locale === "es"
-          ? "por eso no se cumplen las condiciones formales de T(n)=aT(n/b)+f(n)"
-          : "therefore the formal conditions of T(n)=aT(n/b)+f(n) are not satisfied",
+          ? "por eso no se cumplen sus hipótesis formales"
+          : "therefore its formal assumptions are not satisfied",
       ],
       locale,
     );
@@ -118,14 +179,14 @@ const getNotApplicableReason = (
     return naturalJoin(
       [
         locale === "es"
-          ? "La ecuacion caracteristica funciona mejor con recurrencias lineales de desplazamiento constante"
-          : "Characteristic equation works best for linear recurrences with constant shifts",
+          ? "Ecuación característica describe mejor recurrencias de Resta y Vencerás con desplazamientos constantes"
+          : "Characteristic equation best describes Resta y Vencerás recurrences with constant shifts",
         locale === "es"
-          ? "tu algoritmo tiene una forma divide-and-conquer con llamadas de tipo n/b"
-          : "your algorithm follows a divide-and-conquer shape with n/b style calls",
+          ? "tu recurrencia es de Divide y Vencerás con subproblemas del tipo n/b"
+          : "your recurrence is Divide y Vencerás with n/b-style subproblems",
         locale === "es"
-          ? "por eso este metodo no modela de forma directa la estructura detectada"
-          : "so this method does not model the detected structure directly",
+          ? "por eso este método no es la herramienta natural para este patrón"
+          : "so this method is not the natural tool for this pattern",
       ],
       locale,
     );
@@ -135,14 +196,14 @@ const getNotApplicableReason = (
     return naturalJoin(
       [
         locale === "es"
-          ? "El arbol de recursion es mas didactico cuando hay ramificacion en varios subproblemas"
-          : "Recursion tree is more informative when there is branching into multiple subproblems",
+          ? "El árbol de recursión brilla en Divide y Vencerás, cuando hay ramificación clara por niveles"
+          : "Recursion tree shines in Divide y Vencerás, where level-by-level branching is explicit",
         locale === "es"
-          ? "esta recurrencia avanza principalmente con un solo desplazamiento lineal"
-          : "this recurrence mainly advances with a single linear shift",
+          ? "aquí la recurrencia avanza casi linealmente (n, n-1, n-2)"
+          : "here the recurrence progresses almost linearly (n, n-1, n-2)",
         locale === "es"
-          ? "por eso su uso aqui no aporta una estimacion tan clara como otros metodos"
-          : "therefore its use here does not provide an estimate as clear as other methods",
+          ? "por eso suele aportar menos que ecuación característica o iteración"
+          : "so it usually adds less value than characteristic equation or iteration",
       ],
       locale,
     );
@@ -152,19 +213,19 @@ const getNotApplicableReason = (
     return naturalJoin(
       [
         locale === "es"
-          ? "Aunque iteracion puede desplegar la recurrencia, en este caso hay division en subproblemas paralelos"
-          : "Although iteration can unroll a recurrence, this case splits into parallel subproblems",
+          ? "En Divide y Vencerás con múltiples ramas, iterar término a término crece rápido en complejidad algebraica"
+          : "In multi-branch Divide y Vencerás, term-by-term unrolling grows algebraically fast",
         locale === "es"
-          ? "metodos como Teorema Maestro o arbol de recursion suelen ofrecer una cota mas estable"
-          : "methods such as Master Theorem or recursion tree usually provide a more stable bound",
+          ? "Master o árbol suelen dar una ruta más limpia para justificar la cota"
+          : "Master or recursion tree usually provide a cleaner route to justify the bound",
       ],
       locale,
     );
   }
 
   return locale === "es"
-    ? "Este metodo no cumple las condiciones detectadas para este patron de recurrencia."
-    : "This method does not meet the detected conditions for this recurrence pattern.";
+    ? "Este método no coincide con la familia recursiva detectada ni con sus supuestos matemáticos de base."
+    : "This method does not match the detected recurrence family nor its core mathematical assumptions.";
 };
 
 const buildMethodMetadata = (
@@ -173,26 +234,21 @@ const buildMethodMetadata = (
   recurrenceInfo: DetectionRecurrenceInfo | undefined,
   locale: SupportedLocale,
 ): MethodMetadataMap => {
-  return ALL_METHODS.reduce(
-    (acc, method) => {
-      const applicable = applicableMethods.includes(method);
-      const recommended = method === defaultMethod;
-      acc[method] = {
-        applicable,
-        recommended,
-        precision: applicable
-          ? getPrecisionByMethod(method, recurrenceInfo, recommended)
-          : "low",
-        reason: applicable
-          ? (locale === "es"
-            ? "Este metodo es compatible con la forma de recurrencia detectada."
-            : "This method is compatible with the detected recurrence shape.")
-          : getNotApplicableReason(method, recurrenceInfo, locale),
-      };
-      return acc;
-    },
-    {} as MethodMetadataMap,
-  );
+  return ALL_METHODS.reduce((acc, method) => {
+    const applicable = applicableMethods.includes(method);
+    const recommended = method === defaultMethod;
+    acc[method] = {
+      applicable,
+      recommended,
+      precision: applicable
+        ? getPrecisionByMethod(method, recurrenceInfo, recommended)
+        : "low",
+      reason: applicable
+        ? getApplicableReason(method, recurrenceInfo, recommended, locale)
+        : getNotApplicableReason(method, recurrenceInfo, locale),
+    };
+    return acc;
+  }, {} as MethodMetadataMap);
 };
 
 /**
@@ -296,25 +352,25 @@ export async function detectAndSelectMethod(
 
         // Registrar la promesa ANTES de mostrar el selector para que cancelar
         // funcione de inmediato incluso si el usuario hace click muy rápido.
-        const selectionPromise = new Promise<MethodType>(
-          (resolve, reject) => {
-            methodSelectionPromiseRef.current = { resolve, reject };
-            setTimeout(() => {
-              if (methodSelectionPromiseRef.current) {
-                methodSelectionPromiseRef.current.resolve(defaultMethodValue);
-                methodSelectionPromiseRef.current = null;
-              }
-            }, 60000);
-          },
-        );
+        const selectionPromise = new Promise<MethodType>((resolve, reject) => {
+          methodSelectionPromiseRef.current = { resolve, reject };
+          setTimeout(() => {
+            if (methodSelectionPromiseRef.current) {
+              methodSelectionPromiseRef.current.resolve(defaultMethodValue);
+              methodSelectionPromiseRef.current = null;
+            }
+          }, 60000);
+        });
         setShowMethodSelector(true);
 
-        const selectedMethod = await selectionPromise.catch((reason: unknown) => {
-          if (reason === "METHOD_SELECTION_CANCELLED") {
-            return null;
-          }
-          return defaultMethodValue;
-        });
+        const selectedMethod = await selectionPromise.catch(
+          (reason: unknown) => {
+            if (reason === "METHOD_SELECTION_CANCELLED") {
+              return null;
+            }
+            return defaultMethodValue;
+          },
+        );
 
         setShowMethodSelector(false);
         methodSelectionPromiseRef.current = null;
@@ -347,9 +403,7 @@ export async function detectAndSelectMethod(
         return defaultMethodValue;
       }
     } else {
-      setMethodMetadata(
-        buildMethodMetadata([], "master", undefined, locale),
-      );
+      setMethodMetadata(buildMethodMetadata([], "master", undefined, locale));
       const analyzingMsg = getMessage
         ? getMessage("analyzingComplexity")
         : "Iniciando análisis de complejidad...";
@@ -364,9 +418,7 @@ export async function detectAndSelectMethod(
     }
   } catch (error) {
     console.warn("Error detectando métodos, usando método por defecto:", error);
-    setMethodMetadata(
-      buildMethodMetadata([], "master", undefined, locale),
-    );
+    setMethodMetadata(buildMethodMetadata([], "master", undefined, locale));
     const analyzingMsg = getMessage
       ? getMessage("analyzingComplexity")
       : "Iniciando análisis de complejidad...";
@@ -388,7 +440,11 @@ export async function detectAndSelectMethod(
 export function detectRecursiveMethod(
   worst: AnalyzeOpenResponse | null | undefined,
   best: AnalyzeOpenResponse | null | undefined,
-): "characteristicEquation" | "iterationMethod" | "recursionTree" | "masterTheorem" {
+):
+  | "characteristicEquation"
+  | "iterationMethod"
+  | "recursionTree"
+  | "masterTheorem" {
   const method =
     worst?.totals?.recurrence?.method || best?.totals?.recurrence?.method;
 
@@ -407,18 +463,31 @@ export function detectRecursiveMethod(
  * Actualiza el mensaje de análisis según el método detectado.
  */
 export function updateAnalysisMessageForMethod(
-  methodKey: "characteristicEquation" | "iterationMethod" | "recursionTree" | "masterTheorem",
+  methodKey:
+    | "characteristicEquation"
+    | "iterationMethod"
+    | "recursionTree"
+    | "masterTheorem",
   setAnalysisMessage: (value: string) => void,
   getMessage?: GetAnalysisMessage,
 ): void {
   const msg = (key: string, fallback: string) =>
     getMessage ? getMessage(key) : fallback;
   if (methodKey === "characteristicEquation") {
-    setAnalysisMessage(msg("applyingCharacteristic", "Aplicando Método de Ecuación Característica..."));
+    setAnalysisMessage(
+      msg(
+        "applyingCharacteristic",
+        "Aplicando Método de Ecuación Característica...",
+      ),
+    );
   } else if (methodKey === "iterationMethod") {
-    setAnalysisMessage(msg("applyingIteration", "Aplicando Método de Iteración..."));
+    setAnalysisMessage(
+      msg("applyingIteration", "Aplicando Método de Iteración..."),
+    );
   } else if (methodKey === "recursionTree") {
-    setAnalysisMessage(msg("applyingRecursionTree", "Aplicando Método de Árbol de Recursión..."));
+    setAnalysisMessage(
+      msg("applyingRecursionTree", "Aplicando Método de Árbol de Recursión..."),
+    );
   } else {
     setAnalysisMessage(msg("applyingMaster", "Aplicando Teorema Maestro..."));
   }

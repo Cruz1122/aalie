@@ -1,248 +1,266 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 
-import type { GPUCPUAnalysisResult, GPUCPUMetrics } from "@/types/gpu-cpu";
+import type { HardwareSuitabilityReport } from "@/lib/hardware/types";
 
 import BaseModalContainer from "./modals/BaseModalContainer";
 
 interface GPUCPUModalProps {
   open: boolean;
   onClose: () => void;
-  analysis: GPUCPUAnalysisResult | null;
+  analysis: HardwareSuitabilityReport | null;
 }
 
-/**
- * Obtiene el color y estilo de la card basado en el score
- */
-function getCardStyle(score: number): {
-  bgColor: string;
-  borderColor: string;
-  iconColor: string;
-  arrowIcon: string;
-  arrowColor: string;
-  shadowColor: string;
-} {
-  if (score > 60) {
-    return {
-      bgColor: "bg-green-500/20",
-      borderColor: "border-green-500/40",
-      iconColor: "text-white",
-      arrowIcon: "trending_up",
-      arrowColor: "text-green-400",
-      shadowColor: "shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)]",
-    };
-  } else if (score >= 40) {
-    return {
-      bgColor: "bg-yellow-500/20",
-      borderColor: "border-yellow-500/40",
-      iconColor: "text-white",
-      arrowIcon: "trending_flat",
-      arrowColor: "text-yellow-400",
-      shadowColor: "shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)]",
-    };
-  } else {
-    return {
-      bgColor: "bg-red-500/20",
-      borderColor: "border-red-500/40",
-      iconColor: "text-white",
-      arrowIcon: "trending_down",
-      arrowColor: "text-red-400",
-      shadowColor: "shadow-[0_8px_32px_0_rgba(239,68,68,0.3)] hover:shadow-[0_12px_40px_0_rgba(239,68,68,0.4)]",
-    };
-  }
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function ConfidenceBadge({
+  confidence,
+}: Readonly<{ confidence: HardwareSuitabilityReport["confidence"] }>) {
+  const colors: Record<string, string> = {
+    high: "bg-green-500/20 border-green-500/40 text-green-300",
+    medium: "bg-yellow-500/20 border-yellow-500/40 text-yellow-300",
+    low: "bg-red-500/20 border-red-500/40 text-red-300",
+  };
+  const labels: Record<string, string> = {
+    high: "Alta",
+    medium: "Media",
+    low: "Baja",
+  };
+  return (
+    <span
+      className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${colors[confidence]}`}
+    >
+      {labels[confidence] ?? confidence}
+    </span>
+  );
 }
 
-/**
- * Genera las claves de razones por las que GPU es mejor o peor (para traducción)
- */
-function getGPUReasons(score: number, metrics: GPUCPUMetrics): string[] {
-  const reasons: string[] = [];
-  const br = metrics.totalLoops > 0 ? metrics.conditionalsInLoops / metrics.totalLoops : 0;
-
-  if (score > 60) {
-    if (metrics.totalLoops > 0) {
-      if (br < 0.2) reasons.push("regular_loops_very");
-      else if (br < 0.3) reasons.push("regular_loops_little");
-    }
-    if (metrics.arrayAccessCount > metrics.totalLoops * 2 && metrics.totalLoops > 0) {
-      reasons.push("array_block");
-    } else if (metrics.arrayAccessCount > 0) {
-      reasons.push("array_frequent");
-    }
-    if (metrics.maxLoopDepth >= 2 && br < 0.4) reasons.push("nested_simple");
-    if (!metrics.isRecursive) reasons.push("no_recursion");
-    if (metrics.totalLoops > 0 && metrics.conditionalsInLoops === 0) reasons.push("no_conditionals");
-    if (metrics.totalLoops > 3 && br < 0.3) reasons.push("multiple_loops");
-  } else if (score < 40) {
-    if (metrics.isRecursive) {
-      reasons.push(metrics.recursiveCallCount > 1 ? "complex_recursion" : "recursion");
-    }
-    if (metrics.totalLoops > 0) {
-      if (br > 0.7) reasons.push("high_branching");
-      else if (br > 0.5) reasons.push("moderate_branching");
-    }
-    if (metrics.callsInsideLoops > metrics.totalLoops * 2) reasons.push("calls_in_loops");
-    if (metrics.totalLoops === 0 && metrics.isRecursive) reasons.push("no_loops_recursive");
-  } else {
-    reasons.push("mixed");
-    if (metrics.totalLoops > 0 && br > 0.3 && br < 0.5) reasons.push("mixed_moderate");
-    if (metrics.isRecursive && metrics.recursiveCallCount === 1) reasons.push("mixed_limited_recursion");
-    if (metrics.arrayAccessCount > 0 && metrics.arrayAccessCount < metrics.totalLoops * 2) {
-      reasons.push("mixed_array");
-    }
-  }
-  return reasons.length > 0 ? reasons : ["fallback"];
-}
-
-/**
- * Genera las claves de razones por las que CPU es mejor o peor (para traducción)
- */
-function getCPUReasons(score: number, metrics: GPUCPUMetrics): string[] {
-  const reasons: string[] = [];
-  const br = metrics.totalLoops > 0 ? metrics.conditionalsInLoops / metrics.totalLoops : 0;
-
-  if (score > 60) {
-    if (metrics.isRecursive) {
-      reasons.push(metrics.recursiveCallCount > 2 ? "deep_recursion" : "recursion");
-    }
-    if (metrics.totalLoops > 0) {
-      if (br > 0.7) reasons.push("high_branching");
-      else if (br > 0.5) reasons.push("moderate_branching");
-    }
-    if (metrics.recursiveCallCount > 1) reasons.push("complex_recursion");
-    if (metrics.callsInsideLoops > metrics.totalLoops * 2) reasons.push("calls_in_loops");
-    if (metrics.totalLoops > 0 && metrics.conditionalsInLoops > metrics.totalLoops) {
-      reasons.push("complex_decisions");
-    }
-    if (metrics.isRecursive && metrics.totalLoops === 0) reasons.push("pure_recursion");
-  } else if (score < 40) {
-    if (metrics.totalLoops > 0 && br < 0.2) reasons.push("regular_loops");
-    if (metrics.arrayAccessCount > metrics.totalLoops * 2 && metrics.totalLoops > 0) {
-      reasons.push("array_block");
-    }
-    if (!metrics.isRecursive && metrics.totalLoops > 3 && br < 0.3) reasons.push("iterative_simple");
-    if (metrics.maxLoopDepth >= 2 && br < 0.3) reasons.push("nested_simple");
-    if (metrics.totalLoops > 0 && metrics.conditionalsInLoops === 0) reasons.push("no_conditionals");
-  } else {
-    reasons.push("mixed");
-    if (metrics.totalLoops > 0 && br > 0.3 && br < 0.5) reasons.push("mixed_moderate");
-    if (metrics.isRecursive && metrics.recursiveCallCount === 1) reasons.push("mixed_limited_recursion");
-    if (metrics.arrayAccessCount > 0 && metrics.arrayAccessCount < metrics.totalLoops * 2) {
-      reasons.push("mixed_array");
-    }
-    if (metrics.totalLoops > 0 && metrics.callsInsideLoops > 0 && metrics.callsInsideLoops <= metrics.totalLoops) {
-      reasons.push("mixed_calls");
-    }
-  }
-  return reasons.length > 0 ? reasons : ["fallback"];
-}
-
-/**
- * Componente de card para GPU o CPU con flip
- */
-function GPUCard({
-  score,
-  label,
-  animate,
-  metrics,
-  isFlipped,
-  onFlip,
-  t,
-}: Readonly<{ 
-  score: number; 
-  label: "GPU" | "CPU"; 
-  animate?: boolean;
-  metrics: GPUCPUMetrics;
-  isFlipped: boolean;
-  onFlip: () => void;
-  t: (key: string) => string;
-}>) {
-  const style = getCardStyle(score);
-  const icon = label === "GPU" ? "memory" : "developer_board";
-  const reasonKeys = label === "GPU" ? getGPUReasons(score, metrics) : getCPUReasons(score, metrics);
-  const reasonsPrefix = label === "GPU" ? "gpuReasons" : "cpuReasons";
-  
-  // Color invertido para el reverso (más oscuro pero manteniendo el tono)
-  let flippedBgColor: string;
-  if (score > 60) {
-    flippedBgColor = "bg-green-600/30";
-  } else if (score >= 40) {
-    flippedBgColor = "bg-yellow-600/30";
-  } else {
-    flippedBgColor = "bg-red-600/30";
-  }
-
+function RecommendationBadge({
+  rec,
+}: Readonly<{ rec: HardwareSuitabilityReport["primaryRecommendation"] }>) {
+  const colors: Record<string, string> = {
+    gpu: "bg-purple-500/20 border-purple-500/40 text-purple-200",
+    cpu: "bg-blue-500/20 border-blue-500/40 text-blue-200",
+    hybrid: "bg-cyan-500/20 border-cyan-500/40 text-cyan-200",
+  };
+  const labels: Record<string, string> = {
+    gpu: "GPU",
+    cpu: "CPU",
+    hybrid: "Híbrido",
+  };
+  const icons: Record<string, string> = {
+    gpu: "memory",
+    cpu: "developer_board",
+    hybrid: "merge",
+  };
   return (
     <div
-      className="relative h-full min-h-[160px] sm:min-h-[200px] cursor-pointer"
-      onClick={onFlip}
-      style={{ perspective: "1000px" }}
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${colors[rec]}`}
     >
-      <div
-        className="relative w-full h-full transition-transform duration-700"
-        style={{
-          transformStyle: "preserve-3d",
-          transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-        }}
-      >
-        {/* Frente de la card */}
-        <div
-          className={`rounded-lg border ${style.bgColor} ${style.borderColor} ${style.shadowColor} absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500 ${
-            animate ? "animate-pulse-scale" : ""
-          }`}
-          style={{
-            animation: animate ? "pulseScale 0.6s ease-out" : undefined,
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(0deg)",
-          }}
-        >
-          {/* Label arriba del icono */}
-          <h3 className="text-lg font-semibold mb-2 text-white/90 flex-shrink-0">
-            {label}
-          </h3>
+      <span className="material-symbols-outlined text-2xl">{icons[rec]}</span>
+      <span className="text-xl font-bold">
+        {labels[rec] ?? rec.toUpperCase()}
+      </span>
+    </div>
+  );
+}
 
-          {/* Icono principal con flecha en esquina - tamaño reducido para no solapar bordes */}
-          <div className="relative flex items-center justify-center flex-1 min-h-0 w-full">
-            <span
-              className={`material-symbols-outlined ${style.iconColor}`}
-              style={{ 
-                fontSize: 'clamp(4rem, 10vw, 6rem)', 
-                lineHeight: '1',
-                display: 'block'
-              }}
-            >
-              {icon}
+function ScoreBar({
+  label,
+  value,
+  color,
+}: Readonly<{ label: string; value: number; color: string }>) {
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs text-slate-400">
+        <span>{label}</span>
+        <span className="font-semibold text-white">{value}</span>
+      </div>
+      <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-700 ${color}`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ListSection({
+  title,
+  items,
+  icon,
+  color,
+}: Readonly<{ title: string; items: string[]; icon: string; color: string }>) {
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <div
+        className={`flex items-center gap-2 mb-2 text-xs font-semibold ${color} uppercase tracking-wide`}
+      >
+        <span className="material-symbols-outlined text-base">{icon}</span>
+        {title}
+      </div>
+      <ul className="space-y-1">
+        {items.map((item, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+            <span className="mt-0.5 text-slate-500 shrink-0">•</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PatternChip({
+  name,
+  confidence,
+}: Readonly<{ name: string; confidence: number }>) {
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-300">
+      <span className="material-symbols-outlined text-sm text-slate-400">
+        pattern
+      </span>
+      <span>{name}</span>
+      <span className="text-slate-500">({(confidence * 100).toFixed(0)}%)</span>
+    </div>
+  );
+}
+
+// ─── Main Content ─────────────────────────────────────────────────────────
+
+function GPUCPUContent({
+  analysis,
+  t,
+}: Readonly<{
+  analysis: HardwareSuitabilityReport;
+  t: (key: string) => string;
+}>) {
+  const {
+    scores,
+    reasons,
+    detectedPatterns,
+    diagnostics,
+    confidence,
+    primaryRecommendation,
+    summary,
+  } = analysis;
+
+  return (
+    <div className="space-y-6">
+      {/* Header: Recommendation + Confidence */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-white/3 border border-white/10">
+        <RecommendationBadge rec={primaryRecommendation} />
+        <div className="flex-1 space-y-1 text-center sm:text-left">
+          <div className="flex items-center justify-center sm:justify-start gap-2">
+            <span className="text-xs text-slate-400 uppercase tracking-wide">
+              {t("confidence")}:
             </span>
-            {/* Flecha zig-zag en esquina inferior derecha del icono */}
-            <div className="absolute bottom-0 right-0">
-              <span
-                className={`material-symbols-outlined text-sm ${style.arrowColor} bg-slate-900/80 rounded-full p-0.5`}
-              >
-                {style.arrowIcon}
-              </span>
-            </div>
+            <ConfidenceBadge confidence={confidence} />
+          </div>
+          <p className="text-sm text-slate-300 mt-1">{summary}</p>
+        </div>
+      </div>
+
+      {/* Score bars */}
+      <div className="glass-card p-4 rounded-xl border border-white/10 space-y-3">
+        <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-3">
+          {t("scores")}
+        </p>
+        <ScoreBar label="GPU" value={scores.gpu} color="bg-purple-500" />
+        <ScoreBar label="CPU" value={scores.cpu} color="bg-blue-500" />
+        <ScoreBar
+          label={t("hybrid")}
+          value={scores.hybrid}
+          color="bg-cyan-500"
+        />
+      </div>
+
+      {/* Blockers — always visible if present */}
+      {reasons.blockers.length > 0 && (
+        <div className="glass-card p-4 rounded-xl border border-red-500/30 bg-red-500/5">
+          <ListSection
+            title={t("blockers")}
+            items={reasons.blockers}
+            icon="block"
+            color="text-red-400"
+          />
+        </div>
+      )}
+
+      {/* Positive/Negative/Opportunities */}
+      <div className="glass-card p-4 rounded-xl border border-white/10 space-y-4">
+        <ListSection
+          title={t("positive")}
+          items={reasons.positive}
+          icon="check_circle"
+          color="text-green-400"
+        />
+        <ListSection
+          title={t("negative")}
+          items={reasons.negative}
+          icon="warning"
+          color="text-yellow-400"
+        />
+        <ListSection
+          title={t("opportunities")}
+          items={reasons.opportunities}
+          icon="lightbulb"
+          color="text-purple-400"
+        />
+      </div>
+
+      {/* Detected Patterns */}
+      {detectedPatterns.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">
+            {t("patterns")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {detectedPatterns.map((p, i) => (
+              <PatternChip key={i} name={p.name} confidence={p.confidence} />
+            ))}
           </div>
         </div>
+      )}
 
-        {/* Reverso de la card */}
-        <div
-          className={`rounded-lg border ${flippedBgColor} ${style.borderColor} ${style.shadowColor} absolute inset-0 flex flex-col items-center justify-center p-4`}
-          style={{
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-          }}
-        >
-          <h3 className="text-base font-semibold mb-2 text-white/90">
-            {label} — {t("reasonsLabel")}
-          </h3>
-          <div className="space-y-1 text-xs text-white/80 text-center">
-            {reasonKeys.map((key, idx) => (
-              <div key={idx}>{t(`${reasonsPrefix}.${key}`)}</div>
-            ))}
+      {/* Diagnostics */}
+      <div className="glass-card p-4 rounded-xl border border-white/10">
+        <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-3">
+          {t("diagnostics")}
+        </p>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {(
+            [
+              ["controlRegularity", diagnostics.controlRegularity],
+              ["memoryRegularity", diagnostics.memoryRegularity],
+              ["dependencyStrength", diagnostics.dependencyStrength],
+              ["parallelismType", diagnostics.parallelismType],
+            ] as const
+          ).map(([k, v]) => (
+            <div key={k} className="flex flex-col">
+              <span className="text-slate-500 capitalize">
+                {k.replace(/([A-Z])/g, " $1")}
+              </span>
+              <span className="text-slate-200 font-medium capitalize">{v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="flex justify-end">
+        <div className="relative group">
+          <button
+            className="w-5 h-5 rounded-full bg-slate-500/20 border border-slate-500/30 text-slate-300 hover:bg-slate-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
+            title={t("disclaimerTitle")}
+          >
+            ?
+          </button>
+          <div className="absolute right-0 bottom-full mb-2 w-64 p-2 bg-slate-800 border border-slate-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
+            <div className="text-slate-300">{t("disclaimer")}</div>
           </div>
         </div>
       </div>
@@ -250,140 +268,8 @@ function GPUCard({
   );
 }
 
-/**
- * Componente principal que muestra cards o sección expandida
- */
-function GPUCPUContent({
-  analysis,
-  gpuScore,
-  cpuScore,
-  t,
-}: Readonly<{
-  analysis: GPUCPUAnalysisResult;
-  gpuScore: number;
-  cpuScore: number;
-  t: (key: string) => string;
-}>) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [shouldAnimate, setShouldAnimate] = useState(true);
-  const [gpuFlipped, setGpuFlipped] = useState(false);
-  const [cpuFlipped, setCpuFlipped] = useState(false);
+// ─── Modal ─────────────────────────────────────────────────────────────────
 
-  // Activar animación cuando se abre el modal o cuando se colapsa
-  useEffect(() => {
-    if (!isExpanded) {
-      setShouldAnimate(true);
-      const timer = setTimeout(() => setShouldAnimate(false), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [isExpanded]);
-
-  return (
-    <>
-      {/* Cards - se ocultan cuando está expandido */}
-      {!isExpanded && (
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 min-h-0">
-          {/* Card GPU */}
-          <GPUCard 
-            score={gpuScore} 
-            label="GPU" 
-            animate={shouldAnimate}
-            metrics={analysis.metrics}
-            isFlipped={gpuFlipped}
-            onFlip={() => setGpuFlipped(!gpuFlipped)}
-            t={t}
-          />
-
-          {/* Card CPU */}
-          <GPUCard 
-            score={cpuScore} 
-            label="CPU" 
-            animate={shouldAnimate}
-            metrics={analysis.metrics}
-            isFlipped={cpuFlipped}
-            onFlip={() => setCpuFlipped(!cpuFlipped)}
-            t={t}
-          />
-        </div>
-      )}
-
-      {/* Perfil - solo icono y conclusión */}
-      {!isExpanded && (
-        <div className="mb-4 flex-shrink-0">
-          <div className="glass-card p-3 rounded-lg border border-blue-500/30 bg-blue-500/10">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-blue-400 text-lg">
-                info
-              </span>
-              <div className="text-sm text-slate-300">{analysis.summary}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Sección expandible hacia arriba con análisis y recomendación */}
-      <div className="mb-4 flex-shrink-0">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full glass-card p-3 rounded-lg border border-slate-500/30 bg-slate-500/5 flex items-center justify-between hover:bg-white/5 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-slate-400 text-lg">
-              description
-            </span>
-            <div className="text-sm font-semibold text-slate-300">
-              {isExpanded ? t("hideDetails") : t("showDetails")}
-            </div>
-          </div>
-          <span
-            className={`material-symbols-outlined text-lg text-slate-400 transition-transform duration-300 ${
-              isExpanded ? "rotate-180" : ""
-            }`}
-          >
-            expand_less
-          </span>
-        </button>
-        {isExpanded && (
-          <div className="glass-card p-4 rounded-lg border border-slate-500/30 bg-slate-500/5 mt-2 space-y-4">
-            {/* Análisis de la estructura */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-slate-400 text-lg">
-                  description
-                </span>
-                <div className="text-sm font-semibold text-slate-300">
-                  {t("structureAnalysis")}
-                </div>
-              </div>
-              <div className="text-sm text-slate-300 pl-7 whitespace-pre-line">
-                {analysis.explanation}
-              </div>
-            </div>
-
-            {/* Recomendación */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-purple-400 text-lg">
-                  lightbulb
-                </span>
-                <div className="text-sm font-semibold text-purple-300">
-                  {t("recommendation")}
-                </div>
-              </div>
-              <div className="text-sm text-purple-200 pl-7">
-                {analysis.recommendation}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
-/**
- * Modal para mostrar el análisis GPU vs CPU
- */
 export default function GPUCPUModal({
   open,
   onClose,
@@ -394,68 +280,19 @@ export default function GPUCPUModal({
   if (!open || !analysis) return null;
 
   return (
-    <>
-      <style>{`
-        @keyframes pulseScale {
-          0% {
-            transform: scale(0.95);
-            opacity: 0.8;
-          }
-          50% {
-            transform: scale(1.02);
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-        .preserve-3d {
-          transform-style: preserve-3d;
-        }
-        .backface-hidden {
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-      `}</style>
-      <BaseModalContainer
-        open={open}
-        onClose={onClose}
-        title={t("title")}
-        titleIcon="speed"
-        closeAriaLabel={t("closeModal")}
-        zIndexClassName="z-[70]"
-        sizeClassName="w-[95vw] sm:w-[85vw] max-w-4xl h-[85vh] max-h-[85dvh]"
-        panelClassName="mx-2 sm:mx-4 overscroll-contain"
-      >
-        {/* Contenido */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col min-h-0 scrollbar-custom">
-          <GPUCPUContent
-            analysis={analysis}
-            gpuScore={analysis.gpuScore}
-            cpuScore={analysis.cpuScore}
-            t={t}
-          />
-
-          {/* Disclaimer - botón (?) */}
-          <div className="mt-4 flex-shrink-0 flex justify-end">
-            <div className="relative group">
-              <button
-                className="w-5 h-5 rounded-full bg-slate-500/20 border border-slate-500/30 text-slate-300 hover:bg-slate-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
-                title={t("disclaimerTitle")}
-              >
-                ?
-              </button>
-              <div className="absolute right-0 bottom-full mb-2 w-64 p-2 bg-slate-800 border border-slate-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
-                <div className="text-slate-300">{t("disclaimer")}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </BaseModalContainer>
-    </>
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      titleIcon="speed"
+      closeAriaLabel={t("closeModal")}
+      zIndexClassName="z-[70]"
+      sizeClassName="w-[95vw] sm:w-[85vw] max-w-3xl h-[85vh] max-h-[85dvh]"
+      panelClassName="mx-2 sm:mx-4 overscroll-contain"
+    >
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-custom">
+        <GPUCPUContent analysis={analysis} t={t} />
+      </div>
+    </BaseModalContainer>
   );
 }
-

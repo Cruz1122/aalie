@@ -46,9 +46,12 @@ class _LoopScanState:
     has_early_exit: bool = False
     shift_like_count: int = 0
 
-    index_write_patterns: List[Tuple[Tuple[Optional[str], Optional[str], Optional[int]], List[Tuple[Optional[str], Optional[str], Optional[int]]]]] = field(
-        default_factory=list
-    )
+    index_write_patterns: List[
+        Tuple[
+            Tuple[Optional[str], Optional[str], Optional[int]],
+            List[Tuple[Optional[str], Optional[str], Optional[int]]],
+        ]
+    ] = field(default_factory=list)
     identifier_copies: List[Tuple[str, str]] = field(default_factory=list)
     mod_updates: List[Tuple[str, str, str]] = field(default_factory=list)
     halving_updates: List[str] = field(default_factory=list)
@@ -138,7 +141,9 @@ def _literal_number(expr: Any) -> Optional[float]:
     return None
 
 
-def _index_signature(index_expr: Any) -> Tuple[Optional[str], Optional[str], Optional[int]]:
+def _index_signature(
+    index_expr: Any,
+) -> Tuple[Optional[str], Optional[str], Optional[int]]:
     if _node_type(index_expr) != "index":
         return (None, None, None)
 
@@ -154,7 +159,11 @@ def _index_signature(index_expr: Any) -> Tuple[Optional[str], Optional[str], Opt
         left = idx_expr.get("left")
         right = idx_expr.get("right")
 
-        if _node_type(left) == "identifier" and _literal_number(right) is not None and op in ("+", "-"):
+        if (
+            _node_type(left) == "identifier"
+            and _literal_number(right) is not None
+            and op in ("+", "-")
+        ):
             value = int(_literal_number(right) or 0)
             offset = value if op == "+" else -value
             return (base, left.get("name"), offset)
@@ -165,7 +174,9 @@ def _index_signature(index_expr: Any) -> Tuple[Optional[str], Optional[str], Opt
     return (base, None, None)
 
 
-def _collect_index_signatures(expr: Any, out: List[Tuple[Optional[str], Optional[str], Optional[int]]]) -> None:
+def _collect_index_signatures(
+    expr: Any, out: List[Tuple[Optional[str], Optional[str], Optional[int]]]
+) -> None:
     if isinstance(expr, list):
         for item in expr:
             _collect_index_signatures(item, out)
@@ -183,7 +194,10 @@ def _collect_index_signatures(expr: Any, out: List[Tuple[Optional[str], Optional
             _collect_index_signatures(child, out)
 
 
-def _looks_adjacent(a: Tuple[Optional[str], Optional[str], Optional[int]], b: Tuple[Optional[str], Optional[str], Optional[int]]) -> bool:
+def _looks_adjacent(
+    a: Tuple[Optional[str], Optional[str], Optional[int]],
+    b: Tuple[Optional[str], Optional[str], Optional[int]],
+) -> bool:
     base_a, var_a, offset_a = a
     base_b, var_b, offset_b = b
     if not base_a or not base_b:
@@ -411,7 +425,11 @@ def _is_true_like_literal(expr: Any) -> bool:
             return True
         if isinstance(value, (int, float)) and value == 1:
             return True
-        if isinstance(value, str) and value.strip().lower() in ("true", "verdadero", "1"):
+        if isinstance(value, str) and value.strip().lower() in (
+            "true",
+            "verdadero",
+            "1",
+        ):
             return True
     return False
 
@@ -705,7 +723,11 @@ def _analyze_assignment(
         op = _binary_op(value).lower()
         left = value.get("left")
         right = value.get("right")
-        if op in ("mod", "%") and _node_type(left) == "identifier" and _node_type(right) == "identifier":
+        if (
+            op in ("mod", "%")
+            and _node_type(left) == "identifier"
+            and _node_type(right) == "identifier"
+        ):
             left_name = left.get("name")
             right_name = right.get("name")
             if isinstance(left_name, str) and isinstance(right_name, str):
@@ -773,7 +795,9 @@ def _analyze_assignment(
 
     # Extrema with index tracking (max/min plus position)
     if in_conditional and "conditional_collection_compare" in state.detected_features:
-        if any(_has_name_hint(variable, ("idx", "index", "pos", "position")) for variable in writes):
+        if any(
+            _has_name_hint(variable, ("idx", "index", "pos", "position")) for variable in writes
+        ):
             state.detected_features.add("has_extrema_index_update")
 
     # Monotonic control updates for candidate control variables.
@@ -884,7 +908,9 @@ def _detect_extrema_signal(test: Any, consequent: Any, state: _LoopScanState) ->
                 continue
             value_expr = assign.get("value")
             value_vars = set(expr_vars(value_expr))
-            if _expr_has_collection_access(value_expr) or (source_vars and source_vars.intersection(value_vars)):
+            if _expr_has_collection_access(value_expr) or (
+                source_vars and source_vars.intersection(value_vars)
+            ):
                 updates_candidate_from_source = True
                 break
 
@@ -1021,7 +1047,12 @@ def _walk_statement(
                 _append_unique(state.comparisons, comparison, limit=14)
 
         for child_stmt in _body_statements(stmt):
-            _walk_statement(child_stmt, state, nested_control_candidates, in_conditional=in_conditional)
+            _walk_statement(
+                child_stmt,
+                state,
+                nested_control_candidates,
+                in_conditional=in_conditional,
+            )
         return
 
     if t == "return":
@@ -1252,10 +1283,7 @@ def extract_loop_facts(loop_node: Dict[str, Any], depth: int, order: int) -> Opt
     if (
         "has_collection_target_comparison" in state.detected_features
         and "has_interval_boundary_update" in state.detected_features
-        and (
-            "has_midpoint_update" in state.detected_features
-            or len(control_variables) >= 2
-        )
+        and ("has_midpoint_update" in state.detected_features or len(control_variables) >= 2)
     ):
         state.detected_features.add("has_binary_search_interval")
 
@@ -1279,10 +1307,7 @@ def extract_loop_facts(loop_node: Dict[str, Any], depth: int, order: int) -> Opt
     object_field_writes = [name for name in state.body_writes if "." in name]
     if object_field_writes:
         state.detected_features.add("has_object_field_write")
-    if any(
-        name.split(".", 1)[0] in state.collection_variables
-        for name in object_field_writes
-    ):
+    if any(name.split(".", 1)[0] in state.collection_variables for name in object_field_writes):
         state.detected_features.add("has_collection_object_field_write")
 
     # Euclidean step detector: b <- a MOD b and rotation a <- temp (with temp <- b).
@@ -1349,8 +1374,10 @@ def extract_loop_facts(loop_node: Dict[str, Any], depth: int, order: int) -> Opt
     # Progress-only loop: updates control/boundary state without direct semantic aggregate.
     if (
         node_type in ("WHILE", "REPEAT")
-        and
-        any(direction_map.get(v) in ("increasing", "decreasing", "refine") for v in control_variables)
+        and any(
+            direction_map.get(v) in ("increasing", "decreasing", "refine")
+            for v in control_variables
+        )
         and not state.collection_variables
         and not state.accumulators
         and state.collection_write_count == 0
@@ -1365,12 +1392,18 @@ def extract_loop_facts(loop_node: Dict[str, Any], depth: int, order: int) -> Opt
     # 3) conditional multiplicative accumulation in result
     exp_candidates = _sorted(state.halving_updates)
     exp_control_candidates = _sorted([v for v in exp_candidates if v in control_variables])
-    exp_var = exp_control_candidates[0] if exp_control_candidates else (exp_candidates[0] if exp_candidates else None)
+    exp_var = (
+        exp_control_candidates[0]
+        if exp_control_candidates
+        else (exp_candidates[0] if exp_candidates else None)
+    )
 
     square_targets = _sorted([target for target, _ in state.square_updates])
     base_var = square_targets[0] if square_targets else None
 
-    conditional_targets = _sorted([target for target, _partner in state.conditional_mul_accumulators])
+    conditional_targets = _sorted(
+        [target for target, _partner in state.conditional_mul_accumulators]
+    )
     preferred_results = _sorted(
         [
             target
@@ -1378,11 +1411,19 @@ def extract_loop_facts(loop_node: Dict[str, Any], depth: int, order: int) -> Opt
             if _has_name_hint(target, ("res", "result", "ans", "pow", "potencia"))
         ]
     )
-    result_var = preferred_results[0] if preferred_results else (conditional_targets[0] if conditional_targets else None)
+    result_var = (
+        preferred_results[0]
+        if preferred_results
+        else (conditional_targets[0] if conditional_targets else None)
+    )
 
     if base_var and result_var:
         partners_for_result = _sorted(
-            [partner for target, partner in state.conditional_mul_accumulators if target == result_var and partner]
+            [
+                partner
+                for target, partner in state.conditional_mul_accumulators
+                if target == result_var and partner
+            ]
         )
         if partners_for_result and base_var not in partners_for_result:
             base_var = partners_for_result[0]

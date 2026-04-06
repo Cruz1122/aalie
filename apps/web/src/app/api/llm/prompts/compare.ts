@@ -21,6 +21,7 @@ Proporciona worst/best/avg con (schema: T_open, T_polynomial; en la nota usa té
 - **T_open** (ecuación de eficiencia completa): Σ(C_k · count_k) en LaTeX
 - **T_polynomial** (forma polinómica): agrupado por potencias de n, preservando C_k
 - **Cotas**: big_o, big_omega, big_theta en LaTeX
+- **step_by_step**: bundle del walkthrough del caso con \`method="iterative_case"\` y sus \`steps\`
 - Complejidades big_o/big_omega/big_theta SIEMPRE como $O(n^2)$, $\\Omega(n)$, $\\Theta(n \\log n)$ (KaTeX con $...$), con O mayúscula y variable explícita. Nunca escribas solo "o^2".
 
 Ejemplo forma polinómica correcta: "(C_3)·n² + (C_2 - C_3)·n + (C_1 + C_4)"
@@ -30,6 +31,7 @@ Proporciona:
 - **recurrence**: {type, form, [a,b,f,n0] o [order,shifts,coefficients,g(n),n0]}
 - **method**: "master"/"iteration"/"characteristic_equation"/"recursion_tree"
 - **Objeto del método** con TODOS sus campos obligatorios
+- **step_by_step** dentro de cada método reportado, siguiendo el walkthrough del sistema
 - **big_theta**: resultado final
 
 ---
@@ -54,7 +56,7 @@ const noteRulesEs = `
 
 ## SOLO MENCIONA
 - Iterativos: ecuación de eficiencia completa, forma polinómica, cotas
-- Recursivos: recurrence, method, big_theta
+- Recursivos: recurrence, method, big_theta, step_by_step del método
 - Errores matemáticos: cálculos incorrectos, cotas mal aplicadas
 
 ## EJEMPLOS VÁLIDOS
@@ -82,7 +84,7 @@ const noteRulesEn = `
 
 ## ONLY MENTION
 - Iterative: complete efficiency equation, polynomial form, bounds
-- Recursive: recurrence, method, big_theta
+- Recursive: recurrence, method, big_theta, method step_by_step
 - Mathematical errors: incorrect calculations, misapplied bounds
 
 ## VALID EXAMPLES

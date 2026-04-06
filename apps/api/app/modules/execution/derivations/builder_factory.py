@@ -7,27 +7,30 @@ Aplica layout para convertir StructuredTraceView a TraceGraph.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Callable, Dict, List, Optional
 
-from ..schemas import TraceGraphCanonical, TraceGraphNode, TraceGraphEdge, GraphNodeData
-
-from .structural_trace_classifier import StructuralPatternKind, StructuralTraceClassification
-from .structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceNode,
-    StructuredTraceEdge,
-    StructuredTraceRenderConfig,
-)
+from ..schemas import GraphNodeData, TraceGraphEdge, TraceGraphNode
 from .builders import (
+    build_backtracking_stateful,
+    build_binary_branch_recursive,
+    build_divide_merge_recurse,
+    build_divide_partition_recurse,
     build_generic_iterative,
     build_generic_recursive,
-    build_tail_recursive_linear,
-    build_single_branch_recursive_search,
-    build_binary_branch_recursive,
-    build_divide_partition_recurse,
-    build_divide_merge_recurse,
-    build_backtracking_stateful,
     build_hybrid_recursive_iterative,
+    build_single_branch_recursive_search,
+    build_tail_recursive_linear,
+)
+from .structural_trace_classifier import (
+    StructuralPatternKind,
+    StructuralTraceClassification,
+)
+from .structured_trace_models import (
+    StructuredTraceEdge,
+    StructuredTraceNode,
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
 )
 
 BUILDER_REGISTRY: Dict[StructuralPatternKind, Callable[..., StructuredTraceView]] = {
@@ -48,7 +51,9 @@ BUILDER_REGISTRY: Dict[StructuralPatternKind, Callable[..., StructuredTraceView]
 }
 
 
-def get_builder(pattern_kind: StructuralPatternKind) -> Callable[..., StructuredTraceView]:
+def get_builder(
+    pattern_kind: StructuralPatternKind,
+) -> Callable[..., StructuredTraceView]:
     """Obtiene el builder para el patrón dado."""
     return BUILDER_REGISTRY.get(pattern_kind, build_generic_recursive)
 
@@ -80,7 +85,6 @@ def _apply_layout_linear(
     nodes: List[StructuredTraceNode], edges: List[StructuredTraceEdge]
 ) -> tuple:
     """Layout lineal vertical (iterativo, tail recursive)."""
-    x_spacing = 180
     y_spacing = 80
     x, y = 0.0, 0.0
 
@@ -150,15 +154,17 @@ def _apply_layout_tree(
     nodes_by_id = {n.id: n for n in nodes}
     children: Dict[str, List[str]] = {}
     for e in edges:
-        children.setdefault(e.source, []).append(e.target)
+        if e.source not in nodes_by_id or e.target not in nodes_by_id:
+            continue
+        children.setdefault(e.source, [])
+        if e.target not in children[e.source]:
+            children[e.source].append(e.target)
 
     graph_nodes: List[TraceGraphNode] = []
-    graph_edges: List[TraceGraphEdge] = []
+    positioned_nodes: Dict[str, tuple[float, float]] = {}
+    visited: set[str] = set()
 
-    def layout_node(node_id: str, x: float, y: float) -> None:
-        n = nodes_by_id.get(node_id)
-        if not n:
-            return
+    def to_graph_node(n: StructuredTraceNode, x: float, y: float) -> TraceGraphNode:
         label = n.title
         if n.lines:
             node_type = n.data.get("nodeType") if n.data else None
@@ -181,36 +187,72 @@ def _apply_layout_tree(
         node_type = "default"
         if n.data and isinstance(n.data, dict):
             node_type = n.data.get("nodeType", "default") or "default"
-        graph_nodes.append(
-            TraceGraphNode(
-                id=n.id,
-                type=node_type,
-                position={"x": x, "y": y},
-                data=GraphNodeData(**data_dict),
-            )
+        return TraceGraphNode(
+            id=n.id,
+            type=node_type,
+            position={"x": x, "y": y},
+            data=GraphNodeData(**data_dict),
         )
+
+    def layout_node(
+        node_id: str, x: float, y: float, active_path: Optional[set[str]] = None
+    ) -> None:
+        n = nodes_by_id.get(node_id)
+        if not n or node_id in visited:
+            return
+        if active_path is None:
+            active_path = set()
+        if node_id in active_path:
+            return
+        active_path.add(node_id)
+
+        graph_nodes.append(to_graph_node(n, x, y))
+        positioned_nodes[node_id] = (x, y)
+        visited.add(node_id)
+
         ch = children.get(node_id, [])
         n_ch = len(ch)
         if n_ch == 0:
+            active_path.remove(node_id)
             return
         total_width = (n_ch - 1) * x_spacing
         start_x = x - total_width / 2
         for i, child_id in enumerate(ch):
             cx = start_x + i * x_spacing
             cy = y + y_spacing
-            graph_edges.append(
-                TraceGraphEdge(
-                    id=f"e_{node_id}_{child_id}",
-                    source=node_id,
-                    target=child_id,
-                    label="",
-                    type="default",
-                )
-            )
-            layout_node(child_id, cx, cy)
+            layout_node(child_id, cx, cy, active_path)
+        active_path.remove(node_id)
 
     for i, rid in enumerate(root_ids or []):
         layout_node(rid, i * x_spacing, 0)
+
+    # Renderizar componentes desconectados / no alcanzables desde la(s) raíz(ces)
+    orphan_ids = [node_id for node_id in nodes_by_id if node_id not in visited]
+    if orphan_ids:
+        orphan_y = y_spacing
+        if positioned_nodes:
+            orphan_y = max(y for _, y in positioned_nodes.values()) + y_spacing
+        for i, node_id in enumerate(orphan_ids):
+            layout_node(node_id, i * x_spacing, orphan_y)
+
+    graph_edges: List[TraceGraphEdge] = []
+    seen_edges: set[tuple[str, str, str, str]] = set()
+    for e in edges:
+        if e.source not in positioned_nodes or e.target not in positioned_nodes:
+            continue
+        key = (e.id, e.source, e.target, e.label)
+        if key in seen_edges:
+            continue
+        seen_edges.add(key)
+        graph_edges.append(
+            TraceGraphEdge(
+                id=e.id,
+                source=e.source,
+                target=e.target,
+                label=e.label,
+                type="default",
+            )
+        )
 
     return graph_nodes, graph_edges
 

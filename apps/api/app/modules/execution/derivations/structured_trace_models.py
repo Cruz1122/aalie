@@ -7,11 +7,11 @@ con layout para renderizado.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional
 
 from .structural_trace_classifier import StructuralPatternKind
-
 
 StructuredNodeRole = Literal[
     "call",
@@ -67,3 +67,4 @@ class StructuredTraceRenderConfig:
     showConditionEvaluations: bool = True
     maxSnapshotsPerOperation: int = 4
     collapseRepeatedCalls: bool = False
+    locale: str = "en"

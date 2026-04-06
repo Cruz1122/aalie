@@ -6,20 +6,21 @@ Nodo decisión → una rama activa (búsqueda binaria).
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
-from typing import Dict, Any
 
-from ..structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceRenderConfig,
-)
+from typing import Any, Dict
+
 from ..structural_trace_classifier import StructuralTraceClassification
+from ..structured_trace_models import (
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
+)
 from .generic_recursive import _build_from_call_tree
 
 
 def build_single_branch_recursive_search(
     trace: Dict[str, Any],
     classification: StructuralTraceClassification,
-    _config: StructuredTraceRenderConfig,
+    config: StructuredTraceRenderConfig,
 ) -> StructuredTraceView:
     """Construye vista para búsqueda con una rama efectiva."""
-    return _build_from_call_tree(trace, classification.patternKind)
+    return _build_from_call_tree(trace, classification.patternKind, config=config)

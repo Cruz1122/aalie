@@ -6,8 +6,9 @@ Infiere el rol real de cada símbolo usando el AST y la gramática, no su nombre
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 
 @dataclass

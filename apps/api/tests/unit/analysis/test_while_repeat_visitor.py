@@ -3,10 +3,14 @@ Tests unitarios para app.modules.analysis.visitors.while_repeat_visitor.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 import pytest
+from sympy import Integer, Symbol
+
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 from app.modules.parsing.service import parse_source
-from sympy import Symbol, Integer
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestWhileRepeatVisitor:
@@ -35,14 +39,24 @@ class TestWhileRepeatVisitor:
                 "type": "binary",
                 "left": {"type": "identifier", "name": "i"},
                 "op": "<",
-                "right": {"type": "identifier", "name": "n"}
+                "right": {"type": "identifier", "name": "n"},
             },
             "body": {
                 "type": "Block",
                 "body": [
-                    {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "i"}, "value": {"type": "binary", "left": {"type": "identifier", "name": "i"}, "op": "+", "right": {"type": "number", "value": 1}}}
-                ]
-            }
+                    {
+                        "type": "Assign",
+                        "pos": {"line": 3},
+                        "target": {"type": "identifier", "name": "i"},
+                        "value": {
+                            "type": "binary",
+                            "left": {"type": "identifier", "name": "i"},
+                            "op": "+",
+                            "right": {"type": "number", "value": 1},
+                        },
+                    }
+                ],
+            },
         }
         self.analyzer.visitWhile(node, mode="worst")
         assert len(self.analyzer.rows) > 0
@@ -56,14 +70,24 @@ class TestWhileRepeatVisitor:
                 "type": "binary",
                 "left": {"type": "identifier", "name": "i"},
                 "op": ">",
-                "right": {"type": "number", "value": 0}
+                "right": {"type": "number", "value": 0},
             },
             "body": {
                 "type": "Block",
                 "body": [
-                    {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "i"}, "value": {"type": "binary", "left": {"type": "identifier", "name": "i"}, "op": "-", "right": {"type": "number", "value": 1}}}
-                ]
-            }
+                    {
+                        "type": "Assign",
+                        "pos": {"line": 3},
+                        "target": {"type": "identifier", "name": "i"},
+                        "value": {
+                            "type": "binary",
+                            "left": {"type": "identifier", "name": "i"},
+                            "op": "-",
+                            "right": {"type": "number", "value": 1},
+                        },
+                    }
+                ],
+            },
         }
         self.analyzer.visitRepeat(node, mode="worst")
         assert len(self.analyzer.rows) > 0
@@ -91,7 +115,7 @@ class TestWhileRepeatVisitor:
             "type": "binary",
             "left": {"type": "identifier", "name": "a"},
             "op": "+",
-            "right": {"type": "number", "value": 1}
+            "right": {"type": "number", "value": 1},
         }
         result = self.analyzer._expr_to_str(expr)
         assert "a" in result
@@ -146,14 +170,14 @@ class TestWhileRepeatVisitor:
                 "type": "binary",
                 "operator": "<",
                 "left": {"type": "identifier", "name": "i"},
-                "right": {"type": "identifier", "name": "n"}
+                "right": {"type": "identifier", "name": "n"},
             },
             "right": {
                 "type": "binary",
                 "operator": ">",
                 "left": {"type": "identifier", "name": "x"},
-                "right": {"type": "number", "value": 0}
-            }
+                "right": {"type": "number", "value": 0},
+            },
         }
         result = self.analyzer._expr_to_str(expr)
         assert isinstance(result, str)
@@ -161,43 +185,57 @@ class TestWhileRepeatVisitor:
 
     def test_calculate_iterations_addition(self):
         """Test: _calculate_iterations con incremento (+)"""
-        result = self.analyzer._calculate_iterations("i", "0", {"operator": "+", "constant": "1"}, "n", "<", "worst")
+        result = self.analyzer._calculate_iterations(
+            "i", "0", {"operator": "+", "constant": "1"}, "n", "<", "worst"
+        )
         assert result is not None
         assert isinstance(result, str)
 
     def test_calculate_iterations_subtraction(self):
         """Test: _calculate_iterations con decremento (-)"""
-        result = self.analyzer._calculate_iterations("i", "n", {"operator": "-", "constant": "1"}, "0", ">", "worst")
+        result = self.analyzer._calculate_iterations(
+            "i", "n", {"operator": "-", "constant": "1"}, "0", ">", "worst"
+        )
         assert result is not None
         assert isinstance(result, str)
 
     def test_calculate_iterations_multiplication(self):
         """Test: _calculate_iterations con multiplicación (*)"""
-        result = self.analyzer._calculate_iterations("i", "1", {"operator": "*", "constant": "2"}, "n", "<", "worst")
+        result = self.analyzer._calculate_iterations(
+            "i", "1", {"operator": "*", "constant": "2"}, "n", "<", "worst"
+        )
         assert result is not None
         assert isinstance(result, str)
 
     def test_calculate_iterations_division(self):
         """Test: _calculate_iterations con división (/)"""
-        result = self.analyzer._calculate_iterations("i", "n", {"operator": "/", "constant": "2"}, "1", ">", "worst")
+        result = self.analyzer._calculate_iterations(
+            "i", "n", {"operator": "/", "constant": "2"}, "1", ">", "worst"
+        )
         assert result is not None
         assert isinstance(result, str)
 
     def test_calculate_iterations_no_initial(self):
         """Test: _calculate_iterations sin valor inicial"""
-        result = self.analyzer._calculate_iterations("i", None, {"operator": "+", "constant": "1"}, "n", "<", "worst")
+        result = self.analyzer._calculate_iterations(
+            "i", None, {"operator": "+", "constant": "1"}, "n", "<", "worst"
+        )
         assert result is not None
         assert isinstance(result, str)
 
     def test_calculate_iterations_custom_constant(self):
         """Test: _calculate_iterations con constante personalizada"""
-        result = self.analyzer._calculate_iterations("i", "0", {"operator": "+", "constant": "2"}, "n", "<", "worst")
+        result = self.analyzer._calculate_iterations(
+            "i", "0", {"operator": "+", "constant": "2"}, "n", "<", "worst"
+        )
         assert result is not None
         assert isinstance(result, str)
 
     def test_calculate_iterations_invalid(self):
         """Test: _calculate_iterations con combinación inválida"""
-        result = self.analyzer._calculate_iterations("i", "0", {"operator": "+", "constant": "1"}, "n", ">", "worst")
+        result = self.analyzer._calculate_iterations(
+            "i", "0", {"operator": "+", "constant": "1"}, "n", ">", "worst"
+        )
         # Debe retornar None para combinaciones inválidas
         assert result is None
 
@@ -210,7 +248,7 @@ class TestWhileRepeatVisitor:
                 "type": "binary",
                 "operator": "<",
                 "left": {"type": "identifier", "name": "i"},
-                "right": {"type": "identifier", "name": "n"}
+                "right": {"type": "identifier", "name": "n"},
             },
             "body": {
                 "type": "Block",
@@ -222,11 +260,11 @@ class TestWhileRepeatVisitor:
                             "type": "binary",
                             "operator": "+",
                             "left": {"type": "identifier", "name": "i"},
-                            "right": {"type": "number", "value": 1}
-                        }
+                            "right": {"type": "number", "value": 1},
+                        },
                     }
-                ]
-            }
+                ],
+            },
         }
         result = self.analyzer._analyze_while_closure(node, mode="worst")
         # Puede retornar None si no se puede analizar, o un dict con información
@@ -244,16 +282,20 @@ class TestWhileRepeatVisitor:
                     "type": "binary",
                     "operator": ">",
                     "left": {"type": "identifier", "name": "j"},
-                    "right": {"type": "number", "value": 0}
+                    "right": {"type": "number", "value": 0},
                 },
                 "right": {
                     "type": "binary",
                     "operator": ">",
-                    "left": {"type": "index", "target": {"type": "identifier", "name": "A"}, "index": {"type": "identifier", "name": "j"}},
-                    "right": {"type": "identifier", "name": "key"}
-                }
+                    "left": {
+                        "type": "index",
+                        "target": {"type": "identifier", "name": "A"},
+                        "index": {"type": "identifier", "name": "j"},
+                    },
+                    "right": {"type": "identifier", "name": "key"},
+                },
             },
-            "body": {"type": "Block", "body": []}
+            "body": {"type": "Block", "body": []},
         }
         result = self.analyzer._analyze_while_closure(node, mode="best")
         # Puede retornar None o un dict con información de 0 iteraciones
@@ -263,7 +305,12 @@ class TestWhileRepeatVisitor:
         """Test: _get_while_exit_probability sin avg_model"""
         node = {
             "type": "While",
-            "test": {"type": "binary", "operator": "<", "left": {"type": "identifier", "name": "i"}, "right": {"type": "identifier", "name": "n"}}
+            "test": {
+                "type": "binary",
+                "operator": "<",
+                "left": {"type": "identifier", "name": "i"},
+                "right": {"type": "identifier", "name": "n"},
+            },
         }
         # Asegurar que no hay avg_model
         self.analyzer.avg_model = None
@@ -273,10 +320,16 @@ class TestWhileRepeatVisitor:
     def test_get_while_exit_probability_with_model(self):
         """Test: _get_while_exit_probability con avg_model"""
         from app.modules.analysis.models.avg_model import AvgModel
+
         self.analyzer.avg_model = AvgModel(mode="uniform", predicates={})
         node = {
             "type": "While",
-            "test": {"type": "binary", "operator": "<", "left": {"type": "identifier", "name": "i"}, "right": {"type": "identifier", "name": "n"}}
+            "test": {
+                "type": "binary",
+                "operator": "<",
+                "left": {"type": "identifier", "name": "i"},
+                "right": {"type": "identifier", "name": "n"},
+            },
         }
         result = self.analyzer._get_while_exit_probability(node)
         # Puede retornar None si no encuentra el predicado, o tupla (p_sympy, p_str)
@@ -287,7 +340,7 @@ class TestWhileRepeatVisitor:
         node = {
             "type": "index",
             "target": {"type": "identifier", "name": "A"},
-            "index": {"type": "identifier", "name": "j"}
+            "index": {"type": "identifier", "name": "j"},
         }
         result = self.analyzer._has_non_control_comparison(node, "i")
         assert result
@@ -297,8 +350,12 @@ class TestWhileRepeatVisitor:
         node = {
             "type": "binary",
             "operator": ">",
-            "left": {"type": "index", "target": {"type": "identifier", "name": "A"}, "index": {"type": "identifier", "name": "j"}},
-            "right": {"type": "identifier", "name": "key"}
+            "left": {
+                "type": "index",
+                "target": {"type": "identifier", "name": "A"},
+                "index": {"type": "identifier", "name": "j"},
+            },
+            "right": {"type": "identifier", "name": "key"},
         }
         result = self.analyzer._has_non_control_comparison(node, "i")
         assert result
@@ -309,7 +366,7 @@ class TestWhileRepeatVisitor:
             "type": "binary",
             "operator": ">",
             "left": {"type": "identifier", "name": "j"},
-            "right": {"type": "number", "value": 0}
+            "right": {"type": "number", "value": 0},
         }
         result = self.analyzer._has_non_control_comparison(node, "i")
         assert result
@@ -320,7 +377,7 @@ class TestWhileRepeatVisitor:
             "type": "binary",
             "operator": "<",
             "left": {"type": "identifier", "name": "i"},
-            "right": {"type": "number", "value": 10}
+            "right": {"type": "number", "value": 10},
         }
         result = self.analyzer._has_non_control_comparison(node, "i")
         # Comparación solo con constante y variable de control, sin arrays
@@ -370,7 +427,9 @@ END
         assert not wr.get("unbounded", False), "No debe ser unbounded"
         # Condición: 2 evaluaciones (entrada + salida), count = iterations+1 = 2
         count_str = str(wr.get("count", ""))
-        assert count_str == "2", f"Count debe ser 2 (1 iteracion + 1 eval salida: {count_str})"
+        assert (
+            count_str == "2"
+        ), f"Count debe ser 2 (1 iteracion + 1 eval salida: {count_str})"
 
     def test_oracle_while_decrement_bounded(self):
         """WHILE i != 0 DO { i <- i - 1 } con i inicializado → bounded, iterations = i0"""
@@ -390,7 +449,9 @@ END
         assert not wr.get("unbounded", False), "No debe ser unbounded"
         count_str = str(wr.get("count", ""))
         # Debe contener n o i_0 (iteraciones = valor inicial - 0)
-        assert "n" in count_str or "i" in count_str.lower(), f"Count debe reflejar iteraciones: {count_str}"
+        assert (
+            "n" in count_str or "i" in count_str.lower()
+        ), f"Count debe reflejar iteraciones: {count_str}"
 
     def test_oracle_while_no_progress_must(self):
         """WHILE i < n DO { IF (p) THEN i <- i+1 } → unbounded (no progreso must)"""
@@ -409,7 +470,9 @@ END
         while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
         assert len(while_rows) > 0
         wr = while_rows[0]
-        assert wr.get("unbounded", False), "Debe ser unbounded (update solo en rama condicional)"
+        assert wr.get(
+            "unbounded", False
+        ), "Debe ser unbounded (update solo en rama condicional)"
         assert "not change" in wr.get("note", "").lower()
 
     def test_oracle_while_or_no_progress(self):
@@ -447,7 +510,9 @@ END
         while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
         assert len(while_rows) > 0
         wr = while_rows[0]
-        assert not wr.get("unbounded", False), "Debe ser bounded (algoritmo de Euclides)"
+        assert not wr.get(
+            "unbounded", False
+        ), "Debe ser bounded (algoritmo de Euclides)"
         count_str = str(wr.get("count", ""))
         assert "min" in count_str.lower(), f"Count debe contener min(a,b): {count_str}"
 
@@ -471,7 +536,9 @@ END
         count_str = str(wr.get("count", ""))
         assert "n" in count_str, f"Count debe contener n: {count_str}"
         note = wr.get("note", "")
-        assert "worst" in note.lower() or "variable" in note.lower() or "n" in note.lower(), f"Note debe describir analisis: {note}"
+        assert (
+            "worst" in note.lower() or "variable" in note.lower() or "n" in note.lower()
+        ), f"Note debe describir analisis: {note}"
 
     def test_oracle_while_multiplication_log_bounded(self):
         """WHILE i <= n DO { i <- i * 2 } → bounded, O(log n) iteraciones"""
@@ -491,7 +558,9 @@ END
         wr = while_rows[0]
         assert not wr.get("unbounded", False), "Debe ser bounded (multiplicacion)"
         count_str = str(wr.get("count", ""))
-        assert "log" in count_str.lower() or "n" in count_str, f"Count debe reflejar O(log n): {count_str}"
+        assert (
+            "log" in count_str.lower() or "n" in count_str
+        ), f"Count debe reflejar O(log n): {count_str}"
 
     def test_oracle_while_decrement_to_zero_bounded(self):
         """WHILE i > 0 DO { i <- i - 1 } con i <- n → bounded, n+1 evaluaciones"""
@@ -531,8 +600,18 @@ END
         note = wr.get("note", "")
         # Note debe mencionar variable, condición o modo (en/es)
         assert len(note) > 0, "WHILE debe tener note"
-        keywords = ["while", "condition", "variable", "worst", "condición", "peor", "línea"]
-        assert any(kw in note.lower() for kw in keywords) or "i" in note or "n" in note, f"Note debe describir analisis: {note}"
+        keywords = [
+            "while",
+            "condition",
+            "variable",
+            "worst",
+            "condición",
+            "peor",
+            "línea",
+        ]
+        assert (
+            any(kw in note.lower() for kw in keywords) or "i" in note or "n" in note
+        ), f"Note debe describir analisis: {note}"
 
     def test_oracle_while_binary_search_pattern(self):
         """WHILE low <= high con mid = (low+high)/2 → patrón búsqueda binaria, O(log n)"""
@@ -562,7 +641,9 @@ END
         wr = while_rows[0]
         assert not wr.get("unbounded", False), "Busqueda binaria debe ser bounded"
         count_str = str(wr.get("count", ""))
-        assert "log" in count_str.lower() or "n" in count_str, f"Count debe reflejar O(log n): {count_str}"
+        assert (
+            "log" in count_str.lower() or "n" in count_str
+        ), f"Count debe reflejar O(log n): {count_str}"
 
     def test_oracle_while_and_flag_does_not_shrink_worst(self):
         """
@@ -591,4 +672,3 @@ END
         count_str = str(wr.get("count", ""))
         assert count_str != "2", f"No debe colapsar a 2 evaluaciones: {count_str}"
         assert "n" in count_str.lower(), f"Peor caso debe depender de n: {count_str}"
-

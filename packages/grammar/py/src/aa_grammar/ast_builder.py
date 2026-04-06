@@ -6,6 +6,7 @@ from antlr4 import ParserRuleContext, Token  # type: ignore
 from .generated.LanguageVisitor import LanguageVisitor  # type: ignore
 from .generated.LanguageParser import LanguageParser  # type: ignore
 
+
 # Helper para extraer posición de un contexto o token
 def get_pos(ctx_or_token) -> Dict[str, int]:
     """Extrae line y column de un contexto de parser o token."""
@@ -16,6 +17,7 @@ def get_pos(ctx_or_token) -> Dict[str, int]:
         return {"line": token.line, "column": token.column}
     return {"line": 0, "column": 0}
 
+
 # Helpers simples de construcción
 def lit(value: Any, ctx=None) -> Dict[str, Any]:
     node = {"type": "Literal", "value": value}
@@ -23,11 +25,13 @@ def lit(value: Any, ctx=None) -> Dict[str, Any]:
         node["pos"] = get_pos(ctx)
     return node
 
+
 def ident(name: str, ctx=None) -> Dict[str, Any]:
     node = {"type": "Identifier", "name": name}
     if ctx:
         node["pos"] = get_pos(ctx)
     return node
+
 
 def unary(op: str, arg: Dict[str, Any], ctx=None) -> Dict[str, Any]:
     node = {"type": "Unary", "op": op, "arg": arg}
@@ -35,11 +39,15 @@ def unary(op: str, arg: Dict[str, Any], ctx=None) -> Dict[str, Any]:
         node["pos"] = get_pos(ctx)
     return node
 
-def binary(op: str, left: Dict[str, Any], right: Dict[str, Any], ctx=None) -> Dict[str, Any]:
+
+def binary(
+    op: str, left: Dict[str, Any], right: Dict[str, Any], ctx=None
+) -> Dict[str, Any]:
     node = {"type": "Binary", "op": op, "left": left, "right": right}
     if ctx:
         node["pos"] = get_pos(ctx)
     return node
+
 
 # Normalización de operadores
 def normalize_op(raw_op: str) -> str:
@@ -81,6 +89,7 @@ def normalize_op(raw_op: str) -> str:
     # Fallback
     return op_lower
 
+
 class ASTBuilder(LanguageVisitor):
     # ---- programa y sentencias ----
     def visitProgram(self, ctx: LanguageParser.ProgramContext):
@@ -90,18 +99,24 @@ class ASTBuilder(LanguageVisitor):
         stmts = [self.visit(s) for s in ctx.stmt()] if ctx.stmt() else []
         body = procs + stmts
         return {"type": "Program", "body": body, "pos": get_pos(ctx)}
-    
+
     def visitProcDef(self, ctx: LanguageParser.ProcDefContext):
         name = ctx.ID().getText()
         params = self._visit_paramlist(ctx.paramList()) if ctx.paramList() else []
         body = self.visit(ctx.block())
-        return {"type": "ProcDef", "name": name, "params": params, "body": body, "pos": get_pos(ctx)}
-    
+        return {
+            "type": "ProcDef",
+            "name": name,
+            "params": params,
+            "body": body,
+            "pos": get_pos(ctx),
+        }
+
     def _visit_paramlist(self, ctx):
         if not ctx:
             return []
         return [self.visit(p) for p in ctx.param()]
-    
+
     def visitParam(self, ctx: LanguageParser.ParamContext):
         # Puede ser arrayParam, objectParam o ID simple
         if ctx.arrayParam():
@@ -111,41 +126,45 @@ class ASTBuilder(LanguageVisitor):
         else:
             # ID simple (escalar)
             return {"type": "Param", "name": ctx.ID().getText(), "pos": get_pos(ctx)}
-    
+
     def visitArrayParam(self, ctx: LanguageParser.ArrayParamContext):
         name = ctx.ID().getText()
         # Obtener todas las dimensiones
         all_dims = list(ctx.arrayDim()) if ctx.arrayDim() else []
-        
+
         # Si hay un RANGE, dividir las dimensiones en iniciales y de rango
         has_range = ctx.RANGE() is not None
         if has_range:
             # Contar dimensiones antes del RANGE iterando sobre los hijos
             dim_count_before = 0
-            for child in ctx.children:
+            for child in ctx.children or []:
                 if isinstance(child, LanguageParser.ArrayDimContext):
                     dim_count_before += 1
-                elif hasattr(child, 'symbol') and child.symbol:
+                elif hasattr(child, "symbol") and child.symbol:
                     # Verificar si es el token RANGE
-                    try:
-                        from .generated.LanguageParser import LanguageParser
-                        if child.symbol.type == LanguageParser.RANGE:
-                            break
-                    except:
-                        pass
-            
+                    if child.symbol.type == LanguageParser.RANGE:
+                        break
+
             # Dividir dimensiones
             start_dims = all_dims[:dim_count_before] if dim_count_before > 0 else []
-            end_dims = all_dims[dim_count_before:] if dim_count_before < len(all_dims) else []
+            end_dims = (
+                all_dims[dim_count_before:] if dim_count_before < len(all_dims) else []
+            )
             start = self.visit(start_dims[0]) if start_dims else None
             end = self.visit(end_dims[0]) if end_dims else None
         else:
             # Sin rango: usar la primera dimensión como start
             start = self.visit(all_dims[0]) if all_dims else None
             end = None
-        
-        return {"type": "ArrayParam", "name": name, "start": start, "end": end, "pos": get_pos(ctx)}
-    
+
+        return {
+            "type": "ArrayParam",
+            "name": name,
+            "start": start,
+            "end": end,
+            "pos": get_pos(ctx),
+        }
+
     def visitArrayDim(self, ctx: LanguageParser.ArrayDimContext):
         """Extrae el valor de una dimensión de array (ID o INT dentro de [])"""
         if ctx.ID():
@@ -155,16 +174,21 @@ class ASTBuilder(LanguageVisitor):
         else:
             # Fallback
             return lit(0, ctx)
-    
+
     def visitArrayIndex(self, ctx: LanguageParser.ArrayIndexContext):
         if ctx.ID():
             return ident(ctx.ID().getText(), ctx.ID())
         else:
             return lit(int(ctx.INT().getText()), ctx.INT())
-    
+
     def visitObjectParam(self, ctx: LanguageParser.ObjectParamContext):
         ids = [id_token.getText() for id_token in ctx.ID()]
-        return {"type": "ObjectParam", "className": ids[0], "name": ids[1], "pos": get_pos(ctx)}
+        return {
+            "type": "ObjectParam",
+            "className": ids[0],
+            "name": ids[1],
+            "pos": get_pos(ctx),
+        }
 
     def visitBlock(self, ctx: LanguageParser.BlockContext):
         body = [self.visit(s) for s in ctx.stmt()]
@@ -183,8 +207,14 @@ class ASTBuilder(LanguageVisitor):
     def visitCallStmt(self, ctx: LanguageParser.CallStmtContext):
         callee = ctx.ID().getText()
         args = self._visit_arglist(ctx.argList())
-        return {"type": "Call", "callee": callee, "args": args, "statement": True, "pos": get_pos(ctx)}
-    
+        return {
+            "type": "Call",
+            "callee": callee,
+            "args": args,
+            "statement": True,
+            "pos": get_pos(ctx),
+        }
+
     def visitPrintStmt(self, ctx: LanguageParser.PrintStmtContext):
         args = self._visit_arglist(ctx.argList())
         return {"type": "Print", "args": args, "pos": get_pos(ctx)}
@@ -198,7 +228,13 @@ class ASTBuilder(LanguageVisitor):
             alt = self.visit(ctx.ifStmt())
         elif ctx.block(1):
             alt = self.visit(ctx.block(1))
-        return {"type": "If", "test": test, "consequent": cons, "alternate": alt, "pos": get_pos(ctx)}
+        return {
+            "type": "If",
+            "test": test,
+            "consequent": cons,
+            "alternate": alt,
+            "pos": get_pos(ctx),
+        }
 
     def visitWhileStmt(self, ctx: LanguageParser.WhileStmtContext):
         test = self.visit(ctx.expr())
@@ -210,14 +246,21 @@ class ASTBuilder(LanguageVisitor):
         start = self.visit(ctx.expr(0))
         end = self.visit(ctx.expr(1))
         body = self.visit(ctx.block())
-        return {"type": "For", "var": var, "start": start, "end": end, "body": body, "pos": get_pos(ctx)}
-    
+        return {
+            "type": "For",
+            "var": var,
+            "start": start,
+            "end": end,
+            "body": body,
+            "pos": get_pos(ctx),
+        }
+
     def visitRepeatStmt(self, ctx: LanguageParser.RepeatStmtContext):
         body_stmts = [self.visit(s) for s in ctx.stmt()]
         test = self.visit(ctx.expr())
         body_block = {"type": "Block", "body": body_stmts, "pos": get_pos(ctx)}
         return {"type": "Repeat", "body": body_block, "test": test, "pos": get_pos(ctx)}
-    
+
     def visitReturnStmt(self, ctx: LanguageParser.ReturnStmtContext):
         value = self.visit(ctx.expr())
         return {"type": "Return", "value": value, "pos": get_pos(ctx)}
@@ -235,14 +278,28 @@ class ASTBuilder(LanguageVisitor):
                 node = {"type": "Index", "target": node, "pos": get_pos(child), **idx}
             elif text.startswith("."):
                 # next child is ID token
-                name = ctx.getChild(i + 1).getText() if (i + 1) < ctx.getChildCount() else text[1:]
-                node = {"type": "Field", "target": node, "name": name, "pos": get_pos(child)}
+                name = (
+                    ctx.getChild(i + 1).getText()
+                    if (i + 1) < ctx.getChildCount()
+                    else text[1:]
+                )
+                node = {
+                    "type": "Field",
+                    "target": node,
+                    "name": name,
+                    "pos": get_pos(child),
+                }
         return node
 
     def visitIndexSuffix(self, ctx: LanguageParser.IndexSuffixContext):
         # [expr] or [a..b]
         if ctx.RANGE():
-            return {"range": {"start": self.visit(ctx.expr(0)), "end": self.visit(ctx.expr(1))}}
+            return {
+                "range": {
+                    "start": self.visit(ctx.expr(0)),
+                    "end": self.visit(ctx.expr(1)),
+                }
+            }
         return {"index": self.visit(ctx.expr(0))}
 
     # ---- expresiones (precedencia) ----
@@ -272,12 +329,25 @@ class ASTBuilder(LanguageVisitor):
         return self.visit(ctx.expr())
 
     def visitLengthCall(self, ctx: LanguageParser.LengthCallContext):
-        return {"type": "Call", "callee": "length", "args": [self.visit(ctx.expr())], "builtIn": True, "statement": False, "pos": get_pos(ctx)}
+        return {
+            "type": "Call",
+            "callee": "length",
+            "args": [self.visit(ctx.expr())],
+            "builtIn": True,
+            "statement": False,
+            "pos": get_pos(ctx),
+        }
 
     def visitCallExpr(self, ctx: LanguageParser.CallExprContext):
         callee = ctx.ID().getText()
         args = self._visit_arglist(ctx.argList())
-        return {"type": "Call", "callee": callee, "args": args, "statement": False, "pos": get_pos(ctx)}
+        return {
+            "type": "Call",
+            "callee": callee,
+            "args": args,
+            "statement": False,
+            "pos": get_pos(ctx),
+        }
 
     def _visit_arglist(self, ctx):
         if not ctx:
@@ -292,7 +362,9 @@ class ASTBuilder(LanguageVisitor):
         return self.visit(ctx.primary())
 
     # Helpers binarios genéricos
-    def _fold_binary(self, ctx: ParserRuleContext, child_rule: str, op_texts: List[str]):
+    def _fold_binary(
+        self, ctx: ParserRuleContext, child_rule: str, op_texts: List[str]
+    ):
         # child_rule: e.g. "mulExpr" for addExpr
         children = getattr(ctx, child_rule)()
         nodes = [self.visit(c) for c in children]
@@ -319,10 +391,10 @@ class ASTBuilder(LanguageVisitor):
         return self._fold_binary(ctx, "relExpr", ["and"])
 
     def visitRelExpr(self, ctx: LanguageParser.RelExprContext):
-        return self._fold_binary(ctx, "addExpr", ["==","!=", "<", "<=", ">", ">="])
+        return self._fold_binary(ctx, "addExpr", ["==", "!=", "<", "<=", ">", ">="])
 
     def visitAddExpr(self, ctx: LanguageParser.AddExprContext):
-        return self._fold_binary(ctx, "mulExpr", ["+","-"])
+        return self._fold_binary(ctx, "mulExpr", ["+", "-"])
 
     def visitMulExpr(self, ctx: LanguageParser.MulExprContext):
-        return self._fold_binary(ctx, "unaryExpr", ["*","/","div","mod"])
+        return self._fold_binary(ctx, "unaryExpr", ["*", "/", "div", "mod"])

@@ -2,18 +2,12 @@
 
 import { useTranslations } from "next-intl";
 
-import type { TraceGraph } from "@/types/trace";
+import type { StructuredTrace } from "@/types/trace";
 
 import ExecutionGraphView from "../ExecutionGraphView";
 
-interface StructuredDiagram {
-  graph: TraceGraph;
-  patternKind: string;
-  classification: { evidence: string[] };
-}
-
 interface DiagramSectionProps {
-  structuredDiagram?: StructuredDiagram | null;
+  structuredDiagram?: StructuredTrace | null;
   loading?: boolean;
   inputSize?: number;
   initialVariablesSummary?: string;
@@ -47,7 +41,9 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
     if (hasN && inputSize !== undefined) {
       diagramNote = t("diagramNote", { n: inputSize });
     } else if (initialVariablesSummary) {
-      diagramNote = t("diagramNoteVariables", { vars: initialVariablesSummary });
+      diagramNote = t("diagramNoteVariables", {
+        vars: initialVariablesSummary,
+      });
     }
   }
 
@@ -57,7 +53,9 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
   const renderCanvasContent = () => {
     if (loading) {
       return (
-        <div className={`${canvasSlotClass} flex flex-col items-center justify-center gap-4`}>
+        <div
+          className={`${canvasSlotClass} flex flex-col items-center justify-center gap-4`}
+        >
           <div className="relative flex items-center justify-center">
             <div
               className={`w-12 h-12 rounded-full animate-ping ${
@@ -89,21 +87,23 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
 
     if (fetchCompleted) {
       return (
-        <div className={`${canvasSlotClass} flex flex-col items-center justify-center gap-3`}>
+        <div
+          className={`${canvasSlotClass} flex flex-col items-center justify-center gap-3`}
+        >
           <span className="material-symbols-outlined text-3xl text-amber-500/60">
             info
           </span>
           <div className="text-sm text-slate-400 text-center px-4">
-            {isIterative
-              ? t("diagramFailed")
-              : t("callTreeUnavailable")}
+            {isIterative ? t("diagramFailed") : t("callTreeUnavailable")}
           </div>
         </div>
       );
     }
 
     return (
-      <div className={`${canvasSlotClass} flex flex-col items-center justify-center gap-3`}>
+      <div
+        className={`${canvasSlotClass} flex flex-col items-center justify-center gap-3`}
+      >
         <span className="material-symbols-outlined text-3xl text-slate-500/50">
           {isIterative ? "schema" : "account_tree"}
         </span>
@@ -152,18 +152,17 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
       </div>
 
       <div className="h-[28px] flex items-center px-1 flex-shrink-0">
-        <p className="text-xs text-slate-400 truncate">
-          {diagramNote ?? " "}
-        </p>
+        <p className="text-xs text-slate-400 truncate">{diagramNote ?? " "}</p>
       </div>
 
       <div
         className={`relative flex-none shrink-0 overflow-hidden rounded-lg ${
-          frameStyle === "border"
-            ? "border border-slate-700/60"
-            : "glass-card"
+          frameStyle === "border" ? "border border-slate-700/60" : "glass-card"
         }`}
-        style={{ height: `${frameHeightPx}px`, minHeight: `${frameHeightPx}px` }}
+        style={{
+          height: `${frameHeightPx}px`,
+          minHeight: `${frameHeightPx}px`,
+        }}
       >
         {renderCanvasContent()}
       </div>

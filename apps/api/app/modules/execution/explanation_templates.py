@@ -7,6 +7,7 @@ El LLM puede quedar como enriquecimiento opcional.
 Author: Plan diagramas deterministas
 Version: 0.1.0
 """
+
 from typing import Any, Dict, List
 
 
@@ -192,9 +193,8 @@ def explain_minimal(trace: Dict[str, Any], locale: str = "en") -> str:
 
     root_ids = recursion_tree.get("root_calls", [])
     root_id = root_ids[0] if root_ids else None
-    root = (
-        next((c for c in calls if c.get("id") == root_id), None)
-        or next((c for c in calls if c.get("parent_id") is None), calls[0])
+    root = next((c for c in calls if c.get("id") == root_id), None) or next(
+        (c for c in calls if c.get("parent_id") is None), calls[0]
     )
     proc = root.get("function_name") or "proc"
     params = root.get("params", {})
@@ -215,9 +215,7 @@ def build_explanation_summary(trace: Dict[str, Any], locale: str = "en") -> str:
     return explain_recursion_tree(trace, locale).split("\n\n")[0]
 
 
-def build_explanation_events(
-    trace: Dict[str, Any], locale: str = "en"
-) -> List[Dict[str, Any]]:
+def build_explanation_events(trace: Dict[str, Any], locale: str = "en") -> List[Dict[str, Any]]:
     """
     Lista de eventos relevantes (call_enter, return_emit, condition_eval).
 
@@ -239,9 +237,7 @@ def build_explanation_events(
     return events[:30]
 
 
-def explain_node(
-    trace: Dict[str, Any], node_id: str, locale: str = "en"
-) -> str:
+def explain_node(trace: Dict[str, Any], node_id: str, locale: str = "en") -> str:
     """
     Texto corto por nodo (para tooltip/panel futuro).
 

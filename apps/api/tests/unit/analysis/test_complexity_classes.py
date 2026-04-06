@@ -1,7 +1,9 @@
 import pytest
-# tests/unit/test_complexity_classes.py
 
+# tests/unit/test_complexity_classes.py
 from app.modules.analysis.utils.complexity_classes import ComplexityClasses
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestComplexityClasses:
@@ -10,82 +12,82 @@ class TestComplexityClasses:
     @pytest.fixture(autouse=True)
     def setup(self):
         self.complexity = ComplexityClasses()
-    
+
     def test_extract_dominant_term_quadratic(self):
         """Test 1: Extraer término dominante de polinomio cuadrático"""
         poly = "n^2 + 3n + 5"
         dominant = self.complexity.extract_dominant_term(poly)
-        
+
         assert dominant is not None
         assert "n" in dominant.lower()
         assert "2" in dominant or "n^2" in dominant.lower()
-    
+
     def test_extract_dominant_term_linear(self):
         """Test 2: Extraer término dominante de polinomio lineal"""
         poly = "5n + 3"
         dominant = self.complexity.extract_dominant_term(poly)
-        
+
         assert dominant is not None
         assert "n" in dominant.lower()
-    
+
     def test_calculate_big_o_quadratic(self):
         """Test 4: Calcular Big-O para polinomio cuadrático"""
         poly = "n^2 + 3n + 5"
         big_o = self.complexity.calculate_big_o(poly)
-        
+
         assert big_o is not None
         assert big_o.startswith("O(")
         assert "n" in big_o.lower()
-    
+
     def test_calculate_big_o_linear(self):
         """Test 5: Calcular Big-O para polinomio lineal"""
         poly = "5n + 3"
         big_o = self.complexity.calculate_big_o(poly)
-        
+
         assert big_o is not None
         assert big_o.startswith("O(")
         assert "n" in big_o.lower()
-    
+
     def test_calculate_big_omega(self):
         """Test 6: Calcular Big-Omega"""
         poly = "n^2 + n"
         big_omega = self.complexity.calculate_big_omega(poly)
-        
+
         assert big_omega is not None
         assert "\\Omega" in big_omega or "Omega" in big_omega
-    
+
     def test_calculate_big_theta(self):
         """Test 7: Calcular Big-Theta"""
         poly = "n^2 + 3n + 5"
         big_theta = self.complexity.calculate_big_theta(poly)
-        
+
         assert big_theta is not None
         assert "\\Theta" in big_theta or "Theta" in big_theta
-    
+
     def test_logarithmic_complexity(self):
         """Test 8: Manejar complejidad logarítmica"""
         poly = "log(n)"
         big_o = self.complexity.calculate_big_o(poly)
-        
+
         assert big_o is not None
         assert big_o.startswith("O(")
-    
+
     def test_constant_complexity(self):
         """Test 9: Manejar complejidad constante"""
         poly = "5"
         big_o = self.complexity.calculate_big_o(poly)
-        
+
         assert big_o is not None
         assert big_o.startswith("O(")
         # Para complejidad constante, el resultado puede ser O(5), O(1), etc.
         # Lo importante es que empiece con O( y no contenga variables
         assert "n" not in big_o.lower()
-    
+
     def test_empty_polynomial(self):
         """Test 10: Manejar polinomio vacío"""
         poly = ""
         dominant = self.complexity.extract_dominant_term(poly)
-        
+
         assert dominant == "1"
 
     def test_parse_polynomial_with_fractions(self):
@@ -127,13 +129,15 @@ class TestComplexityClasses:
     def test_extract_dominant_sympy_constant(self):
         """Test: _extract_dominant_sympy retorna 1 para constantes"""
         from sympy import Integer
+
         result = self.complexity._extract_dominant_sympy(Integer(5))
         assert result == Integer(1)
 
     def test_extract_dominant_sympy_linear(self):
         """Test: _extract_dominant_sympy extrae término dominante lineal"""
         from sympy import Symbol
-        n = Symbol('n', integer=True, positive=True)
+
+        n = Symbol("n", integer=True, positive=True)
         expr = n + 5
         result = self.complexity._extract_dominant_sympy(expr)
         assert result is not None
@@ -141,15 +145,17 @@ class TestComplexityClasses:
     def test_extract_dominant_sympy_quadratic(self):
         """Test: _extract_dominant_sympy extrae término dominante cuadrático"""
         from sympy import Symbol
-        n = Symbol('n', integer=True, positive=True)
-        expr = n**2 + 3*n + 5
+
+        n = Symbol("n", integer=True, positive=True)
+        expr = n**2 + 3 * n + 5
         result = self.complexity._extract_dominant_sympy(expr)
         assert result is not None
 
     def test_extract_dominant_sympy_log(self):
         """Test: _extract_dominant_sympy maneja logaritmos"""
         from sympy import Symbol, log
-        n = Symbol('n', integer=True, positive=True)
+
+        n = Symbol("n", integer=True, positive=True)
         expr = n * log(n)
         result = self.complexity._extract_dominant_sympy(expr)
         assert result is not None
@@ -157,7 +163,8 @@ class TestComplexityClasses:
     def test_extract_dominant_sympy_different_variable(self):
         """Test: _extract_dominant_sympy con variable diferente"""
         from sympy import Symbol
-        m = Symbol('m', integer=True, positive=True)
+
+        m = Symbol("m", integer=True, positive=True)
         # Si no hay símbolo 'n', debería retornar 1 o usar el primer símbolo
         result = self.complexity._extract_dominant_sympy(m + 5, variable="n")
         # Si no encuentra 'n', puede retornar 1 o usar m
@@ -166,7 +173,8 @@ class TestComplexityClasses:
     def test_sympy_to_latex_simple(self):
         """Test: _sympy_to_latex convierte expresión simple"""
         from sympy import Symbol
-        n = Symbol('n', integer=True, positive=True)
+
+        n = Symbol("n", integer=True, positive=True)
         result = self.complexity._sympy_to_latex(n)
         assert isinstance(result, str)
         assert len(result) > 0
@@ -174,7 +182,8 @@ class TestComplexityClasses:
     def test_sympy_to_latex_complex(self):
         """Test: _sympy_to_latex convierte expresión compleja"""
         from sympy import Symbol, log
-        n = Symbol('n', integer=True, positive=True)
+
+        n = Symbol("n", integer=True, positive=True)
         expr = n**2 + n * log(n)
         result = self.complexity._sympy_to_latex(expr)
         assert isinstance(result, str)
@@ -182,10 +191,11 @@ class TestComplexityClasses:
 
     def test_sympy_to_latex_error_handling(self):
         """Test: _sympy_to_latex maneja errores"""
+
         # Crear un objeto que cause error en latex()
         class BadExpr:
             pass
-        
+
         bad_expr = BadExpr()
         result = self.complexity._sympy_to_latex(bad_expr)
         # Debe usar str() como fallback
@@ -239,15 +249,17 @@ class TestComplexityClasses:
     def test_extract_dominant_sympy_cubic(self):
         """Test: _extract_dominant_sympy extrae término dominante cúbico"""
         from sympy import Symbol
-        n = Symbol('n', integer=True, positive=True)
-        expr = n**3 + 2*n**2 + 5*n + 1
+
+        n = Symbol("n", integer=True, positive=True)
+        expr = n**3 + 2 * n**2 + 5 * n + 1
         result = self.complexity._extract_dominant_sympy(expr)
         assert result is not None
 
     def test_extract_dominant_sympy_exponential(self):
         """Test: _extract_dominant_sympy maneja expresiones exponenciales"""
         from sympy import Symbol, exp
-        n = Symbol('n', integer=True, positive=True)
+
+        n = Symbol("n", integer=True, positive=True)
         expr = exp(n)
         result = self.complexity._extract_dominant_sympy(expr)
         assert result is not None
@@ -255,7 +267,8 @@ class TestComplexityClasses:
     def test_extract_dominant_sympy_mixed(self):
         """Test: _extract_dominant_sympy maneja expresiones mixtas"""
         from sympy import Symbol, log
-        n = Symbol('n', integer=True, positive=True)
+
+        n = Symbol("n", integer=True, positive=True)
         expr = n**2 * log(n) + n**2
         result = self.complexity._extract_dominant_sympy(expr)
         assert result is not None
@@ -263,7 +276,8 @@ class TestComplexityClasses:
     def test_sympy_to_latex_with_log(self):
         """Test: _sympy_to_latex convierte expresión con logaritmo"""
         from sympy import Symbol, log
-        n = Symbol('n', integer=True, positive=True)
+
+        n = Symbol("n", integer=True, positive=True)
         expr = log(n)
         result = self.complexity._sympy_to_latex(expr)
         assert isinstance(result, str)
@@ -272,7 +286,8 @@ class TestComplexityClasses:
     def test_sympy_to_latex_with_exp(self):
         """Test: _sympy_to_latex convierte expresión con exponencial"""
         from sympy import Symbol, exp
-        n = Symbol('n', integer=True, positive=True)
+
+        n = Symbol("n", integer=True, positive=True)
         expr = exp(n)
         result = self.complexity._sympy_to_latex(expr)
         assert isinstance(result, str)
@@ -323,8 +338,3 @@ class TestComplexityClasses:
         big_theta = self.complexity.calculate_big_theta(poly)
         assert big_theta is not None
         assert "\\Theta" in big_theta or "Theta" in big_theta
-
-
-if __name__ == '__main__':
-    unittest.main()
-

@@ -112,7 +112,11 @@ export default function IterativeAnalysisView({
 
   const getCaseLabel = (caseType: CaseType) => t(caseType);
   const getCaseShortLabel = (caseType: CaseType) =>
-    caseType === "best" ? t("bestShort") : caseType === "average" ? t("avgShort") : t("worstShort");
+    caseType === "best"
+      ? t("bestShort")
+      : caseType === "average"
+        ? t("avgShort")
+        : t("worstShort");
 
   /**
    * Renderiza el contenido de la tabla de costos por línea.
@@ -139,10 +143,14 @@ export default function IterativeAnalysisView({
       currentData = data?.worst ?? null;
     } else if (selectedCase === "best") {
       const bestData = data?.best;
-      currentData = bestData === "same_as_worst" ? data?.worst ?? null : (bestData ?? null);
+      currentData =
+        bestData === "same_as_worst"
+          ? (data?.worst ?? null)
+          : (bestData ?? null);
     } else if (selectedCase === "average") {
       const avgData = data?.avg;
-      currentData = avgData === "same_as_worst" ? data?.worst ?? null : (avgData ?? null);
+      currentData =
+        avgData === "same_as_worst" ? (data?.worst ?? null) : (avgData ?? null);
     }
 
     if (!currentData || !currentData.ok) {
@@ -220,12 +228,14 @@ export default function IterativeAnalysisView({
         <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)] min-w-0">
           <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
             {(() => {
-              const bestNotation = getBestAsymptoticNotation("best",
+              const bestNotation = getBestAsymptoticNotation(
+                "best",
                 data?.best === "same_as_worst"
                   ? data?.worst?.totals || {}
-                  : data?.best?.totals || {}
+                  : data?.best?.totals || {},
               ).notation;
-              const showCircle = bestNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              const showCircle =
+                bestNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
               return showCircle ? (
                 <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30 shrink-0">
                   <div className="scale-110">
@@ -238,18 +248,23 @@ export default function IterativeAnalysisView({
                 </div>
               );
             })()}
-            <h3 className="font-semibold text-green-300 mb-0.5">{getCaseLabel("best")}</h3>
-            <p className="text-[10px] text-green-400/80 italic -mt-3 mb-1">{t("bestHint")}</p>
-            {getBestAsymptoticNotation("best", 
-              data?.best === "same_as_worst" 
-                ? data?.worst?.totals || {} 
-                : data?.best?.totals || {}
+            <h3 className="font-semibold text-green-300 mb-0.5">
+              {getCaseLabel("best")}
+            </h3>
+            <p className="text-[10px] text-green-400/80 italic -mt-3 mb-1">
+              {t("bestHint")}
+            </p>
+            {getBestAsymptoticNotation(
+              "best",
+              data?.best === "same_as_worst"
+                ? data?.worst?.totals || {}
+                : data?.best?.totals || {},
             ).chips.length > 0 && (
               <div className="flex flex-wrap gap-1 justify-center mt-1">
                 {getBestAsymptoticNotation(
                   "best",
-                  data?.best === "same_as_worst" 
-                    ? data?.worst?.totals || {} 
+                  data?.best === "same_as_worst"
+                    ? data?.worst?.totals || {}
                     : data?.best?.totals || {},
                 ).chips.map((chip, idx) => (
                   <span
@@ -274,15 +289,29 @@ export default function IterativeAnalysisView({
             )}
             <button
               onClick={() => onViewGeneralProcedure("best")}
-              disabled={!(data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)}
+              disabled={
+                !(data?.best === "same_as_worst"
+                  ? data?.worst?.ok
+                  : data?.best?.ok)
+              }
               className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors min-w-0 ${
-                (data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)
+                (
+                  data?.best === "same_as_worst"
+                    ? data?.worst?.ok
+                    : data?.best?.ok
+                )
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
               }`}
               title={
-                (data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)
-                  ? tView("viewProcedureGeneral", { case: getCaseLabel("best") })
+                (
+                  data?.best === "same_as_worst"
+                    ? data?.worst?.ok
+                    : data?.best?.ok
+                )
+                  ? tView("viewProcedureGeneral", {
+                      case: getCaseLabel("best"),
+                    })
                   : tView("runAnalysisToSeeProcedure")
               }
             >
@@ -294,24 +323,26 @@ export default function IterativeAnalysisView({
           </div>
         </div>
         <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)] relative min-w-0">
-          {data?.avg && typeof data.avg !== "string" && data.avg.totals?.avg_model_info && (
-            <div className="absolute top-2 right-2 group">
-              <button
-                className="w-5 h-5 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
-                title={data.avg.totals.avg_model_info.note}
-              >
-                ?
-              </button>
-              <div className="absolute right-0 top-6 w-48 p-2 bg-slate-800 border border-yellow-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
-                <div className="text-yellow-300 font-semibold mb-1">
-                  {tView("model")}:
-                </div>
-                <div className="text-slate-300">
-                  {data.avg.totals.avg_model_info.note}
+          {data?.avg &&
+            typeof data.avg !== "string" &&
+            data.avg.totals?.avg_model_info && (
+              <div className="absolute top-2 right-2 group">
+                <button
+                  className="w-5 h-5 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
+                  title={data.avg.totals.avg_model_info.note}
+                >
+                  ?
+                </button>
+                <div className="absolute right-0 top-6 w-48 p-2 bg-slate-800 border border-yellow-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
+                  <div className="text-yellow-300 font-semibold mb-1">
+                    {tView("model")}:
+                  </div>
+                  <div className="text-slate-300">
+                    {data.avg.totals.avg_model_info.note}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
             {(() => {
               const avgNotation = getBestAsymptoticNotation(
@@ -320,7 +351,8 @@ export default function IterativeAnalysisView({
                   ? data?.worst?.totals || {}
                   : data?.avg?.totals || {},
               ).notation;
-              const showCircle = avgNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              const showCircle =
+                avgNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
               return showCircle ? (
                 <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30 shrink-0">
                   <div className="scale-110">
@@ -336,18 +368,34 @@ export default function IterativeAnalysisView({
             <h3 className="font-semibold text-yellow-300 mb-0.5">
               {getCaseLabel("average")}
             </h3>
-            <p className="text-[10px] text-yellow-400/80 italic -mt-3 mb-1">{t("averageHint")}</p>
+            <p className="text-[10px] text-yellow-400/80 italic -mt-3 mb-1">
+              {t("averageHint")}
+            </p>
             <button
               onClick={() => onViewGeneralProcedure("average")}
-              disabled={!(data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)}
+              disabled={
+                !(data?.avg === "same_as_worst"
+                  ? data?.worst?.ok
+                  : data?.avg?.ok)
+              }
               className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors min-w-0 ${
-                (data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)
+                (
+                  data?.avg === "same_as_worst"
+                    ? data?.worst?.ok
+                    : data?.avg?.ok
+                )
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
               }`}
               title={
-                (data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)
-                  ? tView("viewProcedureGeneral", { case: getCaseLabel("average") })
+                (
+                  data?.avg === "same_as_worst"
+                    ? data?.worst?.ok
+                    : data?.avg?.ok
+                )
+                  ? tView("viewProcedureGeneral", {
+                      case: getCaseLabel("average"),
+                    })
                   : tView("runAnalysisToSeeProcedure")
               }
             >
@@ -365,7 +413,8 @@ export default function IterativeAnalysisView({
                 "worst",
                 data?.worst?.totals || {},
               ).notation;
-              const showCircle = worstNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              const showCircle =
+                worstNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
               return showCircle ? (
                 <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30 shrink-0">
                   <div className="scale-110">
@@ -378,8 +427,12 @@ export default function IterativeAnalysisView({
                 </div>
               );
             })()}
-            <h3 className="font-semibold text-red-300 mb-0.5">{getCaseLabel("worst")}</h3>
-            <p className="text-[10px] text-red-400/80 italic -mt-3 mb-1">{t("worstHint")}</p>
+            <h3 className="font-semibold text-red-300 mb-0.5">
+              {getCaseLabel("worst")}
+            </h3>
+            <p className="text-[10px] text-red-400/80 italic -mt-3 mb-1">
+              {t("worstHint")}
+            </p>
             {getBestAsymptoticNotation("worst", data?.worst?.totals || {}).chips
               .length > 0 && (
               <div className="flex flex-wrap gap-1 justify-center mt-1">
@@ -417,7 +470,9 @@ export default function IterativeAnalysisView({
               }`}
               title={
                 data?.worst?.ok
-                  ? tView("viewProcedureGeneral", { case: getCaseLabel("worst") })
+                  ? tView("viewProcedureGeneral", {
+                      case: getCaseLabel("worst"),
+                    })
                   : tView("runAnalysisToSeeProcedure")
               }
             >

@@ -270,9 +270,10 @@ export default function RecursionTreeModal({
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  const reactFlowInstance = useRef<
-    ReactFlowInstance<Node<TreeNodeData>, Edge> | null
-  >(null);
+  const reactFlowInstance = useRef<ReactFlowInstance<
+    Node<TreeNodeData>,
+    Edge
+  > | null>(null);
 
   // Detectar tipo de recurrencia
   const isLinearRecurrence = recurrence?.type === "linear_shift";
@@ -578,225 +579,223 @@ export default function RecursionTreeModal({
       headerClassName="!shadow-none"
       contentClassName="p-0 flex flex-col min-h-0 overflow-hidden"
     >
-        {/* Header */}
-        {/* Controles de configuración */}
-        <div className="border-b border-white/10 p-4 flex-shrink-0 bg-slate-800/50">
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Tamaño inicial n */}
-            <div className="flex items-center gap-3 min-w-[220px]">
-              <label className="text-sm text-slate-300 whitespace-nowrap font-medium flex items-center gap-2">
-                <span className="material-symbols-outlined text-cyan-400 text-base">
-                  numbers
-                </span>
-                {t("initialN")}
-              </label>
-              <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="range"
-                  min="3"
-                  max={isLinearRecurrence ? "10" : "100"}
-                  step="1"
-                  value={initialN}
-                  onChange={(e) => {
-                    const newN = parseInt(e.target.value);
-                    setInitialN(newN);
-                    // Recalcular profundidad cuando cambia n
-                    if (recurrence) {
-                      if (isLinearRecurrence) {
-                        // Para árboles lineales, profundidad ≈ n
-                        setMaxDepth(Math.min(newN, 10));
-                      } else if (isDivideConquer) {
-                        let depth = 0;
-                        let currentN = newN;
-                        while (currentN > recurrence.n0 && recurrence.b > 1) {
-                          currentN = currentN / recurrence.b;
-                          depth++;
-                        }
-                        setMaxDepth(depth);
-                      }
-                    }
-                  }}
-                  className="flex-1 h-2 bg-slate-700/60 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:bg-slate-700/80 transition-colors"
-                />
-                <span className="text-sm text-white font-semibold min-w-[35px] text-right bg-slate-700/50 px-2 py-1 rounded border border-white/10">
-                  {initialN}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-300 whitespace-nowrap flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-400 text-base">
-                  layers
-                </span>
-                {t("depth")}
-              </label>
+      {/* Header */}
+      {/* Controles de configuración */}
+      <div className="border-b border-white/10 p-4 flex-shrink-0 bg-slate-800/50">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Tamaño inicial n */}
+          <div className="flex items-center gap-3 min-w-[220px]">
+            <label className="text-sm text-slate-300 whitespace-nowrap font-medium flex items-center gap-2">
+              <span className="material-symbols-outlined text-cyan-400 text-base">
+                numbers
+              </span>
+              {t("initialN")}
+            </label>
+            <div className="flex items-center gap-2 flex-1">
               <input
-                type="number"
-                min="1"
-                max={maxPossibleDepth}
-                value={maxDepth || ""}
-                onChange={handleDepthChange}
-                className="w-20 px-2 py-1 rounded bg-slate-700 border border-white/10 text-white text-sm focus:outline-none focus:border-purple-500/50 transition-colors"
-                placeholder="Auto"
+                type="range"
+                min="3"
+                max={isLinearRecurrence ? "10" : "100"}
+                step="1"
+                value={initialN}
+                onChange={(e) => {
+                  const newN = parseInt(e.target.value);
+                  setInitialN(newN);
+                  // Recalcular profundidad cuando cambia n
+                  if (recurrence) {
+                    if (isLinearRecurrence) {
+                      // Para árboles lineales, profundidad ≈ n
+                      setMaxDepth(Math.min(newN, 10));
+                    } else if (isDivideConquer) {
+                      let depth = 0;
+                      let currentN = newN;
+                      while (currentN > recurrence.n0 && recurrence.b > 1) {
+                        currentN = currentN / recurrence.b;
+                        depth++;
+                      }
+                      setMaxDepth(depth);
+                    }
+                  }
+                }}
+                className="flex-1 h-2 bg-slate-700/60 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:bg-slate-700/80 transition-colors"
               />
-              <span className="text-xs text-slate-400">
-                / {maxPossibleDepth} {t("baseCase")}
+              <span className="text-sm text-white font-semibold min-w-[35px] text-right bg-slate-700/50 px-2 py-1 rounded border border-white/10">
+                {initialN}
               </span>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-300 whitespace-nowrap flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-400 text-base">
-                  swap_vert
-                </span>
-                {t("orientation")}
-              </label>
-              <button
-                onClick={toggleOrientation}
-                className="flex items-center gap-2 px-3 py-1 rounded bg-slate-700 border border-white/10 text-white text-sm hover:bg-slate-600 transition-all duration-200 hover:shadow-lg"
-                title={t("changeOrientation", {
-                  orientation:
-                    orientation === "vertical" ? t("horizontal") : t("vertical"),
-                })}
-              >
-                <span className="text-base">
-                  {orientation === "vertical" ? "↓" : "→"}
-                </span>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-slate-300 whitespace-nowrap flex items-center gap-2">
+              <span className="material-symbols-outlined text-emerald-400 text-base">
+                layers
+              </span>
+              {t("depth")}
+            </label>
+            <input
+              type="number"
+              min="1"
+              max={maxPossibleDepth}
+              value={maxDepth || ""}
+              onChange={handleDepthChange}
+              className="w-20 px-2 py-1 rounded bg-slate-700 border border-white/10 text-white text-sm focus:outline-none focus:border-purple-500/50 transition-colors"
+              placeholder="Auto"
+            />
+            <span className="text-xs text-slate-400">
+              / {maxPossibleDepth} {t("baseCase")}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-slate-300 whitespace-nowrap flex items-center gap-2">
+              <span className="material-symbols-outlined text-amber-400 text-base">
+                swap_vert
+              </span>
+              {t("orientation")}
+            </label>
+            <button
+              onClick={toggleOrientation}
+              className="flex items-center gap-2 px-3 py-1 rounded bg-slate-700 border border-white/10 text-white text-sm hover:bg-slate-600 transition-all duration-200 hover:shadow-lg"
+              title={t("changeOrientation", {
+                orientation:
+                  orientation === "vertical" ? t("horizontal") : t("vertical"),
+              })}
+            >
+              <span className="text-base">
+                {orientation === "vertical" ? "↓" : "→"}
+              </span>
+              <span>
+                {orientation === "vertical" ? t("vertical") : t("horizontal")}
+              </span>
+            </button>
+          </div>
+
+          <div className="ml-auto flex items-center gap-2 text-xs text-slate-400">
+            {isLinearRecurrence ? (
+              <>
                 <span>
-                  {orientation === "vertical"
-                    ? t("vertical")
-                    : t("horizontal")}
+                  {t("shifts")} [{recurrence.shifts.join(", ")}]
                 </span>
-              </button>
-            </div>
-
-            <div className="ml-auto flex items-center gap-2 text-xs text-slate-400">
-              {isLinearRecurrence ? (
-                <>
-                  <span>
-                    {t("shifts")} [{recurrence.shifts.join(", ")}]
-                  </span>
-                  <span>,</span>
-                  <span>
-                    {t("coefs")} [{recurrence.coefficients.join(", ")}]
-                  </span>
-                  {characteristicEquation?.growth_rate && (
-                    <>
-                      <span>,</span>
-                      <span className="text-orange-300">
-                        {t("growth")} ≈
-                        {characteristicEquation.growth_rate.toFixed(3)}ⁿ
-                      </span>
-                    </>
-                  )}
-                </>
-              ) : isDivideConquer ? (
-                <>
-                  <Formula latex={`a = ${recurrence.a}`} />
-                  <span>,</span>
-                  <Formula latex={`b = ${recurrence.b}`} />
-                  <span>,</span>
-                  <Formula latex={`f(n) = ${recurrence.f}`} />
-                </>
-              ) : null}
-            </div>
+                <span>,</span>
+                <span>
+                  {t("coefs")} [{recurrence.coefficients.join(", ")}]
+                </span>
+                {characteristicEquation?.growth_rate && (
+                  <>
+                    <span>,</span>
+                    <span className="text-orange-300">
+                      {t("growth")} ≈
+                      {characteristicEquation.growth_rate.toFixed(3)}ⁿ
+                    </span>
+                  </>
+                )}
+              </>
+            ) : isDivideConquer ? (
+              <>
+                <Formula latex={`a = ${recurrence.a}`} />
+                <span>,</span>
+                <Formula latex={`b = ${recurrence.b}`} />
+                <span>,</span>
+                <Formula latex={`f(n) = ${recurrence.f}`} />
+              </>
+            ) : null}
           </div>
         </div>
+      </div>
 
-        {/* Área del árbol - min-h-0 permite que flex-1 encoja correctamente en el contenedor flex */}
-        <div className="flex-1 min-h-0 relative bg-slate-950 recursion-tree-container">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            onInit={onInit}
-            fitView={false}
-            minZoom={0.1}
-            maxZoom={2}
-            defaultEdgeOptions={{
-              style: {
-                stroke: "#64748b",
-                strokeWidth: 3,
-              },
-              type: "default",
-              animated: false,
-            }}
-            connectionLineStyle={{
+      {/* Área del árbol - min-h-0 permite que flex-1 encoja correctamente en el contenedor flex */}
+      <div className="flex-1 min-h-0 relative bg-slate-950 recursion-tree-container">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onInit={onInit}
+          fitView={false}
+          minZoom={0.1}
+          maxZoom={2}
+          defaultEdgeOptions={{
+            style: {
               stroke: "#64748b",
               strokeWidth: 3,
-            }}
-            edgesFocusable={false}
-            nodesConnectable={false}
-            nodesDraggable={false}
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background color="#334155" gap={16} size={1} />
-            <Controls
-              className="!bg-slate-800/90 !border !border-white/10 !rounded-lg"
-              showZoom={true}
-              showFitView={true}
-              showInteractive={true}
-            />
-          </ReactFlow>
-        </div>
+            },
+            type: "default",
+            animated: false,
+          }}
+          connectionLineStyle={{
+            stroke: "#64748b",
+            strokeWidth: 3,
+          }}
+          edgesFocusable={false}
+          nodesConnectable={false}
+          nodesDraggable={false}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background color="#334155" gap={16} size={1} />
+          <Controls
+            className="!bg-slate-800/90 !border !border-white/10 !rounded-lg"
+            showZoom={true}
+            showFitView={true}
+            showInteractive={true}
+          />
+        </ReactFlow>
+      </div>
 
-        {/* Footer con información */}
-        {nodes.length > 0 && (
-          <div className="border-t border-white/10 p-3 flex-shrink-0 bg-slate-800/50">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <span>
-                    {t("totalNodes")}{" "}
-                    <span className="text-white font-semibold">
-                      {nodes.length}
-                    </span>
+      {/* Footer con información */}
+      {nodes.length > 0 && (
+        <div className="border-t border-white/10 p-3 flex-shrink-0 bg-slate-800/50">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <div className="flex items-center gap-4 flex-wrap">
+                <span>
+                  {t("totalNodes")}{" "}
+                  <span className="text-white font-semibold">
+                    {nodes.length}
                   </span>
-                  <span>
-                    {t("levels")}{" "}
-                    <span className="text-white font-semibold">
-                      {Math.max(...nodes.map((n) => n.data?.level || 0)) + 1}
-                    </span>
+                </span>
+                <span>
+                  {t("levels")}{" "}
+                  <span className="text-white font-semibold">
+                    {Math.max(...nodes.map((n) => n.data?.level || 0)) + 1}
                   </span>
-                  {isLinearRecurrence && (
-                    <>
-                      <span>
-                        {t("duplicateSubproblems")}{" "}
-                        <span className="text-orange-300 font-semibold">
-                          {
-                            nodes.filter(
-                              (n) =>
-                                n.data?.duplicateCount &&
-                                n.data.duplicateCount > 1,
-                            ).length
-                          }
-                        </span>
+                </span>
+                {isLinearRecurrence && (
+                  <>
+                    <span>
+                      {t("duplicateSubproblems")}{" "}
+                      <span className="text-orange-300 font-semibold">
+                        {
+                          nodes.filter(
+                            (n) =>
+                              n.data?.duplicateCount &&
+                              n.data.duplicateCount > 1,
+                          ).length
+                        }
                       </span>
-                      {characteristicEquation?.growth_rate && (
-                        <span className="text-orange-300">
-                          {t("growth")} Θ(
-                          {characteristicEquation.growth_rate.toFixed(3)}ⁿ)
-                        </span>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="text-slate-500 flex items-center gap-2">
-                  <span>{t("zoomHint")}</span>
-                  {isLinearRecurrence && (
-                    <span className="text-orange-400 text-[10px]">
-                      {t("irregularTree")}
                     </span>
-                  )}
-                </div>
+                    {characteristicEquation?.growth_rate && (
+                      <span className="text-orange-300">
+                        {t("growth")} Θ(
+                        {characteristicEquation.growth_rate.toFixed(3)}ⁿ)
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="text-slate-500 flex items-center gap-2">
+                <span>{t("zoomHint")}</span>
+                {isLinearRecurrence && (
+                  <span className="text-orange-400 text-[10px]">
+                    {t("irregularTree")}
+                  </span>
+                )}
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </BaseModalContainer>
   );
 }

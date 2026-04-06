@@ -4,172 +4,35 @@ import { Key, RotateCcw, Send, User } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { getApiKey, setApiKey, validateApiKey } from "@/hooks/useApiKey";
 import {
-  getApiKey,
-  getApiKeyStatus,
-  setApiKey,
-  validateApiKey,
-} from "@/hooks/useApiKey";
+  type AssistantAvailabilityState,
+  useAssistantAvailability,
+} from "@/hooks/useAssistantAvailability";
+import type { AssistantContext, ChatMessage } from "@/lib/assistant/types";
+import {
+  createBotMessage,
+  getLLMResponse,
+  inferIntentFromMessage,
+  isGeminiLikeError,
+} from "@/lib/chatbot-core";
 import { translateLlmError } from "@/lib/llm-error-translator";
 
 import AALIEIcon from "./AALIEIcon";
+import { GlobalLoader } from "./GlobalLoader";
 import MarkdownRenderer from "./MarkdownRenderer";
 
-/**
- * Interfaz para mensajes del chat.
- */
-interface Message {
-  id: string;
-  content: string;
-  sender: "user" | "bot";
-  timestamp: Date;
-  isError?: boolean;
-  retryMessageId?: string; // ID del mensaje del usuario que se debe reintentar
-}
-
-/**
- * Error extendido con información de Gemini/LLM.
- */
-interface GeminiError extends Error {
-  isGeminiError?: boolean;
-}
-
-/**
- * Propiedades del componente ChatBot.
- */
 interface ChatBotProps {
   isOpen: boolean;
   onClose: () => void;
-  messages: Message[];
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  messages: ChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
   onAnalyzeCode?: (code: string) => void;
-}
-
-// ============== FUNCIONES API ==============
-
-/**
- * Inferencia local de intención a partir del contenido del mensaje.
- * No usa ningún job LLM específico.
- */
-function inferIntentFromMessage(
-  message: string,
-): "parser_assist" | "general" {
-  const text = message.toLowerCase();
-
-  const codeKeywords = [
-    "begin",
-    "end",
-    "for ",
-    "while",
-    "repeat",
-    "until",
-    "código",
-    "codigo",
-    "pseudocódigo",
-    "pseudocodigo",
-    "syntax",
-    "sintaxis",
-    "implementación",
-    "implementacion",
-  ];
-
-  const isCodeRelated = codeKeywords.some((kw) => text.includes(kw));
-  return isCodeRelated ? "parser_assist" : "general";
-}
-
-/**
- * Obtiene respuesta del LLM con el job apropiado según la intención clasificada.
- * @param message - Mensaje del usuario
- * @param job - Tipo de trabajo: 'parser_assist' para ayuda con código o 'general' para consultas generales
- * @param chatHistory - Historial de mensajes (últimos 10 se envían al LLM)
- * @param apiKey - API Key de Gemini (opcional, el backend usará la de variables de entorno si no se proporciona)
- * @returns Respuesta del LLM como string
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-async function getLLMResponse(
-  message: string,
-  job: "parser_assist" | "general",
-  chatHistory: Message[],
-  apiKey: string | null,
-  locale?: string,
-  t?: (key: string) => string,
-): Promise<string> {
-  try {
-    // Convertir historial a formato para el LLM (últimos 10 mensajes)
-    const historyForLLM = chatHistory.slice(-10).map((msg) => ({
-      role: msg.sender === "user" ? "user" : "model",
-      content: msg.content,
-    }));
-
-    const body: {
-      job: string;
-      prompt: string;
-      chatHistory: Array<{ role: string; content: string }>;
-      apiKey?: string;
-      locale?: string;
-    } = {
-      job,
-      prompt: message,
-      chatHistory: historyForLLM,
-    };
-
-    // Solo enviar apiKey si hay una del cliente
-    // Si no hay apiKey, el backend usará la de variables de entorno
-    if (apiKey) {
-      body.apiKey = apiKey;
-    }
-    if (locale) {
-      body.locale = locale;
-    }
-
-    const response = await fetch("/api/llm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage =
-        errorData?.error || `HTTP error! status: ${response.status}`;
-      // Todos los errores 500 son del LLM/Gemini, también 400 (API_KEY) y errores que mencionen Gemini o API_KEY
-      const isGeminiError =
-        response.status === 500 ||
-        response.status === 400 ||
-        errorMessage.includes("Gemini") ||
-        errorMessage.includes("API_KEY") ||
-        errorMessage.includes("LLM");
-      const error: GeminiError = new Error(errorMessage);
-      error.isGeminiError = isGeminiError;
-      throw error;
-    }
-
-    const result = await response.json();
-
-    // Verificar si la respuesta indica un error
-    if (!result.ok) {
-      const errorMessage = result?.error || (t ? t("unknownLlmError") : "Unknown LLM error");
-      // Todos los errores 500 son del LLM/Gemini, también errores que mencionen Gemini, API_KEY o LLM
-      const isGeminiError =
-        errorMessage.includes("Gemini") ||
-        errorMessage.includes("API_KEY") ||
-        errorMessage.includes("LLM");
-      const error: GeminiError = new Error(errorMessage);
-      error.isGeminiError = isGeminiError;
-      throw error;
-    }
-
-    // Extraer el contenido de la respuesta de Gemini
-    const content =
-      result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    if (!content || String(content).trim().length === 0) {
-      throw new Error(t ? t("emptyLlmResponse") : "Empty LLM response");
-    }
-    return String(content);
-  } catch (error) {
-    console.error("Error obteniendo respuesta LLM:", error);
-    throw error;
-  }
+  assistantContext?: AssistantContext | null;
+  variant?: "home" | "embedded";
+  welcomeMessage: string;
+  closeTitle?: string;
+  availabilityOverride?: AssistantAvailabilityState;
 }
 
 export default function ChatBot({
@@ -178,6 +41,11 @@ export default function ChatBot({
   messages,
   setMessages,
   onAnalyzeCode,
+  assistantContext = null,
+  variant = "home",
+  welcomeMessage,
+  closeTitle,
+  availabilityOverride,
 }: Readonly<ChatBotProps>) {
   const locale = useLocale();
   const t = useTranslations("chat");
@@ -187,64 +55,19 @@ export default function ChatBot({
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
-  const [showApiKeyCard, setShowApiKeyCard] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const animatedMessagesRef = useRef<Set<string>>(new Set());
-  const processingRef = useRef(false); // Para evitar llamadas duplicadas
+  const processingRef = useRef(false);
+  const hookAvailability = useAssistantAvailability(
+    availabilityOverride == null && isOpen,
+  );
+  const availability = availabilityOverride ?? hookAvailability;
+  const isCheckingAvailability =
+    availability.isChecking && !availability.hasAny;
+  const showApiKeyCard = !isCheckingAvailability && !availability.hasAny;
+  const closeButtonTitle = closeTitle || t("backToHome");
 
-  // Cargar API_KEY al montar el componente y verificar cambios (sin polling)
-  useEffect(() => {
-    const checkApiKey = async () => {
-      // Verificar solo localStorage primero (sin hacer request al servidor)
-      const stored = getApiKey();
-
-      // Si hay API_KEY en localStorage, no mostrar la card
-      if (stored) {
-        setShowApiKeyCard(false);
-        return;
-      }
-
-      // Solo verificar servidor si no hay en localStorage y el chatbot está abierto
-      // Esto evita hacer requests innecesarios
-      if (isOpen) {
-        try {
-          const status = await getApiKeyStatus();
-          setShowApiKeyCard(!status.hasAny);
-        } catch (error) {
-          console.error("[ChatBot] Error verificando API_KEY:", error);
-          // Si hay error, asumir que no hay API_KEY disponible
-          setShowApiKeyCard(true);
-        }
-      }
-    };
-
-    checkApiKey();
-
-    // Escuchar cambios en localStorage en lugar de hacer polling
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "gemini_api_key" || e.key === null) {
-        checkApiKey();
-      }
-    };
-
-    const handleApiKeyChange = () => {
-      checkApiKey();
-    };
-
-    globalThis.window.addEventListener("storage", handleStorageChange);
-    globalThis.window.addEventListener("apiKeyChanged", handleApiKeyChange);
-
-    return () => {
-      globalThis.window.removeEventListener("storage", handleStorageChange);
-      globalThis.window.removeEventListener(
-        "apiKeyChanged",
-        handleApiKeyChange,
-      );
-    };
-  }, [isOpen]);
-
-  // Auto-scroll al final cuando hay nuevos mensajes
   const scrollToBottom = (immediate = false) => {
     const delay = immediate ? 50 : 100;
     setTimeout(() => {
@@ -262,40 +85,27 @@ export default function ChatBot({
 
   const generateBotResponse = useCallback(
     async (retryMessageId?: string) => {
-      // Evitar llamadas duplicadas
-      if (processingRef.current) return;
+      if (processingRef.current || showApiKeyCard) {
+        return;
+      }
 
-      // Verificar API_KEY del cliente
-      // Si no hay API_KEY del cliente, el backend intentará usar la de variables de entorno
       const currentApiKey = getApiKey();
-
-      // No verificar API_KEY del servidor (no hacer peticiones)
-      // Permitir que el backend maneje la API_KEY automáticamente
-      // Solo requerir API_KEY del cliente si queremos garantizar que funcione
-      // Por ahora, permitimos intentar sin API_KEY del cliente
-
       processingRef.current = true;
       setIsTyping(true);
 
-      // Hacer scroll inmediatamente para mostrar el indicador
       setTimeout(() => {
         scrollToBottom(true);
       }, 50);
 
       try {
-        // Obtener el mensaje del usuario a procesar
-        let lastUserMessage: Message | undefined;
-        if (retryMessageId) {
-          // Si hay un ID de reintento, buscar ese mensaje específico
-          lastUserMessage = messages.find(
-            (m) => m.id === retryMessageId && m.sender === "user",
-          );
-        } else {
-          // Si no, obtener el último mensaje del usuario
-          lastUserMessage = [...messages]
-            .reverse()
-            .find((m) => m.sender === "user");
-        }
+        const lastUserMessage = retryMessageId
+          ? messages.find(
+              (message) =>
+                message.id === retryMessageId && message.sender === "user",
+            )
+          : [...messages]
+              .reverse()
+              .find((message) => message.sender === "user");
 
         if (!lastUserMessage) {
           setIsTyping(false);
@@ -303,11 +113,7 @@ export default function ChatBot({
           return;
         }
 
-        // Paso 1: Inferir intención localmente sin job classify
         const intent = inferIntentFromMessage(lastUserMessage.content);
-
-        // Paso 2: Obtener respuesta con el modelo apropiado (incluyendo historial)
-        // Si no hay API_KEY del cliente, el backend usará la de variables de entorno
         const responseText = await getLLMResponse(
           lastUserMessage.content,
           intent,
@@ -315,93 +121,103 @@ export default function ChatBot({
           currentApiKey,
           locale,
           tMessages,
+          assistantContext,
         );
 
-        // Crear mensaje del bot
-        const botResponse: Message = {
-          id: `bot-${Date.now()}`,
-          content: responseText,
-          sender: "bot",
-          timestamp: new Date(),
-        };
-
-        setMessages((prev) => [...prev, botResponse]);
+        setMessages((previous) => [
+          ...previous,
+          createBotMessage(responseText),
+        ]);
       } catch (error) {
         console.error("Error generando respuesta:", error);
 
-        // Verificar si es un error de Gemini/LLM
-        // Todos los errores 500 son del LLM/Gemini
-        const isGeminiError =
-          (error as GeminiError)?.isGeminiError ||
-          (error instanceof Error &&
-            (error.message.includes("Gemini") ||
-              error.message.includes("API_KEY") ||
-              error.message.includes("LLM") ||
-              error.message.includes("HTTP error! status: 400") ||
-              error.message.includes("HTTP error! status: 500")));
-
-        // Obtener el mensaje del usuario que causó el error
         const lastUserMessage = retryMessageId
-          ? messages.find((m) => m.id === retryMessageId && m.sender === "user")
-          : [...messages].reverse().find((m) => m.sender === "user");
+          ? messages.find(
+              (message) =>
+                message.id === retryMessageId && message.sender === "user",
+            )
+          : [...messages]
+              .reverse()
+              .find((message) => message.sender === "user");
 
-        // Mensaje de error traducido y legible
-        const rawMsg = error instanceof Error ? error.message : String(error);
-        const translatedError = tMessages(translateLlmError(rawMsg));
-        const errorResponse: Message = {
+        const rawMessage =
+          error instanceof Error ? error.message : String(error);
+        const translatedError = tMessages(translateLlmError(rawMessage));
+        const errorResponse: ChatMessage = {
           id: `bot-error-${Date.now()}`,
-          content: isGeminiError ? translatedError : t("errorGeneric"),
+          content: isGeminiLikeError(error)
+            ? translatedError
+            : t("errorGeneric"),
           sender: "bot",
           timestamp: new Date(),
           isError: true,
           retryMessageId: lastUserMessage?.id,
         };
 
-        setMessages((prev) => [...prev, errorResponse]);
+        setMessages((previous) => [...previous, errorResponse]);
       } finally {
         setIsTyping(false);
         processingRef.current = false;
       }
     },
-    [locale, messages, setMessages, t, tMessages],
+    [
+      assistantContext,
+      locale,
+      messages,
+      setMessages,
+      showApiKeyCard,
+      t,
+      tMessages,
+    ],
   );
 
-  // Responder automáticamente si el último mensaje del historial es del usuario
   useEffect(() => {
     if (
       !messages ||
       messages.length === 0 ||
       isTyping ||
       processingRef.current ||
-      !isOpen
-    )
+      !isOpen ||
+      showApiKeyCard ||
+      isCheckingAvailability
+    ) {
       return;
-    const lastUserIdx = [...messages].map((m) => m.sender).lastIndexOf("user");
-    if (lastUserIdx === -1) return;
-    // Verificar si después de ese mensaje hay una respuesta del bot
+    }
+
+    const lastUserIdx = [...messages]
+      .map((message) => message.sender)
+      .lastIndexOf("user");
+    if (lastUserIdx === -1) {
+      return;
+    }
+
     const hasBotAfter = messages
       .slice(lastUserIdx + 1)
-      .some((m) => m.sender === "bot");
+      .some((message) => message.sender === "bot");
+
     if (!hasBotAfter) {
-      // Usar un pequeño delay para asegurar que el estado se haya actualizado completamente
       const timeoutId = setTimeout(() => {
-        generateBotResponse();
+        void generateBotResponse();
       }, 200);
       return () => clearTimeout(timeoutId);
     }
-  }, [messages, isOpen, isTyping, generateBotResponse]);
+  }, [
+    generateBotResponse,
+    isCheckingAvailability,
+    isOpen,
+    isTyping,
+    messages,
+    showApiKeyCard,
+  ]);
 
-  // Scroll automático cuando aparece el indicador de escritura
   useEffect(() => {
     if (isTyping) {
-      // Scroll más rápido cuando aparece el indicador
       setTimeout(() => {
         scrollToBottom(true);
       }, 100);
     }
   }, [isTyping]);
 
-  // Scroll automático cuando se abra el chat
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
@@ -410,48 +226,41 @@ export default function ChatBot({
     }
   }, [isOpen]);
 
-  // Focus en el input cuando se abre el chat
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (
+      isOpen &&
+      inputRef.current &&
+      !showApiKeyCard &&
+      !isCheckingAvailability
+    ) {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 300);
     }
-  }, [isOpen]);
+  }, [isCheckingAvailability, isOpen, showApiKeyCard]);
 
-  // El historial y bienvenida se maneja en HomePage
+  const handleSendMessage = () => {
+    if (!inputValue.trim() || showApiKeyCard || isCheckingAvailability) {
+      return;
+    }
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
-
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       content: inputValue,
       sender: "user",
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((previous) => [...previous, userMessage]);
     setInputValue("");
-
-    // La respuesta del bot se gestiona en el useEffect que observa 'messages'
   };
 
   const handleSaveApiKey = () => {
     if (validateApiKey(apiKeyInput)) {
       const success = setApiKey(apiKeyInput);
       if (success) {
-        setShowApiKeyCard(false);
         setApiKeyInput("");
-        // Agregar mensaje de bienvenida cuando se configura la API_KEY
-        const welcomeMessage: Message = {
-          id: `welcome-${Date.now()}`,
-          content:
-            "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages([welcomeMessage]);
+        setMessages([createBotMessage(welcomeMessage)]);
       }
     }
   };
@@ -460,36 +269,56 @@ export default function ChatBot({
     setInputValue("");
     setIsTyping(false);
     animatedMessagesRef.current.clear();
-    const welcomeMessage: Message = {
-      id: `welcome-${Date.now()}`,
-      content:
-        "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-      sender: "bot",
-      timestamp: new Date(),
-    };
-    setMessages([welcomeMessage]);
+    setMessages([createBotMessage(welcomeMessage)]);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       handleSendMessage();
     }
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
+
+  const outerClassName =
+    variant === "embedded"
+      ? "flex h-full w-full flex-col"
+      : "w-full max-w-2xl mx-auto px-2 sm:px-0 flex flex-col items-center justify-center flex-1 min-h-0";
+  const panelClassName =
+    variant === "embedded"
+      ? "flex flex-1 min-h-0 flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#182431]/95 shadow-none [transform:translateZ(0)] [backface-visibility:hidden] isolate"
+      : "flex flex-col glass-modal-container rounded-2xl overflow-hidden min-h-[50vh] sm:min-h-[60vh] h-[50vh] sm:h-[70vh]";
+  const headerClassName =
+    variant === "embedded"
+      ? "flex items-center justify-between border-b border-white/10 bg-[#101a23]/95 p-2.5 [transform:translateZ(0)] [backface-visibility:hidden]"
+      : "glass-modal-header p-2.5 flex items-center justify-between";
+  const footerClassName =
+    variant === "embedded"
+      ? "border-t border-white/10 bg-[#101a23]/95 p-2.5 [transform:translateZ(0)] [backface-visibility:hidden]"
+      : "glass-modal-header p-2.5 border-t border-white/10";
+  const botBubbleClassName =
+    variant === "embedded"
+      ? "border border-white/10 bg-[rgba(24,36,49,0.88)]"
+      : "glass-card border-white/10";
+  const errorBubbleClassName =
+    variant === "embedded"
+      ? "border border-red-500/20 bg-[rgba(69,18,28,0.72)]"
+      : "glass-card border-red-500/20";
+  const typingBubbleClassName =
+    variant === "embedded"
+      ? "border border-white/10 bg-[rgba(24,36,49,0.88)]"
+      : "glass-card border-white/10";
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-2 sm:px-0 flex flex-col items-center justify-center flex-1 min-h-0">
-      <div
-        className="flex flex-col glass-modal-container rounded-2xl overflow-hidden min-h-[50vh] sm:min-h-[60vh] h-[50vh] sm:h-[70vh]"
-      >
-        {/* Header */}
-        <div className="glass-modal-header p-2.5 flex items-center justify-between">
+    <div className={outerClassName}>
+      <div className={panelClassName}>
+        <div className={headerClassName}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
               <AALIEIcon className="text-purple-300" size={26} />
@@ -513,18 +342,24 @@ export default function ChatBot({
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center"
-              title={t("backToHome")}
+              title={closeButtonTitle}
             >
               <span className="material-symbols-outlined text-lg leading-none">
-                arrow_back
+                {variant === "embedded" ? "close" : "arrow_back"}
               </span>
             </button>
           </div>
         </div>
 
-        {/* Content: API Key config (full frame) o mensajes del chat */}
-        {showApiKeyCard ? (
-          /* Frame completo centrado cuando no hay API Key */
+        {isCheckingAvailability ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 bg-slate-900/30">
+            <GlobalLoader
+              variant="pulse"
+              size="md"
+              message={tFooter("checking")}
+            />
+          </div>
+        ) : showApiKeyCard ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-900/30">
             <div className="flex flex-col items-center max-w-md w-full space-y-6">
               <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
@@ -549,7 +384,7 @@ export default function ChatBot({
                 <input
                   type="password"
                   value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  onChange={(event) => setApiKeyInput(event.target.value)}
                   placeholder={tFooter("placeholder")}
                   className={`flex-1 px-3 py-2 rounded-lg bg-white/5 border ${
                     apiKeyInput && !validateApiKey(apiKeyInput)
@@ -584,190 +419,192 @@ export default function ChatBot({
           </div>
         ) : (
           <>
-            {/* Messages Container */}
             <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
-              {/* Mostrar mensajes (el backend manejará la API_KEY automáticamente) */}
               {messages.map((message) => {
-            const isNewMessage = !animatedMessagesRef.current.has(message.id);
-            if (isNewMessage) {
-              animatedMessagesRef.current.add(message.id);
-            }
+                const isNewMessage = !animatedMessagesRef.current.has(
+                  message.id,
+                );
+                if (isNewMessage) {
+                  animatedMessagesRef.current.add(message.id);
+                }
 
-            return (
-              <div
-                key={message.id}
-                className={`flex items-start gap-2 ${
-                  message.sender === "user" ? "flex-row-reverse" : "flex-row"
-                } ${isNewMessage ? "chat-message-slide-in" : ""}`}
-              >
-                {/* Avatar */}
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.sender === "user"
-                      ? "bg-gradient-to-br from-blue-500/30 to-cyan-500/30"
-                      : "bg-gradient-to-br from-purple-500/30 to-blue-500/30"
-                  }`}
-                >
-                  {message.sender === "user" ? (
-                    <User size={14} className="text-blue-300" />
-                  ) : (
-                    <AALIEIcon className="text-purple-300" size={22} />
-                  )}
-                </div>
-
-                {/* Message Bubble */}
-                <div
-                  className={`flex flex-col min-w-0 overflow-hidden ${
-                    message.content.includes("**CÓDIGO ADJUNTO:**")
-                      ? "max-w-[min(85%,420px)]"
-                      : "max-w-[min(75%,420px)]"
-                  } ${message.sender === "user" ? "items-end" : "items-start"}`}
-                >
+                return (
                   <div
-                    className={`min-w-0 max-w-full overflow-hidden ${
-                      message.sender === "bot" ? "px-2 py-1.5" : "px-2.5 py-1.5"
-                    } rounded-xl ${
+                    key={message.id}
+                    className={`flex items-start gap-2 ${
                       message.sender === "user"
-                        ? "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30"
-                        : message.isError
-                          ? "glass-card border-red-500/20"
-                          : "glass-card border-white/10"
-                    } ${message.sender === "user" ? "rounded-br-md" : "rounded-bl-md"}`}
+                        ? "flex-row-reverse"
+                        : "flex-row"
+                    } ${isNewMessage ? "chat-message-slide-in" : ""}`}
                   >
-                    {message.sender === "user" ? (
-                      // Detectar si es un mensaje de ayuda con IA (contiene **CÓDIGO ADJUNTO:**)
-                      (() => {
-                        const isAIHelpMessage = message.content.includes(
-                          "**CÓDIGO ADJUNTO:**",
-                        );
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        message.sender === "user"
+                          ? "bg-gradient-to-br from-blue-500/30 to-cyan-500/30"
+                          : "bg-gradient-to-br from-purple-500/30 to-blue-500/30"
+                      }`}
+                    >
+                      {message.sender === "user" ? (
+                        <User size={14} className="text-blue-300" />
+                      ) : (
+                        <AALIEIcon className="text-purple-300" size={22} />
+                      )}
+                    </div>
 
-                        if (isAIHelpMessage) {
-                          const codeRegex = /```pseudocode\n([\s\S]*?)\n```/;
-                          const errorRegex = /```error\n([\s\S]*?)\n```/;
-                          const codeMatch = codeRegex.exec(message.content);
-                          const errorMatch = errorRegex.exec(message.content);
+                    <div
+                      className={`flex flex-col min-w-0 overflow-hidden ${
+                        message.content.includes("**CÓDIGO ADJUNTO:**")
+                          ? "max-w-[min(85%,420px)]"
+                          : "max-w-[min(75%,420px)]"
+                      } ${message.sender === "user" ? "items-end" : "items-start"}`}
+                    >
+                      <div
+                        className={`min-w-0 max-w-full overflow-hidden ${
+                          message.sender === "bot"
+                            ? "px-2 py-1.5"
+                            : "px-2.5 py-1.5"
+                        } rounded-xl ${
+                          message.sender === "user"
+                            ? "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30"
+                            : message.isError
+                              ? errorBubbleClassName
+                              : botBubbleClassName
+                        } ${message.sender === "user" ? "rounded-br-md" : "rounded-bl-md"}`}
+                      >
+                        {message.sender === "user" ? (
+                          (() => {
+                            const isAIHelpMessage = message.content.includes(
+                              "**CÓDIGO ADJUNTO:**",
+                            );
 
-                          return (
-                            <div className="space-y-2.5 min-w-0 max-w-[min(100%,420px)]">
-                              {/* Código Adjunto */}
-                              <div className="space-y-1 min-w-0">
-                                <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[200px] overflow-y-auto max-w-full min-w-0 overflow-hidden">
-                                  <pre className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed">
-                                    {codeMatch?.[1] || ""}
-                                  </pre>
+                            if (isAIHelpMessage) {
+                              const codeRegex =
+                                /```pseudocode\n([\s\S]*?)\n```/;
+                              const errorRegex = /```error\n([\s\S]*?)\n```/;
+                              const codeMatch = codeRegex.exec(message.content);
+                              const errorMatch = errorRegex.exec(
+                                message.content,
+                              );
+
+                              return (
+                                <div className="space-y-2.5 min-w-0 max-w-[min(100%,420px)]">
+                                  <div className="space-y-1 min-w-0">
+                                    <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[200px] overflow-y-auto max-w-full min-w-0 overflow-hidden">
+                                      <pre className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed">
+                                        {codeMatch?.[1] || ""}
+                                      </pre>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <div className="bg-red-900/40 border border-red-500/40 rounded-md px-2.5 py-1.5">
+                                      <span className="text-red-200 text-[10px] font-medium">
+                                        Error: {errorMatch?.[1] || ""}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="pt-1">
+                                    <p className="text-white text-[11px] font-medium">
+                                      {t("helpRequest")}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
+                              );
+                            }
 
-                              {/* Error Detectado */}
-                              <div className="space-y-1">
-                                <div className="bg-red-900/40 border border-red-500/40 rounded-md px-2.5 py-1.5">
-                                  <span className="text-red-200 text-[10px] font-medium">
-                                    Error: {errorMatch?.[1] || ""}
+                            return (
+                              <p className="text-white text-[11px] leading-relaxed whitespace-pre-wrap break-words min-w-0 max-w-full">
+                                {message.content}
+                              </p>
+                            );
+                          })()
+                        ) : message.isError ? (
+                          <div className="space-y-1.5">
+                            <p className="text-red-300 text-[11px] leading-relaxed break-words min-w-0 max-w-full">
+                              {message.content}
+                            </p>
+                            {message.retryMessageId && (
+                              <div className="flex justify-center">
+                                <button
+                                  onClick={() => {
+                                    setMessages((previous) =>
+                                      previous.filter(
+                                        (entry) => entry.id !== message.id,
+                                      ),
+                                    );
+                                    setTimeout(() => {
+                                      void generateBotResponse(
+                                        message.retryMessageId,
+                                      );
+                                    }, 100);
+                                  }}
+                                  disabled={isTyping}
+                                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-[10px] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <span className="material-symbols-outlined text-xs">
+                                    refresh
                                   </span>
-                                </div>
+                                  {t("retry")}
+                                </button>
                               </div>
-
-                              {/* Solicitud */}
-                              <div className="pt-1">
-                                <p className="text-white text-[11px] font-medium">
-                                  {t("helpRequest")}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <p className="text-white text-[11px] leading-relaxed whitespace-pre-wrap break-words min-w-0 max-w-full">
-                            {message.content}
-                          </p>
-                        );
-                      })()
-                    ) : message.isError ? (
-                      // Mensaje de error minimalista con botón de reintentar
-                      <div className="space-y-1.5">
-                        <p className="text-red-300 text-[11px] leading-relaxed break-words min-w-0 max-w-full">
-                          {message.content}
-                        </p>
-                        {message.retryMessageId && (
-                          <div className="flex justify-center">
-                            <button
-                              onClick={() => {
-                                // Eliminar el mensaje de error antes de reintentar
-                                setMessages((prev) =>
-                                  prev.filter((m) => m.id !== message.id),
-                                );
-                                // Reintentar
-                                setTimeout(() => {
-                                  generateBotResponse(message.retryMessageId);
-                                }, 100);
-                              }}
-                              disabled={isTyping}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-[10px] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <span className="material-symbols-outlined text-xs">
-                                refresh
-                              </span>
-                              {t("retry")}
-                            </button>
+                            )}
                           </div>
+                        ) : (
+                          <MarkdownRenderer
+                            content={message.content}
+                            onAnalyzeCode={onAnalyzeCode}
+                          />
                         )}
                       </div>
-                    ) : (
-                      <MarkdownRenderer
-                        content={message.content}
-                        onAnalyzeCode={onAnalyzeCode}
-                      />
-                    )}
+                      <span className="text-[10px] text-slate-500 mt-0.5 px-1">
+                        {formatTime(message.timestamp)}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-slate-500 mt-0.5 px-1">
-                    {formatTime(message.timestamp)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
 
-          {/* Typing Indicator - Estilo WhatsApp */}
-          {isTyping && (
-            <div className="flex items-start gap-2 chat-message-slide-in">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <AALIEIcon className="text-purple-300" size={22} />
-              </div>
-              <div className="glass-card border-white/10 px-2.5 py-1.5 rounded-xl rounded-bl-md min-w-[45px]">
-                <div className="flex items-center justify-center space-x-1 h-3">
-                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
-                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
-                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+              {isTyping && (
+                <div className="flex items-start gap-2 chat-message-slide-in">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <AALIEIcon className="text-purple-300" size={22} />
+                  </div>
+                  <div
+                    className={`${typingBubbleClassName} px-2.5 py-1.5 rounded-xl rounded-bl-md min-w-[45px]`}
+                  >
+                    <div className="flex items-center justify-center space-x-1 h-3">
+                      <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+                      <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+                      <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-          )}
 
-          <div ref={messagesEndRef} />
-        </div>
-
-            {/* Input Container: flex para evitar solapamiento con el botón y centrado vertical */}
-            <div className="glass-modal-header p-2.5 border-t border-white/10">
-          <div className="flex items-center gap-2 min-w-0 rounded-lg border border-slate-600/50 bg-white/5 focus-within:ring-2 focus-within:ring-purple-500/50 focus-within:border-transparent transition-all">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t("placeholder")}
-              disabled={isTyping}
-              className="flex-1 min-w-0 bg-transparent pl-2.5 pr-2 py-2 text-white placeholder-slate-400 text-xs focus:outline-none"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isTyping}
-              className="flex-shrink-0 p-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-slate-400 hover:text-white"
-            >
-              <Send size={18} className="shrink-0" />
-            </button>
-          </div>
+            <div className={footerClassName}>
+              <div className="flex items-center gap-2 min-w-0 rounded-lg border border-slate-600/50 bg-white/5 focus-within:ring-2 focus-within:ring-purple-500/50 focus-within:border-transparent transition-all">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(event) => setInputValue(event.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t("placeholder")}
+                  disabled={isTyping}
+                  className="flex-1 min-w-0 bg-transparent pl-2.5 pr-2 py-2 text-white placeholder-slate-400 text-xs focus:outline-none"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || isTyping}
+                  className="flex-shrink-0 p-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-slate-400 hover:text-white"
+                >
+                  <Send size={18} className="shrink-0" />
+                </button>
+              </div>
             </div>
           </>
         )}

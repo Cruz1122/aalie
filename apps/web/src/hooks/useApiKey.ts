@@ -1,5 +1,4 @@
 // Hook para manejar API_KEY de Gemini en localStorage
-import React from "react";
 
 const API_KEY_STORAGE_KEY = "gemini_api_key";
 const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
@@ -107,55 +106,11 @@ export function removeApiKey(): void {
 }
 
 /**
- * Verifica si hay una API_KEY válida disponible.
- * Prioridad: localStorage > variables de entorno (solo en servidor)
- * @returns true si hay una API_KEY válida disponible
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-export function hasValidApiKey(): boolean {
-  // En el cliente, verificar localStorage
-  if (typeof window !== "undefined") {
-    const stored = getApiKey();
-    return stored !== null;
-  }
-
-  // En el servidor, verificar variables de entorno
-  // Nota: esto solo funciona en el servidor, no en el cliente
-  const envKey = process.env.API_KEY;
-  return envKey !== undefined && envKey !== null && validateApiKey(envKey);
-}
-
-/**
- * Obtiene la API_KEY con prioridad: localStorage > variables de entorno.
- * @returns La API_KEY si está disponible, null en caso contrario
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-export function getApiKeyWithFallback(): string | null {
-  // Prioridad 1: localStorage (solo en cliente)
-  if (typeof window !== "undefined") {
-    const stored = getApiKey();
-    if (stored) {
-      return stored;
-    }
-  }
-
-  // Prioridad 2: variables de entorno (solo en servidor)
-  // Nota: en el cliente, process.env solo tiene variables públicas
-  // Las variables privadas solo están disponibles en el servidor
-  const envKey = process.env.NEXT_PUBLIC_API_KEY || process.env.API_KEY;
-  if (envKey && validateApiKey(envKey)) {
-    return envKey;
-  }
-
-  return null;
-}
-
-/**
  * Verifica si el servidor tiene API_KEY disponible en variables de entorno.
  * @returns true si el servidor tiene API_KEY disponible, false en caso contrario
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-export async function checkServerApiKey(): Promise<boolean> {
+async function checkServerApiKey(): Promise<boolean> {
   if (typeof window === "undefined") {
     return false;
   }
@@ -195,88 +150,5 @@ export async function getApiKeyStatus(): Promise<{
     hasLocalStorage,
     hasServer,
     hasAny: hasLocalStorage || hasServer,
-  };
-}
-
-/**
- * Hook de React para usar API_KEY en componentes.
- * Proporciona estado y funciones para gestionar la API_KEY de Gemini.
- * @returns Objeto con estado y funciones para gestionar la API_KEY
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- *
- * @example
- * ```tsx
- * const { apiKey, isValid, updateApiKey, clearApiKey } = useApiKey();
- * ```
- */
-export function useApiKey() {
-  const [apiKey, setApiKeyState] = React.useState<string | null>(null);
-  const [isValid, setIsValid] = React.useState<boolean>(false);
-  const [hasServerApiKey, setHasServerApiKey] = React.useState<boolean>(false);
-  const [isCheckingServer, setIsCheckingServer] = React.useState<boolean>(true);
-
-  React.useEffect(() => {
-    const key = getApiKey();
-    setApiKeyState(key);
-    setIsValid(key !== null);
-
-    // Verificar API_KEY del servidor
-    setIsCheckingServer(true);
-    checkServerApiKey()
-      .then((hasServer) => {
-        setHasServerApiKey(hasServer);
-      })
-      .catch((error) => {
-        console.error("[useApiKey] Error verificando servidor:", error);
-        setHasServerApiKey(false);
-      })
-      .finally(() => {
-        setIsCheckingServer(false);
-      });
-  }, []);
-
-  const updateApiKey = React.useCallback((key: string) => {
-    const success = setApiKey(key);
-    if (success) {
-      setApiKeyState(key.trim());
-      setIsValid(true);
-    } else {
-      setApiKeyState(null);
-      setIsValid(false);
-    }
-    return success;
-  }, []);
-
-  const clearApiKey = React.useCallback(() => {
-    removeApiKey();
-    setApiKeyState(null);
-    setIsValid(false);
-  }, []);
-
-  const refreshServerStatus = React.useCallback(async () => {
-    setIsCheckingServer(true);
-    try {
-      const hasServer = await checkServerApiKey();
-      setHasServerApiKey(hasServer);
-    } catch (error) {
-      console.error(
-        "[useApiKey] Error refrescando estado del servidor:",
-        error,
-      );
-      setHasServerApiKey(false);
-    } finally {
-      setIsCheckingServer(false);
-    }
-  }, []);
-
-  return {
-    apiKey,
-    isValid,
-    hasServerApiKey,
-    isCheckingServer,
-    updateApiKey,
-    clearApiKey,
-    refreshServerStatus,
-    validateApiKey: validateApiKey,
   };
 }

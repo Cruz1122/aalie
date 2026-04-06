@@ -2,12 +2,7 @@
 
 from .for_visitor import ForVisitor
 from .if_visitor import IfVisitor
-from .while_repeat_visitor import WhileRepeatVisitor
 from .simple_visitor import SimpleVisitor
+from .while_repeat_visitor import WhileRepeatVisitor
 
-__all__ = [
-    "ForVisitor",
-    "IfVisitor", 
-    "WhileRepeatVisitor",
-    "SimpleVisitor"
-]
+__all__ = ["ForVisitor", "IfVisitor", "WhileRepeatVisitor", "SimpleVisitor"]

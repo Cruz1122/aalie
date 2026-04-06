@@ -1,0 +1,353 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-interpreting",
+  "slug": "interpretar-resultados",
+  "title": "Interpretar resultados",
+  "shortTitle": "Interpretación",
+  "order": 5,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Lee las cotas y comparaciones que muestra el analizador sabiendo qué significan O, Ω y Θ. Incluye el panel CPU/GPU como ayuda visual, sin confundirla con una medición de tiempo real (benchmark).",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 55,
+  "tags": ["O grande", "cotas", "analizador", "comparacion"],
+  "searchMeta": {
+    "aliases": ["asintotico", "interpretar"],
+    "keywords": ["theta", "omega", "gpu"]
+  },
+  "prerequisites": {
+    "modules": [{ "id": "mod-user-guide-recursive", "kind": "recommended" }],
+    "sections": []
+  },
+  "relatedModuleIds": ["mod-user-guide-recursive", "mod-user-guide-loop-invariant"],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-cotas",
+      "text": "Explicar con palabras propias qué es una cota superior, una inferior y un ajuste estrecho antes de leer los símbolos O, Ω y Θ en pantalla."
+    },
+    {
+      "objectiveId": "obj-panel-hw",
+      "text": "Usar el panel de CPU/GPU solo como orientación, sabiendo que no mide por sí solo el orden asintótico del algoritmo."
+    }
+  ],
+  "terms": [
+    {
+      "termId": "term-cota-superior",
+      "label": "cota superior",
+      "aliases": [],
+      "definition": "Función que limita por arriba el costo: el costo no crece más rápido que esa función (salvo detalles formales del curso). En la interfaz, la notación O grande resume cotas superiores típicas."
+    },
+    {
+      "termId": "term-cota-inferior",
+      "label": "cota inferior",
+      "aliases": [],
+      "definition": "Función que limita por abajo el costo: el algoritmo no puede hacer menos trabajo (en el peor caso o modelo que defina tu curso) que lo que indica esa función. Se relaciona con la notación Ω."
+    },
+    {
+      "termId": "term-ajuste-estrecho",
+      "label": "ajuste estrecho",
+      "aliases": [],
+      "definition": "Situación en la que una cota superior e inferior coinciden en orden: el crecimiento queda «apretado». Se relaciona con la notación Θ."
+    },
+    {
+      "termId": "term-constante-multiplicativa",
+      "label": "constante multiplicativa",
+      "aliases": [],
+      "definition": "Factor fijo que multiplica el término principal (por ejemplo 5n² frente a n²). En análisis asintótico suele omitirse al comparar órdenes de crecimiento, pero puede cambiar qué algoritmo es más rápido en datos pequeños."
+    },
+    {
+      "termId": "term-benchmark",
+      "label": "benchmark",
+      "aliases": [],
+      "definition": "Medición práctica de tiempo, energía o rendimiento en un entorno concreto (máquina, datos de prueba). No es lo mismo que el orden asintótico: un benchmark puede favorecer a un algoritmo por constantes ocultas o caché."
+    },
+    {
+      "termId": "term-dominante",
+      "label": "término dominante",
+      "aliases": [],
+      "definition": "En una suma de términos que dependen de n, el que crece más rápido cuando n es grande. Al estudiar crecimiento, los demás suelen ignorarse frente a él."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-ug-m5-comparison",
+        "kind": "figure",
+        "source": { "kind": "backendAsset", "assetId": "ug-capture-symbolic-compare-es" },
+        "alt": "Captura pendiente: vista de comparación simbólica o de resultados entre dos costos.",
+        "caption": "Pantalla a capturar: comparación de costos o resultados simbólicos en el analizador cuando la versión lo ofrezca."
+      },
+      {
+        "resourceId": "img-ug-m5-cpu-gpu",
+        "kind": "figure",
+        "source": { "kind": "backendAsset", "assetId": "ug-capture-cpu-gpu-panel-es" },
+        "alt": "Captura pendiente: panel CPU frente a GPU.",
+        "caption": "Pantalla a capturar: panel CPU/GPU o selector de entorno de ejecución si está visible en tu versión."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-notacion",
+      "slug": "notacion-y-comparacion",
+      "title": "Notación y comparación",
+      "order": 1,
+      "summary": "Definiciones de cotas y lectura de la interfaz.",
+      "sections": [
+        {
+          "sectionId": "sec-omega-theta",
+          "slug": "cotas-y-dominante",
+          "title": "Cotas, término dominante y qué muestra el analizador",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 24,
+          "blocks": [
+            {
+              "id": "blk-m5-s1-p0",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Antes de mirar símbolos en pantalla, conviene tener claro el vocabulario. Una "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-cota-superior",
+                  "text": "cota superior",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " dice «el costo no crece peor que esto». Una "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-cota-inferior",
+                  "text": "cota inferior",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " dice «el costo no puede ser mejor que esto» (en el modelo de análisis que uses). Un "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-ajuste-estrecho",
+                  "text": "ajuste estrecho",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " ocurre cuando ambas coinciden en orden: el crecimiento queda bien determinado salvo "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-constante-multiplicativa",
+                  "text": "constantes multiplicativas",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " y términos de menor orden."
+                }
+              ]
+            },
+            {
+              "id": "blk-m5-s1-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Las notaciones O, Ω y Θ son formas compactas de expresar esas ideas. En la práctica del curso se ignoran a menudo las "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-constante-multiplicativa",
+                  "text": "constantes",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " y los términos que crecen más despacio que el "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-dominante",
+                  "text": "término dominante",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": ": por ejemplo en n² + 1000n, para n grande el comportamiento lo marca n²."
+                }
+              ]
+            },
+            {
+              "id": "blk-m5-s1-scale",
+              "type": "equationBlock",
+              "latex": "1 < \\log n < n < n\\log n < n^2 < n^3 < 2^n < n!"
+            },
+            {
+              "id": "blk-m5-s1-p2",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La línea anterior ordena funciones de más lenta a más rápida crecimiento (cuando n crece). Aquí «log» es el logaritmo en la base que use tu curso; lo importante es que crece más despacio que n. Úsala como guía al comparar fragmentos en el "
+                },
+                {
+                  "type": "link",
+                  "text": "analizador",
+                  "target": { "kind": "external", "ref": "/analyzer" }
+                },
+                {
+                  "type": "text",
+                  "text": ": si la interfaz ofrece comparación simbólica o visual entre dos costos, contrasta el resultado con esta escala."
+                }
+              ]
+            },
+            {
+              "id": "blk-m5-s1-fig",
+              "type": "figure",
+              "resourceRef": "img-ug-m5-comparison"
+            },
+            {
+              "id": "blk-m5-s1-ex",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo numérico intuitivo: si el algoritmo A hace del orden de n² pasos y el B del orden de n log n, para n muy pequeño el "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-constante-multiplicativa",
+                  "text": "constante multiplicativa",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " puede hacer que A sea más rápido en milisegundos en tu portátil; para n grande suele ganar B porque el "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-dominante",
+                  "text": "término dominante",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " dicta el comportamiento. El analizador no sustituye el reloj: estudia el modelo de costo, no el tiempo real."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-gpu-cpu",
+          "slug": "cpu-y-gpu",
+          "title": "Panel CPU/GPU: qué es y qué no demuestra",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 20,
+          "blocks": [
+            {
+              "id": "blk-m5-s2-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El orden asintótico describe cómo escala el trabajo con n según el modelo de análisis, no los milisegundos en un chip concreto. Si tu versión muestra un panel "
+                },
+                {
+                  "type": "strong",
+                  "text": "CPU vs GPU"
+                },
+                {
+                  "type": "text",
+                  "text": " o un entorno de ejecución, trátalo como orientación sobre paralelismo o idoneidad de implementación, "
+                },
+                {
+                  "type": "strong",
+                  "text": "no"
+                },
+                {
+                  "type": "text",
+                  "text": " como prueba automática de una "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-cota-superior",
+                  "text": "cota superior",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " en el sentido del curso."
+                }
+              ]
+            },
+            {
+              "id": "blk-m5-s2-fig",
+              "type": "figure",
+              "resourceRef": "img-ug-m5-cpu-gpu"
+            },
+            {
+              "id": "blk-m5-s2-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "lightbulb",
+              "title": "Benchmark frente a análisis",
+              "blocks": [
+                {
+                  "id": "blk-m5-s2-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Un "
+                    },
+                    {
+                      "type": "term",
+                      "termRef": "term-benchmark",
+                      "text": "benchmark",
+                      "display": "highlight"
+                    },
+                    {
+                      "type": "text",
+                      "text": " mide rendimiento en un ordenador y datos concretos. Puede mostrar que un algoritmo «rápido en teoría» va mal en la práctica por memoria o por constantes. Eso no contradice el análisis asintótico: simplemente son preguntas distintas. No uses el panel de hardware para «demostrar» O(·) en un examen; úsalo para ilustrar la diferencia entre modelo teórico y medición real."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m5-s2-prec",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Pasos útiles en la app: localiza el panel en el "
+                },
+                {
+                  "type": "link",
+                  "text": "analizador",
+                  "target": { "kind": "external", "ref": "/analyzer" }
+                },
+                {
+                  "type": "text",
+                  "text": ", cambia el entorno si la interfaz lo permite, y toma una captura para tus apuntes junto con el resultado de costo simbólico. Así enlazas la misma pantalla con dos lecturas: teoría (cotas) y observación práctica (hardware)."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

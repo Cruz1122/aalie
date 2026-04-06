@@ -7,10 +7,11 @@ sin heurísticas por nombre.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
-from ..ir.expr_utils import expr_vars
-from ..semantics import SymbolTable, SymbolInfo
+
+from ..semantics import SymbolTable
 
 
 @dataclass
@@ -85,7 +86,9 @@ def detect_control_variables(
     # Data-dependent: has_array_access en guard
     if getattr(guard_info, "has_array_access", False):
         for v in vars_in_guard:
-            if v not in (result.primary_numeric_controller or "") and v not in (result.primary_boolean_controller or ""):
+            if v not in (result.primary_numeric_controller or "") and v not in (
+                result.primary_boolean_controller or ""
+            ):
                 if v not in result.coupled_controllers:
                     result.data_dependent_witnesses.append(v)
 

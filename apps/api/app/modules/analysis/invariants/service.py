@@ -8,8 +8,11 @@ from typing import Any, Dict, Optional
 from .classifier import classify_loop_pattern
 from .schemas import SUPPORTED_PATTERNS, empty_loop_invariant, normalize_locale
 from .selector import select_significant_loop
-from .templates import build_invariant_text, resolve_template_variant
-
+from .templates import (
+    build_invariant_text,
+    generate_behaviour,
+    resolve_template_variant,
+)
 
 _SPANISH_ACCENT_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     ("iteracion", "iteración"),
@@ -59,7 +62,12 @@ def _normalize_spanish_text_output(payload: Dict[str, Any], locale_value: str) -
 
     invariant = payload.get("invariant")
     if isinstance(invariant, dict):
-        for key in ("propertyStatement", "initialization", "maintenance", "finalization"):
+        for key in (
+            "propertyStatement",
+            "initialization",
+            "maintenance",
+            "finalization",
+        ):
             value = invariant.get(key)
             if isinstance(value, str):
                 invariant[key] = _apply_spanish_accents(value)
@@ -69,7 +77,9 @@ def _normalize_spanish_text_output(payload: Dict[str, Any], locale_value: str) -
         payload["didacticSummary"] = _apply_spanish_accents(didactic_summary)
 
 
-def generate_loop_invariant(ast: Optional[Dict[str, Any]], locale: Optional[str] = None) -> Dict[str, Any]:
+def generate_loop_invariant(
+    ast: Optional[Dict[str, Any]], locale: Optional[str] = None
+) -> Dict[str, Any]:
     """Build fixed-shape loop invariant payload from AST.
 
     This function is deterministic and uses only local AST evidence.
@@ -126,10 +136,7 @@ def generate_loop_invariant(ast: Optional[Dict[str, Any]], locale: Optional[str]
             "incremental_build",
             "extrema_generic",
         }
-        ambiguous_accumulation = (
-            pattern == "accumulation"
-            and len(selected.accumulators) > 1
-        )
+        ambiguous_accumulation = pattern == "accumulation" and len(selected.accumulators) > 1
         if (
             pattern == "unknown"
             or classification.confidence < 0.72
@@ -182,6 +189,7 @@ def generate_loop_invariant(ast: Optional[Dict[str, Any]], locale: Optional[str]
             "finalization": text.finalization,
         },
         "didacticSummary": text.didactic_summary,
+        "behaviour": generate_behaviour(output_pattern, locale_value),
         "evidence": {
             "conditionReads": selected.condition_reads,
             "bodyWrites": selected.body_writes,

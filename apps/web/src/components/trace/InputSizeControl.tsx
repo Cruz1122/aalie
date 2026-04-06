@@ -34,7 +34,9 @@ export default function InputSizeControl({
 
   return (
     <div className={`flex items-center gap-3 ${noMargin ? "" : "mb-3"}`}>
-      <label className="text-xs text-slate-300 whitespace-nowrap">{t("inputSizeLabel")}</label>
+      <label className="text-xs text-slate-300 whitespace-nowrap">
+        {t("inputSizeLabel")}
+      </label>
       <div className="flex items-center gap-2 flex-1 min-w-0 rounded-lg border border-slate-700/60 bg-slate-900/40 px-3 py-2">
         <input
           type="range"
@@ -55,4 +57,3 @@ export default function InputSizeControl({
     </div>
   );
 }
-

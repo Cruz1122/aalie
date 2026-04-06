@@ -26,7 +26,18 @@ interface ExecutionGraphViewProps {
   readonly graph: TraceGraph;
 }
 
-const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?: string; microseconds?: number; tokens?: number; iterationPath?: string } }) => {
+const TraceNode = ({
+  data,
+}: {
+  data: {
+    label: string;
+    isReturn?: boolean;
+    type?: string;
+    microseconds?: number;
+    tokens?: number;
+    iterationPath?: string;
+  };
+}) => {
   const t = useTranslations("analyzer.executionTrace");
   const isReturn = data.isReturn || false;
   const type = data.type || "default";
@@ -34,12 +45,16 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
   const isFin = firstLine ? /^FIN$/i.test(firstLine) : false;
   const hasCosts = data.microseconds !== undefined || data.tokens !== undefined;
   const hasIteration = Boolean(data.iterationPath);
-  const iterationDepth = data.iterationPath ? data.iterationPath.split(".").length : 1;
+  const iterationDepth = data.iterationPath
+    ? data.iterationPath.split(".").length
+    : 1;
   const iterationLight = Math.min(1, (iterationDepth - 1) * 0.35);
-  
+
   // Detectar si es un nodo de RETURN puro (para hacerlo más compacto)
   const trimmedLabel = data.label.trim();
-  const isPureReturn = /^(RETURN|Retorna)(\s+|$)/i.test(trimmedLabel) && !/^(RETURN|Retorna)\s+\S+/i.test(trimmedLabel);
+  const isPureReturn =
+    /^(RETURN|Retorna)(\s+|$)/i.test(trimmedLabel) &&
+    !/^(RETURN|Retorna)\s+\S+/i.test(trimmedLabel);
 
   let borderColor = "border-slate-600/70";
   let bgColor = "bg-slate-800/80";
@@ -130,28 +145,72 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
       return `${(microseconds / 1000000).toFixed(2)} ${t("timeUnitS")}`;
     }
   };
-  
+
   // Si es un nodo de RETURN puro, mostrarlo de forma compacta
   if (isPureReturn) {
     return (
-      <div className={`relative rounded-full border ${borderColor} ${bgColor} text-slate-50 px-3 py-2 shadow-sm ${shadowColor} backdrop-blur-sm opacity-60`}>
+      <div
+        className={`relative rounded-full border ${borderColor} ${bgColor} text-slate-50 px-3 py-2 shadow-sm ${shadowColor} backdrop-blur-sm opacity-60`}
+      >
         {type !== "input" && (
           <>
-            <Handle id="top" type="target" position={Position.Top} style={handleStyle} />
-            <Handle id="bottom" type="target" position={Position.Bottom} style={handleStyle} />
-            <Handle id="left" type="target" position={Position.Left} style={handleStyle} />
-            <Handle id="right" type="target" position={Position.Right} style={handleStyle} />
+            <Handle
+              id="top"
+              type="target"
+              position={Position.Top}
+              style={handleStyle}
+            />
+            <Handle
+              id="bottom"
+              type="target"
+              position={Position.Bottom}
+              style={handleStyle}
+            />
+            <Handle
+              id="left"
+              type="target"
+              position={Position.Left}
+              style={handleStyle}
+            />
+            <Handle
+              id="right"
+              type="target"
+              position={Position.Right}
+              style={handleStyle}
+            />
           </>
         )}
         <div className="text-center text-xs flex items-center gap-1">
-          <span className="material-symbols-outlined text-sm leading-none">keyboard_return</span>
+          <span className="material-symbols-outlined text-sm leading-none">
+            keyboard_return
+          </span>
         </div>
         {type !== "output" && (
           <>
-            <Handle id="top" type="source" position={Position.Top} style={handleStyle} />
-            <Handle id="bottom" type="source" position={Position.Bottom} style={handleStyle} />
-            <Handle id="left" type="source" position={Position.Left} style={handleStyle} />
-            <Handle id="right" type="source" position={Position.Right} style={handleStyle} />
+            <Handle
+              id="top"
+              type="source"
+              position={Position.Top}
+              style={handleStyle}
+            />
+            <Handle
+              id="bottom"
+              type="source"
+              position={Position.Bottom}
+              style={handleStyle}
+            />
+            <Handle
+              id="left"
+              type="source"
+              position={Position.Left}
+              style={handleStyle}
+            />
+            <Handle
+              id="right"
+              type="source"
+              position={Position.Right}
+              style={handleStyle}
+            />
           </>
         )}
       </div>
@@ -165,10 +224,30 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
     >
       {type !== "input" && (
         <>
-          <Handle id="top" type="target" position={Position.Top} style={handleStyle} />
-          <Handle id="bottom" type="target" position={Position.Bottom} style={handleStyle} />
-          <Handle id="left" type="target" position={Position.Left} style={handleStyle} />
-          <Handle id="right" type="target" position={Position.Right} style={handleStyle} />
+          <Handle
+            id="top"
+            type="target"
+            position={Position.Top}
+            style={handleStyle}
+          />
+          <Handle
+            id="bottom"
+            type="target"
+            position={Position.Bottom}
+            style={handleStyle}
+          />
+          <Handle
+            id="left"
+            type="target"
+            position={Position.Left}
+            style={handleStyle}
+          />
+          <Handle
+            id="right"
+            type="target"
+            position={Position.Right}
+            style={handleStyle}
+          />
         </>
       )}
       {hasIteration && (
@@ -191,8 +270,14 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
               className={`flex items-center gap-1.5 px-2 py-1 rounded ${costBadgeStyles.microBg} border ${costBadgeStyles.microBorder}`}
               style={iterationCostBadgeStyle}
             >
-              <span className={`material-symbols-outlined ${costBadgeStyles.microIcon} text-sm leading-none`}>schedule</span>
-              <span className={`${costBadgeStyles.microText} font-medium`}>{formatMicroseconds(data.microseconds)}</span>
+              <span
+                className={`material-symbols-outlined ${costBadgeStyles.microIcon} text-sm leading-none`}
+              >
+                schedule
+              </span>
+              <span className={`${costBadgeStyles.microText} font-medium`}>
+                {formatMicroseconds(data.microseconds)}
+              </span>
             </div>
           )}
           {data.tokens !== undefined && (
@@ -200,18 +285,44 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
               className={`flex items-center gap-1.5 px-2 py-1 rounded ${costBadgeStyles.tokenBg} border ${costBadgeStyles.tokenBorder}`}
               style={iterationCostBadgeStyle}
             >
-              <span className={`material-symbols-outlined ${costBadgeStyles.tokenIcon} text-sm leading-none`}>calculate</span>
-              <span className={`${costBadgeStyles.tokenText} font-medium`}>{data.tokens}</span>
+              <span
+                className={`material-symbols-outlined ${costBadgeStyles.tokenIcon} text-sm leading-none`}
+              >
+                calculate
+              </span>
+              <span className={`${costBadgeStyles.tokenText} font-medium`}>
+                {data.tokens}
+              </span>
             </div>
           )}
         </div>
       )}
       {type !== "output" && (
         <>
-          <Handle id="top" type="source" position={Position.Top} style={handleStyle} />
-          <Handle id="bottom" type="source" position={Position.Bottom} style={handleStyle} />
-          <Handle id="left" type="source" position={Position.Left} style={handleStyle} />
-          <Handle id="right" type="source" position={Position.Right} style={handleStyle} />
+          <Handle
+            id="top"
+            type="source"
+            position={Position.Top}
+            style={handleStyle}
+          />
+          <Handle
+            id="bottom"
+            type="source"
+            position={Position.Bottom}
+            style={handleStyle}
+          />
+          <Handle
+            id="left"
+            type="source"
+            position={Position.Left}
+            style={handleStyle}
+          />
+          <Handle
+            id="right"
+            type="source"
+            position={Position.Right}
+            style={handleStyle}
+          />
         </>
       )}
     </div>
@@ -233,7 +344,7 @@ function mapNodes(nodes: GraphNode[]): Node[] {
   return nodes.map((n, idx) => {
     const rawLabel = n.data?.label ?? "";
     // Limpiar el "→ valor" del label: ese valor se mostrará en la arista de retorno
-    const label = rawLabel.replace(/\n?→\s*.+$/s, "").trim();
+    const label = rawLabel.replace(/\n→\s*.+$/s, "").trim();
     const isReturn = /return|retorna/i.test(label);
     // No ocultar los nodos de retorno, solo identificarlos para darles estilo especial
     const isReturnNode = /^(RETURN|Retorna)(\s|$)/i.test(label.trim());
@@ -309,12 +420,16 @@ function mapEdges(
 ): Edge[] {
   const multiplicity = new Map<string, number>();
   return edges.map((e) => {
-    const key = e.source < e.target ? `${e.source}|${e.target}` : `${e.target}|${e.source}`;
+    const key =
+      e.source < e.target
+        ? `${e.source}|${e.target}`
+        : `${e.target}|${e.source}`;
     const count = multiplicity.get(key) ?? 0;
     multiplicity.set(key, count + 1);
 
     const edgeLabel = e.label || "";
-    const translatedLabel = edgeLabel === "loop_start" ? t("loopEdgeStart") : edgeLabel;
+    const translatedLabel =
+      edgeLabel === "loop_start" ? t("loopEdgeStart") : edgeLabel;
     const isReturnEdge = e.type === "return";
 
     const sourceNode = nodeIndex.get(e.source);
@@ -394,12 +509,18 @@ export default function ExecutionGraphView({ graph }: ExecutionGraphViewProps) {
   );
 
   const nodeIndex = useMemo(
-    () => new Map<string, GraphNode>((layoutedGraph.nodes ?? []).map((n) => [n.id, n])),
+    () =>
+      new Map<string, GraphNode>(
+        (layoutedGraph.nodes ?? []).map((n) => [n.id, n]),
+      ),
     [layoutedGraph.nodes],
   );
 
-  const initialNodes = useMemo(() => mapNodes(layoutedGraph.nodes ?? []), [layoutedGraph.nodes]);
-  
+  const initialNodes = useMemo(
+    () => mapNodes(layoutedGraph.nodes ?? []),
+    [layoutedGraph.nodes],
+  );
+
   const initialEdges = useMemo(() => {
     const originalEdges = layoutedGraph.edges ?? [];
     const callEdges = mapEdges(originalEdges, nodeIndex, t);
@@ -417,7 +538,11 @@ export default function ExecutionGraphView({ graph }: ExecutionGraphViewProps) {
 
   const hasEdges = edges.length > 0;
 
-  if (!layoutedGraph || !layoutedGraph.nodes || layoutedGraph.nodes.length === 0) {
+  if (
+    !layoutedGraph ||
+    !layoutedGraph.nodes ||
+    layoutedGraph.nodes.length === 0
+  ) {
     return (
       <div className="text-slate-400 text-sm p-4 text-center">
         {t("noGraphFromTrace")}
@@ -457,7 +582,9 @@ export default function ExecutionGraphView({ graph }: ExecutionGraphViewProps) {
         />
         {!hasEdges && (
           <div className="absolute top-2 right-3 px-2 py-1 rounded bg-slate-700/80 border border-slate-600/60 text-[10px] text-slate-300 font-medium shadow flex items-center gap-1">
-            <span className="material-symbols-outlined text-[12px] leading-none">info</span>
+            <span className="material-symbols-outlined text-[12px] leading-none">
+              info
+            </span>
             {t("graphNoEdges")}
           </div>
         )}

@@ -5,6 +5,7 @@ Toda verificación de complejidad en tests debe usar este módulo.
 Author: Camilo Cruz (@Cruz1122)
 Version: 0.1.0
 """
+
 import re
 from typing import Any, Dict, Optional, Set
 
@@ -51,13 +52,15 @@ def is_o1_notation(notation: str) -> bool:
     if not notation:
         return False
     s = notation.lower().replace("\\", "").replace(" ", "")
-    return "o(1)" in s or "θ(1)" in s or "theta(1)" in s or "ω(1)" in s or "omega(1)" in s
+    return (
+        "o(1)" in s or "θ(1)" in s or "theta(1)" in s or "ω(1)" in s or "omega(1)" in s
+    )
 
 
 def infer_complexity_class(notation: str) -> str:
     """
     Infere una clase de complejidad única a partir de la notación asintótica.
-    
+
     Devuelve exactamente una de:
     constant | log | linear | nlogn | quadratic | cubic | exponential | unknown
     """
@@ -205,9 +208,9 @@ def get_notation_from_totals(totals: dict) -> str:
 def assert_has_asymptotic_notation(result: Dict[str, Any], case: str) -> None:
     """Verifica que el caso tenga al menos una notación (big_theta/big_o/big_omega)."""
     totals = get_totals(result, case)
-    assert has_asymptotic_notation(totals), (
-        f"Caso {case}: se esperaba notación asintótica en totals, obtenido: {totals}"
-    )
+    assert has_asymptotic_notation(
+        totals
+    ), f"Caso {case}: se esperaba notación asintótica en totals, obtenido: {totals}"
 
 
 def assert_complexity_class(
@@ -218,9 +221,9 @@ def assert_complexity_class(
     """
     totals = get_totals(result, case)
     notation = get_notation_from_totals(totals)
-    assert _notation_has_complexity(notation, expected), (
-        f"[{name}] {case}: esperado {expected}, obtenido: {notation!r}"
-    )
+    assert _notation_has_complexity(
+        notation, expected
+    ), f"[{name}] {case}: esperado {expected}, obtenido: {notation!r}"
 
 
 def assert_no_unknown_counts(result: Dict[str, Any], case: str) -> None:
@@ -229,9 +232,9 @@ def assert_no_unknown_counts(result: Dict[str, Any], case: str) -> None:
     for i, row in enumerate(by_line):
         count = row.get("count")
         if count is not None and isinstance(count, str):
-            assert "unknown" not in count.lower(), (
-                f"Caso {case}, línea {i}: count contiene 'unknown': {count!r}"
-            )
+            assert (
+                "unknown" not in count.lower()
+            ), f"Caso {case}, línea {i}: count contiene 'unknown': {count!r}"
 
 
 def assert_byline_schema(result: Dict[str, Any], case: str) -> None:
@@ -247,9 +250,9 @@ def assert_totals_schema(result: Dict[str, Any], case: str) -> None:
     """Totals debe tener T_open o t_polynomial y notación."""
     totals = get_totals(result, case)
     has_t = "T_open" in totals or "t_polynomial" in totals
-    assert has_t or has_asymptotic_notation(totals), (
-        f"Caso {case}: totals sin T_open/t_polynomial ni notación: {totals}"
-    )
+    assert has_t or has_asymptotic_notation(
+        totals
+    ), f"Caso {case}: totals sin T_open/t_polynomial ni notación: {totals}"
 
 
 def assert_expected_symbols(
@@ -260,29 +263,30 @@ def assert_expected_symbols(
     t_open = totals.get("T_open", "") or totals.get("t_polynomial", "") or ""
     t_lower = t_open.lower()
     for sym in symbols:
-        assert sym.lower() in t_lower or f"{{{sym}}}" in t_open, (
-            f"Caso {case}: se esperaba símbolo {sym!r} en totals, obtenido: {t_open!r}"
-        )
+        assert (
+            sym.lower() in t_lower or f"{{{sym}}}" in t_open
+        ), f"Caso {case}: se esperaba símbolo {sym!r} en totals, obtenido: {t_open!r}"
 
 
-# Símbolos típicos de arrays que no deben aparecer en la notación de complejidad
-_ARRAY_LIKE_SYMBOLS = {"a", "b", "c", "arr", "array", "lista", "list"}
+# Palabras reservadas de ruido; no usar letras sueltas (chocan con \\min(a,b), etc.)
+_NOTATION_NOISE_TOKENS = {"arr", "array", "lista", "list"}
 
 
-def assert_notation_no_array_symbols(result: Dict[str, Any], case: str = "worst") -> None:
+def assert_notation_no_array_symbols(
+    result: Dict[str, Any], case: str = "worst"
+) -> None:
     """
-    Verifica que la notación asintótica no contenga símbolos de arrays (A, B, arr, etc.).
-    La complejidad debe expresarse solo en términos de tamaño (n, m, etc.).
+    Verifica que la notación no contenga tokens de ruido tipo nombre de arreglo genérico.
+    La complejidad debe expresarse en términos de tamaño (n, m, k, etc.), no identificadores heurísticos.
     """
     totals = get_totals(result, case)
     notation = get_notation_from_totals(totals)
     if not notation:
         return
-    # Buscar símbolos de array como palabras/tokens (evitar falsos positivos en "log", "frac")
     tokens = set(re.findall(r"[a-zA-Z]+", notation.lower()))
-    for bad in _ARRAY_LIKE_SYMBOLS:
+    for bad in _NOTATION_NOISE_TOKENS:
         assert bad not in tokens, (
-            f"Caso {case}: la notación no debe contener símbolos de array como {bad!r}, "
+            f"Caso {case}: la notación no debe contener token {bad!r}, "
             f"obtenido: {notation!r}"
         )
 
@@ -299,9 +303,9 @@ def assert_case_complexity(
     """Verifica que el caso tenga la complejidad esperada."""
     totals = get_totals(result, case)
     notation = get_notation_from_totals(totals)
-    assert _notation_has_complexity(notation, expected_level), (
-        f"[{name}] {case.upper()}: esperado {expected_level}, obtenido: {notation!r}"
-    )
+    assert _notation_has_complexity(
+        notation, expected_level
+    ), f"[{name}] {case.upper()}: esperado {expected_level}, obtenido: {notation!r}"
 
 
 def assert_worst_complexity(

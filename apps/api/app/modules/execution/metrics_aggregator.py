@@ -7,6 +7,7 @@ Evita que call_tree_builder mezcle lógica de agregación con lógica visual.
 Author: Plan refactor subsistema trace
 Version: 0.1.0
 """
+
 from typing import Any, Dict, List, Tuple
 
 

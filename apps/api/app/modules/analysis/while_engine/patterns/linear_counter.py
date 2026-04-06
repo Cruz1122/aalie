@@ -4,8 +4,10 @@ Patrón: contador lineal creciente (i < n, i <- i + c).
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from typing import Any, Dict
-from .base import WhilePattern, TerminationResult, IterationBoundResult
+
+from .base import IterationBoundResult, TerminationResult, WhilePattern
 
 
 class LinearCounterPattern(WhilePattern):

@@ -1,7 +1,9 @@
 """
 Modelos Pydantic para el módulo de analysis.
 """
+
 from typing import Any, Dict, List, Literal, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -16,7 +18,9 @@ class AnalyzeRequest(BaseModel):
     api_key: Optional[str] = None  # API Key de Gemini (opcional)
     avgModel: Optional[AvgModelConfig] = None  # Modelo probabilístico para caso promedio
     algorithm_kind: Optional[str] = None  # "iterative" | "recursive" | "hybrid" | "unknown"
-    preferred_method: Optional[str] = None  # "characteristic_equation" | "iteration" | "recursion_tree" | "master"
+    preferred_method: Optional[str] = (
+        None  # "characteristic_equation" | "iteration" | "recursion_tree" | "master"
+    )
     locale: Optional[str] = None  # "en" | "es" - idioma para etiquetas del procedimiento
 
 
@@ -30,6 +34,7 @@ class LineCost(BaseModel):
     note: Optional[str] = None
     unbounded: Optional[bool] = None  # True si el bucle puede no terminar
     unbounded_kind: Optional[str] = None  # "non_terminating" | "unknown"
+    loopBlockRef: Optional[str] = None
 
 
 class LoopInvariantSelectedLoop(BaseModel):
@@ -86,10 +91,13 @@ class LoopInvariantEvidence(BaseModel):
 
 class LoopInvariantPayload(BaseModel):
     status: Literal["ok", "unavailable", "low_confidence"]
-    reason: Optional[Literal["no_supported_loop", "insufficient_evidence", "pattern_not_supported"]] = None
+    reason: Optional[
+        Literal["no_supported_loop", "insufficient_evidence", "pattern_not_supported"]
+    ] = None
     selectedLoop: LoopInvariantSelectedLoop
     invariant: LoopInvariantSections
     didacticSummary: str
+    behaviour: str | None = None
     evidence: LoopInvariantEvidence
 
 

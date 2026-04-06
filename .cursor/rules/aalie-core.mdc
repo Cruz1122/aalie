@@ -1,0 +1,11 @@
+---
+description: Reglas base de contratos core AALIE
+alwaysApply: true
+---
+
+# AALIE Core
+
+- Antes de tocar parser, análisis, trace, snapshot o export, leer primero los contratos de `docs/03-specs/`.
+- Si `docs/03-specs/` y una doc descriptiva discrepan, prevalece `03-specs/`.
+- No introducir contratos nuevos en silencio.
+- Si cambias comportamiento contractual, actualiza spec, API/doc relevante y tests auténticos.

@@ -1,0 +1,116 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ExamplesTypeSelector snapshot > renders base selector layout 1`] = `
+<section
+  class="min-h-[68vh]"
+>
+  <div
+    class="grid min-h-[68vh] grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4"
+  >
+    <div
+      class="glass-card grid h-full min-h-[300px] content-center grid-rows-[60px_50px_80px_100px] place-items-center rounded-md p-8 text-center xl:min-h-[68vh]"
+    >
+      <span
+        class="material-symbols-outlined leading-none text-primary"
+        style="font-size: 2.75rem;"
+      >
+        loop
+      </span>
+      <h3
+        class="line-clamp-2 text-xl font-bold text-white"
+      >
+        Iterativos
+      </h3>
+      <p
+        class="line-clamp-4 text-sm text-dark-text"
+      >
+        Resuelven el problema con ciclos y actualizaciones paso a paso.
+      </p>
+      <a
+        class="glass-secondary flex h-10 w-full items-center justify-center rounded-md px-4 text-sm font-bold text-white transition-colors hover:bg-white/20"
+        href="/examples/iterativos"
+      >
+        Ver familia
+      </a>
+    </div>
+    <div
+      class="glass-card grid h-full min-h-[300px] content-center grid-rows-[60px_50px_80px_100px] place-items-center rounded-md p-8 text-center xl:min-h-[68vh]"
+    >
+      <span
+        class="material-symbols-outlined leading-none text-primary"
+        style="font-size: 2.75rem;"
+      >
+        sentiment_very_satisfied
+      </span>
+      <h3
+        class="line-clamp-2 text-xl font-bold text-white"
+      >
+        Divide y vencerás
+      </h3>
+      <p
+        class="line-clamp-4 text-sm text-dark-text"
+      >
+        Parten el problema en varias partes más pequeñas, las resuelven y luego combinan el resultado.
+      </p>
+      <a
+        class="glass-secondary flex h-10 w-full items-center justify-center rounded-md px-4 text-sm font-bold text-white transition-colors hover:bg-white/20"
+        href="/examples/divide-y-venceras"
+      >
+        Ver familia
+      </a>
+    </div>
+    <div
+      class="glass-card grid h-full min-h-[300px] content-center grid-rows-[60px_50px_80px_100px] place-items-center rounded-md p-8 text-center xl:min-h-[68vh]"
+    >
+      <span
+        class="material-symbols-outlined leading-none text-primary"
+        style="font-size: 2.75rem;"
+      >
+        sentiment_satisfied
+      </span>
+      <h3
+        class="line-clamp-2 text-xl font-bold text-white"
+      >
+        Resta y vencerás
+      </h3>
+      <p
+        class="line-clamp-4 text-sm text-dark-text"
+      >
+        Reducen el problema a una versión más pequeña del mismo y repiten hasta llegar al caso base.
+      </p>
+      <a
+        class="glass-secondary flex h-10 w-full items-center justify-center rounded-md px-4 text-sm font-bold text-white transition-colors hover:bg-white/20"
+        href="/examples/resta-y-venceras"
+      >
+        Ver familia
+      </a>
+    </div>
+    <div
+      class="glass-card grid h-full min-h-[300px] content-center grid-rows-[60px_50px_80px_100px] place-items-center rounded-md p-8 text-center xl:min-h-[68vh]"
+    >
+      <span
+        class="material-symbols-outlined leading-none text-primary"
+        style="font-size: 2.75rem;"
+      >
+        sentiment_dissatisfied
+      </span>
+      <h3
+        class="line-clamp-2 text-xl font-bold text-white"
+      >
+        Resta y serás vencido
+      </h3>
+      <p
+        class="line-clamp-4 text-sm text-dark-text"
+      >
+        Avanzan restando una parte pequeña del problema en cada llamada, normalmente en recurrencias lineales.
+      </p>
+      <a
+        class="glass-secondary flex h-10 w-full items-center justify-center rounded-md px-4 text-sm font-bold text-white transition-colors hover:bg-white/20"
+        href="/examples/resta-y-seras-vencido"
+      >
+        Ver familia
+      </a>
+    </div>
+  </div>
+</section>
+`;

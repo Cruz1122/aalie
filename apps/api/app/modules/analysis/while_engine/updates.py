@@ -7,10 +7,16 @@ y monotone_progress_must para clasificación de terminación.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 Version: 0.1.0
 """
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
-from ..ir.expr_utils import expr_to_str, is_literal_true, is_literal_false, is_simple_constant
+from ..ir.expr_utils import (
+    expr_to_str,
+    is_literal_false,
+    is_literal_true,
+    is_simple_constant,
+)
 
 
 @dataclass
@@ -32,7 +38,9 @@ class VarUpdateSummary:
     monotone_progress_must: bool = False
 
 
-def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
+def _parse_update(
+    value: Any, var_name: str, local_assigned_vars: Optional[Set[str]] = None
+) -> Optional[Dict[str, Any]]:
     """
     Parsea una asignación value y retorna tipo de update si aplica.
     Retorna {type, operator?, constant?, kills_guard?, monotone?} o None.
@@ -42,6 +50,7 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
 
     t = value.get("type", "").lower()
     op = value.get("op", "") or value.get("operator", "")
+    op_norm = str(op).lower()
 
     # Boolean: flag <- false / flag <- true (Literal, Number o Identifier)
     if is_literal_false(value):
@@ -53,12 +62,16 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
     if t == "unary":
         uop = value.get("operator", "")
         arg = value.get("arg", {})
-        if uop.lower() == "not" and isinstance(arg, dict) and arg.get("type", "").lower() == "identifier":
+        if (
+            uop.lower() == "not"
+            and isinstance(arg, dict)
+            and arg.get("type", "").lower() == "identifier"
+        ):
             if arg.get("name", "") == var_name:
                 return {"type": "toggle", "monotone": False}
 
     # Euclid: var <- expr MOD var (a mod b < b cuando b > 0 → var disminuye)
-    if t == "binary" and (op == "mod" or op == "MOD"):
+    if t == "binary" and op_norm == "mod":
         left = value.get("left", {})
         right = value.get("right", {})
         if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
@@ -67,25 +80,56 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
                 return {"type": "mod_decrease", "other_var": other, "monotone": True}
 
     # Binary: i <- i + c, i - c, i * c, i / c
-    if t == "binary" and op in ("+", "-", "*", "/", "//"):
+    if t == "binary" and op_norm in ("+", "-", "*", "/", "//", "div"):
         left = value.get("left", {})
         right = value.get("right", {})
 
         if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
             if left.get("name", "") == var_name:
                 const = expr_to_str(right)
-                if is_simple_constant(const):
-                    if op == "+":
-                        return {"type": "num", "operator": "+", "constant": const, "monotone": True}
-                    if op == "-":
-                        return {"type": "num", "operator": "-", "constant": const, "monotone": True}
-                    if op in ("*", "/", "//"):
-                        return {"type": "num", "operator": op, "constant": const, "monotone": True}
+                # Aceptar:
+                # - constantes numéricas simples (ej. 2, 10)
+                # - parámetros simbólicos (ej. paso) para derivar cotas tipo n/paso
+                import re
+
+                const_is_param = bool(re.match(r"^[A-Za-z_]\w*$", str(const).strip()))
+                if const_is_param and local_assigned_vars is not None:
+                    # Si el identificador fue asignado dentro del mismo WHILE
+                    # (p.ej. delta <- f(left,right)), no lo tratamos como constante.
+                    const_is_param = str(const).strip() not in local_assigned_vars
+                if is_simple_constant(const) or const_is_param:
+                    if op_norm == "+":
+                        return {
+                            "type": "num",
+                            "operator": "+",
+                            "constant": const,
+                            "monotone": True,
+                        }
+                    if op_norm == "-":
+                        return {
+                            "type": "num",
+                            "operator": "-",
+                            "constant": const,
+                            "monotone": True,
+                        }
+                    if op_norm in ("*", "/", "//", "div"):
+                        canonical_op = "/" if op_norm in ("/", "//", "div") else "*"
+                        return {
+                            "type": "num",
+                            "operator": canonical_op,
+                            "constant": const,
+                            "monotone": True,
+                        }
         if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
-            if right.get("name", "") == var_name and op in ("+", "*"):
+            if right.get("name", "") == var_name and op_norm in ("+", "*"):
                 const = expr_to_str(left)
                 if is_simple_constant(const):
-                    return {"type": "num", "operator": op, "constant": const, "monotone": True}
+                    return {
+                        "type": "num",
+                        "operator": op_norm,
+                        "constant": const,
+                        "monotone": True,
+                    }
 
     # Reset: i <- 0, i <- n (asignación a constante u otra expr)
     if t in ("number", "literal"):
@@ -105,7 +149,7 @@ def _collect_assignments(node: Any, var_name: str, out: List[Dict[str, Any]]) ->
         target = node.get("target", {})
         if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
             if target.get("name", "") == var_name:
-                parsed = _parse_update(node.get("value"), var_name)
+                parsed = _parse_update(node.get("value"), var_name, local_assigned_vars=None)
                 if parsed:
                     out.append({**parsed, "node": node})
     if nt == "block":
@@ -114,7 +158,11 @@ def _collect_assignments(node: Any, var_name: str, out: List[Dict[str, Any]]) ->
     elif nt == "if":
         for branch in [node.get("consequent"), node.get("alternate")]:
             if branch:
-                body = branch.get("body", []) if branch.get("type", "").lower() == "block" else [branch]
+                body = (
+                    branch.get("body", [])
+                    if branch.get("type", "").lower() == "block"
+                    else [branch]
+                )
                 for stmt in body:
                     _collect_assignments(stmt, var_name, out)
     elif nt not in ("while", "repeat", "for"):
@@ -142,7 +190,11 @@ def _updates_match(a: Dict, b: Dict) -> bool:
     return True
 
 
-def _must_may_if(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
+def _must_may_if(
+    node: Any,
+    var_name: str,
+    local_assigned_vars: Optional[Set[str]] = None,
+) -> tuple[List[Dict], List[Dict]]:
     """
     IF cond then A else B: must = must(A) ∩ must(B), may = may(A) ∪ may(B) ∪ must(A) ∪ must(B)
     IF sin else: must = ∅, may = may(then) ∪ must(then)
@@ -150,18 +202,22 @@ def _must_may_if(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
     then_branch = node.get("consequent") or node.get("then")
     else_branch = node.get("alternate")
 
-    must_t, may_t = _must_may_stmt(then_branch, var_name) if then_branch else ([], [])
+    must_t, may_t = (
+        _must_may_stmt(then_branch, var_name, local_assigned_vars) if then_branch else ([], [])
+    )
     if not else_branch:
         return [], list({id(x): x for x in may_t + must_t}.values())
 
-    must_e, may_e = _must_may_stmt(else_branch, var_name)
+    must_e, may_e = _must_may_stmt(else_branch, var_name, local_assigned_vars)
     must_common = [a for a in must_t if any(_updates_match(a, b) for b in must_e)]
     may_all = may_t + may_e + must_t + must_e
     may_dedup = list({id(x): x for x in may_all}.values())
     return must_common, may_dedup
 
 
-def _must_may_stmt(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
+def _must_may_stmt(
+    node: Any, var_name: str, local_assigned_vars: Optional[Set[str]] = None
+) -> tuple[List[Dict], List[Dict]]:
     """
     Calcula must y may para un statement.
     Secuencia: todos los stmt se ejecutan, must = todos los updates.
@@ -175,20 +231,20 @@ def _must_may_stmt(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
         must_all: List[Dict] = []
         may_all: List[Dict] = []
         for stmt in node.get("body", []):
-            m, y = _must_may_stmt(stmt, var_name)
+            m, y = _must_may_stmt(stmt, var_name, local_assigned_vars)
             must_all.extend(m)
             may_all.extend(y)
         return must_all, list({id(x): x for x in may_all}.values())
     if nt == "if":
-        return _must_may_if(node, var_name)
+        return _must_may_if(node, var_name, local_assigned_vars)
     if nt == "for":
         # Todo dentro de un FOR se considera may update desde la perspectiva del WHILE:
         # el rango puede ser vacío (0 iteraciones) o la rama condicional interna puede no ejecutarse.
-        _, may_nested = _must_may_stmt(node.get("body", {}), var_name)
+        _, may_nested = _must_may_stmt(node.get("body", {}), var_name, local_assigned_vars)
         return [], may_nested
     if nt in ("while", "repeat"):
         # Todo dentro de un bucle anidado se considera may update (ya que podría ejecutarse 0 veces)
-        _, may_nested = _must_may_stmt(node.get("body", {}), var_name)
+        _, may_nested = _must_may_stmt(node.get("body", {}), var_name, local_assigned_vars)
         # También extraer del bloque interno directamente por si no es un "block" Node
         return [], may_nested
 
@@ -196,7 +252,9 @@ def _must_may_stmt(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
         target = node.get("target", {})
         if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
             if target.get("name", "") == var_name:
-                parsed = _parse_update(node.get("value"), var_name)
+                parsed = _parse_update(
+                    node.get("value"), var_name, local_assigned_vars=local_assigned_vars
+                )
                 if parsed:
                     return [parsed], [parsed]
 
@@ -207,13 +265,14 @@ def _compute_summary_for_var(
     body: Any,
     var_name: str,
     guard_desired: Optional[bool],
+    local_assigned_vars: Optional[Set[str]] = None,
 ) -> VarUpdateSummary:
     """
     Calcula VarUpdateSummary para una variable.
     guard_desired: True si el guard exige var==true para continuar;
                    False si exige var==false (ej. ordenado=false en bubble sort mejorado).
     """
-    must, may = _must_may_stmt(body, var_name)
+    must, may = _must_may_stmt(body, var_name, local_assigned_vars=local_assigned_vars)
     kills_guard_must = False
     revives_guard_may = False
     monotone_progress_must = False
@@ -266,6 +325,39 @@ def summarize_updates(
     # Normalizar cuerpo como bloque si el parser devuelve una lista de sentencias
     if isinstance(body, list):
         body = {"type": "block", "body": body}
+
+    def _collect_local_assigned_vars(n: Any) -> Set[str]:
+        out: Set[str] = set()
+
+        def _walk(x: Any) -> None:
+            if isinstance(x, list):
+                for it in x:
+                    _walk(it)
+                return
+            if not isinstance(x, dict):
+                return
+
+            nt = (x.get("type", "") or "").lower()
+            if nt == "assign":
+                tgt = x.get("target") or {}
+                if isinstance(tgt, dict) and (tgt.get("type", "") or "").lower() == "identifier":
+                    name = tgt.get("name") or ""
+                    if name:
+                        out.add(str(name))
+                # No bajamos a RHS: solo necesitamos targets asignados.
+                return
+            if nt in ("while", "repeat", "for"):
+                # No mezclar scopes dentro de bucles anidados.
+                return
+
+            for v in x.values():
+                if isinstance(v, (dict, list)):
+                    _walk(v)
+
+        _walk(n)
+        return out
+
+    local_assigned_vars = _collect_local_assigned_vars(body)
     result: Dict[str, VarUpdateSummary] = {}
     for var_name in vars_used:
         if not var_name:
@@ -289,10 +381,19 @@ def summarize_updates(
 
                 # Si aparece como identificador suelto dentro de AND/OR, entonces el guard exige True.
                 if desired is None:
-                    if hasattr(guard_info, "and_bool_vars") and var_name in getattr(guard_info, "and_bool_vars", set()):
+                    if hasattr(guard_info, "and_bool_vars") and var_name in getattr(
+                        guard_info, "and_bool_vars", set()
+                    ):
                         desired = True
-                    elif hasattr(guard_info, "or_bool_vars") and var_name in getattr(guard_info, "or_bool_vars", set()):
+                    elif hasattr(guard_info, "or_bool_vars") and var_name in getattr(
+                        guard_info, "or_bool_vars", set()
+                    ):
                         desired = True
 
-        result[var_name] = _compute_summary_for_var(body, var_name, desired)
+        result[var_name] = _compute_summary_for_var(
+            body,
+            var_name,
+            desired,
+            local_assigned_vars=local_assigned_vars,
+        )
     return result

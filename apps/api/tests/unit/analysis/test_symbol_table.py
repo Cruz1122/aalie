@@ -4,13 +4,19 @@ Tests unitarios para semantics.symbol_table y scope_resolver.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 import pytest
-from app.modules.analysis.semantics import SymbolTable, SymbolInfo, resolve_scope, infer_type
+
+from app.modules.analysis.semantics import SymbolInfo, SymbolTable, resolve_scope
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestSymbolInfo:
     def test_control_candidate(self):
-        info = SymbolInfo(name="i", participates_in_guard=True, assigned_at=[{"line": 1}])
+        info = SymbolInfo(
+            name="i", participates_in_guard=True, assigned_at=[{"line": 1}]
+        )
         assert info.is_control_candidate is True
 
     def test_bound_candidate(self):
@@ -44,8 +50,23 @@ class TestScopeResolver:
             "body": {
                 "type": "Block",
                 "body": [
-                    {"type": "Assign", "pos": {"line": 2}, "target": {"type": "identifier", "name": "i"}, "value": {"type": "number", "value": 0}},
-                    {"type": "While", "pos": {"line": 3}, "test": {"type": "binary", "left": {"type": "identifier", "name": "i"}, "op": "<", "right": {"type": "identifier", "name": "n"}}, "body": {"type": "Block", "body": []}},
+                    {
+                        "type": "Assign",
+                        "pos": {"line": 2},
+                        "target": {"type": "identifier", "name": "i"},
+                        "value": {"type": "number", "value": 0},
+                    },
+                    {
+                        "type": "While",
+                        "pos": {"line": 3},
+                        "test": {
+                            "type": "binary",
+                            "left": {"type": "identifier", "name": "i"},
+                            "op": "<",
+                            "right": {"type": "identifier", "name": "n"},
+                        },
+                        "body": {"type": "Block", "body": []},
+                    },
                 ],
             },
         }

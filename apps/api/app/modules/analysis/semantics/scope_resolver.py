@@ -7,8 +7,10 @@ Recorre el AST del procedimiento para extraer la estructura de scope.
 Author: @Cruz1122
 Version: 0.1.0
 """
-from typing import Any, Dict, List, Optional, Set
-from .symbol_table import SymbolTable, SymbolInfo
+
+from typing import Any, Dict, Set
+
+from .symbol_table import SymbolTable
 
 
 def _collect_params(proc_def: Dict[str, Any]) -> Set[str]:
@@ -29,6 +31,7 @@ def _collect_params(proc_def: Dict[str, Any]) -> Set[str]:
 def _collect_assign_targets(expr: Any) -> Set[str]:
     """Recolecta identificadores que son targets de asignación."""
     from ..ir.expr_utils import expr_vars
+
     if isinstance(expr, dict):
         t = (expr.get("type") or "").lower()
         if t == "assign":
@@ -83,7 +86,11 @@ class ScopeResolver:
                 if name:
                     info = table.get_or_create(name)
                     info.assigned_at.append(loc)
-                    info.origin = "parameter" if name in self.params else ("loop_local" if in_loop else "local")
+                    info.origin = (
+                        "parameter"
+                        if name in self.params
+                        else ("loop_local" if in_loop else "local")
+                    )
             self._visit(node.get("value"), table, in_loop)
             return
 
@@ -115,6 +122,7 @@ class ScopeResolver:
 
         # Identifiers, binary, etc.: marcar como read
         from ..ir.expr_utils import expr_vars
+
         for var in expr_vars(node):
             if var:
                 info = table.get_or_create(var)

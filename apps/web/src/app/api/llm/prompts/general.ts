@@ -46,11 +46,11 @@ export const generalBase = `Eres AALIE (Algorithmic Analysis Live Interaction Ex
  - WHILE: WHILE (condición) DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: WHILE (condición) DO { ... })
  - FOR: FOR variable <- inicio TO fin DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: FOR variable <- inicio TO fin DO { ... })
  - REPEAT: REPEAT ... UNTIL (condición); (no usa DO)
- - Asignación: usar alguno de estos operadores: <-, :=, 🡨
+ - Asignación visible oficial: usar <-
 - Arrays base 1: A[1]..A[n]
 - ⚠️ NOTACIÓN DE PARÁMETROS DE ARRAYS: Los parámetros de arrays en las definiciones de procedimientos deben usar la notación A[n], NO nombres genéricos como "array". Ejemplo correcto: mergesort(A[n], izq, der) BEGIN ... END. Ejemplo incorrecto: mergesort(array, izq, der) BEGIN ... END
 - Punto y coma al final de cada sentencia (excepto después de END)
- - Operadores: =, <>, !=, ≠, <, >, <=, ≤, >=, ≥, AND, OR
+ - Operadores visibles oficiales: =, !=, <, >, <=, >=, AND, OR
  - ⚠️ OPERADOR MÓDULO: usar MOD, NO usar % (ej: IF (n MOD 2 = 0) THEN ... NO IF (n % 2 = 0))
  - ⚠️ DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2, NO exponente / 2 para división entera)
  - ⚠️ COMENTARIOS: usar // para comentarios de una línea (ej: // esto es un comentario). PROHIBIDO usar -- para comentarios.

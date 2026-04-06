@@ -6,15 +6,16 @@ Flujo lineal con nodos por paso/iteración.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Dict, List, Optional
 
-from ..structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceNode,
-    StructuredTraceEdge,
-    StructuredTraceRenderConfig,
-)
 from ..structural_trace_classifier import StructuralTraceClassification
+from ..structured_trace_models import (
+    StructuredTraceEdge,
+    StructuredTraceNode,
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
+)
 
 
 def _step_to_label(step: Dict[str, Any]) -> str:
@@ -43,13 +44,21 @@ def _step_to_label(step: Dict[str, Any]) -> str:
         return f"FOR {loop_var} = {val}"
     if kind == "loop_iter_enter":
         loop_var = it.get("loopVar", "iter")
-        val = it.get("currentValue") if it.get("currentValue") is not None else it.get("iteration", "?")
+        val = (
+            it.get("currentValue")
+            if it.get("currentValue") is not None
+            else it.get("iteration", "?")
+        )
         if step_kind == "for":
             return f"FOR {loop_var} = {val}"
         return f"{loop_var} = {val}"
     if kind == "loop_iter_exit":
         loop_var = it.get("loopVar", "iter")
-        val = it.get("currentValue") if it.get("currentValue") is not None else it.get("iteration", "?")
+        val = (
+            it.get("currentValue")
+            if it.get("currentValue") is not None
+            else it.get("iteration", "?")
+        )
         return f"Fin iter {loop_var}={val}"
     if kind == "loop_exit":
         exit_cond = it.get("exitCondition")
@@ -146,7 +155,7 @@ def build_generic_iterative(
         if len(nodes) >= 80:
             break
         event_kind = step.get("eventKind") or step.get("kind", "")
-        step_kind = step.get("kind") or ""
+        step.get("kind") or ""
         step_num = step.get("step_number", idx + 1)
 
         if event_kind == "loop_enter":
@@ -202,9 +211,15 @@ def build_generic_iterative(
                 "microseconds": 0,
                 "iterationPath": path,
                 "loopVar": it.get("loopVar", "iter"),
-                "loopValue": it.get("currentValue") if it.get("currentValue") is not None else it.get("iteration"),
+                "loopValue": (
+                    it.get("currentValue")
+                    if it.get("currentValue") is not None
+                    else it.get("iteration")
+                ),
                 "nodeType": "iteration",
-                "last_vars": step.get("variables") if isinstance(step.get("variables"), dict) else None,
+                "last_vars": (
+                    step.get("variables") if isinstance(step.get("variables"), dict) else None
+                ),
             }
             if active_iterations:
                 active_iterations[-1] = data

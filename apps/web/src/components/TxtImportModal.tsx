@@ -45,7 +45,9 @@ export default function TxtImportModal({
         </div>
 
         <div className="px-6 py-5">
-          <p className="text-sm text-slate-200 leading-relaxed">{description}</p>
+          <p className="text-sm text-slate-200 leading-relaxed">
+            {description}
+          </p>
           {details && details.length > 0 && (
             <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
               <ul className="space-y-1 text-xs text-amber-100">

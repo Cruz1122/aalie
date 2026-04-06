@@ -351,7 +351,8 @@ body {
 
 /* Cards de documentación - altura fija para alineación */
 .documentation-card {
-  height: 300px;
+  min-height: 320px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -680,6 +681,48 @@ dialog::backdrop {
   overflow: hidden !important;
 }
 
+.inline-code-math-chip {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.inline-code-math,
+.inline-code-math * {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace !important;
+  font-style: normal !important;
+  color: inherit;
+  letter-spacing: 0 !important;
+}
+
+.inline-code-math {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.inline-code-math-cluster {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.inline-code-math-sub,
+.inline-code-math-sup {
+  font-size: 0.78em;
+  line-height: 1;
+}
+
+.inline-code-math-sub {
+  vertical-align: sub;
+}
+
+.inline-code-math-sup {
+  vertical-align: super;
+}
+
 /* Animation delays for page loader */
 .animation-delay-75 {
   animation-delay: 0.075s;
@@ -821,7 +864,9 @@ dialog::backdrop {
 }
 
 /* Aristas de retorno en verde - DEBE IR AL FINAL para mayor especificidad */
-.recursion-tree-container .react-flow__edge.return-edge path.react-flow__edge-path {
+.recursion-tree-container
+  .react-flow__edge.return-edge
+  path.react-flow__edge-path {
   stroke: #10b981 !important; /* verde para retornos */
   stroke-width: 2.5px !important;
 }

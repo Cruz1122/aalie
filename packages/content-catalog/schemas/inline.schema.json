@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aalie.dev/schemas/content/inline.schema.json",
+  "title": "AALIE Inline Rich Text",
+  "$defs": {
+    "text": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": {
+          "const": "text"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "strong": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": {
+          "const": "strong"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "emphasis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": {
+          "const": "emphasis"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "underline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": {
+          "const": "underline"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "highlight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": {
+          "const": "highlight"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        },
+        "tone": {
+          "type": "string",
+          "enum": ["yellow", "green", "blue", "red"]
+        }
+      }
+    },
+    "inlineCode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": {
+          "const": "inlineCode"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "inlineMath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "latex"],
+      "properties": {
+        "type": {
+          "const": "inlineMath"
+        },
+        "latex": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text", "target"],
+      "properties": {
+        "type": {
+          "const": "link"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        },
+        "target": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/targetRef"
+        }
+      }
+    },
+    "term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text", "termRef"],
+      "properties": {
+        "type": {
+          "const": "term"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        },
+        "termRef": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        },
+        "display": {
+          "type": "string",
+          "enum": ["tooltip", "highlight"]
+        }
+      }
+    },
+    "tooltip": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text", "tooltip"],
+      "properties": {
+        "type": {
+          "const": "tooltip"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        },
+        "tooltip": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "color": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text", "token"],
+      "properties": {
+        "type": {
+          "const": "color"
+        },
+        "text": {
+          "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+        },
+        "token": {
+          "type": "string",
+          "enum": ["primary", "success", "warning", "danger", "muted"]
+        }
+      }
+    },
+    "inlineSpan": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "$ref": "#/$defs/strong"
+        },
+        {
+          "$ref": "#/$defs/emphasis"
+        },
+        {
+          "$ref": "#/$defs/underline"
+        },
+        {
+          "$ref": "#/$defs/highlight"
+        },
+        {
+          "$ref": "#/$defs/inlineCode"
+        },
+        {
+          "$ref": "#/$defs/inlineMath"
+        },
+        {
+          "$ref": "#/$defs/link"
+        },
+        {
+          "$ref": "#/$defs/term"
+        },
+        {
+          "$ref": "#/$defs/tooltip"
+        },
+        {
+          "$ref": "#/$defs/color"
+        }
+      ]
+    },
+    "richText": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/inlineSpan"
+      }
+    }
+  }
+}

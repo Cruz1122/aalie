@@ -6,16 +6,17 @@ Llamada → operación lateral → resultado → 2 subllamadas (quicksort).
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
-from typing import Any, Dict, List, Optional
+
+from typing import Any, Dict, List
 
 from ...metrics_aggregator import aggregate_metrics
-from ..structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceNode,
-    StructuredTraceEdge,
-    StructuredTraceRenderConfig,
-)
 from ..structural_trace_classifier import StructuralTraceClassification
+from ..structured_trace_models import (
+    StructuredTraceEdge,
+    StructuredTraceNode,
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
+)
 from ._call_utils import call_to_label
 
 
@@ -63,7 +64,7 @@ def build_divide_partition_recurse(
             return
 
         node_id = f"call_{call_id}"
-        label = call_to_label(call)
+        label = call_to_label(call, config.locale)
         bc = call.get("base_case") or {}
         is_base = call.get("is_base_case", False) or (
             bc.get("detected", False) and bc.get("matched", False)
@@ -89,13 +90,19 @@ def build_divide_partition_recurse(
 
         children = call.get("children", [])
         if len(children) == 2 and config.showOperationNode:
+            locale_key = str(config.locale).lower()[:2]
+            op_title = "particionar" if locale_key == "es" else "partition"
+            op_line = (
+                "particionar(A, p, r) -> q" if locale_key == "es" else "partition(A, p, r) -> q"
+            )
+            q_line = "q = indice pivote" if locale_key == "es" else "q = pivot index"
             op_id = f"op_{call_id}"
             nodes.append(
                 StructuredTraceNode(
                     id=op_id,
                     role="operation",
-                    title="partition",
-                    lines=["partition(A, p, r) → q"],
+                    title=op_title,
+                    lines=[op_line],
                 )
             )
             edges.append(
@@ -107,7 +114,7 @@ def build_divide_partition_recurse(
                     id=res_id,
                     role="result",
                     title="q",
-                    lines=["q = pivot index"],
+                    lines=[q_line],
                 )
             )
             edges.append(

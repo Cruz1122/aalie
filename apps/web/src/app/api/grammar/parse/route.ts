@@ -1,6 +1,9 @@
 import type { GrammarParseRequest, GrammarParseResponse } from "@aa/types";
 import { NextRequest, NextResponse } from "next/server";
 
+/** Proxy al backend; no debe prerenderizarse ni cachearse como página estática. */
+export const dynamic = "force-dynamic";
+
 function getApiBase(): string {
   const a = process.env.API_INTERNAL_BASE_URL?.replace(/\/+$/, "");
   if (a) {

@@ -5,6 +5,7 @@ from .generated.LanguageParser import LanguageParser  # type: ignore
 from .error_listener import CollectingErrorListener
 from .ast_builder import ASTBuilder
 
+
 def parse_to_ast(source: str) -> Tuple[Dict[str, Any] | None, List[Dict[str, Any]]]:
     chars = InputStream(source)
     lexer = LanguageLexer(chars)

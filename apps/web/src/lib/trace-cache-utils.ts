@@ -7,9 +7,9 @@
  */
 
 /** Versión del contrato de trace. Incrementar cuando cambie el formato del response. */
-export const TRACE_CONTRACT_VERSION = "2.0";
+export const TRACE_CONTRACT_VERSION = "2.2";
 
-export const TRACE_CACHE_KEY_PREFIX = "analyzerTraceCache";
+const TRACE_CACHE_KEY_PREFIX = "analyzerTraceCache";
 export const TRACE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
 
 export interface TraceCacheKeyParams {
@@ -28,10 +28,7 @@ export interface TraceCacheKeyParams {
  */
 export function normalizeSource(source: string): string {
   if (!source || typeof source !== "string") return "";
-  let s = source
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .trim();
+  let s = source.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
   // Remover comentarios de bloque /* ... */
   s = s.replace(/\/\*[\s\S]*?\*\//g, "");
   // Remover comentarios de línea // ...
@@ -54,7 +51,7 @@ export function normalizeSource(source: string): string {
 function djb2Hash(str: string): string {
   let h = 5381;
   for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) + h) + str.charCodeAt(i);
+    h = (h << 5) + h + str.charCodeAt(i);
   }
   return (h >>> 0).toString(36);
 }

@@ -210,7 +210,8 @@ export default async function PrivacyPage({ params }: Props) {
                         juan.cruz37552@ucaldas.edu.co
                       </a>
                       <span className="text-slate-500 block sm:inline">
-                        {" "}({t("contactName")})
+                        {" "}
+                        ({t("contactName")})
                       </span>
                     </span>
                   </li>

@@ -39,8 +39,12 @@ export default function TraceChatPanel({
               className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
               aria-label={t("back")}
             >
-              <span className="material-symbols-outlined text-lg">arrow_back</span>
-              <span className="text-xs font-medium hidden sm:inline">{t("back")}</span>
+              <span className="material-symbols-outlined text-lg">
+                arrow_back
+              </span>
+              <span className="text-xs font-medium hidden sm:inline">
+                {t("back")}
+              </span>
             </button>
           )}
           <h3 className="text-sm font-semibold text-slate-300 truncate">

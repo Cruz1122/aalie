@@ -1,0 +1,180 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-iterative",
+  "slug": "iterative-algorithms",
+  "title": "Iterative algorithms",
+  "shortTitle": "Iterative",
+  "order": 3,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Linear loops, logarithmic patterns, and nested loops. Use tracing and counting to see real iterations and accumulated cost before fixing the growth order.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 55,
+  "tags": ["for", "while", "nested", "log n", "n2"],
+  "searchMeta": {
+    "aliases": ["loops", "iteration"],
+    "keywords": ["linear", "quadratic", "logarithmic"]
+  },
+  "prerequisites": {
+    "modules": [{ "id": "mod-user-guide-building-cost", "kind": "required" }],
+    "sections": []
+  },
+  "relatedModuleIds": ["mod-user-guide-building-cost", "mod-user-guide-recursive"],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-patrones-iter",
+      "text": "Relate loop patterns to typical growth (n, n², log n, n log n) using execution evidence."
+    },
+    {
+      "objectiveId": "obj-while-heuristico",
+      "text": "Understand that some WHILE analyses are heuristic and need cautious interpretation."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-iter-patrones",
+      "slug": "loop-patterns",
+      "title": "Loop patterns",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-lineal-y-log",
+          "slug": "linear-and-logarithmic",
+          "title": "Linear and logarithmic",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "blocks": [
+            {
+              "id": "blk-m3-s1-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A simple traversal over n elements usually yields linear cost if the loop body is constant per iteration. When the control variable halves or doubles the search space each step, iterations often grow like log n. The goal is not to guess: tracing shows how often you enter the body and counting sums each line."
+                }
+              ]
+            },
+            {
+              "id": "blk-m3-s1-table",
+              "type": "table",
+              "title": "Common patterns (intuition)",
+              "columns": [
+                { "key": "patron", "label": "Visible pattern" },
+                { "key": "orden", "label": "Typical order" }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [{ "type": "text", "text": "One loop over 1..n with O(1) body" }],
+                    [{ "type": "text", "text": "Linear in n" }]
+                  ]
+                },
+                {
+                  "cells": [
+                    [{ "type": "text", "text": "Nested loops with ~n ranges" }],
+                    [{ "type": "text", "text": "Quadratic in n" }]
+                  ]
+                },
+                {
+                  "cells": [
+                    [{ "type": "text", "text": "Halve each step" }],
+                    [{ "type": "text", "text": "Logarithmic in n" }]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-anidados",
+          "slug": "nested-loops",
+          "title": "Nested loops",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 16,
+          "blocks": [
+            {
+              "id": "blk-m3-s2-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "With two loops dependent on n, cost often grows as n² when both sweep linear ranges. Summations that appear when counting executions explain concrete coefficients; asymptotic notation later drops lower-order terms."
+                }
+              ]
+            },
+            {
+              "id": "blk-m3-s2-ev",
+              "type": "evidenceBlock",
+              "variant": "systemEvidence",
+              "icon": "analytics",
+              "title": "Trace and counting",
+              "blocks": [
+                {
+                  "id": "blk-m3-s2-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Tracing shows the real visit order; per-line counting accumulates cost. If evidence disagrees with your mental model (e.g. you expected n iterations but see more), recheck the guard and index bounds before concluding."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-while-limites",
+          "slug": "while-and-limits",
+          "title": "WHILE and analysis limits",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 21,
+          "blocks": [
+            {
+              "id": "blk-m3-s3-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Some "
+                },
+                { "type": "inlineCode", "text": "WHILE" },
+                {
+                  "type": "text",
+                  "text": " loops are hard to classify without a clear invariant or a closed form for the number of iterations. The system may then offer partial or heuristic results. Your job is not to treat that as proof: cross-check with examples, review the guard logic, and read the module on analysis limits."
+                }
+              ]
+            },
+            {
+              "id": "blk-m3-s3-warn",
+              "type": "evidenceBlock",
+              "variant": "warning",
+              "icon": "warning",
+              "blocks": [
+                {
+                  "id": "blk-m3-s3-wp",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "WHILE is conservative by design when evidence does not support a strong conclusion: do not force a label if coverage does not back the bound."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

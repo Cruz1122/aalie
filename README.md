@@ -52,11 +52,15 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - Editor Monaco (VS Code en el navegador)
 - Syntax highlighting para pseudocódigo
 - Validación en tiempo real con Web Workers
-- Autocompletado y numeración de líneas
-- Múltiples operadores de asignación soportados
+- Autocompletado contextual con prioridad para parámetros y variables locales
+- Inserción bilingüe de snippets y algoritmos según locale (`es` / `en`)
+- Panel lateral curado de ayuda de escritura con paginación responsive
+- Numeración de líneas
+- La sintaxis visible enseña la asignación oficial `<-`
 
 ### Asistente IA
 - Chatbot integrado con modelos de lenguaje
+- Asistente embebido por iframe en `/analyzer`, `/examples` y `/user-guide`
 - Clasificación automática de algoritmos
 - Análisis directo desde bloques de código
 - Corrección automática de errores
@@ -102,7 +106,8 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - Gestión de API key de Gemini en el frontend
 - Almacenamiento seguro en localStorage
 - Validación de formato y autenticidad
-- Prioridad: localStorage > variables de entorno
+- Prioridad efectiva para llamadas BFF: `API_KEY` del servidor > API key local válida del usuario
+- Sin API key válida, el asistente embebido no se renderiza y la app base sigue operando normal
 
 ## Estado del Proyecto
 
@@ -136,8 +141,8 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - [x] Tests exhaustivos
 
 **Documentación:**
-- [x] Documentación de API (`docs/api/`)
-- [x] Documentación de aplicación web (`docs/app/`)
+- [x] Documentación contractual centralizada en `docs/`
+- [x] Catálogo unificado de contenido en `packages/content-catalog/`
 - [x] Guía de usuario rediseñada
 - [x] README completo
 
@@ -213,12 +218,25 @@ pip install -r requirements.txt
 ### 3. Configurar variables de entorno (opcional)
 
 ```bash
-# Backend - apps/api/.env
-GEMINI_API_KEY=tu_api_key_here  # Opcional, para usar LLM
-
 # Frontend - apps/web/.env.local
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+
+# Frontend / BFF - apps/web/.env.local
+API_KEY=tu_api_key_here  # Opcional, habilita funciones LLM del servidor y el asistente embebido
 ```
+
+Si `API_KEY` no existe en servidor ni se configura una API key válida en el navegador, el asistente embebido de `/analyzer`, `/examples` y `/user-guide` no se muestra. El análisis formal principal sigue funcionando sin depender del asistente.
+
+### Asistente embebido por API key
+
+- Se muestra solo en `/analyzer`, `/examples` y `/user-guide`.
+- Reutiliza la UI base del chatbot, pero corre dentro de un `iframe` interno mismo-origen.
+- Mantiene historial separado del chatbot de home y persiste entre cambios de página.
+- Usa contexto curado de la vista actual. Si hay un modal o panel en foco, esa vista tiene prioridad sobre el resto del análisis.
+- En `analyzer` puede apoyarse en resultados formales visibles, seguimiento, comparación con LLM, GPU/CPU, loop invariant, procedimientos y modales recursivos.
+- En `examples` recibe secciones, algoritmos visibles y pseudocódigo del ejemplo focalizado.
+- En `user-guide` recibe la sección o modal visible.
+- El motor formal sigue siendo la fuente de verdad; el asistente explica, orienta o amplía, pero no sustituye el resultado determinista.
 
 ## Uso
 
@@ -289,11 +307,16 @@ algorithmic-analysis/
 │   ├── grammar/          # Gramática ANTLR4 y codegen (TS/Py)
 │   │   ├── grammar/      # Archivos .g4
 │   │   └── src/          # Parsers generados
+│   ├── content-catalog/  # Schemas, catálogo y validación de contenido
+│   │   ├── catalog/      # Espacios y módulos JSON
+│   │   ├── schemas/      # JSON Schemas del contrato
+│   │   └── src/          # Discovery, search, progress y validate
 │   └── types/            # Tipos compartidos (TypeScript)
 │       └── src/          # Definiciones de tipos
-├── docs/                 # Documentación técnica
-│   ├── api/              # Documentación de API
-│   └── app/              # Documentación de aplicación web
+├── docs/                 # Documentación contractual y operativa
+│   ├── 03-specs/         # Specs del motor y catálogos
+│   ├── 08-content/       # Contrato del contenido unificado
+│   └── 09-decisions/     # ADRs
 ├── infra/                # Docker Compose
 └── pnpm-workspace.yaml   # Configuración de workspaces
 ```
@@ -306,45 +329,16 @@ Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
 
 ### Documentación Técnica
 
-- **[Documentación de API](docs/api/README.md)** - Endpoints, modelos, arquitectura
-  - [Endpoints REST](docs/api/endpoints.md)
-  - [Modelos de Datos](docs/api/models.md)
-  - [Arquitectura del Backend](docs/api/architecture.md)
-  - [Manejo de Errores](docs/api/errors.md)
-  - **Nuevos documentos técnicos:**
-    - [Trace Endpoint](docs/api/trace-endpoint.md) - Funcionamiento del endpoint `/trace`
-    - [Análisis Recursivo](docs/api/recursive-analysis.md) - Detección de métodos y análisis
-    - [Integración de SymPy](docs/api/sympy-integration.md) - Uso de SymPy para matemáticas simbólicas
-
-- **[Documentación de Aplicación Web](docs/app/README.md)** - Frontend, componentes, routing
-  - [Arquitectura](docs/app/architecture.md)
-  - [Componentes](docs/app/components.md)
-  - [Sistema de Rutas](docs/app/routing.md)
-  - [Gestión de Estado](docs/app/state-management.md)
-  - [Sistema de Diseño](docs/app/styling.md)
-  - [Integración con API](docs/app/api-integration.md)
-  - **Documentos técnicos adicionales:**
-    - [React Flow](docs/app/react-flow.md) - Visualización de diagramas interactivos
-    - [GPU vs CPU Comparison](docs/app/gpu-cpu-comparison.md) - Sistema de análisis GPU/CPU
-    - [LLM Comparison](docs/app/llm-comparison.md) - Comparación con análisis de LLM
-    - [Pseudocode Tracking](docs/app/pseudocode-tracking.md) - Seguimiento de ejecución
-    - [API Key Configuration](docs/app/api-key-configuration.md) - Configuración de API key
-    - [Internacionalización, Labels y Prompts](docs/app/i18n-labels-prompts.md) - i18n, labels y prompts parametrizados por idioma
-
-- **[Documentación de LLM](docs/llm/usage-and-models.md)** - Uso de modelos de lenguaje
-  - Jobs disponibles y modelos usados
-  - Configuración centralizada
-  - Endpoints de LLM
-
-- **[Documentación de Desarrollo](docs/development/request-flow.md)** - Flujo de peticiones
-  - Flujo completo desde frontend hasta backend
-  - Proxies de Next.js API routes
-  - Manejo de errores y estados de carga
+- **[Mapa principal de documentación](docs/README.md)** - Puerta de entrada contractual del repo.
+- **[Mapa de navegación](docs/index.md)** - Ruta corta para ubicar specs, API, calidad y contenido.
+- **[Contrato del catálogo unificado](docs/08-content/content-model.md)** - Modelo `space -> module -> chapter -> section -> block`.
+- **[Schemas y catálogo real](packages/content-catalog/)** - Implementación canónica de contenido, búsqueda, progreso y validación.
 
 ### Documentación de Usuario
 
-- **[Guía de Usuario](apps/web/src/app/user-guide/page.tsx)** - Tutorial completo en la aplicación
-- **[Gramática y Sintaxis](packages/grammar/grammar/README.md)** - Referencia de sintaxis
+- **[Guía de usuario contractual](docs/07-user/user-guide.md)** - Uso operativo del sistema.
+- **[Guía viva en la app](apps/web/src/app/[locale]/user-guide/page.tsx)** - UI actual aún no migrada al renderer genérico.
+- **[Gramática y sintaxis](docs/03-specs/pseudocode-grammar-spec.md)** - Contrato visible del lenguaje.
 
 ### Guía de Desarrollo
 
@@ -370,6 +364,9 @@ pytest tests/ --cov=app --cov-report=term --cov-report=html
 # Tests de la gramática
 cd packages/grammar
 npm run verify
+
+# Validar catálogo de contenido
+pnpm validate:content-catalog
 ```
 
 ### Cobertura de Código
@@ -428,7 +425,7 @@ El proyecto utiliza **GitHub Actions** para automatización continua de builds, 
 
 3. **Quality** - Verificación de calidad de código
    - ESLint y Prettier para frontend
-   - Ruff y Black para backend
+   - Ruff (lint y format) para backend
    - No bloquea el build principal
 
 4. **Docker Integration** - Verificación de contenedores
@@ -468,6 +465,6 @@ Proyecto académico - Universidad de Caldas (2025-2)
 
 <div align="center">
 
-[Documentación](./docs/) • [Guía de Usuario](./apps/web/src/app/user-guide/) • [Ejemplos](./apps/web/src/app/examples/)
+[Documentación](./docs/) • [Guía de Usuario](./apps/web/src/app/[locale]/user-guide/) • [Ejemplos](./apps/web/src/app/[locale]/examples/)
 
 </div>

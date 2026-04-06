@@ -13,10 +13,10 @@
   "nav": {
     "home": "Home",
     "analyzer": "Analyzer",
-    "documentation": "Docs",
     "examples": "Examples",
     "about": "About Us",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "howToUse": "How to use"
   },
   "footer": {
     "languageLabel": "Language",
@@ -84,7 +84,6 @@
       "classifyError": "Could not classify algorithm",
       "analysisStopped": "Analysis stopped",
       "finalizing": "Finalizing analysis...",
-      "complete": "Analysis complete",
       "errorOccurred": "An error occurred",
       "generatingPolynomial": "Generating polynomial form..."
     },
@@ -154,6 +153,17 @@
           "description": "For standard divide-and-conquer recurrences T(n) = a·T(n/b) + f(n)."
         }
       }
+    },
+    "exportSelector": {
+      "title": "Choose download method",
+      "description": "Select the formats in which you want to download the analysis report.",
+      "formats": {
+        "markdown": "Markdown (MD)",
+        "pdf": "PDF Document"
+      },
+      "download": "Download",
+      "progress": "Generating report...",
+      "pleaseWait": "It may take a few seconds."
     },
     "view": {
       "sourceCode": "Source Code",
@@ -273,7 +283,28 @@
       "dominatingLevel": "Dominating Level:",
       "leavesLevel": "Leaves (last level)",
       "rootLevel": "Root (first level)",
-      "levelN": "Level {level}"
+      "levelN": "Level {level}",
+      "exportReport": "Export report",
+      "exportingReport": "Exporting report...",
+      "exportNoData": "No analysis to export"
+    },
+    "editorSupport": {
+      "title": "Writing Support",
+      "subtitle": "Hover a block to see when to use it and the key idea behind writing it correctly.",
+      "helpDefaultTitle": "Hover a block",
+      "helpDefaultDetails": "You will see a short hint about when to use it and how to start writing it.",
+      "helpExamplePrefix": "Use:",
+      "helpPreviewPrefix": "In our grammar:",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "categories": {
+        "recommended": "Recommended",
+        "conditions": "Conditions",
+        "loops": "Loops",
+        "functions": "Functions and returns",
+        "templates": "Templates",
+        "other": "Other"
+      }
     },
     "loopInvariant": {
       "title": "Deterministic Loop Invariant",
@@ -459,6 +490,10 @@
       "editVariables": "Edit variables",
       "arrayEditableHint": "Edit array as comma-separated list (e.g. 1,2,3,4)",
       "lengthFixedHint": "{names} = len({array}) (fixed)",
+      "editVariablesJson": "Edit variables (JSON)",
+      "jsonEditableHint": "Define initial_variables as a JSON object (nested structures allowed).",
+      "jsonVarsInvalid": "Invalid JSON. Check syntax.",
+      "jsonVarsObjectRequired": "JSON must be an object (key-value pairs).",
       "apply": "Apply",
       "explanationLevelMinimal": "Minimal",
       "explanationLevelStructured": "Structured",
@@ -492,9 +527,9 @@
       "view": "View",
       "assign": "Assignment",
       "if": "Conditional",
-      "for": "for",
-      "while": "while",
-      "repeat": "repeat",
+      "for": "For",
+      "while": "While",
+      "repeat": "Repeat",
       "call": "Call",
       "print": "Print",
       "return": "Return",
@@ -516,6 +551,7 @@
       "numExecutions": "Number of executions:",
       "expectedExecutionsDesc": "Expected number of times this line executes (E[N_ℓ])",
       "numExecutionsDesc": "How many times this line executes",
+      "lineCostDerivation": "Step by step of how this cost was derived:",
       "notes": "Notes:",
       "lineCost": "Line cost:",
       "lineCostAvg": "Expected line cost:",
@@ -532,6 +568,7 @@
       "polynomialForm": "Polynomial form T(n)",
       "polynomialFormAvg": "Polynomial form A(n)",
       "asymptoticNotation": "Asymptotic notation",
+      "iterativeProcedure": "Iterative Procedure",
       "derivationT": "Derivation of Equation T(n)",
       "derivationA": "Derivation of Equation A(n)",
       "symbols": "Symbols",
@@ -563,6 +600,7 @@
       "polynomialFormT": "Polynomial Form T(n)",
       "polynomialFormA": "Polynomial Form A(n)",
       "avgProcedure": "Average Case Procedure",
+      "iterativeProcedure": "Iterative Procedure",
       "asymptoticNotation": "Asymptotic Notation",
       "bigOUpper": "Big-O (upper bound):",
       "bigOmegaLower": "Big-Omega (lower bound):",
@@ -577,57 +615,19 @@
       "approximateWarning": "This average case is approximate; exact analysis requires more information about the input distribution."
     },
     "gpuCpuModal": {
-      "title": "GPU vs CPU Analysis",
+      "title": "Hardware Suitability Analysis",
       "closeModal": "Close modal",
-      "reasonsLabel": "Reasons",
-      "hideDetails": "Hide details",
-      "showDetails": "View analysis and recommendation",
-      "structureAnalysis": "Structure analysis:",
-      "recommendation": "Recommendation:",
-      "disclaimer": "This analysis is qualitative and based solely on the algorithm structure (its AST). It does not claim that GPU is always faster than CPU or vice versa. The recommendation is indicative and serves as a conceptual guide, not as a real benchmark.",
-      "disclaimerTitle": "About this analysis",
-      "gpuReasons": {
-        "regular_loops_very": "✓ Loops have a very regular structure, with minimal conditional decisions allowing uniform parallel execution",
-        "regular_loops_little": "✓ Loops have little conditional logic, facilitating massive parallelization without significant thread divergence",
-        "array_block": "✓ The algorithm performs multiple block accesses to data structures, an ideal pattern for GPU kernels that process large volumes of data simultaneously",
-        "array_frequent": "✓ Frequent array accesses detected, indicating data processing that benefits from GPU memory bandwidth",
-        "nested_simple": "✓ Nested loops with simple logic create opportunities for multi-dimensional parallelization, leveraging the massively parallel architecture of GPUs",
-        "no_recursion": "✓ The absence of recursion eliminates the need to handle complex stacks, allowing predictable and parallelizable execution flow",
-        "no_conditionals": "✓ Loops lack conditional decisions entirely, guaranteeing all threads follow the same execution path without divergence penalties",
-        "multiple_loops": "✓ The presence of multiple regular loops suggests a repetitive computation pattern that can be efficiently distributed among thousands of GPU cores",
-        "complex_recursion": "✗ Complex recursion introduces irregular control flow and dependencies between calls that hinder massive parallelization on GPU",
-        "recursion": "✗ The presence of recursion creates a non-linear execution flow that does not adapt well to the parallel execution architecture of GPUs",
-        "high_branching": "✗ High density of conditional decisions within loops causes massive divergence between threads, drastically reducing GPU efficiency",
-        "moderate_branching": "✗ Multiple decisions within loops generate divergent execution paths that penalize performance on SIMD architectures like GPUs",
-        "calls_in_loops": "✗ Frequent function calls within loops introduce overhead and complexity that hinder optimization and parallelization on GPU",
-        "no_loops_recursive": "✗ The absence of loops combined with recursion indicates a tree or backtracking-based algorithm, typically more efficient on CPU",
-        "mixed": "• The algorithm presents mixed characteristics that do not clearly favor either GPU or CPU",
-        "mixed_moderate": "• Loops have a moderate level of conditional decisions, creating a balance between parallelization and divergence",
-        "mixed_limited_recursion": "• Limited recursion introduces some complexity, but not deep enough to completely rule out parallelization",
-        "mixed_array": "• Array accesses are present but not dense enough to fully exploit GPU memory bandwidth",
-        "fallback": "• The analysis does not show clearly defined characteristics toward GPU or CPU"
-      },
-      "cpuReasons": {
-        "deep_recursion": "✓ Deep and multiple recursion creates a control flow that is naturally handled on CPU, where the stack and call management are optimized",
-        "recursion": "✓ The presence of recursion indicates an algorithm that benefits from the efficient call and context handling offered by modern CPUs",
-        "high_branching": "✓ High density of conditional decisions within loops creates complex control flow that CPUs handle efficiently with branch prediction and out-of-order execution",
-        "moderate_branching": "✓ Multiple decisions within loops generate varied execution paths that are better optimized on CPU through branch prediction techniques",
-        "complex_recursion": "✓ The complex recursive pattern with multiple calls leverages the flexibility of CPU execution model, where each call can have its own context and stack",
-        "calls_in_loops": "✓ Frequent function calls within loops execute efficiently on CPU thanks to call optimization and instruction cache",
-        "complex_decisions": "✓ The complexity of decisions within loops requires conditional evaluation that CPUs process efficiently with specialized execution units",
-        "pure_recursion": "✓ A purely recursive algorithm without loops benefits from the sequential execution model and stack memory management that characterizes CPUs",
-        "regular_loops": "✗ Extremely regular loops with little conditional logic represent an ideal pattern for massive GPU parallelization, where CPU cannot leverage its flexibility",
-        "array_block": "✗ Intensive block array processing benefits more from GPU memory bandwidth and massive parallelization than from sequential CPU execution",
-        "iterative_simple": "✗ The simple repetitive iterative pattern with multiple loops is an ideal candidate for GPU parallelization, where thousands of threads can execute the same operation simultaneously",
-        "nested_simple": "✗ Nested loops with simple logic create multidimensional parallelization opportunities that GPUs exploit better than CPUs",
-        "no_conditionals": "✗ The total absence of conditional decisions in loops eliminates CPU branch prediction advantages, favoring massively parallel GPU execution",
-        "mixed": "• The algorithm presents mixed characteristics that do not clearly favor either GPU or CPU",
-        "mixed_moderate": "• Loops have a moderate level of decisions, creating a balance where neither massive parallelization nor CPU flexibility clearly dominate",
-        "mixed_limited_recursion": "• Limited recursion introduces some control flow complexity, but not deep enough to completely rule out other optimization strategies",
-        "mixed_array": "• Array accesses are present but not dense enough to fully justify a migration to GPU",
-        "mixed_calls": "• Function calls within loops add complexity, but at a level that can be handled both on CPU and in hybrid implementations",
-        "fallback": "• The analysis does not show clearly defined characteristics toward CPU or GPU"
-      }
+      "confidence": "Confidence",
+      "scores": "Scores",
+      "hybrid": "Hybrid",
+      "blockers": "Parallelization blockers",
+      "positive": "Favorable signals",
+      "negative": "Unfavorable signals",
+      "opportunities": "Transformation opportunities",
+      "patterns": "Detected patterns",
+      "diagnostics": "Diagnostics",
+      "disclaimer": "This analysis is deterministic and based on the algorithm's AST structure. It does not constitute a benchmark. Scores are indicative.",
+      "disclaimerTitle": "About this analysis"
     },
     "characteristicEquationModal": {
       "title": "Complete Procedure - Characteristic Equation Method",
@@ -844,77 +844,31 @@
       "progress": "Progress",
       "analyzingRecurrence": "Analyzing recurrence...",
       "pleaseWait": "Please wait while the analysis completes..."
-    }
-  },
-  "documentation": {
-    "index": {
-      "technicalTitle": "Technical Documentation",
-      "technicalDesc": "Detailed guides for developers, APIs, system architecture and code examples to integrate the analyzer into your projects.",
-      "technicalLink": "View Technical Documentation",
-      "userGuideTitle": "User Guide",
-      "userGuideDesc": "Step-by-step tutorials, common use cases and guides to get the most out of the complexity analyzer features.",
-      "userGuideLink": "View User Guide",
-      "examplesTitle": "Algorithm Examples",
-      "examplesDesc": "Collection of classic algorithms organized by analysis methods. Copy any example and analyze its complexity with the most appropriate method (iteration, master theorem, or recursion tree).",
-      "examplesLink": "View Examples"
     },
-    "technical": {
-      "title": "Technical Documentation",
-      "subtitle": "Overview of the flow, monorepo architecture and initial API contracts. This document is an initial draft and will be updated as the project evolves.",
-      "toc": "Table of contents",
-      "fullTitle": "Complete Technical Documentation",
-      "fullDesc": "For detailed technical documentation, see the following resources in the repository:",
-      "apiTitle": "API Documentation",
-      "apiDesc": "Complete backend API documentation, including endpoints, data models, architecture and error handling.",
-      "appTitle": "App Documentation",
-      "appDesc": "Complete frontend documentation, including components, routing, state management, styling and API integration.",
-      "indexGeneral": "General index",
-      "endpoints": "REST endpoints",
-      "models": "Data models",
-      "architecture": "Architecture",
-      "errors": "Error handling",
-      "components": "Components",
-      "routing": "Routing system",
-      "state": "State",
-      "styling": "Styling",
-      "apiIntegration": "API integration",
-      "i18nLabels": "Internationalization, labels and prompts",
-      "note": "Note",
-      "noteText": "This documentation is available in the project repository in the folders",
-      "backToDocs": "Back to Documentation",
-      "nextToUserGuide": "View User Guide",
-      "updating": "This page is being constantly updated.",
-      "modalClose": "Close modal",
-      "viewDetails": "View Details",
-      "viewDiagram": "View Diagram",
-      "withDiagram": "With diagram",
-      "contentOnly": "Content only",
-      "sections": {
-        "arquitectura": "Architecture and request flow",
-        "flujoUi": "Analysis flow in the UI",
-        "visualizaciones": "Visualizations",
-        "errores": "Error handling",
-        "llm": "LLM integration",
-        "i18n": "Internationalization",
-        "monorepo": "Monorepo packages",
-        "herramientas": "Development tools",
-        "analisis": "Complexity analysis",
-        "grammar": "Grammar and parser",
-        "mcp": "MCP AALIE Conventions"
+    "analysisSteps": {
+      "title": "Step by step",
+      "closeModal": "Close modal",
+      "noSteps": "No step-by-step data is available for this analysis.",
+      "overallStatus": "Overall status",
+      "status": {
+        "complete": "Complete",
+        "partial": "Partial",
+        "unsupported": "Unsupported",
+        "error": "Error"
       },
-      "descriptions": {
-        "arquitectura": "Monorepo, request flow, parse and analyze. REST and BFF for LLM.",
-        "flujoUi": "Monaco editor, live validation, cost table, LaTeX modals.",
-        "visualizaciones": "CFG, recurrence tree, React Flow. Dagre layout, execution diagrams.",
-        "errores": "API down, invalid grammar, unclosable summations. LLM suggestions.",
-        "llm": "Grammar correction, analysis from chat, simplification, procedures. Jobs and models.",
-        "i18n": "es/en support, backend labels, LLM prompts parametrized by locale.",
-        "monorepo": "@aa/grammar and @aa/types. Identical AST client-server.",
-        "herramientas": "ESLint, Prettier, Ruff, Black. Environment variables and trace metadata.",
-        "analisis": "3-column interface, iterative/recursive, Master Theorem, memoization, GPU/CPU, LaTeX.",
-        "grammar": "ANTLR4 grammar, TS/Py parsers. Procedures, control structures, operators.",
-        "mcp": "Tools: read_conventions, read_doc, list_components, changelog_template, i18n_reminder."
-      }
+      "confidence": "Confidence",
+      "confidenceLevels": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "warning": "Warning",
+      "flipToExplanation": "View explanation",
+      "flipToResult": "Back to step",
+      "conceptTitle": "Step explanation",
+      "recurrenceEquation": "Recurrence equation",
+      "characteristicEquation": "Characteristic equation",
+      "finalTheta": "Asymptotic conclusion (Theta)"
     }
   },
   "home": {
@@ -983,227 +937,16 @@
     "assistantTitle": "Algorithmic Analysis Live Interaction Expert",
     "clearConversation": "Clear conversation",
     "backToHome": "Back to home",
+    "closeAssistant": "Close assistant",
     "unavailable": "AALIE unavailable",
     "apiKeyRequired": "AALIE requires a Gemini API Key to work. Configure your API Key to enable AI functions. You can get it at",
     "placeholder": "Type your message...",
     "helpRequest": "Help me fix this error",
     "retry": "Retry",
-    "errorGeneric": "Sorry, I had a problem processing your message. Could you try again?"
-  },
-  "userGuide": {
-    "title": "User Guide",
-    "subtitle": "Learn to use the algorithmic complexity analyzer with this complete guide covering from basic syntax to advanced algorithm analysis.",
-    "toc": "Contents",
-    "viewDetails": "View Details",
-    "modalClose": "Close modal",
-    "introduccion": "Introduction",
-    "editor": "Using the Editor",
-    "editorBasico": "Basic Functions",
-    "editorValidacion": "Real-time Validation",
-    "editorAtajos": "Keyboard Shortcuts",
-    "gramatica": "Grammar Syntax",
-    "gramaticaProcedimientos": "Procedures",
-    "gramaticaVariables": "Variables and Assignment",
-    "gramaticaEstructuras": "Control Structures",
-    "gramaticaOperadores": "Operators",
-    "gramaticaArrays": "Arrays",
-    "gramaticaPrint": "PRINT Statements",
-    "analisis": "Complexity Analysis",
-    "analisisEditor": "From Manual Editor",
-    "analisisChatbot": "From AALIE",
-    "analisisResultados": "Interpreting Results",
-    "analisisLlm": "LLM Comparison",
-    "analisisGpuCpu": "GPU vs CPU Analysis",
-    "analisisTrace": "Pseudocode Tracing",
-    "ejemplos": "Quick Examples",
-    "errores": "Troubleshooting",
-    "introDesc1": "Welcome to the algorithmic complexity analyzer. This tool allows you to write algorithms in pseudocode and automatically obtain the analysis of their temporal complexity (Big O).",
-    "introDesc2": "The system uses a structured pseudocode language that is easy to read and write, with real-time validation and automatic suggestions to help you write correct code.",
-    "introTip": "Tip",
-    "introTipDescPre": "If you're new, start by reviewing the ",
-    "introTipDescLinkText": "examples",
-    "introTipDescPost": " to familiarize yourself with the syntax.",
-    "editorBasicDesc": "The editor is based on Monaco Editor (the same editor as Visual Studio Code) and offers advanced features:",
-    "editorBasic1": "Syntax highlighting specific to the pseudocode language",
-    "editorBasic2": "Keyword autocomplete (BEGIN, END, FOR, WHILE, etc.)",
-    "editorBasic3": "Automatic line numbering",
-    "editorBasic4": "Smart automatic indentation",
-    "editorBasic5": "Find and replace text (Ctrl+F)",
-    "editorValidDesc": "The editor validates your code as you type, showing errors and warnings immediately:",
-    "editorValid1": "Red underline: Syntax errors that must be corrected",
-    "editorValid2": "Yellow underline: Warnings or improvement suggestions",
-    "editorValid3": "Descriptive messages when hovering over the error",
-    "editorValid4": "Indicators in the left margin for severe errors",
-    "editorValidNote": "Note",
-    "editorValidNoteDesc": "Validation runs in a Web Worker to avoid blocking the interface, so there may be a slight delay.",
-    "shortcutShortcut": "Shortcut",
-    "shortcutAction": "Action",
-    "shortcut1": "Save/Analyze code",
-    "shortcut2": "Find text",
-    "shortcut3": "Find and replace",
-    "shortcut4": "Comment/uncomment line",
-    "shortcut5": "Indent selection",
-    "shortcut6": "Outdent selection",
-    "gramProcDesc": "Procedures are the basic unit of the language. They are defined as follows:",
-    "gramProcTypes": "Parameter types:",
-    "gramProcScalar": "Scalars:",
-    "gramProcArrayDim": "Arrays with dimension:",
-    "gramProcArrayRange": "Arrays with range:",
-    "gramProcTyped": "Typed objects:",
-    "gramVarDesc": "Variables are assigned using the assignment operator. Multiple notations are supported:",
-    "gramVarImportant": "Important",
-    "gramVarImportantDesc": "All assignments must end with a semicolon (;)",
-    "gramStructIf": "IF-THEN-ELSE",
-    "gramStructFor": "FOR",
-    "gramStructWhile": "WHILE",
-    "gramStructRepeat": "REPEAT-UNTIL",
-    "gramStructImportant": "Important",
-    "gramStructImportantDesc": "All control structures require BEGIN...END blocks or braces { }. Standalone statements are not allowed.",
-    "gramOpType": "Type",
-    "gramOpOps": "Operators",
-    "gramOpPrec": "Precedence",
-    "gramOpArith": "Arithmetic",
-    "gramOpRel": "Relational",
-    "gramOpLog": "Logical",
-    "gramOpPrecArith": "*, /, DIV, MOD > +, -",
-    "gramOpPrecRel": "Lower than logical",
-    "gramOpPrecLog": "NOT > AND > OR",
-    "gramOpExamples": "Examples:",
-    "gramArraysDesc": "Array declaration and usage:",
-    "gramPrintDesc": "The print statement allows you to display values in the console:",
-    "gramPrintLiteral": "Literal strings:",
-    "gramPrintLiteralDesc": "In double quotes \"text\"",
-    "gramPrintMulti": "Multiple arguments:",
-    "gramPrintMultiDesc": "Separated by comma, automatically concatenated",
-    "gramPrintExpr": "Expressions:",
-    "gramPrintExprDesc": "You can include variables and mathematical operations",
-    "gramPrintEscape": "Escape quotes:",
-    "gramPrintEscapeDesc": "Use \\\" for quotes inside the string",
-    "gramPrintNote": "Note",
-    "gramPrintNoteDesc": "The cost of print is constant (O(1)) plus the cost of evaluating its arguments.",
-    "analisisEditorDesc": "In manual mode, you can write code directly in the editor and analyze it:",
-    "analisisEditor1": "Write your code:",
-    "analisisEditor1b": "The editor validates syntax in real time",
-    "analisisEditor2": "Verify parse:",
-    "analisisEditor2b": "Use the \"Verify Parse\" button to validate syntax",
-    "analisisEditor3": "Analyze complexity:",
-    "analisisEditor3b": "Click \"Analyze Complexity\" to start the full analysis",
-    "analisisEditor4": "Review results:",
-    "analisisEditor4b": "The results page will open with cost table and detailed procedures",
-    "analisisEditorTip": "Tip",
-    "analisisEditorTipDesc": "If there are syntax errors, wait 3 seconds and an \"AI Help\" button will appear that will send your code to AALIE for automatic correction.",
-    "analisisChatbotDesc": "You can also analyze code directly from AALIE:",
-    "analisisChatbot1": "Ask AALIE for code:",
-    "analisisChatbot1b": "Request an algorithm or paste code in the chat",
-    "analisisChatbot2": "\"Analyze\" button:",
-    "analisisChatbot2b": "When AALIE returns code in a pseudocode block, a green \"Analyze\" button will appear next to the copy button",
-    "analisisChatbot3": "Loader in chat:",
-    "analisisChatbot3b": "The analysis runs directly in the chat view with the same loader as the manual editor",
-    "analisisChatbot4": "Automatic navigation:",
-    "analisisChatbot4b": "When the analysis completes, it automatically navigates to the results page",
-    "analisisChatbotAdv": "Advantage",
-    "analisisChatbotAdvDesc": "You can ask AALIE for corrections and analyze the corrected code without leaving the chat.",
-    "analisisResultDesc": "Once the analysis is complete, you will see:",
-    "analisisResult1": "Cost table per line:",
-    "analisisResult1b": "Shows elemental cost (Cₖ), number of executions and total cost per line",
-    "analisisResult2": "Case selector:",
-    "analisisResult2b": "In the top right corner, switch between Best/Average/Worst case",
-    "analisisResult3": "Summary cards:",
-    "analisisResult3b": "Three cards show asymptotic notation (Big-O) for each case, with \"View Procedure\" buttons on each card",
-    "analisisResult4": "Detailed procedures:",
-    "analisisResult4a": "General procedure: Click \"View Procedure\" on any card to see the full analysis",
-    "analisisResult4b": "Procedure per line: Click any line in the table to see the specific steps for that line",
-    "analisisModes": "Analysis Modes",
-    "bestCase": "Best Case",
-    "bestCaseDesc": "Analyzes the best case of the algorithm, considering:",
-    "bestCase1": "IF branches with fewer lines of code",
-    "bestCase2": "Minimum number of loop iterations",
-    "bestCase3": "Expected minimum complexity (lower bound)",
-    "bestCaseEx": "Example:",
-    "bestCaseExDesc": "In linear search, the best case is O(1) if the element is in the first position.",
-    "worstCase": "Worst Case",
-    "worstCaseDesc": "Analyzes the worst case of the algorithm, considering:",
-    "worstCase1": "IF branches with more lines of code",
-    "worstCase2": "Maximum number of loop iterations",
-    "worstCase3": "Expected maximum complexity (upper bound)",
-    "worstCaseEx": "Example:",
-    "worstCaseExDesc": "In linear search, the worst case is O(n) if the element does not exist or is at the end.",
-    "avgCase": "Average Case",
-    "avgCaseDesc": "Analyzes the average case using probabilistic models:",
-    "avgCase1": "Uniform Model: Uniform probability distribution (p = 1/2 by default)",
-    "avgCase2": "Symbolic Model: Probabilities expressed symbolically",
-    "avgCase3": "Mathematical expectations (expectedRuns) for each line",
-    "avgCase4": "Expected average complexity A(n) = E[T(n)]",
-    "avgCaseEx": "Example:",
-    "avgCaseExDesc": "In linear search, the average case is O(n/2) ≈ O(n) assuming uniform distribution.",
-    "analisisResultNote": "Note",
-    "analisisResultNoteDesc": "Procedures show detailed steps in LaTeX, from the original expression to the final polynomial form and asymptotic notation. For average case, A(n) is shown instead of T(n).",
-    "analisisLlmDesc": "The system allows comparing the automatic analysis with an independent analysis generated by an LLM (Gemini 2.5 Pro):",
-    "analisisLlm1": "Independent Analysis:",
-    "analisisLlm1b": "The LLM analyzes the code without knowing the system result",
-    "analisisLlm2": "Validation:",
-    "analisisLlm2b": "Compares both analyses and detects discrepancies",
-    "analisisLlm3": "Validation Note:",
-    "analisisLlm3b": "Generates a brief note (≤100 characters) indicating whether the analysis is correct",
-    "analisisLlmNote": "Note",
-    "analisisLlmNoteDesc": "AI functions (such as LLM comparison) require a Gemini API key. You can configure it in the application footer.",
-    "analisisGpuDesc": "The system analyzes whether your algorithm is more suitable for GPU or CPU through a scoring system (0-100):",
-    "analisisGpuMetrics": "Analyzed Metrics",
-    "analisisGpuRec": "Recursion:",
-    "analisisGpuRecDesc": "Penalizes GPU (difficult to parallelize)",
-    "analisisGpuBranch": "Branching:",
-    "analisisGpuBranchDesc": "Penalizes GPU (warp divergence)",
-    "analisisGpuLoops": "Loops:",
-    "analisisGpuLoopsDesc": "Favors GPU if independent",
-    "analisisGpuArrays": "Arrays:",
-    "analisisGpuArraysDesc": "Favors GPU (parallel access)",
-    "analisisGpuOps": "Mathematical operations:",
-    "analisisGpuOpsDesc": "Favors GPU (specialized ALUs)",
-    "analisisGpuRecs": "Recommendations",
-    "analisisGpuGpu": "GPU:",
-    "analisisGpuGpuDesc": "GPU Score >60 (highly parallelizable)",
-    "analisisGpuCpuLabel": "CPU:",
-    "analisisGpuCpuDesc": "CPU Score >60 (sequential or complex)",
-    "analisisGpuMix": "Mixed:",
-    "analisisGpuMixDesc": "Both scores 40-60 (hybrid)",
-    "analisisTraceDesc": "The system allows you to visualize the step-by-step execution of your algorithm with specific input values:",
-    "analisisTraceIter": "Iterative Algorithms",
-    "analisisTraceIter1": "Instruments the code to capture state at each step",
-    "analisisTraceIter2": "Shows variable values at each iteration",
-    "analisisTraceIter3": "Visualizes execution flow with React Flow",
-    "analisisTraceIter4": "Allows entering custom input values",
-    "analisisTraceRec": "Recursive Algorithms",
-    "analisisTraceRec1": "Generates recursive call tree diagram with LLM (Gemini 2.0 Flash)",
-    "analisisTraceRec2": "Shows recursive calls with input/output values",
-    "analisisTraceRec3": "Visualizes the complete tree with React Flow",
-    "analisisTraceRec4": "Includes explanation of the recursion process",
-    "analisisTraceNote": "Note",
-    "analisisTraceNoteDesc": "AI functions (such as recursive diagram generation) require a Gemini API key. Iterative tracing does not require an API key.",
-    "ejemplosDesc": "Here are some simple examples to get started:",
-    "ejemplo1": "Example 1: Factorial",
-    "ejemplo2": "Example 2: Linear Search",
-    "ejemplosMore": "More examples",
-    "ejemplosMoreDescPre": "To see more complete examples, visit the ",
-    "ejemplosMoreDescLinkText": "examples page",
-    "ejemplosMoreDescPost": ".",
-    "errorUnexpected": "Error: \"unexpected token\"",
-    "errorUnexpectedCause": "Cause:",
-    "errorUnexpectedCauseDesc": "Unexpected token in syntax.",
-    "errorUnexpectedSol": "Solution:",
-    "errorUnexpectedSolDesc": "Verify that all keywords are in uppercase (BEGIN, END, IF, THEN, etc.) and that blocks are complete.",
-    "errorMissingBegin": "Error: \"missing BEGIN or END\"",
-    "errorMissingBeginCause": "Missing BEGIN...END block in a control structure.",
-    "errorMissingBeginSol": "All structures (IF, FOR, WHILE) require complete blocks. Standalone statements are not allowed.",
-    "errorMissingSemicolon": "Error: \"missing semicolon\"",
-    "errorMissingSemicolonCause": "Missing semicolon at the end of a statement.",
-    "errorMissingSemicolonSol": "All assignments, declarations and calls must end with a semicolon (;).",
-    "errorApiUnavailable": "API unavailable",
-    "errorApiCause": "The backend server is not responding.",
-    "errorApiSol": "The editor will continue to work with local validation, but complexity analysis will not be available. Check your connection or try again later.",
-    "backToDoc": "Back to Documentation",
-    "viewExamples": "View Examples",
-    "examplesLink": "examples",
-    "examplesPageLink": "examples page"
+    "errorGeneric": "Sorry, I had a problem processing your message. Could you try again?",
+    "launcherAriaLabel": "Open analysis assistant",
+    "embeddedFrameTitle": "Embedded analysis assistant",
+    "embeddedWelcome": "I'm AALIE. I can help explain what you're viewing, suggest next steps, and add context, but the app's formal analysis remains the source of truth."
   },
   "privacy": {
     "title": "Privacy Policy - AALIE",
@@ -1241,48 +984,582 @@
     "metaDesc": "AALIE (Algorithmic Analysis Live Interaction Expert) privacy policy"
   },
   "examples": {
-    "title": "Algorithm Examples",
-    "subtitle": "Collection of classic algorithms organized by analysis methods. Examples are grouped by: basic (unknown), iterative, and recursive algorithms classified by the method used (iteration, master theorem, or recursion tree).",
-    "categories": {
-      "simple": "Unknown/Basic Algorithms",
-      "iterative": "Iterative",
-      "recursive_iteration": "Recursive (Iteration Method)",
-      "recursive_master": "Recursive (Master Theorem)",
-      "recursive_tree": "Recursive (Recursion Tree)",
-      "recursive_characteristic": "Recursive (Characteristic Equation)"
-    },
-    "categoryDesc": {
-      "simple": "Basic algorithms without complex loops. They will be classified as 'unknown' in the analysis.",
-      "iterative": "Algorithms with FOR/WHILE loops. Fully supported by the iterative analyzer.",
-      "recursive_iteration": "Recursive algorithms analyzed with the iteration method (unrolling). Used when the recurrence does not meet the conditions of Master Theorem, Recursion Tree or Characteristic Equation.",
-      "recursive_master": "Recursive algorithms analyzed with the Master Theorem. Used when the recurrence has the form T(n) = aT(n/b) + f(n) with a < 2 or does not meet the conditions of Recursion Tree or Characteristic Equation.",
-      "recursive_tree": "Recursive algorithms analyzed with the Recursion Tree method. Used when a ≥ 2, divides uniformly and is divide-and-conquer. Includes tree visualization and level table.",
-      "recursive_characteristic": "Recursive algorithms analyzed with the Characteristic Equation method. Used when the recurrence is linear with constant shifts T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Has PRIORITY over the iteration method. Automatically detects linear Dynamic Programming cases and generates DP version."
-    },
-    "exampleCount": "{count} example",
-    "exampleCountPlural": "{count} examples",
+    "title": "Algorithm Catalog",
+    "subtitle": "Explore parser- and analyzer-validated examples. Only enabled algorithms from the central catalog are shown.",
+    "catalogSummary": "{enabled} active of {total} total",
+    "typeSelectorTitle": "Choose a family",
+    "typeSelectorSubtitle": "Each family keeps a clear didactic definition and a conservative release policy based on real validation.",
+    "viewFamily": "View family",
+    "globalSearchTitle": "Global search",
+    "globalSearchSubtitle": "Search by name, summary, tags, and category across all enabled algorithms.",
+    "searchPlaceholder": "Search algorithm, tag, or category...",
+    "searchAriaLabel": "Search examples catalog",
+    "emptyTitle": "No results",
+    "emptyDescription": "No algorithms match the current search and filters.",
+    "viewAlgorithm": "View algorithm",
+    "hideAlgorithm": "Hide algorithm",
     "analyze": "Analyze",
-    "copyToAnalyzer": "Copy and analyze",
-    "viewUserGuide": "View User Guide",
-    "viewCode": "View Code",
-    "hideCode": "Hide Code",
-    "copied": "Copied",
-    "copy": "Copy",
     "analyzing": "Analyzing...",
-    "note": "Note",
-    "homogeneous": "Homogeneous",
-    "nonHomogeneous": "Non-Homogeneous",
-    "dpLinear": "Linear DP",
-    "toc": "Table of contents",
-    "howToUse": "How to use",
-    "howToUse1": "View Code: Click to see the full algorithm code.",
-    "howToUse2": "Copy: Copy the code to the clipboard.",
-    "howToUse3": "Analyze: Analyze directly or paste in the",
-    "howToUse3Link": "analyzer",
-    "howToUse4": "Explore: The system calculates best/worst/average complexity automatically.",
-    "methodsNote": "Analysis methods note",
+    "categorySummary": "{enabled} active of {total} in this category",
+    "categoryPanelTitle": "Category description",
+    "filtersTitle": "Filter by verified methods",
     "backToUserGuide": "User Guide",
     "goToAnalyzer": "Go to AALIE",
-    "pseudocode": "Pseudocode"
+    "backToExamplesHome": "Examples Home",
+    "catalogItems": {
+      "bogo-sort": {
+        "title": "Bogo Sort",
+        "summary": "An intentionally extreme teaching sample used to contrast an inefficient iterative sorter with the rest of the catalog.",
+        "tags": ["sorting", "random", "toy"]
+      },
+      "bubble-sort": {
+        "title": "Bubble Sort",
+        "summary": "Sorts by comparing adjacent elements and works as a stable reference for quadratic iterative cases.",
+        "tags": ["sorting", "quadratic", "swaps"]
+      },
+      "bucket-sort": {
+        "title": "Bucket Sort",
+        "summary": "Iterative bucket-distribution skeleton kept hidden until a grammar-friendly version is fully validated.",
+        "tags": ["sorting", "buckets", "distribution"]
+      },
+      "counting-sort": {
+        "title": "Counting Sort",
+        "summary": "Counts frequencies and rebuilds the array in several linear passes over indices and occurrences.",
+        "tags": ["sorting", "frequencies", "linear"]
+      },
+      "dutch-national-flag": {
+        "title": "Dutch National Flag",
+        "summary": "Maintains three regions and is useful to study linear partitions with multiple pointers.",
+        "tags": ["partition", "two pointers", "linear"]
+      },
+      "euclides-iterativo-mcd": {
+        "title": "Iterative Euclid (GCD)",
+        "summary": "A short and reliable sample to study a loop with geometric reduction on the state size.",
+        "tags": ["gcd", "mod", "logarithmic"]
+      },
+      "factorial-iterativo": {
+        "title": "Iterative factorial",
+        "summary": "A basic linear sample that advances a simple control variable while accumulating a product.",
+        "tags": ["factorial", "for", "linear"]
+      },
+      "flood-fill-iterativo": {
+        "title": "Iterative Flood Fill",
+        "summary": "A grid sample with an explicit stack; kept hidden until a robust variant for large traces is validated.",
+        "tags": ["matrix", "stack", "fill"]
+      },
+      "heapsort": {
+        "title": "Heapsort",
+        "summary": "Compact version built around iterative heapify; disabled until heap support is validated more thoroughly.",
+        "tags": ["heap", "sorting", "implicit tree"]
+      },
+      "insertion-sort": {
+        "title": "Insertion Sort",
+        "summary": "Builds the sorted array by inserting each key into place and exposes a classic inner while loop.",
+        "tags": ["sorting", "insertion", "while"]
+      },
+      "jump-search": {
+        "title": "Jump Search",
+        "summary": "Alternates block jumps with a short linear scan and is useful to study two consecutive loops.",
+        "tags": ["search", "jumps", "blocks"]
+      },
+      "kadane": {
+        "title": "Kadane",
+        "summary": "Tracks a best local prefix and a global optimum in a single linear pass.",
+        "tags": ["subarray", "dp", "linear"]
+      },
+      "linear-search": {
+        "title": "Linear Search",
+        "summary": "Traverses the array sequentially and serves as a minimal reference for iterative searches.",
+        "tags": ["search", "linear", "for"]
+      },
+      "maximum-subarray-cuadratico": {
+        "title": "Quadratic Maximum Subarray",
+        "summary": "Iterates over all starting points and expands running sums to contrast with Kadane.",
+        "tags": ["subarray", "quadratic", "nested loops"]
+      },
+      "merge-dos-arreglos-ordenados": {
+        "title": "Merge two sorted arrays",
+        "summary": "Uses two pointers and a temporary output to study a classic linear merge.",
+        "tags": ["merge", "two pointers", "linear"]
+      },
+      "newton-raphson-iterativo": {
+        "title": "Iterative Newton-Raphson",
+        "summary": "Numerical sample with successive refinements and a tolerance-based stopping rule.",
+        "tags": ["numeric", "approximation", "repeat"]
+      },
+      "pascal-triangle-bottom-up": {
+        "title": "Bottom-up Pascal Triangle",
+        "summary": "Tabular construction of a triangular matrix; it stays in the master catalog for now but not in the public UI.",
+        "tags": ["pascal", "table", "matrix"]
+      },
+      "prefix-sum": {
+        "title": "Prefix Sum",
+        "summary": "Builds a reusable cumulative sum and is ideal to study simple linear dependencies.",
+        "tags": ["prefix", "cumulative", "linear"]
+      },
+      "selection-sort": {
+        "title": "Selection Sort",
+        "summary": "Finds the remaining minimum and places it at the front on each iteration.",
+        "tags": ["sorting", "selection", "quadratic"]
+      },
+      "shell-sort": {
+        "title": "Shell Sort",
+        "summary": "Refines the array through decreasing gaps and shows multiple levels of iterative nesting.",
+        "tags": ["sorting", "gaps", "increments"]
+      },
+      "sieve-of-eratosthenes": {
+        "title": "Sieve of Eratosthenes",
+        "summary": "Marks multiples in a boolean table and works well to study nested loops with jumps.",
+        "tags": ["primes", "sieve", "boolean table"]
+      },
+      "suma-de-arreglo": {
+        "title": "Array sum",
+        "summary": "Accumulates every element in the array in a single linear scan.",
+        "tags": ["sum", "linear", "for"]
+      },
+      "ternary-search-iterativo": {
+        "title": "Iterative Ternary Search",
+        "summary": "Splits the range into three sections per iteration over a sorted array.",
+        "tags": ["search", "ternary", "logarithmic"]
+      },
+      "two-sum-con-hash": {
+        "title": "Two Sum with hash",
+        "summary": "Lives in the master catalog as a reminder for richer auxiliary-object support in the future.",
+        "tags": ["hash", "pairs", "auxiliary structure"]
+      },
+      "warshall-transitive-closure": {
+        "title": "Warshall Transitive Closure",
+        "summary": "Triple loop over a matrix; remains disabled until two-dimensional matrix support is validated more carefully.",
+        "tags": ["matrix", "graph", "transitive closure"]
+      },
+      "closest-pair-of-points": {
+        "title": "Closest Pair of Points",
+        "summary": "A geometrically faithful skeleton that stays hidden until the strip and point handling is modeled more tightly.",
+        "tags": ["geometry", "points", "strip"]
+      },
+      "convex-hull-divide-and-conquer": {
+        "title": "Divide-and-Conquer Convex Hull",
+        "summary": "Kept as a reference sketch for a future validated divide-and-conquer convex hull sample.",
+        "tags": ["geometry", "convex hull", "merge"]
+      },
+      "cooley-tukey-fft": {
+        "title": "Cooley-Tukey FFT",
+        "summary": "Recursive FFT over even and odd terms; stays disabled until a more parser-friendly version is fixed.",
+        "tags": ["fft", "even", "odd"]
+      },
+      "counting-inversions": {
+        "title": "Counting Inversions",
+        "summary": "Splits the array, counts on each half, and accumulates cross inversions while merging.",
+        "tags": ["merge", "inversions", "divide and conquer"]
+      },
+      "fast-multipole-skeleton-simplificado": {
+        "title": "Simplified Fast Multipole Skeleton",
+        "summary": "Kept as an honest placeholder for a hierarchical pattern that is not ready for end-user exposure yet.",
+        "tags": ["hierarchical", "geometry", "toy"]
+      },
+      "karatsuba-multiplication": {
+        "title": "Karatsuba Multiplication",
+        "summary": "Shows a ternary split of the multiplication work with an algebraic combine phase at the end.",
+        "tags": ["karatsuba", "multiplication", "subproblems"]
+      },
+      "kth-smallest-mediana-de-medianas": {
+        "title": "K-th Smallest by Median of Medians",
+        "summary": "Kept as an advanced reference until a tighter deterministic-pivot variant is ready to publish.",
+        "tags": ["selection", "medians", "pivot"]
+      },
+      "majority-element-divide-and-conquer": {
+        "title": "Divide-and-Conquer Majority Element",
+        "summary": "Obtains candidates per half and validates them in the combine phase.",
+        "tags": ["majority", "combine", "recursive"]
+      },
+      "matrix-chain-parenthesization-divide-and-conquer-naive": {
+        "title": "Naive Divide-and-Conquer Matrix Chain Parenthesization",
+        "summary": "Naive recursive matrix partition model kept out of the UI while we validate a more stable form.",
+        "tags": ["matrices", "partitions", "naive"]
+      },
+      "max-min-tournament": {
+        "title": "Max-Min Tournament",
+        "summary": "Splits the array into two halves and combines the maximum and minimum from each branch.",
+        "tags": ["maximum", "minimum", "tournament"]
+      },
+      "merge-sort": {
+        "title": "Merge Sort",
+        "summary": "Splits the array in half, sorts each half, and merges them in linear time.",
+        "tags": ["sorting", "merge", "divide and conquer"]
+      },
+      "minimax-de-arbol-binario": {
+        "title": "Binary Tree Minimax",
+        "summary": "Recursive game-tree sketch kept out of the UI until auxiliary node handling is tightened.",
+        "tags": ["minimax", "tree", "games"]
+      },
+      "nearest-points-by-strip-merge-variant": {
+        "title": "Nearest Points by Strip Merge Variant",
+        "summary": "A strip-based nearest-points variant kept as an advanced draft in the master catalog.",
+        "tags": ["geometry", "strip", "closeness"]
+      },
+      "polynomial-multiplication-divide-and-conquer": {
+        "title": "Divide-and-Conquer Polynomial Multiplication",
+        "summary": "Splits the polynomials in halves and combines partial products at the end.",
+        "tags": ["polynomials", "multiplication", "conquer"]
+      },
+      "post-office-recursive-partition": {
+        "title": "Post Office Recursive Partition",
+        "summary": "Recursive interval-partition placeholder that is not public yet because it needs a more concrete form.",
+        "tags": ["intervals", "partition", "classic"]
+      },
+      "quadtree-construction": {
+        "title": "QuadTree Construction",
+        "summary": "Four-way matrix partition kept for now as a master-catalog reference only.",
+        "tags": ["quadtree", "matrix", "quadrants"]
+      },
+      "quick-sort": {
+        "title": "Quick Sort",
+        "summary": "Partitions around a pivot and solves the two remaining regions recursively.",
+        "tags": ["sorting", "pivot", "partition"]
+      },
+      "range-sum-query-divide-and-conquer": {
+        "title": "Divide-and-Conquer Range Sum Query",
+        "summary": "Shows range partition into two halves, but stays out of the UI until a tighter version is ready.",
+        "tags": ["ranges", "sums", "segments"]
+      },
+      "segment-tree-construction": {
+        "title": "Segment Tree Construction",
+        "summary": "Recursive interval construction reserved for a fuller future version.",
+        "tags": ["segment tree", "intervals", "structure"]
+      },
+      "skyline-problem-divide-and-conquer": {
+        "title": "Divide-and-Conquer Skyline Problem",
+        "summary": "Classic skyline merge problem that remains an advanced record for now.",
+        "tags": ["skyline", "profile", "geometry"]
+      },
+      "strassen-matrix-multiplication": {
+        "title": "Strassen Matrix Multiplication",
+        "summary": "Included in the master catalog but still disabled until the matrix representation is refined.",
+        "tags": ["strassen", "matrices", "7 products"]
+      },
+      "tournament-tree-construction": {
+        "title": "Tournament Tree Construction",
+        "summary": "Splits the array into two branches and combines local winners at the root.",
+        "tags": ["tournament", "tree", "structure"]
+      },
+      "vlsi-closest-pair-style-partition": {
+        "title": "VLSI Closest-Pair Style Partition",
+        "summary": "Advanced geometric partition variant stored only in the master catalog for now.",
+        "tags": ["vlsi", "geometry", "partition"]
+      },
+      "weighted-median-divide-and-conquer": {
+        "title": "Divide-and-Conquer Weighted Median",
+        "summary": "Kept as an advanced weighted selection sample, still out of the public UI.",
+        "tags": ["median", "weights", "selection"]
+      },
+      "z-order-recursive-matrix-traversal": {
+        "title": "Recursive Z-order Matrix Traversal",
+        "summary": "Traverses a matrix by quadrants and makes a clear four-way divide-and-conquer pattern visible.",
+        "tags": ["matrix", "z-order", "quadrants"]
+      },
+      "binary-search-recursiva": {
+        "title": "Recursive Binary Search",
+        "summary": "Reduces the range to a single half and is one of the most reliable cases in the recursive catalog.",
+        "tags": ["search", "half", "logarithmic"]
+      },
+      "binary-tree-height": {
+        "title": "Binary Tree Height",
+        "summary": "Kept in the master catalog, but its two-branch shape stays out of the initial release.",
+        "tags": ["tree", "height", "two branches"]
+      },
+      "euclides-recursivo": {
+        "title": "Recursive Euclid",
+        "summary": "A short, stable case for reduction by modulo until the final divisor is reached.",
+        "tags": ["gcd", "mod", "recursive"]
+      },
+      "exponenciacion-rapida": {
+        "title": "Fast Exponentiation",
+        "summary": "Reduces the exponent by half on each call and reuses the central subresult.",
+        "tags": ["powers", "halving", "logarithmic"]
+      },
+      "fibonacci-search-recursiva": {
+        "title": "Recursive Fibonacci Search",
+        "summary": "Advanced ordered-search case that stays hidden until its offsets are validated more carefully.",
+        "tags": ["search", "fibonacci", "offsets"]
+      },
+      "find-maximum-recursivo": {
+        "title": "Recursive Find Maximum",
+        "summary": "Processes one element per call and compares it against the maximum of the remaining prefix.",
+        "tags": ["maximum", "decrement", "linear"]
+      },
+      "heapify-recursivo": {
+        "title": "Recursive Heapify",
+        "summary": "Implicit-heap model kept in the master catalog while we refine its valid public-facing form.",
+        "tags": ["heap", "implicit tree", "descent"]
+      },
+      "insertion-sort-recursivo": {
+        "title": "Recursive Insertion Sort",
+        "summary": "Sorts the prefix of length n-1 and then inserts the last key.",
+        "tags": ["sorting", "insertion", "decrement"]
+      },
+      "interpolation-search-recursiva": {
+        "title": "Recursive Interpolation Search",
+        "summary": "Its estimated position makes current support more delicate, so it remains hidden.",
+        "tags": ["search", "interpolation", "estimation"]
+      },
+      "josephus-recursivo": {
+        "title": "Recursive Josephus",
+        "summary": "Reduces the problem by one person per call and then rebuilds the survivor position.",
+        "tags": ["josephus", "classic", "decrement"]
+      },
+      "kth-symbol-in-grammar": {
+        "title": "K-th Symbol in Grammar",
+        "summary": "Reduces the position and row until a short base case is reached.",
+        "tags": ["grammar", "symbol", "halving"]
+      },
+      "linear-search-recursiva": {
+        "title": "Recursive Linear Search",
+        "summary": "Processes one position per call and stops when it finds the element or exhausts the array.",
+        "tags": ["search", "linear", "recursive"]
+      },
+      "linked-list-length": {
+        "title": "Linked List Length",
+        "summary": "Advances one node per call until the end of the linked list is reached.",
+        "tags": ["list", "length", "nodes"]
+      },
+      "lista-invertida-recursiva": {
+        "title": "Recursive Reversed List",
+        "summary": "Processes one node per call and rebuilds the order on the way back.",
+        "tags": ["list", "reverse", "nodes"]
+      },
+      "max-en-arreglo-divide-by-one": {
+        "title": "Array Max Divide-by-One",
+        "summary": "Reduces the problem by one element and compares against the maximum of the rest.",
+        "tags": ["maximum", "decrement", "array"]
+      },
+      "numeros-binarios-por-division-entre-2": {
+        "title": "Binary Digits by Division by 2",
+        "summary": "Reduces the number by half and rebuilds its digits on the way back.",
+        "tags": ["binary", "division", "half"]
+      },
+      "potencia-modular-rapida": {
+        "title": "Fast Modular Power",
+        "summary": "Reduces the exponent and preserves the modulus in each combine step.",
+        "tags": ["modular", "power", "halving"]
+      },
+      "recursive-selection-sort": {
+        "title": "Recursive Selection Sort",
+        "summary": "Fixes the first position, finds the remaining minimum, and continues over the suffix.",
+        "tags": ["sorting", "selection", "suffix"]
+      },
+      "recursive-sum-of-digits": {
+        "title": "Recursive Sum of Digits",
+        "summary": "Removes one digit per call until the number reaches zero.",
+        "tags": ["digits", "sum", "division"]
+      },
+      "reverse-string-recursiva": {
+        "title": "Recursive Reverse String",
+        "summary": "Swaps extremes and shrinks the interval toward the center.",
+        "tags": ["strings", "reverse", "two indices"]
+      },
+      "ternary-search-recursiva": {
+        "title": "Recursive Ternary Search",
+        "summary": "Reduces the interval to one of three possible blocks on each call.",
+        "tags": ["search", "ternary", "blocks"]
+      },
+      "tower-of-logarithmic-halving-toy-example": {
+        "title": "Toy Example of Logarithmic Halving Tower",
+        "summary": "Artificial pedagogical example kept out of the initial UI.",
+        "tags": ["toy", "halving", "pedagogical"]
+      },
+      "traversal-inorder": {
+        "title": "Inorder Traversal",
+        "summary": "Stays in the master catalog, but not in the initial UI because of its two-branch shape.",
+        "tags": ["tree", "inorder", "two branches"]
+      },
+      "traversal-postorder": {
+        "title": "Postorder Traversal",
+        "summary": "Kept as an internal reference until binary traversal publication is tightened.",
+        "tags": ["tree", "postorder", "two branches"]
+      },
+      "traversal-preorder": {
+        "title": "Preorder Traversal",
+        "summary": "Left out of the initial UI to keep the recursive-tree batch conservative.",
+        "tags": ["tree", "preorder", "two branches"]
+      },
+      "ackermann-truncado-pedagogico": {
+        "title": "Pedagogical Truncated Ackermann",
+        "summary": "Kept only as a reminder of a pattern outside the prudent production coverage.",
+        "tags": ["ackermann", "toy", "non standard"]
+      },
+      "catalan-recursivo-naive": {
+        "title": "Naive Recursive Catalan",
+        "summary": "A famous example, but more delicate for the current engine, so it stays hidden.",
+        "tags": ["catalan", "naive", "branching"]
+      },
+      "climbing-stairs": {
+        "title": "Climbing Stairs",
+        "summary": "Counts paths with steps of 1 and 2, yielding a classic linear recurrence.",
+        "tags": ["stairs", "fibonacci", "recurrence"]
+      },
+      "coin-change-recursivo-naive": {
+        "title": "Naive Recursive Coin Change",
+        "summary": "Highly branching recursive model still kept as an unpublished master example.",
+        "tags": ["coins", "naive", "branches"]
+      },
+      "count-binary-strings-without-consecutive-ones": {
+        "title": "Count Binary Strings Without Consecutive Ones",
+        "summary": "Classic linear recurrence that connects naturally with the characteristic equation.",
+        "tags": ["strings", "binary", "no consecutive ones"]
+      },
+      "count-ways-to-reach-n": {
+        "title": "Count Ways to Reach N",
+        "summary": "Another short linear recurrence for counting paths with small jumps.",
+        "tags": ["paths", "steps", "linear"]
+      },
+      "derangements-recursivo": {
+        "title": "Recursive Derangements",
+        "summary": "Linear sequence with variable coefficients that helps broaden the sequence batch.",
+        "tags": ["derangements", "sequence", "linear"]
+      },
+      "edit-distance-recursivo-naive": {
+        "title": "Naive Recursive Edit Distance",
+        "summary": "Classic multi-branch example kept out of the initial release.",
+        "tags": ["distance", "edit", "naive"]
+      },
+      "factorial-recursivo": {
+        "title": "Recursive factorial",
+        "summary": "Simple linear case that remains useful to contrast against its iterative counterpart.",
+        "tags": ["factorial", "linear", "decrement"]
+      },
+      "fibonacci-recursivo": {
+        "title": "Recursive Fibonacci",
+        "summary": "Core catalog reference for the characteristic equation and exponential growth.",
+        "tags": ["fibonacci", "sequence", "classic"]
+      },
+      "friend-pairing-recursivo": {
+        "title": "Recursive Friend Pairing",
+        "summary": "Combinatorial sequence with one single branch and one paired branch.",
+        "tags": ["pairing", "combinatorics", "recurrence"]
+      },
+      "hanoi": {
+        "title": "Tower of Hanoi",
+        "summary": "Classic problem with two calls on n-1 and constant local work.",
+        "tags": ["hanoi", "classic", "two branches"]
+      },
+      "house-robber-recursivo-naive": {
+        "title": "Naive Recursive House Robber",
+        "summary": "Kept as a non-visible advanced example because of branching and max-over-state behavior.",
+        "tags": ["house robber", "naive", "decision"]
+      },
+      "integer-partition-recursiva": {
+        "title": "Recursive Integer Partition",
+        "summary": "Remains an advanced master-catalog sample because support is still partial.",
+        "tags": ["partitions", "integers", "branching"]
+      },
+      "k-step-stairs": {
+        "title": "K-step Stairs",
+        "summary": "Pedagogical stairs variant with several branches controlled by a fixed constant.",
+        "tags": ["stairs", "k steps", "recurrence"]
+      },
+      "lucas-numbers": {
+        "title": "Lucas Numbers",
+        "summary": "Fibonacci-like sequence with different initial conditions.",
+        "tags": ["lucas", "sequence", "linear"]
+      },
+      "pell-numbers": {
+        "title": "Pell Numbers",
+        "summary": "Second-order linear recurrence that broadens the characteristic-equation batch.",
+        "tags": ["pell", "sequence", "characteristic equation"]
+      },
+      "perrin-sequence": {
+        "title": "Perrin Sequence",
+        "summary": "Third-order linear sequence useful to expand the verified-example set.",
+        "tags": ["perrin", "order 3", "sequence"]
+      },
+      "recaman-truncado-pedagogico": {
+        "title": "Pedagogical Truncated Recaman",
+        "summary": "Kept as a non-visible example because self-referential sequences need finer rules.",
+        "tags": ["recaman", "toy", "self reference"]
+      },
+      "rod-cutting-recursivo-naive": {
+        "title": "Naive Recursive Rod Cutting",
+        "summary": "Classic branching example reserved for the master catalog.",
+        "tags": ["rod cutting", "naive", "partitions"]
+      },
+      "subset-sum-recursivo-naive": {
+        "title": "Naive Recursive Subset Sum",
+        "summary": "Left out of the initial UI to keep public badges conservative.",
+        "tags": ["subset sum", "naive", "decision"]
+      },
+      "suma-de-1-a-n-recursiva": {
+        "title": "Recursive Sum 1..n",
+        "summary": "Reduces by one and accumulates the current term.",
+        "tags": ["sum", "linear", "decrement"]
+      },
+      "suma-de-arreglo-recursiva": {
+        "title": "Recursive Array Sum",
+        "summary": "Consumes one element per call and delegates the rest of the work to the suffix.",
+        "tags": ["array", "sum", "linear"]
+      },
+      "tribonacci-recursivo": {
+        "title": "Recursive Tribonacci",
+        "summary": "Extends the Fibonacci pattern to three branches over constant shifts.",
+        "tags": ["tribonacci", "order 3", "sequence"]
+      },
+      "ways-to-tile-2xn": {
+        "title": "Ways to Tile 2xn",
+        "summary": "Counts 2xn tilings with a short and highly didactic linear recurrence.",
+        "tags": ["tiling", "domino", "sequence"]
+      }
+    },
+    "categories": {
+      "iterativos": {
+        "label": "Iterative",
+        "offText": "They solve the problem with loops and step-by-step updates."
+      },
+      "divide-y-venceras": {
+        "label": "Divide and conquer",
+        "offText": "They split the problem into multiple smaller parts, solve them, and then combine the result."
+      },
+      "resta-y-venceras": {
+        "label": "Decrease and conquer",
+        "offText": "They reduce the problem to a smaller version of itself and repeat until reaching the base case."
+      },
+      "resta-y-seras-vencido": {
+        "label": "Decrease by a constant",
+        "offText": "They advance by removing a small part of the problem on each call, usually in linear recurrences."
+      }
+    },
+    "families": {
+      "busqueda": "Search",
+      "ordenamiento": "Sorting",
+      "matrices": "Matrices",
+      "numerico": "Numeric",
+      "geometria": "Geometry",
+      "secuencias": "Sequences",
+      "estructuras": "Structures",
+      "clasicos": "Classics"
+    },
+    "kind": {
+      "iterative": "Iterative",
+      "recursive": "Recursive"
+    }
+  },
+  "contentUi": {
+    "progress": "Progress",
+    "globalProgress": "Global progress",
+    "estimatedTime": "Estimated time",
+    "openModule": "Enter module",
+    "moduleGrid": "Guide modules",
+    "tableOfContents": "Table of contents",
+    "searchPlaceholder": "Search the guide",
+    "searchAriaLabel": "Search guide content",
+    "searchWithinModulePlaceholder": "Search within this module",
+    "searchWithinModuleAriaLabel": "Search within the current module",
+    "emptySearchTitle": "No results",
+    "emptySearchDescription": "No useful matches were found in this catalog.",
+    "backToGuide": "Back to guide",
+    "previousModule": "Previous module",
+    "nextModule": "Next module",
+    "completed": "Completed",
+    "references": "References",
+    "viewSolution": "View solution",
+    "brokenLinkTooltip": "Content not available"
   }
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 
-export const TRACE_REFRESH_EVENT = "traceRefreshRequested";
+const TRACE_REFRESH_EVENT = "traceRefreshRequested";
 
 /**
  * Hook que reacciona cuando el usuario analiza estando en vista trace.

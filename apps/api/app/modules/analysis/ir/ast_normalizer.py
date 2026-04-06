@@ -7,7 +7,8 @@ para que ningún módulo lea nodos crudos con diferencias de formato.
 Author: @Cruz1122
 Version: 0.1.0
 """
-from typing import Any, Dict, Optional
+
+from typing import Any
 
 
 def _normalize_op(node: dict) -> dict:

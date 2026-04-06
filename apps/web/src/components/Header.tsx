@@ -36,8 +36,8 @@ const navItems: NavItem[] = [
     color: "orange",
   },
   {
-    href: "/documentation",
-    labelKey: "documentation",
+    href: "/user-guide",
+    labelKey: "howToUse",
     icon: "menu_book",
     color: "blue",
   },
@@ -50,37 +50,12 @@ const navItems: NavItem[] = [
   { href: "/about-us", labelKey: "about", icon: "info", color: "cyan" },
 ];
 
-const getColorClasses = (color: string, isActiveItem: boolean) => {
+const getColorClasses = (_color: string, isActiveItem: boolean) => {
   if (isActiveItem) {
-    switch (color) {
-      case "purple":
-        return "bg-purple-500/20 text-white border-purple-500/30";
-      case "orange":
-        return "bg-orange-500/20 text-white border-orange-500/30";
-      case "blue":
-        return "bg-blue-500/20 text-white border-blue-500/30";
-      case "emerald":
-        return "bg-emerald-500/20 text-white border-emerald-500/30";
-      case "cyan":
-        return "bg-cyan-500/20 text-white border-cyan-500/30";
-      default:
-        return "bg-purple-500/20 text-white border-purple-500/30";
-    }
+    return "bg-transparent text-white border-white/55 shadow-[0_0_0_1px_rgba(255,255,255,0.16)]";
   }
-  switch (color) {
-    case "purple":
-      return "text-slate-400 hover:text-white hover:bg-purple-500/10 hover:border-purple-500/20";
-    case "orange":
-      return "text-slate-400 hover:text-white hover:bg-orange-500/10 hover:border-orange-500/20";
-    case "blue":
-      return "text-slate-400 hover:text-white hover:bg-blue-500/10 hover:border-blue-500/20";
-    case "emerald":
-      return "text-slate-400 hover:text-white hover:bg-emerald-500/10 hover:border-emerald-500/20";
-    case "cyan":
-      return "text-slate-400 hover:text-white hover:bg-cyan-500/10 hover:border-cyan-500/20";
-    default:
-      return "text-slate-400 hover:text-white hover:bg-purple-500/10 hover:border-purple-500/20";
-  }
+
+  return "text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/25";
 };
 
 /**

@@ -1,0 +1,103 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-recursive",
+  "slug": "recursive-algorithms",
+  "title": "Recursive algorithms",
+  "shortTitle": "Recursive",
+  "order": 4,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Recurrences, growth, and call-tree intuition. The visual tree and method comparison support reasoning without replacing the algebra you learn in class.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 45,
+  "tags": ["recursion", "recurrence", "tree", "divide and conquer"],
+  "searchMeta": {
+    "aliases": ["recursive", "calls"],
+    "keywords": ["T(n)", "master", "substitution"]
+  },
+  "prerequisites": {
+    "modules": [{ "id": "mod-user-guide-iterative", "kind": "recommended" }],
+    "sections": []
+  },
+  "relatedModuleIds": ["mod-user-guide-iterative", "mod-user-guide-interpreting"],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-arbol",
+      "text": "Relate depth and work distribution in the call tree to cost growth."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-rec-bases",
+      "slug": "recurrences-and-tree",
+      "title": "Recurrences and tree",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-recurrencias",
+          "slug": "recurrence-forms",
+          "title": "Recurrence forms",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 16,
+          "blocks": [
+            {
+              "id": "blk-m4-s1-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A recurrence describes the cost of a problem in terms of smaller subproblems. Analysis solves or bounds it to get growth in n. Call-tree intuition: each node is a call; height and per-level work explain many divide-and-conquer cases."
+                }
+              ]
+            },
+            {
+              "id": "blk-m4-s1-ev",
+              "type": "evidenceBlock",
+              "variant": "systemEvidence",
+              "icon": "analytics",
+              "title": "Call tree",
+              "blocks": [
+                {
+                  "id": "blk-m4-s1-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The tree shows how many calls are generated and at what depth the base case resolves. Comparing resolution methods in the UI helps cross-check results when several approaches apply—always interpret in problem terms, not as a black box."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-limites-rec",
+          "slug": "depth-and-stacks",
+          "title": "Depth and practical limits",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m4-s2-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Deep recursion can hit stack limits or analyzer scope for unsupported patterns. If you see warnings or partial results, shrink the example, verify the base case, or switch to an equivalent iterative view to isolate the issue."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

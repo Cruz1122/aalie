@@ -3,8 +3,17 @@ node_modules/
 .pnpm-store/
 pnpm-debug.log*
 
-# Fixtures for exporter tests
-packages/exporter/src/__tests__/fixtures/golden/
+# Fixtures for report export engine tests
+packages/report-export-engine/src/__tests__/fixtures/golden/
+
+# Builds for report export engine
+packages/report-export-engine/build/
+
+# Reports
+reports/
+
+# Catálogo: snapshot JSON grande (regenerable con pnpm validate:catalog-complexity en apps/web)
+apps/web/scripts/output/catalog-complexity-snapshot.json
 
 # Builds
 dist/
@@ -30,6 +39,7 @@ __pycache__/
 *.pyo
 *.pyd
 .venv/
+.venv311/
 .env
 .env.*
 !.env.example
@@ -55,5 +65,6 @@ apps/api/.mypy_cache/
 # Test result files
 test_result.json
 
-# Bloquear lockfiles ajenos\ n**/package-lock.json
+# Bloquear lockfiles ajenos
+**/package-lock.json
 **/yarn.lock

@@ -1,99 +1,12 @@
 /**
- * Utilidades para comparar y seleccionar notaciones asintóticas
- * según las reglas de priorización.
+ * Utilidades para interpretar y presentar notaciones asintóticas.
  */
-
-/**
- * Compara dos notaciones Big O y retorna la más pequeña (más informativa).
- * O(n) < O(n log n) < O(n²) < O(2^n)
- */
-export function compareBigO(notation1: string, notation2: string): number {
-  const order1 = getAsymptoticOrder(notation1);
-  const order2 = getAsymptoticOrder(notation2);
-  return order1 - order2; // Menor orden = más pequeña = mejor
-}
-
-/**
- * Compara dos notaciones Big Omega y retorna la más grande (más informativa).
- * Ω(n log n) > Ω(n) > Ω(log n)
- */
-export function compareBigOmega(notation1: string, notation2: string): number {
-  const order1 = getAsymptoticOrder(notation1);
-  const order2 = getAsymptoticOrder(notation2);
-  return order2 - order1; // Mayor orden = más grande = mejor
-}
-
-/**
- * Obtiene el orden asintótico de una notación para comparación.
- * Valores más bajos = crecimiento más lento.
- */
-function getAsymptoticOrder(notation: string): number {
-  const normalized = notation.toLowerCase().trim();
-
-  // Constante
-  if (
-    normalized.includes("o(1)") ||
-    normalized.includes("θ(1)") ||
-    normalized.includes("ω(1)")
-  ) {
-    return 0;
-  }
-
-  // Logarítmico
-  if (normalized.includes("log log") || normalized.includes("loglog")) {
-    return 10;
-  }
-  if (normalized.includes("log") && !normalized.includes("n log")) {
-    return 20;
-  }
-
-  // Log-lineal
-  if (normalized.includes("n log") || normalized.includes("n*log")) {
-    return 30;
-  }
-
-  // Lineal
-  if (normalized.match(/o\(n\)|θ\(n\)|ω\(n\)/)) {
-    return 40;
-  }
-
-  // Cuasi-lineal (n log^k n)
-  const logPowerMatch = normalized.match(/n\s*log\^?(\d+)\s*n/);
-  if (logPowerMatch) {
-    const power = parseInt(logPowerMatch[1], 10);
-    return 40 + power * 5;
-  }
-
-  // Polinomial
-  const polyMatch = normalized.match(/n\^?(\d+)/);
-  if (polyMatch) {
-    const power = parseInt(polyMatch[1], 10);
-    return 50 + power * 10;
-  }
-
-  // Exponencial
-  if (
-    normalized.includes("2^n") ||
-    normalized.includes("2^") ||
-    normalized.includes("exp")
-  ) {
-    return 200;
-  }
-
-  // Factorial
-  if (normalized.includes("n!") || normalized.includes("factorial")) {
-    return 300;
-  }
-
-  // Por defecto, asumir polinomial de grado medio
-  return 100;
-}
 
 /**
  * Extrae el contenido interno de una notación asintótica.
  * Ej: "O(n log n)" -> "n log n"
  */
-export function extractNotationContent(notation: string): string {
+function extractNotationContent(notation: string): string {
   // Remover prefijos O(, Θ(, Ω( y paréntesis finales
   return notation
     .replace(/^[OΘΩ]\s*\(/i, "")
@@ -105,7 +18,7 @@ export function extractNotationContent(notation: string): string {
 /**
  * Determina si una notación contiene hipótesis o condiciones.
  */
-export function hasHypothesis(notation: string): boolean {
+function hasHypothesis(notation: string): boolean {
   const lower = notation.toLowerCase();
   return (
     lower.includes("para") ||
@@ -119,36 +32,12 @@ export function hasHypothesis(notation: string): boolean {
 /**
  * Determina si una notación es condicional (depende de parámetros).
  */
-export function isConditional(notation: string): boolean {
+function isConditional(notation: string): boolean {
   const lower = notation.toLowerCase();
   return (
     (lower.includes("p") || lower.includes("q")) &&
     (lower.includes("constante") || lower.includes("> 0"))
   );
-}
-
-/**
- * Selecciona la mejor notación Big O de una lista.
- */
-export function selectBestBigO(notations: string[]): string | null {
-  if (notations.length === 0) return null;
-  if (notations.length === 1) return notations[0];
-
-  // Ordenar de menor a mayor (más informativa primero)
-  const sorted = [...notations].sort(compareBigO);
-  return sorted[0];
-}
-
-/**
- * Selecciona la mejor notación Big Omega de una lista.
- */
-export function selectBestBigOmega(notations: string[]): string | null {
-  if (notations.length === 0) return null;
-  if (notations.length === 1) return notations[0];
-
-  // Ordenar de mayor a menor (más informativa primero)
-  const sorted = [...notations].sort(compareBigOmega);
-  return sorted[0];
 }
 
 /**

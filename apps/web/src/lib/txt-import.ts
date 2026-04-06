@@ -15,7 +15,7 @@ export type TxtImportValidationResult =
         | "readError";
     };
 
-export function normalizeImportedAlgorithmSource(source: string): string {
+function normalizeImportedAlgorithmSource(source: string): string {
   return source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
 }
 
@@ -72,37 +72,6 @@ export async function readAndValidateTxtFile(
     ok: true,
     normalizedSource,
   };
-}
-
-function hasProcedureLikeNode(value: unknown): boolean {
-  if (!value) {
-    return false;
-  }
-
-  if (Array.isArray(value)) {
-    return value.some((item) => hasProcedureLikeNode(item));
-  }
-
-  if (typeof value !== "object") {
-    return false;
-  }
-
-  const node = value as Record<string, unknown>;
-  const nodeType = typeof node.type === "string" ? node.type.toLowerCase() : "";
-  if (
-    nodeType === "procdef" ||
-    nodeType === "procedure" ||
-    nodeType === "function" ||
-    nodeType === "functiondef"
-  ) {
-    return true;
-  }
-
-  return Object.values(node).some((child) => hasProcedureLikeNode(child));
-}
-
-export function looksLikeAlgorithmAst(ast: unknown): boolean {
-  return hasProcedureLikeNode(ast);
 }
 
 export function looksLikeAlgorithmSourceText(source: string): boolean {

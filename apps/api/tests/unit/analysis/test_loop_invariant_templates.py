@@ -1,7 +1,14 @@
 """Unit tests for deterministic loop invariant templates."""
 
+import pytest
+
 from app.modules.analysis.invariants.schemas import LoopFacts
-from app.modules.analysis.invariants.templates import build_invariant_text, resolve_template_variant
+from app.modules.analysis.invariants.templates import (
+    build_invariant_text,
+    resolve_template_variant,
+)
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def make_facts(**overrides) -> LoopFacts:
@@ -138,7 +145,10 @@ def test_variant_resolution_detects_binary_search_template():
         node_type="WHILE",
         control_variables=["low", "high"],
         target_variables=["x"],
-        detected_features=["has_binary_search_interval", "has_collection_target_comparison"],
+        detected_features=[
+            "has_binary_search_interval",
+            "has_collection_target_comparison",
+        ],
     )
 
     variant = resolve_template_variant("search", facts)
@@ -189,7 +199,9 @@ def test_variant_resolution_detects_binary_exponentiation_template():
     )
 
     variant = resolve_template_variant("binary_exponentiation_state", facts)
-    text = build_invariant_text("binary_exponentiation_state", facts, "es", template_variant=variant)
+    text = build_invariant_text(
+        "binary_exponentiation_state", facts, "es", template_variant=variant
+    )
 
     assert variant == "binary_exp_modular"
     assert "exponenciación binaria" in text.property_statement.lower()
@@ -208,7 +220,9 @@ def test_variant_resolution_detects_partition_template():
     )
 
     variant = resolve_template_variant("partition_by_pivot", facts)
-    text = build_invariant_text("partition_by_pivot", facts, "en", template_variant=variant)
+    text = build_invariant_text(
+        "partition_by_pivot", facts, "en", template_variant=variant
+    )
 
     assert variant == "quicksort_partition"
     assert "pivot" in text.property_statement.lower()
@@ -240,7 +254,9 @@ def test_variant_resolution_detects_copy_prefix_template():
     )
 
     variant = resolve_template_variant("prefix_progress", facts)
-    text = build_invariant_text("prefix_progress", facts, "es", template_variant=variant)
+    text = build_invariant_text(
+        "prefix_progress", facts, "es", template_variant=variant
+    )
 
     assert variant == "array_copy"
     assert "copia" in text.didactic_summary.lower()
@@ -264,7 +280,9 @@ def test_variant_resolution_detects_filter_progress_template():
     )
 
     variant = resolve_template_variant("filter_progress", facts)
-    text = build_invariant_text("filter_progress", facts, "es", template_variant=variant)
+    text = build_invariant_text(
+        "filter_progress", facts, "es", template_variant=variant
+    )
 
     assert variant == "filter_compaction"
     assert "B[1..k-1]" in text.property_statement
@@ -309,7 +327,9 @@ def test_intersection_template_uses_detected_output_cursor_not_generic_k():
         ],
     )
 
-    text = build_invariant_text("merge_progress", facts, "es", template_variant="intersection_two_way")
+    text = build_invariant_text(
+        "merge_progress", facts, "es", template_variant="intersection_two_way"
+    )
 
     assert "cx_3[1..w_9-1]" in text.property_statement
     assert "cx_3[w_9]" in text.maintenance
@@ -332,7 +352,9 @@ def test_filter_progress_maintenance_uses_source_collection_cell():
         ],
     )
 
-    text = build_invariant_text("filter_progress", facts, "es", template_variant="filter_compaction")
+    text = build_invariant_text(
+        "filter_progress", facts, "es", template_variant="filter_compaction"
+    )
 
     assert "se evalúa src_5[p_1]" in text.maintenance
     assert "se evalúa dst_6[p_1]" not in text.maintenance
@@ -355,7 +377,9 @@ def test_variant_resolution_detects_uniform_object_array_field_assignment():
     )
 
     variant = resolve_template_variant("field_assignment_progress", facts)
-    text = build_invariant_text("field_assignment_progress", facts, "es", template_variant=variant)
+    text = build_invariant_text(
+        "field_assignment_progress", facts, "es", template_variant=variant
+    )
 
     assert variant == "object_array_field_uniform_assignment"
     assert "arreglo de objetos" in text.property_statement.lower()
@@ -519,7 +543,9 @@ def test_state_refinement_object_field_variant_mentions_object_fields():
     )
 
     variant = resolve_template_variant("state_refinement", facts)
-    text = build_invariant_text("state_refinement", facts, "es", template_variant=variant)
+    text = build_invariant_text(
+        "state_refinement", facts, "es", template_variant=variant
+    )
 
     assert variant == "object_field_refinement"
     assert "campo" in text.maintenance.lower()
@@ -533,7 +559,11 @@ def test_repeat_sum_uses_repeat_specific_template():
         collection_variables=["A"],
         accumulators=["suma"],
         body_writes=["suma", "i"],
-        detected_features=["is_repeat_until", "has_accumulator_update", "has_collection_access"],
+        detected_features=[
+            "is_repeat_until",
+            "has_accumulator_update",
+            "has_collection_access",
+        ],
     )
 
     variant = resolve_template_variant("accumulation", facts)
@@ -577,7 +607,10 @@ def test_unknown_object_array_field_variant_is_more_informative():
         collection_variables=["A"],
         body_writes=["A.visitado"],
         accumulators=[],
-        detected_features=["has_collection_object_field_write", "has_object_field_write"],
+        detected_features=[
+            "has_collection_object_field_write",
+            "has_object_field_write",
+        ],
     )
 
     variant = resolve_template_variant("unknown", facts)
@@ -662,7 +695,9 @@ def test_field_assignment_progress_template_mentions_predicate_controlled_write(
     )
 
     variant = resolve_template_variant("field_assignment_progress", facts)
-    text = build_invariant_text("field_assignment_progress", facts, "es", template_variant=variant)
+    text = build_invariant_text(
+        "field_assignment_progress", facts, "es", template_variant=variant
+    )
 
     assert variant == "object_field_predicate_assignment"
     assert "asignación por predicado" in text.property_statement.lower()

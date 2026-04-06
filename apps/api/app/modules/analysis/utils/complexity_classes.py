@@ -1,53 +1,102 @@
-from sympy import Symbol, sympify, latex, oo, log, exp, Expr
-from sympy import Poly
-from sympy.polys.polytools import LC, LM
 import re
+
+from sympy import Expr, Poly, Symbol, exp, latex, log, oo, sympify
+from sympy.polys.polytools import LC, LM
 
 
 class ComplexityClasses:
     """
     Extrae términos dominantes y calcula clases de complejidad O/Ω/Θ.
-    
+
     Maneja:
     - Polinomios: n², n³, etc.
     - Funciones logarítmicas: log(n), n*log(n)
     - Funciones exponenciales: 2^n
     - Combinaciones de las anteriores
-    
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
-    
+
     def __init__(self):
         """
         Inicializa una instancia de ComplexityClasses.
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         pass
-    
+
+    def _replace_balanced_fracs(self, expr_str: str) -> str:
+        """
+        Reemplaza fracciones LaTeX con llaves balanceadas:
+          \frac{A}{B} -> ((A)/(B))
+
+        Soporta numerador/denominador con llaves anidadas, donde un regex
+        simple de tipo [^{}]+ suele fallar.
+        """
+
+        def _read_braced(text: str, open_idx: int):
+            if open_idx >= len(text) or text[open_idx] != "{":
+                return None, open_idx
+            depth = 0
+            start = open_idx + 1
+            i = open_idx
+            while i < len(text):
+                ch = text[i]
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        return text[start:i], i
+                i += 1
+            return None, open_idx
+
+        out = expr_str
+        guard = 0
+        while "\\frac" in out and guard < 64:
+            guard += 1
+            frac_idx = out.find("\\frac")
+            if frac_idx < 0:
+                break
+
+            num_open = frac_idx + len("\\frac")
+            num, num_close = _read_braced(out, num_open)
+            if num is None:
+                break
+
+            den_open = num_close + 1
+            den, den_close = _read_braced(out, den_open)
+            if den is None:
+                break
+
+            repl = f"(({num})/({den}))"
+            out = out[:frac_idx] + repl + out[den_close + 1 :]
+
+        return out
+
     def extract_dominant_term(self, polynomial: str, variable: str = "n") -> str:
         """
         Extrae el término dominante de un polinomio.
-        
+
         Args:
             polynomial: Expresión polinómica en formato LaTeX o string
             variable: Variable principal (por defecto "n")
-            
+
         Returns:
             Término dominante en formato LaTeX
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not polynomial or polynomial.strip() == "":
             return "1"
-        
+
         try:
             # Convertir a SymPy
             expr = self._parse_polynomial(polynomial, variable)
 
             # Expandir la expresión antes de extraer el término dominante.
             # NO usar simplify() aquí porque puede factorizar la expresión y mezclar grados.
-            from sympy import expand, Integer
+            from sympy import expand
 
             expr = expand(expr)
 
@@ -75,19 +124,14 @@ class ComplexityClasses:
             else:
                 terms = [expr]
 
-            best_term = None
-            best_deg = -1.0
-
-            for term in terms:
+            def _total_degree_in_size_syms(term) -> float:
                 try:
                     powers = term.as_powers_dict()
                 except Exception:
-                    continue
-
+                    return -1.0
                 total_deg = 0.0
                 for sym, exp in powers.items():
                     if sym in size_syms:
-                        # exp puede no ser puramente numérico (casos raros), intentar evaluarlo
                         if getattr(exp, "is_number", False):
                             try:
                                 total_deg += float(exp)
@@ -98,120 +142,135 @@ class ComplexityClasses:
                                 total_deg += float(exp.evalf())
                             except Exception:
                                 pass
+                return total_deg
 
-                if total_deg > best_deg:
-                    best_deg = total_deg
-                    best_term = term
+            best_deg = -1.0
+            for term in terms:
+                d = _total_degree_in_size_syms(term)
+                if d > best_deg:
+                    best_deg = d
 
-            if best_term is None or best_deg <= 0:
-                # No se encontró monomio con grado positivo → tratar como constante
+            if best_deg <= 0:
                 return "1"
-            
-            # Eliminar factor numérico (p.ej., 15 n^2 → n^2, 7/2 n^2 → n^2)
-            best_term = self._strip_numeric_coefficient(best_term)
-            return self._sympy_to_latex(best_term)
-        except Exception as e:
-            print(f"[ComplexityClasses] Error extrayendo término dominante de {polynomial}: {e}")
+
+            # Todos los términos con el mismo grado total máximo (p. ej. 12*n y 12*m → Θ(n+m))
+            max_terms = [t for t in terms if abs(_total_degree_in_size_syms(t) - best_deg) < 1e-9]
+
+            if not max_terms:
+                return "1"
+
+            if len(max_terms) == 1:
+                best_term = self._strip_numeric_coefficient(max_terms[0])
+                return self._sympy_to_latex(best_term)
+
+            from sympy import Add as SymAdd
+
+            stripped = [self._strip_numeric_coefficient(t) for t in max_terms]
+            combined = SymAdd(*stripped)
+            return self._sympy_to_latex(combined)
+        except Exception:
             # Fallback: aproximar el monomio dominante directamente desde el string
             return self._fallback_dominant_from_string(polynomial, variable)
-    
+
     def calculate_big_o(self, polynomial: str, variable: str = "n") -> str:
         """
         Calcula O(f(n)) para una expresión.
-        
+
         Args:
             polynomial: Expresión polinómica
             variable: Variable principal
-            
+
         Returns:
             Clase Big-O en formato LaTeX (ej: "O(n^2)")
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         dominant = self.extract_dominant_term(polynomial, variable)
         return f"O({dominant})"
-    
+
     def calculate_big_omega(self, polynomial: str, variable: str = "n") -> str:
         """
         Calcula Ω(f(n)) para una expresión.
-        
+
         Args:
             polynomial: Expresión polinómica
             variable: Variable principal
-            
+
         Returns:
             Clase Big-Omega en formato LaTeX (ej: "Ω(n^2)")
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         dominant = self.extract_dominant_term(polynomial, variable)
         return f"\\Omega({dominant})"
-    
+
     def calculate_big_theta(self, polynomial: str, variable: str = "n") -> str:
         """
         Calcula Θ(f(n)) para una expresión.
-        
+
         Args:
             polynomial: Expresión polinómica
             variable: Variable principal
-            
+
         Returns:
             Clase Big-Theta en formato LaTeX (ej: "Θ(n^2)")
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         dominant = self.extract_dominant_term(polynomial, variable)
         return f"\\Theta({dominant})"
-    
-    def _parse_polynomial(self, polynomial: str, variable: str = "n") -> 'Expr':
+
+    def _parse_polynomial(self, polynomial: str, variable: str = "n") -> "Expr":
         """
         Parsea un polinomio desde string/LaTeX a SymPy.
-        
+
         Args:
             polynomial: Expresión polinómica en formato LaTeX o string
             variable: Variable principal (por defecto "n")
-            
+
         Returns:
             Expresión SymPy
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
-        
+
         Args:
             polynomial: Expresión en formato string o LaTeX
             variable: Variable principal
-            
+
         Returns:
             Expresión SymPy
         """
         # Normalizar formato LaTeX
         expr_str = polynomial
-        
-        # Eliminar comandos LaTeX que no afectan el parsing: \left, \right
-        expr_str = re.sub(r'\\left\(', '(', expr_str)
-        expr_str = re.sub(r'\\right\)', ')', expr_str)
-        expr_str = re.sub(r'\\left\{', '{', expr_str)
-        expr_str = re.sub(r'\\right\}', '}', expr_str)
-        expr_str = re.sub(r'\\left\[', '[', expr_str)
-        expr_str = re.sub(r'\\right\]', ']', expr_str)
-        
-        # Eliminar espacios
-        expr_str = re.sub(r'\s+', '', expr_str)
 
-        # Normalizar t_{while_X} y t_{repeat_X} a t_while_X (SymPy no parsea llaves)
-        expr_str = re.sub(r't_\{while_(\d+)\}', r't_while_\1', expr_str)
-        expr_str = re.sub(r't_\{repeat_(\d+)\}', r't_repeat_\1', expr_str)
-        
+        # Eliminar comandos LaTeX que no afectan el parsing: \left, \right
+        expr_str = re.sub(r"\\left\(", "(", expr_str)
+        expr_str = re.sub(r"\\right\)", ")", expr_str)
+        expr_str = re.sub(r"\\left\{", "{", expr_str)
+        expr_str = re.sub(r"\\right\}", "}", expr_str)
+        expr_str = re.sub(r"\\left\[", "[", expr_str)
+        expr_str = re.sub(r"\\right\]", "]", expr_str)
+
+        # Eliminar espacios
+        expr_str = re.sub(r"\s+", "", expr_str)
+
+        # Normalizar símbolos de loop con llaves para detectar si quedan sin resolver.
+        expr_str = re.sub(r"t_\{while_(\d+)\}", r"t_while_\1", expr_str)
+        expr_str = re.sub(r"t_\{repeat_(\d+)\}", r"t_repeat_\1", expr_str)
+        expr_str = re.sub(r"I_\{while_(\d+)\}", r"I_while_\1", expr_str)
+        expr_str = re.sub(r"I_\{repeat_(\d+)\}", r"I_repeat_\1", expr_str)
+
         # Reemplazar operadores LaTeX
-        expr_str = expr_str.replace('\\cdot', '*')
+        expr_str = expr_str.replace("\\cdot", "*")
         # Normalizar algunos patrones con fracciones que ya vienen parcialmente "sympificados"
         # como resultado de latex() (evita errores de TokenError con '\\' y saltos de línea).
-        expr_str = expr_str.replace('\\\\', '\\')
+        expr_str = expr_str.replace("\\\\", "\\")
 
         # Normalizar variantes de la variable de exponente con subíndice:
         #   exp_{0}, exp_0, exp_{1}, etc. → exp
-        expr_str = re.sub(r'exp_\{\d+\}', 'exp', expr_str)
-        expr_str = re.sub(r'exp_\d+', 'exp', expr_str)
-        
+        expr_str = re.sub(r"exp_\{\d+\}", "exp", expr_str)
+        expr_str = re.sub(r"exp_\d+", "exp", expr_str)
+
         # Normalizar símbolos de tamaño equivalentes:
         # En algunos cierres se usa 'N' (mayúscula) como alias de la variable principal.
         # Para la extracción de complejidad, tratamos ambas como la misma variable.
@@ -224,69 +283,102 @@ class ComplexityClasses:
         # Usamos lookbehind negativo para letras para no tocar llamadas a funciones
         # como log(n) o exp(n), pero sí permitir coeficientes numéricos antes de n.
         expr_str = re.sub(rf"(?<![a-zA-Z]){re.escape(variable)}\(", f"{variable}*(", expr_str)
-        
+
         # Manejar fracciones LaTeX: \frac{a}{b} -> (a)/(b)
         # 1) Caso especial: fracciones anidadas simples \frac{\frac{n}{2}}{3}
         expr_str = re.sub(
-            r'\\frac\{\\frac\{([^{}]+)\}\{([^{}]+)\}\}\{([^{}]+)\}',
-            r'((\1)/(\2))/(\3)',
+            r"\\frac\{\\frac\{([^{}]+)\}\{([^{}]+)\}\}\{([^{}]+)\}",
+            r"((\1)/(\2))/(\3)",
             expr_str,
         )
+
         # 2) Fracciones simples
         def replace_frac(match):
             num = match.group(1)
             den = match.group(2)
-            return f'({num})/({den})'
-        
-        expr_str = re.sub(r'\\frac\{([^{}]+)\}\{([^{}]+)\}', replace_frac, expr_str)
-        
+            return f"({num})/({den})"
+
+        expr_str = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", replace_frac, expr_str)
+
         # Reemplazar potencias LaTeX: n^2 -> n**2, n^{2} -> n**2
-        expr_str = re.sub(r'(\w+)\^(\d+)', r'\1**\2', expr_str)
-        expr_str = re.sub(r'(\w+)\^\{(\d+)\}', r'\1**\2', expr_str)
-        
+        expr_str = re.sub(r"(\w+)\^(\d+)", r"\1**\2", expr_str)
+        expr_str = re.sub(r"(\w+)\^\{(\d+)\}", r"\1**\2", expr_str)
+
+        # Reintentar reemplazo de fracciones después de normalizar potencias.
+        # Esto permite convertir casos como \frac{5n^{2}}{2} (anidación en ^{2})
+        # que no matchean en el primer pass por tener llaves internas.
+        for _ in range(4):
+            updated = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", replace_frac, expr_str)
+            if updated == expr_str:
+                break
+            expr_str = updated
+
+        # Conversión robusta final para cualquier \frac restante con llaves anidadas.
+        expr_str = self._replace_balanced_fracs(expr_str)
+
         # Reemplazar logaritmos: \log(n) -> log(n), \log{\left(n\right)} -> log(n)
         # Primero remover \left y \right dentro de logaritmos
-        expr_str = re.sub(r'\\log\{\\left\(([^)]+)\\right\)\}', r'log(\1)', expr_str)
-        expr_str = re.sub(r'\\log\(([^)]+)\)', r'log(\1)', expr_str)
-        expr_str = re.sub(r'\\log\{([^}]+)\}', r'log(\1)', expr_str)
-        
+        expr_str = re.sub(r"\\log\{\\left\(([^)]+)\\right\)\}", r"log(\1)", expr_str)
+        expr_str = re.sub(r"\\log\(([^)]+)\)", r"log(\1)", expr_str)
+        expr_str = re.sub(r"\\log\{([^}]+)\}", r"log(\1)", expr_str)
+
         # Normalizar productos implícitos típicos en polinomios:
         #   5n  -> 5*n
         #   5mn -> 5*m*n
         #   mn  -> m*n, nm -> n*m
         # Esto ayuda a SymPy a parsear expresiones como 5mn+6n+3.
         # 1) número seguido de letra: 5n -> 5*n
-        expr_str = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', expr_str)
+        expr_str = re.sub(r"(\d)([a-zA-Z])", r"\1*\2", expr_str)
         # 2) letras de tamaño consecutivas (m y n) sin operador: mn -> m*n, nm -> n*m
-        expr_str = re.sub(r'([mn])([mn])', r'\1*\2', expr_str)
-        
+        expr_str = re.sub(r"([mn])([mn])", r"\1*\2", expr_str)
+
         # Si la expresión contiene C_k o constantes no numéricas, no podemos parsearla
         # Esto indica que es T_polynomial con constantes, no T_open simplificado
-        if 'C_' in expr_str or 'C{' in expr_str:
-            raise ValueError(f"Expresión contiene constantes C_k, no se puede parsear directamente: {expr_str[:100]}")
-        
+        if "C_" in expr_str or "C{" in expr_str:
+            raise ValueError(
+                f"Expresión contiene constantes C_k, no se puede parsear directamente: {expr_str[:100]}"
+            )
+
         # Crear símbolo para la variable
         n = Symbol(variable, integer=True, positive=True)
-        
-        # Crear contexto con símbolos comunes + t_while_X, t_repeat_X
-        from sympy import log
-        syms = {variable: n, 'log': log}
-        for m in re.finditer(r't_(?:while|repeat)_\d+', expr_str):
-            name = m.group(0)
-            syms[name] = n  # Sustituir por n como cota conservadora cuando no hay bound explícito
-        
+
+        unresolved_loop_symbols = re.findall(
+            r"\b(?:t_(?:while|repeat)_\d+|I_(?:while|repeat)_\d+)\b", expr_str
+        )
+        if unresolved_loop_symbols:
+            raise ValueError(
+                "Expresión contiene símbolos de loop no resueltos: "
+                + ", ".join(sorted(set(unresolved_loop_symbols)))
+            )
+
+        # Crear contexto con símbolos comunes
+        syms = {variable: n, "log": log}
+
         try:
             return sympify(expr_str, locals=syms)
-        except Exception as e:
+        except Exception:
             # Fallback: intentar con parsing más simple
             try:
                 # Intentar sin algunos reemplazos complejos
                 expr_str_simple = expr_str
                 return sympify(expr_str_simple, locals=syms)
             except Exception as e2:
-                raise e2
+                # Último fallback: parser LaTeX de SymPy para expresiones que
+                # aún conservan notación TeX (p.ej. \frac no convertido).
+                try:
+                    from sympy.parsing.latex import parse_latex
 
-    def _strip_numeric_coefficient(self, expr: 'Expr') -> 'Expr':
+                    latex_input = polynomial
+                    latex_input = re.sub(r"\\left", "", latex_input)
+                    latex_input = re.sub(r"\\right", "", latex_input)
+                    parsed = parse_latex(latex_input)
+                    if variable == "n":
+                        parsed = parsed.subs(Symbol("N"), n)
+                    return parsed
+                except Exception:
+                    raise e2
+
+    def _strip_numeric_coefficient(self, expr: "Expr") -> "Expr":
         """
         Elimina el coeficiente numérico global de un monomio.
         Ejemplos:
@@ -298,6 +390,7 @@ class ComplexityClasses:
         """
         try:
             from sympy import Expr as SymExpr
+
             if not isinstance(expr, SymExpr):
                 return expr
             coeff, rest = expr.as_coeff_Mul()
@@ -323,7 +416,8 @@ class ComplexityClasses:
             # Eliminar bloques log(...) / \log{...} temporariamente para ver
             # si la variable aparece FUERA del log (n log n vs log n).
             import re as _re
-            log_block_pattern = r'(\\log\{[^}]*\}|\\log\([^)]*\)|log\([^)]*\))'
+
+            log_block_pattern = r"(\\log\{[^}]*\}|\\log\([^)]*\)|log\([^)]*\))"
             s_no_logs = _re.sub(log_block_pattern, "", s)
             var_outside_logs = variable in s_no_logs
             if var_outside_logs:
@@ -360,18 +454,27 @@ class ComplexityClasses:
         # 6) Si no se encontró el símbolo pedido, pero hay otros símbolos candidatos,
         # intentar una pasada adicional usando uno de ellos como nueva variable.
         import re as _re2
+
         token_vars = _re2.findall(r"[a-zA-Z]+", s)
-        # Filtrar tokens obvios que no representan tamaño (log, C, t, etc.)
-        # y nombres típicos de arrays (A, B, arr, etc.) que no deben aparecer en complejidad
-        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
+        # Filtrar tokens de ruido LaTeX; no usar heurística por letra suelta (p. ej. a,b en \\min(a,b)).
+        LATEX_NOISE = {
+            "log",
+            "cdot",
+            "frac",
+            "text",
+            "arr",
+            "array",
+            "lista",
+            "list",
+            "sum",
+            "lim",
+        }
         filtered = []
         for tok in token_vars:
             low = tok.lower()
-            if low in ("log", "cdot", "frac", "text"):
+            if low in LATEX_NOISE:
                 continue
             if low.startswith("c_") or low.startswith("t_"):
-                continue
-            if low in ARRAY_LIKE_NAMES:
                 continue
             filtered.append(tok)
         # Evitar recursión infinita: solo reintentar si encontramos algo distinto
@@ -381,34 +484,34 @@ class ComplexityClasses:
 
         # 7) Fallback completo: sin variables detectables → constante
         return "1"
-    
-    def _extract_dominant_sympy(self, expr: 'Expr', variable: str = "n") -> 'Expr':
+
+    def _extract_dominant_sympy(self, expr: "Expr", variable: str = "n") -> "Expr":
         """
         Extrae el término dominante usando SymPy.
-        
+
         Args:
             expr: Expresión SymPy
             variable: Variable principal
-            
+
         Returns:
             Término dominante como expresión SymPy (si es constante, retorna 1)
         """
         from sympy import Integer
-        
+
         # Obtener símbolos libres de la expresión
         free_symbols = expr.free_symbols
-        
+
         # Si no hay símbolos libres, es constante
         if not free_symbols:
             return Integer(1)
-        
+
         # Buscar el símbolo de la variable en los símbolos libres
         var_symbol = None
         for sym in free_symbols:
             if sym.name == variable:
                 var_symbol = sym
                 break
-        
+
         # Si no se encuentra el símbolo de la variable pedida, usar una variable libre
         # disponible como fallback (evita colapsar indebidamente a O(1)).
         if var_symbol is None:
@@ -418,24 +521,26 @@ class ComplexityClasses:
                 var_symbol = preferred[0] if preferred else next(iter(free_symbols))
             else:
                 return Integer(1)
-        
+
         # Intentar crear Poly y extraer término líder
         # Este es el método principal para polinomios
         # Asegurar que la expresión esté expandida antes de crear el Poly
         # (puede estar factorizada como n*(n**2 + n + 1))
-        from sympy import expand as sympy_expand, Symbol, ZZ
+        from sympy import ZZ, Symbol
+        from sympy import expand as sympy_expand
+
         # Expandir la expresión para asegurar que esté en forma de suma
         expr_expanded = sympy_expand(expr)
-        
+
         # Crear un símbolo nuevo sin propiedades especiales para crear el Poly
         # Si el símbolo original tiene integer=True, positive=True, Poly puede usar
         # domain='ZZ[n]' que causa problemas con degree()
         var_symbol_for_poly = Symbol(variable)
-        
+
         # Reemplazar el símbolo original con el genérico en la expresión expandida
         # Esto asegura que Poly use domain='ZZ' en lugar de 'ZZ[n]'
         expr_for_poly = expr_expanded.subs(var_symbol, var_symbol_for_poly)
-        
+
         # Intentar convertir a Poly usando as_poly() que es más robusto
         # Primero intentar con el símbolo genérico
         try:
@@ -467,7 +572,7 @@ class ComplexityClasses:
             except Exception:
                 # Ambos métodos fallaron, continuar con método alternativo
                 pass
-        
+
         # Método alternativo: analizar términos manualmente usando as_coeff_exponent
         # Este método es más robusto para obtener la potencia de una variable
         # NO usar term.has(var_symbol) porque los símbolos pueden ser objetos diferentes
@@ -475,7 +580,7 @@ class ComplexityClasses:
             terms = expr_expanded.args
             max_complexity_level = -1  # -1: constante, 0: log(n), 1: n, 2: n*log(n), 3+: n^k
             max_term = None
-            
+
             for term in terms:
                 # Verificar si el término contiene la variable por nombre
                 term_symbol_names = [s.name for s in term.free_symbols]
@@ -485,15 +590,16 @@ class ComplexityClasses:
                         max_complexity_level = -1
                         max_term = term
                     continue
-                
+
                 # Calcular nivel de complejidad del término
                 term_level = -1
                 term_power = 0
-                
+
                 # Verificar si tiene log
                 from sympy import log
+
                 has_log = term.has(log)
-                
+
                 # Buscar el símbolo con el nombre de la variable en el término
                 for sym in term.free_symbols:
                     if sym.name == variable:
@@ -508,7 +614,7 @@ class ComplexityClasses:
                             if term == sym:
                                 term_power = 1
                             break
-                
+
                 # Determinar nivel de complejidad
                 if has_log and term_power == 0:
                     # Solo log(n), sin n^k
@@ -522,23 +628,24 @@ class ComplexityClasses:
                 else:
                     # Constante
                     term_level = -1
-                
+
                 # Actualizar máximo
                 if term_level > max_complexity_level:
                     max_complexity_level = term_level
                     max_term = term
-            
+
             # Retornar el término de mayor complejidad
             if max_term is not None:
                 return max_term
-        
+
         # Si no es un polinomio, analizar comportamiento asintótico
         # Verificar si es exponencial
         if expr.has(exp):
             return expr
-        
+
         # Verificar si tiene logaritmos
         from sympy import log
+
         if expr.has(log) and var_symbol is not None:
             try:
                 log_term = expr.subs(var_symbol, oo)
@@ -548,30 +655,29 @@ class ComplexityClasses:
                     return log(var_symbol)
             except Exception:
                 pass
-        
+
         # Último fallback: si tiene la variable, retornar la expresión
         # Si no tiene la variable, es constante
         if expr_expanded.has(var_symbol):
             return expr_expanded
         return Integer(1)
-    
-    def _sympy_to_latex(self, expr: 'Expr') -> str:
+
+    def _sympy_to_latex(self, expr: "Expr") -> str:
         """
         Convierte una expresión SymPy a LaTeX.
-        
+
         Args:
             expr: Expresión SymPy
-            
+
         Returns:
             String LaTeX
         """
         try:
             latex_str = latex(expr)
             # Normalizar formato
-            latex_str = latex_str.replace('*', ' \\cdot ')
+            latex_str = latex_str.replace("*", " \\cdot ")
             # Asegurar que log se muestre como \log
-            latex_str = latex_str.replace('log', '\\log')
+            latex_str = latex_str.replace("log", "\\log")
             return latex_str
         except Exception:
             return str(expr)
-

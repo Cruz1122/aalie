@@ -236,9 +236,7 @@ def select_significant_loop(ast: Dict[str, Any]) -> SelectionResult:
             continue
 
         components = _score_loop(facts)
-        facts.score_components = {
-            k: v for k, v in components.items() if k != "score"
-        }
+        facts.score_components = {k: v for k, v in components.items() if k != "score"}
         facts.score = components["score"]
         extracted.append(facts)
 

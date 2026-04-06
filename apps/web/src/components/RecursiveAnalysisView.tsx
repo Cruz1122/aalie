@@ -2,18 +2,23 @@
 
 import type { AnalyzeOpenResponse } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
+import {
+  buildBundleDetailNotes,
+  normalizeAssistantLocale,
+  truncateAssistantDetail,
+} from "@/lib/assistant/panel-context";
+import type { AssistantFocusedPanelContext } from "@/lib/assistant/types";
 import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import CharacteristicEquationModal from "./CharacteristicEquationModal";
 import DPVersionModal from "./DPVersionModal";
 import Formula from "./Formula";
 import IterationProcedureModal from "./IterationProcedureModal";
+import MasterTheoremModal from "./MasterTheoremModal";
 import RecursionTreeModal from "./RecursionTreeModal";
 import RecursionTreeProcedureModal from "./RecursionTreeProcedureModal";
-import RecursionTreeStepsModal from "./RecursionTreeStepsModal";
-import RecursiveProcedureModal from "./RecursiveProcedureModal";
 
 type RecurrenceType = AnalyzeOpenResponse["totals"]["recurrence"];
 type CharacteristicEquationType =
@@ -21,7 +26,6 @@ type CharacteristicEquationType =
 type IterationType = AnalyzeOpenResponse["totals"]["iteration"];
 type RecursionTreeType = AnalyzeOpenResponse["totals"]["recursion_tree"];
 type MasterType = AnalyzeOpenResponse["totals"]["master"];
-type ProofType = AnalyzeOpenResponse["totals"]["proof"];
 
 type CaseType = "worst" | "best" | "average";
 type DPApplicabilityStatus = "clear" | "doubtful" | "rejected";
@@ -36,7 +40,9 @@ interface DPApplicabilityInfo {
 
 const THETA_ZERO_LATEX = String.raw`\theta(0)`;
 
-const isHomogeneousLinearShift = (recurrence: RecurrenceType): boolean | null => {
+const isHomogeneousLinearShift = (
+  recurrence: RecurrenceType,
+): boolean | null => {
   if (recurrence?.type !== "linear_shift") return null;
 
   const recurrenceGN = recurrence["g(n)"]?.trim().toLowerCase() ?? "";
@@ -151,7 +157,8 @@ function inferDPApplicability(
   }
 
   const recursive =
-    characteristicEquation.dp_version?.recursive_complexity?.toLowerCase() ?? "";
+    characteristicEquation.dp_version?.recursive_complexity?.toLowerCase() ??
+    "";
   const dpTime =
     characteristicEquation.dp_version?.time_complexity?.toLowerCase() ?? "";
   const hasImprovement =
@@ -281,93 +288,6 @@ const getMethodTextColor = (
 };
 
 /**
- * Obtiene los datos de análisis para el caso seleccionado.
- * @param selectedCase - Tipo de caso seleccionado
- * @param worstData - Datos del peor caso
- * @param bestData - Datos del mejor caso
- * @param avgData - Datos del caso promedio
- * @returns Datos de análisis correspondientes al caso seleccionado, o fallback si no están disponibles
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const getDataForSelectedCase = (
-  selectedCase: CaseType,
-  worstData: AnalyzeOpenResponse | null | undefined,
-  bestData: AnalyzeOpenResponse | null | undefined,
-  avgData: AnalyzeOpenResponse | null | undefined,
-): AnalyzeOpenResponse | null | undefined => {
-  if (selectedCase === "worst") return worstData;
-  if (selectedCase === "best") return bestData;
-  return avgData || worstData || bestData;
-};
-
-/**
- * Extrae los parámetros de una recurrencia divide-and-conquer con método.
- * @param recurrence - Recurrencia divide-and-conquer con método opcional
- * @returns Objeto con los parámetros de la recurrencia y el método (iteration o master)
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const extractDivideConquerRecurrence = (recurrence: {
-  type: "divide_conquer";
-  form: string;
-  a: number;
-  b: number;
-  f: string;
-  n0: number;
-  applicable: boolean;
-  notes: string[];
-  method?: "master" | "iteration" | "recursion_tree";
-}): {
-  form: string;
-  a: number;
-  b: number;
-  f: string;
-  n0: number;
-  applicable: boolean;
-  notes: string[];
-  method: "iteration" | "master";
-} => {
-  const method: "iteration" | "master" =
-    recurrence.method === "iteration" ? "iteration" : "master";
-  return {
-    form: recurrence.form,
-    a: recurrence.a,
-    b: recurrence.b,
-    f: recurrence.f,
-    n0: recurrence.n0,
-    applicable: recurrence.applicable,
-    notes: recurrence.notes,
-    method,
-  };
-};
-
-/**
- * Extrae los parámetros de una recurrencia divide-and-conquer sin el método.
- * @param recurrence - Recurrencia divide-and-conquer sin método
- * @returns Objeto con los parámetros de la recurrencia (sin método)
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const extractDivideConquerRecurrenceWithoutMethod = (recurrence: {
-  type: "divide_conquer";
-  form: string;
-  a: number;
-  b: number;
-  f: string;
-  n0: number;
-  applicable: boolean;
-  notes: string[];
-}) => {
-  return {
-    form: recurrence.form,
-    a: recurrence.a,
-    b: recurrence.b,
-    f: recurrence.f,
-    n0: recurrence.n0,
-    applicable: recurrence.applicable,
-    notes: recurrence.notes,
-  };
-};
-
-/**
  * Renderiza la ecuación de eficiencia según el método y si hay diferentes complejidades.
  * @param isMasterMethod - Indica si es método del teorema maestro
  * @param hasDifferentComplexities - Indica si hay diferentes complejidades entre casos
@@ -407,7 +327,9 @@ const renderEfficiencyEquation = (
           <Formula latex={`T(n) = ${roundLatexNumbers(bestT)}`} display />
         </div>
         <div className="text-center">
-          <div className="text-xs text-yellow-300 mb-1">{tCases("average")}:</div>
+          <div className="text-xs text-yellow-300 mb-1">
+            {tCases("average")}:
+          </div>
           <Formula latex={`T(n) = ${roundLatexNumbers(avgT)}`} display />
         </div>
         <div className="text-center">
@@ -444,8 +366,6 @@ interface ProcedureModalProps {
   readonly recursionTree: RecursionTreeType;
   readonly master: MasterType;
   readonly currentMaster: MasterType;
-  readonly proof: ProofType;
-  readonly currentProof: ProofType;
   readonly theta: string | null | undefined;
   readonly T_open: string | null | undefined;
   readonly selectedCase: CaseType;
@@ -465,9 +385,7 @@ const renderCharacteristicModal = (
     <CharacteristicEquationModal
       open={props.showCharacteristicModal}
       onClose={() => props.setShowCharacteristicModal(false)}
-      recurrence={props.recurrence}
       characteristicEquation={props.characteristicEquation}
-      proof={props.proof}
       theta={props.theta || props.T_open}
     />
   );
@@ -482,31 +400,12 @@ const renderCharacteristicModal = (
 const renderIterationModal = (
   props: ProcedureModalProps,
 ): React.JSX.Element => {
-  const divideConquerRecurrence =
-    props.recurrence?.type === "divide_conquer"
-      ? extractDivideConquerRecurrence(
-          props.recurrence as {
-            type: "divide_conquer";
-            form: string;
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-            method?: "master" | "iteration" | "recursion_tree";
-          },
-        )
-      : null;
-
   return (
     <IterationProcedureModal
       open={props.showProcedureModal}
       onClose={() => props.setShowProcedureModal(false)}
-      data={props.worstData || props.bestData || props.avgData}
-      recurrence={divideConquerRecurrence}
+      recurrence={props.recurrence}
       iteration={props.iteration}
-      proof={props.proof}
       theta={props.theta || props.T_open}
     />
   );
@@ -521,30 +420,12 @@ const renderIterationModal = (
 const renderRecursionTreeModal = (
   props: ProcedureModalProps,
 ): React.JSX.Element => {
-  const divideConquerRecurrence =
-    props.recurrence?.type === "divide_conquer"
-      ? extractDivideConquerRecurrenceWithoutMethod(
-          props.recurrence as {
-            type: "divide_conquer";
-            form: string;
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-          },
-        )
-      : null;
-
   return (
     <RecursionTreeProcedureModal
       open={props.showProcedureModal}
       onClose={() => props.setShowProcedureModal(false)}
-      data={props.worstData || props.bestData || props.avgData}
-      recurrence={divideConquerRecurrence}
+      recurrence={props.recurrence}
       recursionTree={props.recursionTree}
-      proof={props.proof}
       theta={props.theta || props.T_open}
     />
   );
@@ -557,35 +438,12 @@ const renderRecursionTreeModal = (
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 const renderMasterModal = (props: ProcedureModalProps): React.JSX.Element => {
-  const divideConquerRecurrence =
-    props.recurrence?.type === "divide_conquer"
-      ? extractDivideConquerRecurrenceWithoutMethod(
-          props.recurrence as {
-            type: "divide_conquer";
-            form: string;
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-          },
-        )
-      : null;
-
   return (
-    <RecursiveProcedureModal
+    <MasterTheoremModal
       open={props.showProcedureModal}
       onClose={() => props.setShowProcedureModal(false)}
-      data={getDataForSelectedCase(
-        props.selectedCase,
-        props.worstData,
-        props.bestData,
-        props.avgData,
-      )}
-      recurrence={divideConquerRecurrence}
+      recurrence={props.recurrence}
       master={props.currentMaster || props.master}
-      proof={props.currentProof ?? props.proof}
       theta={props.currentTheta || props.theta || props.T_open}
     />
   );
@@ -630,7 +488,10 @@ const renderCharacteristicBadges = (
 ): React.JSX.Element | null => {
   if (!characteristicEquation) return null;
 
-  const dpApplicability = inferDPApplicability(characteristicEquation, recurrence);
+  const dpApplicability = inferDPApplicability(
+    characteristicEquation,
+    recurrence,
+  );
   const homogeneousByGN = isHomogeneousLinearShift(recurrence);
   const isHomogeneous =
     homogeneousByGN ?? !characteristicEquation.particular_solution;
@@ -641,33 +502,43 @@ const renderCharacteristicBadges = (
     : tView(dpApplicability.reasonKey);
 
   return (
-    <div className="absolute top-0 right-0 z-20 flex items-center justify-end gap-1.5 whitespace-nowrap sm:top-1">
+    <div className="absolute top-0 right-0 z-20 flex max-w-[58%] flex-wrap items-center justify-end gap-1 sm:top-1 sm:max-w-none">
       {/* Badge de Homogénea/No Homogénea */}
       {isHomogeneous ? (
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border bg-blue-500/20 text-blue-300 border-blue-500/30">
+        <span
+          className="inline-flex items-center gap-1 rounded-sm border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-blue-300"
+          title={tView("homogeneous")}
+          aria-label={tView("homogeneous")}
+        >
           <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
             functions
           </span>
-          {tView("homogeneous")}
+          <span className="hidden md:inline">{tView("homogeneous")}</span>
         </span>
       ) : (
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
+        <span
+          className="inline-flex items-center gap-1 rounded-sm border border-yellow-500/30 bg-yellow-500/20 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-yellow-300"
+          title={tView("nonHomogeneous")}
+          aria-label={tView("nonHomogeneous")}
+        >
           <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
             functions
           </span>
-          {tView("nonHomogeneous")}
+          <span className="hidden md:inline">{tView("nonHomogeneous")}</span>
         </span>
       )}
       <div className="relative inline-flex items-center">
         <span
-          className={`peer inline-flex cursor-help items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border ${dpVisual.badgeClass}`}
+          className={`peer inline-flex cursor-help items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold leading-none ${dpVisual.badgeClass}`}
+          title={dpVisual.statusLabel}
+          aria-label={dpVisual.statusLabel}
         >
           <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
             {dpVisual.badgeIcon}
           </span>
-          {dpVisual.statusLabel}
+          <span className="hidden md:inline">{dpVisual.statusLabel}</span>
         </span>
-        <div className="pointer-events-none absolute right-0 top-full mt-1 w-56 whitespace-normal break-words rounded-md border border-slate-700 bg-slate-900/95 p-2 text-[10px] text-slate-100 shadow-lg opacity-0 transition-opacity peer-hover:opacity-100 peer-focus-visible:opacity-100">
+        <div className="pointer-events-none absolute right-0 top-full mt-1 w-48 whitespace-normal break-words rounded-md border border-slate-700 bg-slate-900/95 p-2 text-[10px] text-slate-100 shadow-lg opacity-0 transition-opacity peer-hover:opacity-100 peer-focus-visible:opacity-100 sm:w-56">
           {dpPatternLabel && (
             <p className="mb-1 whitespace-normal break-words font-semibold text-cyan-300">
               {dpPatternLabel}
@@ -750,14 +621,37 @@ const renderRecurrenceParameters = (
   );
 };
 
+function recursivePanelText(locale: "es" | "en", es: string, en: string) {
+  return locale === "es" ? es : en;
+}
+
+function appendRecursiveDetail(
+  details: string[],
+  value: string | null | undefined,
+): void {
+  if (value) {
+    details.push(value);
+  }
+}
+
+function summarizeRecursiveText(
+  locale: "es" | "en",
+  value: string | undefined | null,
+  maxChars = 320,
+) {
+  return truncateAssistantDetail(
+    translateBackendContent(value ?? "", normalizeAssistantLocale(locale)),
+    maxChars,
+  );
+}
+
 interface ActionButtonsProps {
   readonly tView: (k: string) => string;
   readonly isCharacteristicMethod: boolean;
+  readonly isIterationMethod: boolean;
   readonly isRecursionTreeMethod: boolean;
-  readonly proof: ProofType;
   readonly setShowCharacteristicModal: (show: boolean) => void;
   readonly setShowProcedureModal: (show: boolean) => void;
-  readonly setShowStepsModal: (show: boolean) => void;
   readonly setShowDPModal: (show: boolean) => void;
   readonly characteristicEquation: CharacteristicEquationType;
   readonly dpApplicability: DPApplicabilityInfo;
@@ -770,9 +664,7 @@ interface ActionButtonsProps {
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
-  const showGrid =
-    (props.isRecursionTreeMethod && props.proof && props.proof.length > 0) ||
-    props.isCharacteristicMethod;
+  const showGrid = props.isCharacteristicMethod;
 
   const handleDetailsClick = () => {
     if (props.isCharacteristicMethod) {
@@ -783,23 +675,26 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
   };
 
   return (
-    <div className={`mb-4 ${showGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}`}>
+    <div
+      className={`mb-4 ${showGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}`}
+    >
       <button
         onClick={handleDetailsClick}
-        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0 ${showGrid ? "" : "w-full"}`}
+        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
+          props.isCharacteristicMethod
+            ? "hover:bg-blue-500/20"
+            : props.isIterationMethod
+              ? "hover:bg-violet-500/20"
+              : props.isRecursionTreeMethod
+                ? "hover:bg-cyan-500/20"
+                : "hover:bg-orange-500/20"
+        } ${showGrid ? "" : "w-full"}`}
       >
-        <span className="material-symbols-outlined text-sm flex-shrink-0">info</span>
-        <span className="truncate">{props.tView("viewDetails")}</span>
+        <span className="material-symbols-outlined text-sm flex-shrink-0">
+          info
+        </span>
+        <span className="truncate">{props.tView("viewStepByStep")}</span>
       </button>
-      {props.isRecursionTreeMethod && props.proof && props.proof.length > 0 && (
-        <button
-          onClick={() => props.setShowStepsModal(true)}
-          className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors min-w-0"
-        >
-          <span className="material-symbols-outlined text-sm flex-shrink-0">description</span>
-          <span className="truncate">{props.tView("viewStepByStep")}</span>
-        </button>
-      )}
       {props.isCharacteristicMethod &&
         props.dpApplicability.status !== "rejected" &&
         props.characteristicEquation?.dp_version && (
@@ -807,7 +702,9 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
             onClick={() => props.setShowDPModal(true)}
             className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors min-w-0"
           >
-            <span className="material-symbols-outlined text-sm flex-shrink-0">memory</span>
+            <span className="material-symbols-outlined text-sm flex-shrink-0">
+              memory
+            </span>
             <span className="truncate">{props.tView("viewDPVersion")}</span>
           </button>
         )}
@@ -932,7 +829,7 @@ const renderRecursionTreeCards = (
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Nivel Dominante */}
-      <div className="glass-card p-3 rounded-lg h-full flex flex-col">
+      <div className="glass-card p-3 rounded-lg h-full flex flex-col border border-cyan-500/20">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -949,11 +846,9 @@ const renderRecursionTreeCards = (
             <div className="text-center overflow-x-auto w-full max-w-full">
               <div className="text-xs scale-85">
                 <Formula
-                  latex={
-                    props.translateReason(
-                      props.recursionTree?.dominating_level?.reason || "",
-                    )
-                  }
+                  latex={props.translateReason(
+                    props.recursionTree?.dominating_level?.reason || "",
+                  )}
                   display
                 />
               </div>
@@ -963,7 +858,7 @@ const renderRecursionTreeCards = (
       </div>
 
       {/* Ecuación de Eficiencia */}
-      <div className="glass-card p-3 rounded-lg h-full flex flex-col">
+      <div className="glass-card p-3 rounded-lg h-full flex flex-col border border-cyan-500/30">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -971,12 +866,14 @@ const renderRecursionTreeCards = (
             </span>
             <span>{tRT("efficiencyEquation")}</span>
           </h3>
-          <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-3 overflow-x-auto overflow-y-auto max-h-[40vh] flex-1 min-h-[120px] min-w-0">
+          <div className="bg-slate-800/60 p-3 rounded border border-cyan-500/25 flex flex-col items-center justify-center gap-3 overflow-x-auto overflow-y-auto max-h-[40vh] flex-1 min-h-[120px] min-w-0">
             <div className="w-full min-w-0 overflow-auto [&_.katex]:!text-[0.8em] sm:[&_.katex]:!text-[0.95em] md:[&_.katex]:!text-[1em]">
               {props.hasDifferentComplexities ? (
                 <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
                   <div className="text-center">
-                    <div className="text-xs text-green-300 mb-1">{props.tCases("best")}:</div>
+                    <div className="text-xs text-green-300 mb-1">
+                      {props.tCases("best")}:
+                    </div>
                     <Formula latex={`T(n) = ${props.bestT}`} display />
                   </div>
                   <div className="text-center">
@@ -986,7 +883,9 @@ const renderRecursionTreeCards = (
                     <Formula latex={`T(n) = ${props.avgT}`} display />
                   </div>
                   <div className="text-center">
-                    <div className="text-xs text-red-300 mb-1">{props.tCases("worst")}:</div>
+                    <div className="text-xs text-red-300 mb-1">
+                      {props.tCases("worst")}:
+                    </div>
                     <Formula latex={`T(n) = ${props.worstT}`} display />
                   </div>
                 </div>
@@ -1031,14 +930,36 @@ interface EfficiencyCardProps {
 const renderEfficiencyCard = (
   props: EfficiencyCardProps,
 ): React.JSX.Element => {
+  const efficiencyBorderClass = props.isIterationMethod
+    ? "!border-violet-500/30"
+    : props.isMasterMethod
+      ? "!border-orange-500/30"
+      : "border-blue-500/20";
+  const efficiencyIconClass = props.isIterationMethod
+    ? "text-violet-400"
+    : props.isMasterMethod
+      ? "text-orange-400"
+      : "text-blue-400";
+  const efficiencyInnerBorderClass = props.isIterationMethod
+    ? "!border-violet-500/30"
+    : props.isMasterMethod
+      ? "!border-orange-500/30"
+      : "border-blue-500/30";
+
   return (
-    <div className="glass-card p-4 sm:p-7 rounded-lg border border-blue-500/20 flex-shrink-0 min-w-0">
+    <div
+      className={`glass-card p-4 sm:p-7 rounded-lg border flex-shrink-0 min-w-0 ${efficiencyBorderClass}`}
+    >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 min-w-0">
         <h3 className="text-white font-semibold text-sm flex items-center gap-2 flex-wrap min-w-0">
-          <span className="material-symbols-outlined text-base text-blue-400 flex-shrink-0">
+          <span
+            className={`material-symbols-outlined text-base flex-shrink-0 ${efficiencyIconClass}`}
+          >
             functions
           </span>
-          <span className="truncate">{props.tRecursionTree("efficiencyEquation")}</span>
+          <span className="truncate">
+            {props.tRecursionTree("efficiencyEquation")}
+          </span>
           {props.isMasterMethod && props.hasDifferentComplexities && (
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide flex-shrink-0 ${getCaseBadgeStyle(props.selectedCase)}`}
@@ -1072,8 +993,10 @@ const renderEfficiencyCard = (
         )}
       </div>
       <div
-        className={`rounded-lg bg-slate-800/60 border border-blue-500/30 flex justify-start sm:justify-center items-center overflow-x-auto overflow-y-auto max-h-[40vh] min-w-0 ${
-          props.isIterationMethod ? "p-4 sm:p-7 min-h-[100px] sm:min-h-[140px]" : "p-4 sm:p-6 min-h-[100px] sm:min-h-[120px]"
+        className={`rounded-lg bg-slate-800/60 border flex justify-start sm:justify-center items-center overflow-x-auto overflow-y-auto max-h-[40vh] min-w-0 ${efficiencyInnerBorderClass} ${
+          props.isIterationMethod
+            ? "p-4 sm:p-7 min-h-[100px] sm:min-h-[140px]"
+            : "p-4 sm:p-6 min-h-[100px] sm:min-h-[120px]"
         }`}
       >
         <div className="w-full min-w-0 overflow-auto [&_.katex]:!text-[0.8em] sm:[&_.katex]:!text-[0.95em] md:[&_.katex]:!text-[1em]">
@@ -1128,6 +1051,9 @@ interface RecursiveAnalysisViewProps {
     best: AnalyzeOpenResponse | "same_as_worst" | null;
     avg: AnalyzeOpenResponse | "same_as_worst" | null;
   } | null;
+  readonly onAssistantFocusedPanelChange?: (
+    panel: AssistantFocusedPanelContext | null,
+  ) => void;
 }
 
 /**
@@ -1152,6 +1078,7 @@ interface RecursiveAnalysisViewProps {
  */
 export default function RecursiveAnalysisView({
   data,
+  onAssistantFocusedPanelChange,
 }: RecursiveAnalysisViewProps) {
   const locale = useLocale() as "en" | "es";
   const tCases = useTranslations("analyzer.cases");
@@ -1159,16 +1086,15 @@ export default function RecursiveAnalysisView({
   const tRecursionTree = useTranslations("analyzer.recursionTree");
   const tView = useTranslations("analyzer.view");
 
-  const getMethodBadgeText = (
-    isChar: boolean,
-    isIter: boolean,
-    isTree: boolean,
-  ) => {
-    if (isChar) return tMethods("characteristicEquation");
-    if (isIter) return tMethods("iterationMethod");
-    if (isTree) return tMethods("recursionTree");
-    return tMethods("masterTheorem");
-  };
+  const getMethodBadgeText = useCallback(
+    (isChar: boolean, isIter: boolean, isTree: boolean) => {
+      if (isChar) return tMethods("characteristicEquation");
+      if (isIter) return tMethods("iterationMethod");
+      if (isTree) return tMethods("recursionTree");
+      return tMethods("masterTheorem");
+    },
+    [tMethods],
+  );
 
   // Memoizar los datos para evitar recálculos innecesarios
   const analysisData = useMemo(() => {
@@ -1241,7 +1167,6 @@ export default function RecursiveAnalysisView({
     T_open,
   } = analysisData;
   const [showProcedureModal, setShowProcedureModal] = useState(false);
-  const [showStepsModal, setShowStepsModal] = useState(false);
   const [showTreeModal, setShowTreeModal] = useState(false);
   const [showCharacteristicModal, setShowCharacteristicModal] = useState(false);
   const [showDPModal, setShowDPModal] = useState(false);
@@ -1300,19 +1225,6 @@ export default function RecursiveAnalysisView({
     }
   }, [selectedCase, isMasterMethod, worstData, bestData, avgData, master]);
 
-  const currentProof = useMemo(() => {
-    switch (selectedCase) {
-      case "worst":
-        return worstData?.totals?.proof || undefined;
-      case "best":
-        return bestData?.totals?.proof || undefined;
-      case "average":
-        return avgData?.totals?.proof || undefined;
-      default:
-        return worstData?.totals?.proof || bestData?.totals?.proof || avgData?.totals?.proof || undefined;
-    }
-  }, [selectedCase, worstData, bestData, avgData]);
-
   // Obtener theta según el caso seleccionado (solo para teorema maestro)
   const currentTheta = useMemo(() => {
     if (!isMasterMethod) return theta || T_open;
@@ -1329,6 +1241,502 @@ export default function RecursiveAnalysisView({
   // Detectar si hay diferencias entre los casos
   const hasDifferentComplexities =
     bestT !== worstT || bestT !== avgT || worstT !== avgT;
+
+  const recursiveFocusedPanel =
+    useMemo<AssistantFocusedPanelContext | null>(() => {
+      const methodLabel = getMethodBadgeText(
+        isCharacteristicMethod,
+        isIterationMethod,
+        isRecursionTreeMethod,
+      );
+      const recurrenceForm = recurrence?.form;
+      const detailsForMethodModal = () => {
+        const details: string[] = [
+          recursivePanelText(
+            locale,
+            `Metodo visible: ${methodLabel}.`,
+            `Visible method: ${methodLabel}.`,
+          ),
+          recursivePanelText(
+            locale,
+            `Caso visible: ${tCases(selectedCase)}.`,
+            `Visible case: ${tCases(selectedCase)}.`,
+          ),
+        ];
+
+        appendRecursiveDetail(
+          details,
+          recurrenceForm
+            ? recursivePanelText(
+                locale,
+                `Recurrencia visible: ${recurrenceForm}.`,
+                `Visible recurrence: ${recurrenceForm}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          currentTheta
+            ? recursivePanelText(
+                locale,
+                `Theta visible en el modal: ${currentTheta}.`,
+                `Visible theta in the modal: ${currentTheta}.`,
+              )
+            : null,
+        );
+
+        if (isCharacteristicMethod && characteristicEquation) {
+          appendRecursiveDetail(
+            details,
+            characteristicEquation.equation
+              ? recursivePanelText(
+                  locale,
+                  `Ecuacion caracteristica visible: ${characteristicEquation.equation}.`,
+                  `Visible characteristic equation: ${characteristicEquation.equation}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            characteristicEquation.closed_form
+              ? recursivePanelText(
+                  locale,
+                  `Forma cerrada visible: ${characteristicEquation.closed_form}.`,
+                  `Visible closed form: ${characteristicEquation.closed_form}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            characteristicEquation.dominant_root
+              ? recursivePanelText(
+                  locale,
+                  `Raiz dominante visible: ${characteristicEquation.dominant_root}.`,
+                  `Visible dominant root: ${characteristicEquation.dominant_root}.`,
+                )
+              : null,
+          );
+          details.push(
+            ...buildBundleDetailNotes(
+              characteristicEquation.step_by_step,
+              locale,
+              {
+                maxSteps: 3,
+                includeMath: true,
+              },
+            ),
+          );
+        } else if (isIterationMethod && iteration) {
+          appendRecursiveDetail(
+            details,
+            iteration.g_function
+              ? recursivePanelText(
+                  locale,
+                  `Funcion de reduccion visible: ${iteration.g_function}.`,
+                  `Visible reduction function: ${iteration.g_function}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            iteration.general_form
+              ? recursivePanelText(
+                  locale,
+                  `Forma general visible: ${iteration.general_form}.`,
+                  `Visible general form: ${iteration.general_form}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            iteration.base_case?.condition
+              ? recursivePanelText(
+                  locale,
+                  `Caso base visible: ${iteration.base_case.condition}; k = ${iteration.base_case.k}.`,
+                  `Visible base case: ${iteration.base_case.condition}; k = ${iteration.base_case.k}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            iteration.summation?.evaluated
+              ? recursivePanelText(
+                  locale,
+                  `Sumatoria evaluada visible: ${iteration.summation.evaluated}.`,
+                  `Visible evaluated summation: ${iteration.summation.evaluated}.`,
+                )
+              : null,
+          );
+          details.push(
+            ...buildBundleDetailNotes(iteration.step_by_step, locale, {
+              maxSteps: 3,
+              includeMath: true,
+            }),
+          );
+        } else if (isRecursionTreeMethod && recursionTree) {
+          appendRecursiveDetail(
+            details,
+            recursionTree.height
+              ? recursivePanelText(
+                  locale,
+                  `Altura visible del arbol: ${recursionTree.height}.`,
+                  `Visible tree height: ${recursionTree.height}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            recursionTree.dominating_level?.reason
+              ? recursivePanelText(
+                  locale,
+                  `Nivel dominante visible: ${recursionTree.dominating_level.level} (${summarizeRecursiveText(locale, recursionTree.dominating_level.reason)}).`,
+                  `Visible dominating level: ${recursionTree.dominating_level.level} (${summarizeRecursiveText(locale, recursionTree.dominating_level.reason)}).`,
+                )
+              : null,
+          );
+          recursionTree.table_by_levels.slice(0, 2).forEach((level) => {
+            appendRecursiveDetail(
+              details,
+              recursivePanelText(
+                locale,
+                `Nivel ${level.level}: nodos ${level.num_nodes}, costo total ${level.total_cost}.`,
+                `Level ${level.level}: nodes ${level.num_nodes}, total cost ${level.total_cost}.`,
+              ),
+            );
+          });
+          details.push(
+            ...buildBundleDetailNotes(recursionTree.step_by_step, locale, {
+              maxSteps: 3,
+              includeMath: true,
+            }),
+          );
+        } else if (currentMaster) {
+          appendRecursiveDetail(
+            details,
+            currentMaster.case != null
+              ? recursivePanelText(
+                  locale,
+                  `Caso visible del teorema maestro: ${currentMaster.case}.`,
+                  `Visible master theorem case: ${currentMaster.case}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            currentMaster.nlogba
+              ? recursivePanelText(
+                  locale,
+                  `Comparador visible nlog_b(a): ${currentMaster.nlogba}.`,
+                  `Visible nlog_b(a) comparator: ${currentMaster.nlogba}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            currentMaster.comparison
+              ? recursivePanelText(
+                  locale,
+                  `Comparacion visible con f(n): ${currentMaster.comparison}.`,
+                  `Visible comparison against f(n): ${currentMaster.comparison}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            details,
+            currentMaster.regularity?.note
+              ? recursivePanelText(
+                  locale,
+                  `Regularidad visible: ${summarizeRecursiveText(locale, currentMaster.regularity.note)}.`,
+                  `Visible regularity note: ${summarizeRecursiveText(locale, currentMaster.regularity.note)}.`,
+                )
+              : null,
+          );
+          details.push(
+            ...buildBundleDetailNotes(currentMaster.step_by_step, locale, {
+              maxSteps: 3,
+              includeMath: true,
+            }),
+          );
+        }
+
+        return details;
+      };
+
+      if (showCharacteristicModal) {
+        return {
+          id: "characteristic-equation-modal",
+          title:
+            locale === "es"
+              ? "Ecuacion caracteristica"
+              : "Characteristic equation",
+          description:
+            locale === "es"
+              ? "Desarrollo visible del metodo de ecuacion caracteristica para la recurrencia actual."
+              : "Visible characteristic-equation method development for the current recurrence.",
+          notes: [
+            recursivePanelText(
+              locale,
+              `Metodo visible: ${methodLabel}.`,
+              `Visible method: ${methodLabel}.`,
+            ),
+            ...(recurrenceForm
+              ? [
+                  recursivePanelText(
+                    locale,
+                    `Recurrencia visible: ${recurrenceForm}.`,
+                    `Visible recurrence: ${recurrenceForm}.`,
+                  ),
+                ]
+              : []),
+            ...(characteristicEquation?.equation
+              ? [
+                  recursivePanelText(
+                    locale,
+                    `Ecuacion visible: ${characteristicEquation.equation}.`,
+                    `Visible equation: ${characteristicEquation.equation}.`,
+                  ),
+                ]
+              : []),
+            ...(characteristicEquation?.general_solution
+              ? [
+                  recursivePanelText(
+                    locale,
+                    `Solucion general visible: ${characteristicEquation.general_solution}.`,
+                    `Visible general solution: ${characteristicEquation.general_solution}.`,
+                  ),
+                ]
+              : []),
+            ...(characteristicEquation?.theta || theta || T_open
+              ? [
+                  recursivePanelText(
+                    locale,
+                    `Theta visible: ${characteristicEquation?.theta || theta || T_open}.`,
+                    `Visible theta: ${characteristicEquation?.theta || theta || T_open}.`,
+                  ),
+                ]
+              : []),
+            ...buildBundleDetailNotes(
+              characteristicEquation?.step_by_step,
+              locale,
+              {
+                maxSteps: 3,
+                includeMath: true,
+              },
+            ),
+          ],
+        };
+      }
+
+      if (showProcedureModal) {
+        return {
+          id: "recursive-step-by-step-modal",
+          title: tView("viewStepByStep"),
+          description: recursivePanelText(
+            locale,
+            `Procedimiento paso a paso visible del metodo ${methodLabel}.`,
+            `Visible step-by-step procedure for the ${methodLabel} method.`,
+          ),
+          notes: detailsForMethodModal(),
+        };
+      }
+
+      if (showTreeModal) {
+        const treeDetails: string[] = [
+          recursivePanelText(
+            locale,
+            `Metodo visible: ${methodLabel}.`,
+            `Visible method: ${methodLabel}.`,
+          ),
+        ];
+
+        appendRecursiveDetail(
+          treeDetails,
+          recurrence?.type
+            ? recursivePanelText(
+                locale,
+                `Tipo de recurrencia visible: ${recurrence.type}.`,
+                `Visible recurrence type: ${recurrence.type}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          treeDetails,
+          recurrenceForm
+            ? recursivePanelText(
+                locale,
+                `Recurrencia visible: ${recurrenceForm}.`,
+                `Visible recurrence: ${recurrenceForm}.`,
+              )
+            : null,
+        );
+
+        if (recursionTree) {
+          appendRecursiveDetail(
+            treeDetails,
+            recursionTree.height
+              ? recursivePanelText(
+                  locale,
+                  `Altura visible del arbol: ${recursionTree.height}.`,
+                  `Visible tree height: ${recursionTree.height}.`,
+                )
+              : null,
+          );
+          recursionTree.table_by_levels.slice(0, 3).forEach((level) => {
+            appendRecursiveDetail(
+              treeDetails,
+              recursivePanelText(
+                locale,
+                `Nivel ${level.level}: ${level.num_nodes} nodos, subproblema ${level.subproblem_size}, costo total ${level.total_cost}.`,
+                `Level ${level.level}: ${level.num_nodes} nodes, subproblem ${level.subproblem_size}, total cost ${level.total_cost}.`,
+              ),
+            );
+          });
+          appendRecursiveDetail(
+            treeDetails,
+            recursionTree.theta
+              ? recursivePanelText(
+                  locale,
+                  `Theta visible del arbol: ${recursionTree.theta}.`,
+                  `Visible tree theta: ${recursionTree.theta}.`,
+                )
+              : null,
+          );
+        } else if (characteristicEquation) {
+          appendRecursiveDetail(
+            treeDetails,
+            characteristicEquation.growth_rate != null
+              ? recursivePanelText(
+                  locale,
+                  `Tasa de crecimiento visible: ${characteristicEquation.growth_rate}.`,
+                  `Visible growth rate: ${characteristicEquation.growth_rate}.`,
+                )
+              : null,
+          );
+          appendRecursiveDetail(
+            treeDetails,
+            characteristicEquation.theta
+              ? recursivePanelText(
+                  locale,
+                  `Theta visible del arbol derivado: ${characteristicEquation.theta}.`,
+                  `Visible derived-tree theta: ${characteristicEquation.theta}.`,
+                )
+              : null,
+          );
+        }
+
+        return {
+          id: "recursive-tree-modal",
+          title: tView("viewRecurrenceTree"),
+          description:
+            locale === "es"
+              ? "Visualizacion visible del arbol de recurrencia o del arbol derivado del metodo actual."
+              : "Visible recurrence-tree view or derived tree for the current method.",
+          notes: treeDetails,
+        };
+      }
+
+      if (showDPModal) {
+        const dpDetails: string[] = [
+          recursivePanelText(
+            locale,
+            `Estado visible de aplicabilidad DP: ${dpApplicability.status}.`,
+            `Visible DP applicability status: ${dpApplicability.status}.`,
+          ),
+        ];
+
+        appendRecursiveDetail(
+          dpDetails,
+          characteristicEquation?.dp_version?.pattern
+            ? recursivePanelText(
+                locale,
+                `Patron DP visible: ${characteristicEquation.dp_version.pattern}.`,
+                `Visible DP pattern: ${characteristicEquation.dp_version.pattern}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          dpDetails,
+          characteristicEquation?.dp_version
+            ? recursivePanelText(
+                locale,
+                `Complejidad visible de la version DP: tiempo ${characteristicEquation.dp_version.time_complexity}, espacio ${characteristicEquation.dp_version.space_complexity}.`,
+                `Visible DP-version complexity: time ${characteristicEquation.dp_version.time_complexity}, space ${characteristicEquation.dp_version.space_complexity}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          dpDetails,
+          characteristicEquation?.dp_version?.recursive_complexity
+            ? recursivePanelText(
+                locale,
+                `Complejidad visible de la version recursiva: ${characteristicEquation.dp_version.recursive_complexity}.`,
+                `Visible recursive-version complexity: ${characteristicEquation.dp_version.recursive_complexity}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          dpDetails,
+          characteristicEquation?.dp_optimized_version
+            ? recursivePanelText(
+                locale,
+                `Version optimizada visible: tiempo ${characteristicEquation.dp_optimized_version.time_complexity}, espacio ${characteristicEquation.dp_optimized_version.space_complexity}.`,
+                `Visible optimized version: time ${characteristicEquation.dp_optimized_version.time_complexity}, space ${characteristicEquation.dp_optimized_version.space_complexity}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          dpDetails,
+          characteristicEquation?.dp_equivalence
+            ? recursivePanelText(
+                locale,
+                `Equivalencia visible: ${summarizeRecursiveText(locale, characteristicEquation.dp_equivalence)}.`,
+                `Visible equivalence: ${summarizeRecursiveText(locale, characteristicEquation.dp_equivalence)}.`,
+              )
+            : null,
+        );
+
+        return {
+          id: "dp-version-modal",
+          title: tView("viewDPVersion"),
+          description:
+            locale === "es"
+              ? "Hipotesis visible de programacion dinamica asociada a la recurrencia actual."
+              : "Visible dynamic-programming hypothesis associated with the current recurrence.",
+          notes: dpDetails,
+        };
+      }
+
+      return null;
+    }, [
+      T_open,
+      characteristicEquation,
+      currentTheta,
+      currentMaster,
+      dpApplicability.status,
+      getMethodBadgeText,
+      isCharacteristicMethod,
+      isIterationMethod,
+      isRecursionTreeMethod,
+      iteration,
+      locale,
+      recurrence,
+      recursionTree,
+      selectedCase,
+      showCharacteristicModal,
+      showDPModal,
+      showProcedureModal,
+      showTreeModal,
+      tCases,
+      tView,
+      theta,
+    ]);
+
+  useEffect(() => {
+    onAssistantFocusedPanelChange?.(recursiveFocusedPanel);
+    return () => {
+      onAssistantFocusedPanelChange?.(null);
+    };
+  }, [onAssistantFocusedPanelChange, recursiveFocusedPanel]);
 
   // Debug: log solo una vez cuando cambian los datos
   useEffect(() => {
@@ -1382,9 +1790,7 @@ export default function RecursiveAnalysisView({
                   )}
                 </span>
               </span>
-              <span
-                className="flex flex-col justify-center leading-tight"
-              >
+              <span className="flex flex-col justify-center leading-tight">
                 <span className="text-[11px] font-medium tracking-wide text-slate-400">
                   {tView("analysisMethod")}
                 </span>
@@ -1452,12 +1858,12 @@ export default function RecursiveAnalysisView({
               >
                 <button
                   onClick={() => setShowCharacteristicModal(true)}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0"
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-blue-500/20 transition-colors min-w-0"
                 >
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     info
                   </span>
-                  <span className="truncate">{tView("viewDetails")}</span>
+                  <span className="truncate">{tView("viewStepByStep")}</span>
                 </button>
                 {hasDPButton && (
                   <button
@@ -1477,7 +1883,9 @@ export default function RecursiveAnalysisView({
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     account_tree
                   </span>
-                  <span className="truncate">{tView("viewRecurrenceTree")}</span>
+                  <span className="truncate">
+                    {tView("viewRecurrenceTree")}
+                  </span>
                 </button>
               </div>
             );
@@ -1489,12 +1897,16 @@ export default function RecursiveAnalysisView({
               <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   onClick={() => setShowProcedureModal(true)}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0"
+                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
+                    isIterationMethod
+                      ? "hover:bg-violet-500/20"
+                      : "hover:bg-orange-500/20"
+                  }`}
                 >
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     info
                   </span>
-                  <span className="truncate">{tView("viewDetails")}</span>
+                  <span className="truncate">{tView("viewStepByStep")}</span>
                 </button>
                 <button
                   onClick={() => setShowTreeModal(true)}
@@ -1503,7 +1915,9 @@ export default function RecursiveAnalysisView({
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     account_tree
                   </span>
-                  <span className="truncate">{tView("viewRecurrenceTree")}</span>
+                  <span className="truncate">
+                    {tView("viewRecurrenceTree")}
+                  </span>
                 </button>
               </div>
             );
@@ -1515,11 +1929,10 @@ export default function RecursiveAnalysisView({
               {renderActionButtons({
                 tView,
                 isCharacteristicMethod,
+                isIterationMethod,
                 isRecursionTreeMethod,
-                proof,
                 setShowCharacteristicModal,
                 setShowProcedureModal,
-                setShowStepsModal,
                 setShowDPModal,
                 characteristicEquation,
                 dpApplicability,
@@ -1528,12 +1941,18 @@ export default function RecursiveAnalysisView({
                 <div className="mb-4">
                   <button
                     onClick={() => setShowTreeModal(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors min-w-0"
+                    className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
+                      isRecursionTreeMethod
+                        ? "hover:bg-cyan-500/20"
+                        : "hover:bg-purple-500/20"
+                    }`}
                   >
                     <span className="material-symbols-outlined text-sm flex-shrink-0">
                       account_tree
                     </span>
-                    <span className="truncate">{tView("viewRecurrenceTree")}</span>
+                    <span className="truncate">
+                      {tView("viewRecurrenceTree")}
+                    </span>
                   </button>
                 </div>
               )}
@@ -1588,8 +2007,6 @@ export default function RecursiveAnalysisView({
         recursionTree,
         master,
         currentMaster,
-        proof,
-        currentProof,
         theta,
         T_open,
         selectedCase,
@@ -1600,12 +2017,12 @@ export default function RecursiveAnalysisView({
       {isCharacteristicMethod &&
         dpApplicability.status !== "rejected" &&
         characteristicEquation?.dp_version && (
-        <DPVersionModal
-          open={showDPModal}
-          onClose={() => setShowDPModal(false)}
-          characteristicEquation={characteristicEquation}
-        />
-      )}
+          <DPVersionModal
+            open={showDPModal}
+            onClose={() => setShowDPModal(false)}
+            characteristicEquation={characteristicEquation}
+          />
+        )}
 
       {/* Modal del árbol de recursión - para recursion_tree, characteristic_equation, master e iteration */}
       {((isRecursionTreeMethod && recurrence?.type === "divide_conquer") ||
@@ -1618,15 +2035,6 @@ export default function RecursiveAnalysisView({
           recurrence={recurrence}
           recursionTreeData={recursionTree}
           characteristicEquation={characteristicEquation}
-        />
-      )}
-
-      {/* Modal de pasos del método de Árbol de Recursión */}
-      {isRecursionTreeMethod && (
-        <RecursionTreeStepsModal
-          open={showStepsModal}
-          onClose={() => setShowStepsModal(false)}
-          proof={proof}
         />
       )}
     </div>

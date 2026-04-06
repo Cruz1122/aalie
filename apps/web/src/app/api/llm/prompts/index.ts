@@ -43,5 +43,4 @@ export function getPrompt(job: LLMJob, locale?: string): string {
   }
 }
 
-export { getExplanationLanguageInstruction, getExplanationFormatInstruction } from "./response-language";
 export type { LLMJob, SupportedLocale, RecursionDiagramParams } from "./types";

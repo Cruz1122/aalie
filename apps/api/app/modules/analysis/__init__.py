@@ -5,8 +5,4 @@ from .analyzers.iterative import IterativeAnalyzer
 from .analyzers.recursive import RecursiveAnalyzer
 from .analyzers.registry import AnalyzerRegistry
 
-__all__ = [
-    "AnalyzerRegistry",
-    "IterativeAnalyzer",
-    "RecursiveAnalyzer"
-]
+__all__ = ["AnalyzerRegistry", "IterativeAnalyzer", "RecursiveAnalyzer"]

@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useState, useRef , useMemo } from "react";
-
+import { useCallback, useState, useRef, useMemo } from "react";
 
 import type {
   CaseType,
   TraceApiResponse,
-  TraceGraph,
   TraceConfig,
   InternalInput,
+  StructuredTrace,
 } from "@/types/trace";
 
 import { useTraceCache } from "./useTraceCache";
@@ -31,7 +30,7 @@ export interface UseTraceControllerResult {
   /** true una vez que el primer fetch completó (con éxito o fallo). */
   fetchCompleted: boolean;
   /** Diagrama estructurado (única fuente). */
-  structuredDiagram: { graph: TraceGraph; patternKind: string; classification: { evidence: string[] } } | null;
+  structuredDiagram: StructuredTrace | null;
   algorithmKind: string | null;
   traceConfig: TraceConfig;
   loadTrace: (
@@ -68,13 +67,10 @@ export function useTraceController(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchCompleted, setFetchCompleted] = useState(false);
-  const [structuredDiagram, setStructuredDiagram] = useState<{
-    graph: TraceGraph;
-    patternKind: string;
-    classification: { evidence: string[] };
-  } | null>(null);
+  const [structuredDiagram, setStructuredDiagram] =
+    useState<StructuredTrace | null>(null);
   const [algorithmKind, setAlgorithmKind] = useState<string | null>(null);
-  const [exampleArray, setExampleArray] = useState<number[]>([1, 2, 3, 4]);
+  const [exampleArray, setExampleArray] = useState<number[]>([]);
   // Permite cancelar requests anteriores cuando llega uno nuevo
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -105,7 +101,11 @@ export function useTraceController(
         const actualN = hasZeroCheck ? Math.max(1, n) : n;
         const arr = makeBaseArray(actualN);
         const midIndex = Math.floor(Math.max(1, actualN) / 2);
-        return { n: actualN, array: arr, x: arr[midIndex] ?? arr[arr.length - 1] };
+        return {
+          n: actualN,
+          array: arr,
+          x: arr[midIndex] ?? arr[arr.length - 1],
+        };
       },
       worst: (n: number): InternalInput => {
         if (hasZeroCheck) return { n: 0, array: [], x: undefined };
@@ -138,7 +138,9 @@ export function useTraceController(
 
       const scenario: CaseType = caseType;
       const overrideToUse =
-        effectiveOverride !== undefined ? effectiveOverride : initialVariablesOverride;
+        effectiveOverride !== undefined
+          ? effectiveOverride
+          : initialVariablesOverride;
 
       const nFromOverride =
         overrideToUse &&
@@ -150,9 +152,6 @@ export function useTraceController(
       const n = nFromOverride ?? nFromSelector;
 
       let variablesFromGenerator: Record<string, unknown> | null = null;
-      const nVal = n;
-      const makeBaseArray = (size: number) =>
-        Array.from({ length: Math.max(1, size) }, (_, idx) => idx + 1);
       if (traceConfig.kind === "iterative" && traceConfig.inputGenerator) {
         const generator =
           (scenario === "best"
@@ -175,22 +174,6 @@ export function useTraceController(
               ? (overrideToUse.A as number[])
               : arr;
           if (arrToUse.length > 0) setExampleArray(arrToUse);
-        }
-      }
-      if (
-        !variablesFromGenerator &&
-        (traceConfig.kind === "recursive" || traceConfig.kind === "hybrid")
-      ) {
-        const isSortingSource = /(merge|quick|heap|bubble|insertion|selection|sort|ordenar|mezclar|particionar)/i.test(
-          source,
-        );
-        const baseArr = makeBaseArray(nVal);
-        const arr = isSortingSource ? [...baseArr].reverse() : baseArr;
-        if (usesX) {
-          const x = arr[Math.floor(arr.length / 2)] ?? arr[arr.length - 1];
-          variablesFromGenerator = { A: arr, x };
-        } else {
-          variablesFromGenerator = { A: arr };
         }
       }
 
@@ -216,17 +199,11 @@ export function useTraceController(
               throw new Error("Cache contains x, bypassing.");
             }
             setAlgorithmKind(
-              cachedData.algorithmKind ??
-                cachedData.trace?.kind ??
-                "unknown",
+              cachedData.algorithmKind ?? cachedData.trace?.kind ?? "unknown",
             );
             const st = cachedData.derived?.structuredTrace;
             if (st?.graph && (st.graph.nodes?.length ?? 0) > 0) {
-              setStructuredDiagram({
-                graph: st.graph,
-                patternKind: st.patternKind,
-                classification: st.classification,
-              });
+              setStructuredDiagram(st);
             } else {
               setStructuredDiagram(null);
             }
@@ -258,47 +235,11 @@ export function useTraceController(
 
         const data: TraceApiResponse = await response.json();
 
-        // #region agent log
-        try {
-          fetch("http://127.0.0.1:7642/ingest/4e868e29-6cb7-4d4c-abab-40d6b95cd3c7", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "1b7cca",
-            },
-            body: JSON.stringify({
-              sessionId: "1b7cca",
-              runId: "initial",
-              hypothesisId: "H3",
-              location: "useTraceController.ts:after_fetch",
-              message: "trace_response_received",
-              data: {
-                ok: data?.ok ?? null,
-                algorithmKind: data?.algorithmKind ?? data?.trace?.kind ?? null,
-                stepsCount: data?.trace?.steps?.length ?? null,
-                hasStructuredTrace: Boolean(data?.derived?.structuredTrace),
-                graphNodes: data?.derived?.structuredTrace?.graph?.nodes?.length ?? null,
-                graphEdges: data?.derived?.structuredTrace?.graph?.edges?.length ?? null,
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-        } catch {
-          // Ignorar errores de logging de depuración
-        }
-        // #endregion agent log
-
-        setAlgorithmKind(
-          data.algorithmKind ?? data.trace?.kind ?? "unknown",
-        );
+        setAlgorithmKind(data.algorithmKind ?? data.trace?.kind ?? "unknown");
 
         const st = data.derived?.structuredTrace;
         if (st?.graph && (st.graph.nodes?.length ?? 0) > 0) {
-          setStructuredDiagram({
-            graph: st.graph,
-            patternKind: st.patternKind,
-            classification: st.classification,
-          });
+          setStructuredDiagram(st);
         } else {
           setStructuredDiagram(null);
         }

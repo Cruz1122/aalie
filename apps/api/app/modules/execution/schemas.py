@@ -5,10 +5,10 @@ Alineados con @aa/types (ExecutionTraceCanonical, CallTreeCanonical, DiagramPayl
 Author: Plan diagramas deterministas
 Version: 0.1.0
 """
+
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 DiagramKind = Literal["execution_diagram", "call_tree", "recurrence_tree"]
 

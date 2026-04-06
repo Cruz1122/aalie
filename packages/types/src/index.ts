@@ -226,9 +226,26 @@ export interface LineCost {
   count_raw?: string;   // # ejecuciones (con sumatorias sin simplificar), ej: "\sum_{i=1}^{n} 1"
   note?: string;        // aclaraciones (p. ej., "worst: max(then, else)")
   procedure?: string[]; // procedimiento completo por línea (desde count_raw hasta forma polinómica)
+  line_procedure?: string[]; // pasos específicos de la línea (contabilidad + cierre de sumatorias)
+  step_by_step?: AnalysisStepBundle; // walkthrough tipado compartido para el modal de línea
   expectedRuns?: string; // E[# ejecuciones] para caso promedio (KaTeX)
   unbounded?: boolean;  // true si el bucle puede no terminar (evidencia de no terminación)
   unbounded_kind?: "non_terminating" | "unknown";  // clasificación del unbounded
+  loopBlockRef?: string; // referencia opcional al bloque semántico de loop que gobierna la línea
+}
+
+export interface WhileBlockView {
+  id: string;
+  line: number;
+  status: "available" | "partial" | "unknown" | "unbounded";
+  patternUsed?: string;
+  evidenceLevel: "strong" | "medium" | "weak";
+  reasonCode?: string;
+  dominantController?: string;
+  iterationsExpr?: string;
+  iterationsClass?: string;
+  expandedCostExpr?: string;
+  diagnostics?: string[];
 }
 
 export type LoopInvariantStatus = "ok" | "unavailable" | "low_confidence";
@@ -250,6 +267,7 @@ export type LoopInvariantPatternType =
   | "traversal"
   | "search"
   | "accumulation"
+  | "field_assignment_progress"
   | "counting"
   | "extrema"
   | "prefix_progress"
@@ -296,6 +314,7 @@ export interface LoopInvariant {
   selectedLoop: LoopInvariantSelectedLoop;
   invariant: LoopInvariantSections;
   didacticSummary: string;
+  behaviour?: string;
   evidence: LoopInvariantEvidence;
 }
 
@@ -313,6 +332,155 @@ export interface AnalyzeRequest {
   algorithm_kind?: "iterative" | "recursive" | "hybrid" | "unknown";  // tipo de algoritmo (se detecta automáticamente si no se proporciona)
 }
 
+export type RecursiveStepStatus = "complete" | "partial" | "unsupported" | "error";
+export type RecursiveStepConfidence = "high" | "medium" | "low";
+
+export type CharacteristicStepKind =
+  | "recurrence_detected"
+  | "applicability_validated"
+  | "homogeneity_classified"
+  | "homogeneous_part_extracted"
+  | "characteristic_polynomial_built"
+  | "roots_computed"
+  | "homogeneous_solution_built"
+  | "particular_solution_built"
+  | "general_solution_built"
+  | "base_conditions_applied"
+  | "closed_form_simplified"
+  | "dominant_term_concluded";
+
+export type IterationStepKind =
+  | "recurrence_detected"
+  | "applicability_validated"
+  | "base_case_identified"
+  | "initial_unrolling_built"
+  | "k_pattern_generalized"
+  | "k_value_solved"
+  | "summation_built"
+  | "summation_simplified"
+  | "final_expression_built"
+  | "dominant_term_identified"
+  | "asymptotic_concluded";
+
+export type IterativeWalkthroughStepKind =
+  | "line_scope_identified"
+  | "line_execution_count_resolved"
+  | "line_count_summation_closed"
+  | "line_cost_built"
+  | "line_groups_identified"
+  | "line_counts_summarized"
+  | "line_cost_sum_built"
+  | "line_cost_sum_closed"
+  | "constant_substitution_applied"
+  | "cost_expression_simplified"
+  | "dominant_term_identified"
+  | "asymptotic_concluded";
+
+export type MasterStepKind =
+  | "recurrence_detected"
+  | "master_form_validated"
+  | "master_parameters_extracted"
+  | "critical_exponent_computed"
+  | "reference_growth_built"
+  | "growth_comparison_performed"
+  | "master_case_evaluated"
+  | "regularity_checked"
+  | "master_applicability_decided"
+  | "asymptotic_conclusion";
+
+export type RecursionTreeStepKind =
+  | "recurrence_detected"
+  | "recursion_tree_applicability_check"
+  | "tree_parameters_extracted"
+  | "level_model_built"
+  | "level_cost_computed"
+  | "tree_height_determined"
+  | "leaf_cost_computed"
+  | "total_tree_sum_built"
+  | "total_tree_sum_simplified"
+  | "dominant_term_identified"
+  | "asymptotic_conclusion";
+
+export type RecursiveStepKind =
+  | CharacteristicStepKind
+  | IterationStepKind
+  | IterativeWalkthroughStepKind
+  | MasterStepKind
+  | RecursionTreeStepKind;
+export type RecursiveMethodId =
+  | "characteristic_equation"
+  | "iteration"
+  | "iterative_line"
+  | "iterative_case"
+  | "master"
+  | "recursion_tree";
+export type RecursiveStepBundleVersion =
+  | "ceq_steps_v1"
+  | "iter_steps_v1"
+  | "iter_line_steps_v1"
+  | "iter_case_steps_v1"
+  | "master_steps_v1"
+  | "rt_steps_v1";
+
+export interface RecursiveStepMathItem {
+  id: string;
+  kind: "equation" | "transformation" | "condition" | "result";
+  latex: string;
+}
+
+export interface RecursiveAnalysisStep {
+  id: string;
+  index: number;
+  kind: RecursiveStepKind;
+  title: string;
+  status: RecursiveStepStatus;
+  math: {
+    primaryLatex?: string;
+    items: RecursiveStepMathItem[];
+  };
+  summary: string;
+  conceptNote: string;
+  teachingNote: string;
+  warning?: string | null;
+  confidence: RecursiveStepConfidence;
+  payload: Record<string, unknown>;
+  derivation?: {
+    sourceExpression?: string;
+    derivedExpression?: string;
+    substitutions?: Array<{ symbol: string; value: string }>;
+    symbolicResult?: string;
+    asymptoticResult?: string;
+    supportReason?: string;
+  };
+  template: {
+    summaryKey: string;
+    conceptKey: string;
+    warningKey?: string;
+    params: Record<string, string | number | boolean>;
+  };
+  audit: {
+    codes: string[];
+    assumptions: string[];
+    blockedBy?: string[];
+  };
+}
+
+export interface RecursiveMethodStepBundle {
+  method: RecursiveMethodId;
+  version: RecursiveStepBundleVersion;
+  overallStatus: RecursiveStepStatus;
+  steps: RecursiveAnalysisStep[];
+}
+
+export type AnalysisStepStatus = RecursiveStepStatus;
+export type AnalysisStepConfidence = RecursiveStepConfidence;
+export type AnalysisStepKind = RecursiveStepKind;
+export type AnalysisMethodId = RecursiveMethodId;
+export type AnalysisStepBundleVersion = RecursiveStepBundleVersion;
+export type AnalysisStepMathItem = RecursiveStepMathItem;
+export type AnalysisStep = RecursiveAnalysisStep;
+export type AnalysisStepBundle = RecursiveMethodStepBundle;
+
 /** Response exitoso con análisis abierto */
 export interface AnalyzeOpenResponse {
   ok: true;
@@ -321,6 +489,8 @@ export interface AnalyzeOpenResponse {
   totals: {
     T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy (o A(n) para promedio)
     procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
+    step_by_step?: AnalysisStepBundle; // walkthrough tipado compartido para el caso iterativo
+    whileBlocks?: WhileBlockView[];  // bloques semánticos de WHILE preservados hasta snapshot/export
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
     notes?: string[];               // reglas usadas (for, while, if) o pasos de procedimiento para promedio
     dp_validation_events?: Array<{
@@ -386,7 +556,7 @@ export interface AnalyzeOpenResponse {
           n0: number;           // umbral base
           applicable: boolean;
           notes: string[];
-          method?: "characteristic_equation";
+          method?: "characteristic_equation" | "iteration" | "recursion_tree";
         }
     );
     characteristic_equation?: {              // resultado del Método de Ecuación Característica
@@ -436,8 +606,10 @@ export interface AnalyzeOpenResponse {
       };
       dp_equivalence: string;               // explicación de equivalencia entre ecuación característica y DP
       theta: string;                        // resultado final Θ(...) en LaTeX
+      step_by_step?: RecursiveMethodStepBundle; // pasos detallados tipados del método
     };
     master?: {                      // resultado del Teorema Maestro
+      method?: "master";
       case: 1 | 2 | 3 | null;      // caso aplicado (1, 2, 3) o null si no aplicable
       nlogba: string;               // expresión LaTeX de n^(log_b a)
       comparison: "smaller" | "equal" | "larger" | null;  // comparación f(n) vs g(n)
@@ -446,6 +618,7 @@ export interface AnalyzeOpenResponse {
         note: string;               // nota sobre la verificación
       };
       theta: string | null;         // resultado Θ(...) en LaTeX
+      step_by_step?: RecursiveMethodStepBundle;
     };
     iteration?: {                   // resultado del Método de Iteración (Unrolling)
       method: "iteration";          // identificador del método
@@ -461,6 +634,7 @@ export interface AnalyzeOpenResponse {
         evaluated: string;          // resultado evaluado (LaTeX)
       };
       theta: string;                // resultado final Θ(...) en LaTeX
+      step_by_step?: RecursiveMethodStepBundle;
     };
     recursion_tree?: {              // resultado del Método de Árbol de Recursión
       method: "recursion_tree";     // identificador del método
@@ -491,6 +665,7 @@ export interface AnalyzeOpenResponse {
         total_cost: string;         // costo total del nivel en LaTeX
       }>;
       theta: string;                // resultado final Θ(...) en LaTeX
+      step_by_step?: RecursiveMethodStepBundle;
     };
     proof?: Array<{                 // pasos de prueba del análisis
       id: string;                   // identificador del paso (extract, critical, compare, iteration_start, etc.)

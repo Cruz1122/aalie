@@ -6,8 +6,10 @@ Construye ranking expressions y determina si hay terminación demostrable.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from dataclasses import dataclass
 from typing import Any, List, Optional
+
 from sympy import Expr
 
 

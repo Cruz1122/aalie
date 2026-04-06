@@ -1,46 +1,52 @@
 # apps/api/app/analysis/visitors/if_visitor.py
 
 from typing import Any, Dict
+
 from sympy import Integer, Mul, Rational
 
 
 class IfVisitor:
     """
     Visitor que implementa las reglas específicas para condicionales IF.
-    
+
     Implementa:
     - Guardia del if: siempre se evalúa una vez
     - Rama THEN: líneas internas, ya multiplicadas por bucles activos
     - Rama ELSE: igual que THEN (si existe)
     - En peor caso: tomar la rama dominante (la que "cuesta más")
-    - En mejor caso: 
+    - En mejor caso:
         * Si no hay ELSE y no hay early return: NO ejecutar THEN (condición falsa)
         * Si hay early return: ejecutar la rama con early return (termina temprano)
         * Si hay ELSE: elegir la rama con menor costo
-    
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
-    
+
+    def __init__(self, **kwargs):
+        """Cooperative multiple inheritance: pass kwargs to next class in MRO."""
+        super().__init__(**kwargs)
+
     def _expr_to_str(self, expr: Any) -> str:
         """Delega a expr_to_str del módulo ir.expr_utils."""
         from ..ir.expr_utils import expr_to_str
+
         return expr_to_str(expr)
 
     def visitIf(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un nodo IF y aplica las reglas de análisis.
-        
+
         Args:
             node: Nodo IF del AST
             mode: Modo de análisis ("worst", "best", "avg")
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Extraer información del nodo IF
         line = node.get("pos", {}).get("line", 0)
         consequent = node.get("consequent")  # bloque THEN
         alternate = node.get("alternate")  # bloque ELSE (opcional)
-        
+
         # 1) Guardia: siempre se evalúa una vez
         ck_guard = self.C()  # generar siguiente constante
         ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
@@ -51,21 +57,21 @@ class IfVisitor:
             ck=ck_guard,
             count=Integer(1),
             note=self._note("cond_eval"),
-            ops=ops
+            ops=ops,
         )
-        
+
         # Helper para ejecutar un bloque y extraer solo las filas nuevas (con memoización)
         def run_block_to_buffer(block_node):
             # Guardar estado de rows para extraer solo lo nuevo
             start = len(self.rows)
-            
+
             # Visitar el bloque sobre el mismo contexto (loop_stack se respeta)
             if block_node:
                 # Aplicar memoización si el bloque es cacheable
                 if self._should_memoize(block_node):
                     ctx_hash = self.get_context_hash()
                     memo_key = self.memo_key(block_node, mode, ctx_hash)
-                    
+
                     # Intentar obtener del cache
                     cached_rows = self.memo_get(memo_key)
                     if cached_rows is not None:
@@ -80,21 +86,22 @@ class IfVisitor:
                 else:
                     # No es cacheable, visitar normalmente
                     self.visit(block_node, mode)
-            
+
             # Extraer lo recién agregado
             new_rows = self.rows[start:]
             # Removerlos de rows para decidir luego qué rama se queda
             self.rows = self.rows[:start]
             return new_rows
-        
+
         # 2) THEN y 3) ELSE -> buffers
         then_buf = run_block_to_buffer(consequent)
         else_buf = run_block_to_buffer(alternate)
-        
+
         # Helper para multiplicar count_raw_expr por probabilidad (definido antes de usarlo)
         def multiply_by_probability(rows, prob_expr, prob_str, branch_name):
             """Multiplica el count_raw_expr de cada fila por la probabilidad."""
             from sympy import latex as sympy_latex
+
             multiplied_rows = []
             for row in rows:
                 new_row = dict(row)
@@ -102,32 +109,34 @@ class IfVisitor:
                 count_expr = new_row.get("count_raw_expr")
                 if count_expr is None:
                     # Fallback: convertir desde count_raw
-                    if hasattr(self, '_str_to_sympy'):
+                    if hasattr(self, "_str_to_sympy"):
                         count_expr = self._str_to_sympy(new_row.get("count_raw", "1"))
                     else:
                         count_expr = Integer(1)
-                
+
                 # Multiplicar por probabilidad
                 new_count_expr = Mul(count_expr, prob_expr)
                 new_row["count_raw_expr"] = new_count_expr
-                
+
                 # Actualizar count_raw (LaTeX) para reflejar la probabilidad
                 try:
                     new_count_raw_latex = sympy_latex(new_count_expr)
                     new_row["count_raw"] = new_count_raw_latex
                     # También actualizar expectedRuns para caso promedio
-                    if hasattr(self, 'mode') and self.mode == "avg":
+                    if hasattr(self, "mode") and self.mode == "avg":
                         new_row["expectedRuns"] = new_count_raw_latex
                 except Exception:
                     # Si falla la conversión, dejar el count_raw original
                     pass
-                
+
                 # Actualizar nota para indicar probabilidad
-                new_row["note"] = self._note("avg_branch", branch_name=branch_name, prob_str=prob_str)
-                
+                new_row["note"] = self._note(
+                    "avg_branch", branch_name=branch_name, prob_str=prob_str
+                )
+
                 multiplied_rows.append(new_row)
             return multiplied_rows
-        
+
         # 4) Elegir rama dominante (worst)
         if mode == "worst":
             # Helper para detectar si una rama contiene early returns
@@ -136,7 +145,7 @@ class IfVisitor:
                     if row.get("kind") in ("return", "break") and row.get("count") != "1":
                         return True
                 return False
-            
+
             if not else_buf:
                 # Si no hay else, verificar si then tiene early return
                 if has_early_return(then_buf):
@@ -149,7 +158,7 @@ class IfVisitor:
                 # Verificar early returns en ambas ramas
                 then_has_early = has_early_return(then_buf)
                 else_has_early = has_early_return(else_buf)
-                
+
                 if then_has_early and not else_has_early:
                     chosen = else_buf
                     annotate = "worst: no early-exit (else)"
@@ -160,19 +169,19 @@ class IfVisitor:
                     # Heurística simple: más filas => más "peso"
                     chosen = then_buf if len(then_buf) >= len(else_buf) else else_buf
                     annotate = "worst: max(then, else)"
-            
+
             # Anotar en la primera fila elegida
             if chosen:
                 chosen[0] = {**chosen[0], "note": annotate}
             self.rows.extend(chosen)
-        
+
         elif mode == "best":
             # Helper para detectar si una rama contiene early returns
             # Un early return es un return o break que está dentro de un bucle
             def has_early_return(rows):
                 # Verificar si hay bucles activos (multiplicadores en el stack)
-                has_active_loops = hasattr(self, 'loop_stack') and len(self.loop_stack) > 0
-                
+                hasattr(self, "loop_stack") and len(self.loop_stack) > 0
+
                 for row in rows:
                     # Si es un return o break, y hay bucles activos, es un early return
                     if row.get("kind") in ("return", "break"):
@@ -181,14 +190,16 @@ class IfVisitor:
                         # En best case, cualquier return es favorable
                         return True
                 return False
-            
+
             if not else_buf:
                 # Si no hay else, en best case la condición es falsa (no se ejecuta el THEN)
                 # EXCEPTO: 1) early return (favorable), 2) param-controlled WHILE (param habilita → THEN)
                 if has_early_return(then_buf):
                     chosen = then_buf  # Ejecutar early return en best case (favorable)
                     annotate = "best: early-exit (then)"
-                elif getattr(self, "_param_controlled_if_take_then", False) and self._is_var_eq_const(node.get("test", {})):
+                elif getattr(
+                    self, "_param_controlled_if_take_then", False
+                ) and self._is_var_eq_const(node.get("test", {})):
                     # IF(param=const) que guarda update del WHILE: best case = param habilita → ejecutar THEN
                     chosen = then_buf
                     annotate = "best: param enables (then)"
@@ -200,7 +211,7 @@ class IfVisitor:
                 # Verificar early returns en ambas ramas
                 then_has_early = has_early_return(then_buf)
                 else_has_early = has_early_return(else_buf)
-                
+
                 # En best case, preferir ramas con early return (permiten salir temprano)
                 if then_has_early and not else_has_early:
                     chosen = then_buf
@@ -216,24 +227,24 @@ class IfVisitor:
                         annotate = "best: min(then, else) with early-exit"
                     else:
                         annotate = "best: min(then, else)"
-            
+
             # Anotar en la primera fila elegida (si hay alguna)
             if chosen:
                 chosen[0] = {**chosen[0], "note": annotate}
             self.rows.extend(chosen)
-        
+
         elif mode == "avg":
             # Caso promedio: verificar si estamos en un bucle con early return
             # En Modelo A (éxito seguro): el IF siempre entra en THEN, no aplicar probabilidades
-            has_active_loop = hasattr(self, 'loop_stack') and len(self.loop_stack) > 0
+            has_active_loop = hasattr(self, "loop_stack") and len(self.loop_stack) > 0
             has_early_return = False
-            
+
             if has_active_loop:
                 # Verificar si alguna rama tiene return (early return)
                 has_return_then = any(row.get("kind") == "return" for row in then_buf)
                 has_return_else = any(row.get("kind") == "return" for row in else_buf)
                 has_early_return = has_return_then or has_return_else
-            
+
             if has_early_return:
                 # Modelo A: éxito seguro (Pr(éxito) = 1)
                 # El IF siempre entra en la rama con return (éxito)
@@ -253,23 +264,24 @@ class IfVisitor:
                 else:
                     # No hay return en ninguna rama, aplicar probabilidades normales
                     # Obtener probabilidad p del avg_model
-                    if not hasattr(self, 'avg_model') or self.avg_model is None:
+                    if not hasattr(self, "avg_model") or self.avg_model is None:
                         p_sympy = Rational(1, 2)
                         p_str = "1/2"
                     else:
                         test = node.get("test", {})
                         condition_str = self._expr_to_str(test)
                         context = None
-                        if hasattr(self, 'loop_stack') and self.loop_stack:
+                        if hasattr(self, "loop_stack") and self.loop_stack:
                             from sympy import Sum
+
                             last_mult = self.loop_stack[-1]
                             if isinstance(last_mult, Sum):
                                 var_sym = last_mult.args[1][0]
-                                if hasattr(var_sym, 'name'):
+                                if hasattr(var_sym, "name"):
                                     context = {"loop_var": var_sym.name}
                         p_str = self.avg_model.get_probability(condition_str, context)
                         p_sympy = self.avg_model.get_probability_sympy(condition_str, context)
-                    
+
                     # Aplicar probabilidades normalmente
                     if then_buf:
                         then_multiplied = multiply_by_probability(then_buf, p_sympy, p_str, "then")
@@ -277,13 +289,15 @@ class IfVisitor:
                     if else_buf:
                         one_minus_p_sympy = Integer(1) - p_sympy
                         one_minus_p_str = f"1-{p_str}" if p_str != "1/2" else "1/2"
-                        else_multiplied = multiply_by_probability(else_buf, one_minus_p_sympy, one_minus_p_str, "else")
+                        else_multiplied = multiply_by_probability(
+                            else_buf, one_minus_p_sympy, one_minus_p_str, "else"
+                        )
                         self.rows.extend(else_multiplied)
                 return
-            
+
             # Caso promedio normal: ambas ramas se ejecutan con probabilidades
             # Obtener probabilidad p del avg_model
-            if not hasattr(self, 'avg_model') or self.avg_model is None:
+            if not hasattr(self, "avg_model") or self.avg_model is None:
                 # Fallback: usar 1/2 por defecto
                 p_sympy = Rational(1, 2)
                 p_str = "1/2"
@@ -291,37 +305,39 @@ class IfVisitor:
                 # Obtener condición como string para buscar predicado
                 test = node.get("test", {})
                 condition_str = self._expr_to_str(test)
-                
+
                 # Obtener contexto (variable de bucle actual si existe)
                 context = None
-                if hasattr(self, 'loop_stack') and self.loop_stack:
+                if hasattr(self, "loop_stack") and self.loop_stack:
                     # Intentar obtener variable del bucle más interno
                     from sympy import Sum
+
                     last_mult = self.loop_stack[-1]
                     if isinstance(last_mult, Sum):
                         var_sym = last_mult.args[1][0]
-                        if hasattr(var_sym, 'name'):
+                        if hasattr(var_sym, "name"):
                             context = {"loop_var": var_sym.name}
-                
+
                 # Obtener probabilidad del modelo
                 p_str = self.avg_model.get_probability(condition_str, context)
                 p_sympy = self.avg_model.get_probability_sympy(condition_str, context)
-            
+
             # Aplicar probabilidades a ambas ramas
             # THEN: p * #visitas, ELSE: (1-p) * #visitas
-            
+
             # Procesar THEN con probabilidad p
             if then_buf:
                 then_multiplied = multiply_by_probability(then_buf, p_sympy, p_str, "then")
                 self.rows.extend(then_multiplied)
-            
+
             # Procesar ELSE con probabilidad (1-p)
             if else_buf:
                 # Calcular (1-p)
                 one_minus_p_sympy = Integer(1) - p_sympy
                 one_minus_p_str = f"1-{p_str}" if p_str != "1/2" else "1/2"
-                else_multiplied = multiply_by_probability(else_buf, one_minus_p_sympy, one_minus_p_str, "else")
+                else_multiplied = multiply_by_probability(
+                    else_buf, one_minus_p_sympy, one_minus_p_str, "else"
+                )
                 self.rows.extend(else_multiplied)
-            
-            # Si no hay else, no hay nada más que hacer (then ya se agregó con probabilidad p)
 
+            # Si no hay else, no hay nada más que hacer (then ya se agregó con probabilidad p)

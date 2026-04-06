@@ -97,14 +97,12 @@ O con llaves:
 ### Sentencias
 
 #### Asignación
-El lenguaje soporta múltiples operadores de asignación:
+La sintaxis oficial visible usa:
 ```
-variable <- expresion;    // Forma estándar
-variable := expresion;    // Forma alternativa
-variable 🡨 expresion;    // Símbolo Unicode (flecha izquierda)
-variable ← expresion;     // Símbolo Unicode (flecha izquierda alternativa)
-variable ⟵ expresion;     // Símbolo Unicode (flecha larga izquierda)
+variable <- expresion;
 ```
+
+Por compatibilidad legacy, el parser todavía acepta `:=`, `🡨`, `←` y `⟵`, pero la app no debe enseñarlos ni insertarlos.
 
 #### Declaración de arrays
 ```
@@ -188,21 +186,29 @@ RETURN factorial(n - 1);
 ### Operadores
 
 #### Operadores de asignación
-- `<-` (ASCII estándar)
-- `:=` (estilo Pascal)
-- `🡨` (símbolo Unicode - flecha izquierda)
-- `←` (símbolo Unicode - flecha izquierda alternativa)
-- `⟵` (símbolo Unicode - flecha larga izquierda)
+- `<-` (ASCII oficial visible)
 
-**Nota**: La gramática acepta todos estos operadores y los normaliza internamente. El archivo `Language.g4` debe guardarse en UTF-8 para reconocer correctamente los símbolos Unicode.
+Compatibilidad legacy de parseo:
+- `:=`
+- `🡨`
+- `←`
+- `⟵`
+
+**Nota**: La gramática todavía acepta operadores legacy por compatibilidad, pero snippets, documentación y ayudas visibles deben enseñar solo `<-`.
 
 #### Operadores de comparación
+Sintaxis oficial visible:
 - `=` (igual)
-- `!=`, `<>`, `≠` (diferente)
+- `!=` (diferente)
 - `<` (menor)
 - `>` (mayor)
-- `<=`, `≤` (menor o igual)
-- `>=`, `≥` (mayor o igual)
+- `<=` (menor o igual)
+- `>=` (mayor o igual)
+
+Compatibilidad legacy de parseo:
+- `<>`, `≠`
+- `≤`
+- `≥`
 
 #### Operadores aritméticos
 - `+` (suma)
@@ -820,7 +826,7 @@ pnpm --filter @aa/grammar build
 ```
 
 **¿Qué hace esto?**
-- Ejecuta `scripts/gen-ts.mjs`
+- Ejecuta `scripts/gen-ts.js`
 - Usa `antlr4ts` para generar el parser TypeScript
 - Genera archivos en `packages/grammar/src/ts/`:
   - `LanguageLexer.ts`
@@ -1320,4 +1326,3 @@ Esto ejecuta `tsc` y genera `dist/index.d.ts` y `dist/index.js`.
 ---
 
 **Última actualización:** Octubre 2025
-

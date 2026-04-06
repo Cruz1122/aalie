@@ -13,10 +13,10 @@
   "nav": {
     "home": "Inicio",
     "analyzer": "Analizador",
-    "documentation": "Documentación",
     "examples": "Ejemplos",
     "about": "Acerca de",
-    "openMenu": "Abrir menú"
+    "openMenu": "Abrir menú",
+    "howToUse": "Cómo usar"
   },
   "footer": {
     "languageLabel": "Idioma",
@@ -84,7 +84,6 @@
       "classifyError": "No se pudo clasificar el algoritmo",
       "analysisStopped": "Análisis detenido",
       "finalizing": "Finalizando análisis...",
-      "complete": "Análisis completo",
       "errorOccurred": "Ocurrió un error",
       "generatingPolynomial": "Generando forma polinómica..."
     },
@@ -147,13 +146,24 @@
         },
         "recursion_tree": {
           "name": "Árbol de Recursión",
-          "description": "Visualiza el árbol de llamadas recursivas para divide-and-conquer con múltiples subproblemas."
+          "description": "Visualiza el árbol de llamadas recursivas para Divide y Vencerás con múltiples subproblemas."
         },
         "master": {
           "name": "Teorema Maestro",
-          "description": "Para recurrencias divide-and-conquer estándar T(n) = a·T(n/b) + f(n)."
+          "description": "Para recurrencias estándar de Divide y Vencerás T(n) = a·T(n/b) + f(n)."
         }
       }
+    },
+    "exportSelector": {
+      "title": "Elige método de descarga",
+      "description": "Selecciona los formatos en los que deseas descargar el reporte de análisis.",
+      "formats": {
+        "markdown": "Markdown (MD)",
+        "pdf": "Documento PDF"
+      },
+      "download": "Descargar",
+      "progress": "Generando reporte...",
+      "pleaseWait": "Puede tardar unos segundos."
     },
     "view": {
       "sourceCode": "Código Fuente",
@@ -220,9 +230,9 @@
       "dpPatternRollingWindow": "Patrón: ventana deslizante",
       "dpReasonStrongReduction": "Reducción fuerte entre complejidad recursiva e iterativa.",
       "dpReasonNoStrongGain": "Se detecta recurrencia lineal, pero la ganancia no es concluyente.",
-      "dpReasonMasterPreferred": "La recurrencia es divide-and-conquer: conviene Teorema Maestro o árbol de recursión.",
+      "dpReasonMasterPreferred": "La recurrencia es de Divide y Vencerás: conviene Teorema Maestro o árbol de recursión.",
       "dpReasonValidationRejected": "La validación no confirmó suficiente solapamiento de subproblemas para DP.",
-      "dpReasonDivideConquerPreferred": "La recurrencia es divide-and-conquer; prioriza Teorema Maestro, iteración o árbol de recursión sobre DP.",
+      "dpReasonDivideConquerPreferred": "La recurrencia es de Divide y Vencerás; prioriza Teorema Maestro, iteración o árbol de recursión sobre DP.",
       "dpReasonRollingWindowOptimal": "La recurrencia depende solo de los últimos estados contiguos y puede optimizarse con memoria acotada.",
       "dpReasonTabulationRequired": "La recurrencia requiere conservar estados no contiguos o un historial más largo que una ventana pequeña.",
       "dpReasonSubproblemReuse": "Las llamadas recursivas reutilizan subproblemas definidos por el mismo parámetro de tamaño.",
@@ -274,7 +284,28 @@
       "dominatingLevel": "Nivel Dominante:",
       "leavesLevel": "Hojas (último nivel)",
       "rootLevel": "Raíz (primer nivel)",
-      "levelN": "Nivel {level}"
+      "levelN": "Nivel {level}",
+      "exportReport": "Descargar reporte",
+      "exportingReport": "Descargando reporte...",
+      "exportNoData": "No hay análisis para exportar"
+    },
+    "editorSupport": {
+      "title": "Ayuda de escritura",
+      "subtitle": "Pasa el cursor por un bloque para ver cuándo usarlo y qué idea te ayuda a escribirlo mejor.",
+      "helpDefaultTitle": "Pasa el cursor sobre un bloque",
+      "helpDefaultDetails": "Verás una ayuda breve sobre cuándo usarlo y cómo empezar a escribirlo.",
+      "helpExamplePrefix": "Uso:",
+      "helpPreviewPrefix": "Uso en nuestra gramática:",
+      "expand": "Expandir",
+      "collapse": "Colapsar",
+      "categories": {
+        "recommended": "Recomendados",
+        "conditions": "Condiciones",
+        "loops": "Ciclos",
+        "functions": "Funciones y retornos",
+        "templates": "Plantillas",
+        "other": "Otros"
+      }
     },
     "loopInvariant": {
       "title": "Loop Invariant Determinista",
@@ -460,6 +491,10 @@
       "editVariables": "Editar variables",
       "arrayEditableHint": "Edita el arreglo como lista separada por comas (ej. 1,2,3,4)",
       "lengthFixedHint": "{names} = len({array}) (fijo)",
+      "editVariablesJson": "Editar variables (JSON)",
+      "jsonEditableHint": "Define initial_variables como objeto JSON (incluye estructuras anidadas).",
+      "jsonVarsInvalid": "JSON inválido. Revisa la sintaxis.",
+      "jsonVarsObjectRequired": "El JSON debe ser un objeto (clave-valor).",
       "apply": "Aplicar",
       "explanationLevelMinimal": "Mínima",
       "explanationLevelStructured": "Estructurada",
@@ -517,6 +552,7 @@
       "numExecutions": "Número de ejecuciones:",
       "expectedExecutionsDesc": "Esperanza del número de veces que se ejecuta esta línea (E[N_ℓ])",
       "numExecutionsDesc": "Cuántas veces se ejecuta esta línea",
+      "lineCostDerivation": "Paso a paso de cómo se llegó a este costo:",
       "notes": "Notas:",
       "lineCost": "Costo total de la línea:",
       "lineCostAvg": "Costo esperado de la línea:",
@@ -564,6 +600,7 @@
       "polynomialFormT": "Forma polinómica T(n)",
       "polynomialFormA": "Forma polinómica A(n)",
       "avgProcedure": "Procedimiento de Caso Promedio",
+      "iterativeProcedure": "Procedimiento Iterativo",
       "asymptoticNotation": "Notación asintótica",
       "bigOUpper": "Big-O (cota superior):",
       "bigOmegaLower": "Big-Omega (cota inferior):",
@@ -578,57 +615,19 @@
       "approximateWarning": "Este caso promedio es aproximado; el análisis exacto requiere más información sobre la distribución de entradas."
     },
     "gpuCpuModal": {
-      "title": "Análisis GPU vs CPU",
+      "title": "Análisis de Idoneidad Hardware",
       "closeModal": "Cerrar modal",
-      "reasonsLabel": "Razones",
-      "hideDetails": "Ocultar detalles",
-      "showDetails": "Ver análisis y recomendación",
-      "structureAnalysis": "Análisis de la estructura:",
-      "recommendation": "Recomendación:",
-      "disclaimer": "Este análisis es cualitativo y basado únicamente en la estructura del algoritmo (su AST). No se promete que GPU sea siempre más rápida que CPU ni al revés. La recomendación es orientativa y sirve como guía conceptual, no como benchmark real.",
-      "disclaimerTitle": "Información sobre el análisis",
-      "gpuReasons": {
-        "regular_loops_very": "✓ Los bucles presentan una estructura muy regular, con mínimas decisiones condicionales que permiten una ejecución uniforme en paralelo",
-        "regular_loops_little": "✓ Los bucles tienen poca lógica condicional, lo que facilita la paralelización masiva sin divergencia significativa entre threads",
-        "array_block": "✓ El algoritmo realiza múltiples accesos a estructuras de datos en bloque, un patrón ideal para kernels de GPU que procesan grandes volúmenes de datos simultáneamente",
-        "array_frequent": "✓ Se detectan accesos frecuentes a arrays, indicando procesamiento de datos que se beneficia del ancho de banda de memoria de las GPUs",
-        "nested_simple": "✓ La anidación de bucles con lógica simple crea oportunidades para paralelización en múltiples dimensiones, aprovechando la arquitectura masivamente paralela de las GPUs",
-        "no_recursion": "✓ La ausencia de recursión elimina la necesidad de manejar stacks complejos, permitiendo un flujo de ejecución predecible y paralelizable",
-        "no_conditionals": "✓ Los bucles carecen completamente de decisiones condicionales, garantizando que todos los threads sigan el mismo camino de ejecución sin penalizaciones por divergencia",
-        "multiple_loops": "✓ La presencia de múltiples bucles regulares sugiere un patrón de cálculo repetitivo que se puede distribuir eficientemente entre miles de cores de GPU",
-        "complex_recursion": "✗ La recursión compleja introduce flujo de control irregular y dependencias entre llamadas que dificultan la paralelización masiva en GPU",
-        "recursion": "✗ La presencia de recursión crea un flujo de ejecución no lineal que no se adapta bien a la arquitectura de ejecución paralela de las GPUs",
-        "high_branching": "✗ La alta densidad de decisiones condicionales dentro de los bucles causa divergencia masiva entre threads, reduciendo drásticamente la eficiencia de la GPU",
-        "moderate_branching": "✗ Las múltiples decisiones dentro de los bucles generan caminos de ejecución divergentes que penalizan el rendimiento en arquitecturas SIMD como las GPUs",
-        "calls_in_loops": "✗ Las frecuentes llamadas a funciones dentro de los bucles introducen overhead y complejidad que dificultan la optimización y paralelización en GPU",
-        "no_loops_recursive": "✗ La ausencia de bucles junto con recursión indica un algoritmo basado en árboles o backtracking, típicamente más eficiente en CPU",
-        "mixed": "• El algoritmo presenta características mixtas que no favorecen claramente ni GPU ni CPU",
-        "mixed_moderate": "• Los bucles tienen un nivel moderado de decisiones condicionales, creando un equilibrio entre paralelización y divergencia",
-        "mixed_limited_recursion": "• La recursión limitada introduce cierta complejidad, pero no es suficientemente profunda como para descartar completamente la paralelización",
-        "mixed_array": "• Los accesos a arrays están presentes pero no en la densidad suficiente para aprovechar completamente el ancho de banda de memoria de GPU",
-        "fallback": "• El análisis no muestra características claramente definidas hacia GPU o CPU"
-      },
-      "cpuReasons": {
-        "deep_recursion": "✓ La recursión profunda y múltiple crea un flujo de control que se maneja naturalmente en CPU, donde el stack y la gestión de llamadas están optimizados",
-        "recursion": "✓ La presencia de recursión indica un algoritmo que se beneficia del manejo eficiente de llamadas y contexto que ofrecen las CPUs modernas",
-        "high_branching": "✓ La alta densidad de decisiones condicionales dentro de los bucles crea un flujo de control complejo que las CPUs manejan eficientemente con predicción de saltos y ejecución fuera de orden",
-        "moderate_branching": "✓ Las múltiples decisiones dentro de los bucles generan caminos de ejecución variados que se optimizan mejor en CPU mediante técnicas de branch prediction",
-        "complex_recursion": "✓ El patrón recursivo complejo con múltiples llamadas aprovecha la flexibilidad del modelo de ejecución de CPU, donde cada llamada puede tener su propio contexto y stack",
-        "calls_in_loops": "✓ Las frecuentes llamadas a funciones dentro de los bucles se ejecutan eficientemente en CPU gracias a la optimización de llamadas y el cache de instrucciones",
-        "complex_decisions": "✓ La complejidad de las decisiones dentro de los bucles requiere evaluación condicional que las CPUs procesan eficientemente con unidades de ejecución especializadas",
-        "pure_recursion": "✓ Un algoritmo puramente recursivo sin bucles se beneficia del modelo de ejecución secuencial y la gestión de memoria stack que caracteriza a las CPUs",
-        "regular_loops": "✗ Los bucles extremadamente regulares con poca lógica condicional representan un patrón ideal para paralelización masiva en GPU, donde la CPU no puede aprovechar su flexibilidad",
-        "array_block": "✗ El procesamiento intensivo de arrays en bloque se beneficia más del ancho de banda de memoria y la paralelización masiva de GPU que de la ejecución secuencial de CPU",
-        "iterative_simple": "✗ El patrón iterativo simple y repetitivo con múltiples bucles es un candidato ideal para paralelización en GPU, donde miles de threads pueden ejecutar la misma operación simultáneamente",
-        "nested_simple": "✗ Los bucles anidados con lógica simple crean oportunidades de paralelización multidimensional que las GPUs explotan mejor que las CPUs",
-        "no_conditionals": "✗ La ausencia total de decisiones condicionales en los bucles elimina las ventajas de la predicción de saltos de CPU, favoreciendo la ejecución masivamente paralela de GPU",
-        "mixed": "• El algoritmo presenta características mixtas que no favorecen claramente ni GPU ni CPU",
-        "mixed_moderate": "• Los bucles tienen un nivel moderado de decisiones, creando un equilibrio donde ni la paralelización masiva ni la flexibilidad de CPU dominan claramente",
-        "mixed_limited_recursion": "• La recursión limitada introduce cierta complejidad de flujo, pero no es suficientemente profunda como para descartar completamente otras estrategias de optimización",
-        "mixed_array": "• Los accesos a arrays están presentes pero no en la densidad suficiente para justificar completamente una migración a GPU",
-        "mixed_calls": "• Las llamadas a funciones dentro de bucles añaden complejidad, pero en un nivel que puede manejarse tanto en CPU como en implementaciones híbridas",
-        "fallback": "• El análisis no muestra características claramente definidas hacia CPU o GPU"
-      }
+      "confidence": "Confianza",
+      "scores": "Puntajes",
+      "hybrid": "Híbrido",
+      "blockers": "Bloqueadores de paralelización",
+      "positive": "Señales favorables",
+      "negative": "Señales desfavorables",
+      "opportunities": "Oportunidades de transformación",
+      "patterns": "Patrones detectados",
+      "diagnostics": "Diagnósticos",
+      "disclaimer": "Este análisis es determinístico y basado en la estructura AST del algoritmo. No constituye un benchmark. Los puntajes son orientativos.",
+      "disclaimerTitle": "Sobre este análisis"
     },
     "characteristicEquationModal": {
       "title": "Procedimiento Completo - Método de Ecuación Característica",
@@ -733,7 +732,7 @@
       "autoDetection": "Detección Automática",
       "singleRecursiveCall": "Un solo llamado recursivo (a = 1)",
       "decreaseAndConquer": "Subproblema decrease-and-conquer:",
-      "noDivideAndConquer": "No divide-and-conquer (no múltiples subproblemas)",
+      "noDivideAndConquer": "No es Divide y Vencerás (no múltiples subproblemas)",
       "strictlySmaller": "Subproblema estrictamente más pequeño",
       "symbolicExpansions": "Expansiones Simbólicas",
       "generalForm": "Forma General",
@@ -845,77 +844,52 @@
       "progress": "Progreso",
       "analyzingRecurrence": "Analizando recurrencia...",
       "pleaseWait": "Por favor, espera mientras se completa el análisis..."
-    }
-  },
-  "documentation": {
-    "index": {
-      "technicalTitle": "Documentación Técnica",
-      "technicalDesc": "Guías detalladas para desarrolladores, APIs, arquitectura del sistema y ejemplos de código para integrar el analizador en tus proyectos.",
-      "technicalLink": "Ver Documentación Técnica",
-      "userGuideTitle": "Guía de Usuario",
-      "userGuideDesc": "Tutoriales paso a paso, casos de uso comunes y guías para aprovechar al máximo las funcionalidades del analizador de complejidad.",
-      "userGuideLink": "Ver Guía de Usuario",
-      "examplesTitle": "Ejemplos de Algoritmos",
-      "examplesDesc": "Colección de algoritmos clásicos organizados por métodos de análisis. Copia cualquier ejemplo y analiza su complejidad con el método más apropiado (iteración, teorema maestro, o árbol de recursión).",
-      "examplesLink": "Ver Ejemplos"
     },
-    "technical": {
-      "title": "Documentación Técnica",
-      "subtitle": "Visión general del flujo, arquitectura del monorepo y contratos iniciales de API. Este documento es un borrador inicial y se actualizará conforme evolucione el proyecto.",
-      "toc": "Índice de contenidos",
-      "fullTitle": "Documentación Técnica Completa",
-      "fullDesc": "Para documentación técnica detallada, consulta los siguientes recursos en el repositorio:",
-      "apiTitle": "Documentación de API",
-      "apiDesc": "Documentación completa de la API backend, incluyendo endpoints, modelos de datos, arquitectura y manejo de errores.",
-      "appTitle": "Documentación de App",
-      "appDesc": "Documentación completa del frontend, incluyendo componentes, routing, gestión de estado, estilos e integración con API.",
-      "indexGeneral": "Índice general",
-      "endpoints": "Endpoints REST",
-      "models": "Modelos de datos",
-      "architecture": "Arquitectura",
-      "errors": "Manejo de errores",
-      "components": "Componentes",
-      "routing": "Sistema de rutas",
-      "state": "Estado",
-      "styling": "Estilos",
-      "apiIntegration": "Integración API",
-      "i18nLabels": "Internacionalización, labels y prompts",
-      "note": "Nota",
-      "noteText": "Esta documentación está disponible en el repositorio del proyecto en las carpetas",
-      "backToDocs": "Volver a Documentación",
-      "nextToUserGuide": "Ver Guía de Usuario",
-      "updating": "Esta página se está actualizando constantemente.",
-      "modalClose": "Cerrar modal",
-      "viewDetails": "Ver Detalles",
-      "viewDiagram": "Ver Diagrama",
-      "withDiagram": "Con diagrama",
-      "contentOnly": "Solo contenido",
-      "sections": {
-        "arquitectura": "Arquitectura y flujo de peticiones",
-        "flujoUi": "Flujo de análisis en la UI",
-        "visualizaciones": "Visualizaciones",
-        "errores": "Manejo de errores",
-        "llm": "Integración con LLM",
-        "i18n": "Internacionalización",
-        "monorepo": "Paquetes del Monorepo",
-        "herramientas": "Herramientas de desarrollo",
-        "analisis": "Análisis de complejidad",
-        "grammar": "Gramática y Parser",
-        "mcp": "MCP AALIE Conventions"
+    "exportModal": {
+      "title": "Elige método de descarga",
+      "subtitle": "Selecciona el/los formato(s) que deseas incluir en tu exportación.",
+      "markdownLabel": "Markdown",
+      "markdownDesc": "Formato estándar de fácil lectura",
+      "pdfLabel": "PDF",
+      "pdfDesc": "Documento formateado (requiere compilación)",
+      "confirm": "Descargar",
+      "cancel": "Cancelar",
+      "generating": "Generando reporte...",
+      "generatingMd": "Generando Markdown...",
+      "generatingPdf": "Generando PDF...",
+      "complete": "Reporte listo",
+      "errorTitle": "Error al generar reporte",
+      "progress": "Progreso",
+      "pleaseWait": "Por favor espera mientras se genera el reporte...",
+      "reportWord": "reporte",
+      "errorPdfTimeout": "La generación de PDF excedió el tiempo límite. Intenta de nuevo o descarga solo Markdown.",
+      "errorPdfCompilation": "Error compilando PDF: {message}",
+      "pdfDisclaimer": "La generación de PDF puede tardar unos segundos."
+    },
+    "analysisSteps": {
+      "title": "Paso a paso",
+      "closeModal": "Cerrar modal",
+      "noSteps": "No hay pasos disponibles para este análisis.",
+      "overallStatus": "Estado global",
+      "status": {
+        "complete": "Completo",
+        "partial": "Parcial",
+        "unsupported": "No soportado",
+        "error": "Error"
       },
-      "descriptions": {
-        "arquitectura": "Monorepo, flujo de peticiones, parse y analyze. REST y BFF para LLM.",
-        "flujoUi": "Editor Monaco, validación en vivo, tabla de costos, modales con LaTeX.",
-        "visualizaciones": "CFG, árbol de recurrencia, React Flow. Layout Dagre, diagramas de seguimiento.",
-        "errores": "API caída, gramática inválida, sumatorias no cerrables. Sugerencias LLM.",
-        "llm": "Corrección de gramática, análisis desde chat, simplificación, procedimientos. Jobs y modelos.",
-        "i18n": "Soporte es/en, labels en backend, prompts LLM parametrizados por locale.",
-        "monorepo": "@aa/grammar y @aa/types. AST idéntico cliente-servidor.",
-        "herramientas": "ESLint, Prettier, Ruff, Black. Variables de entorno y metadata del trace.",
-        "analisis": "Interfaz 3 columnas, iterativo/recursivo, Teorema Maestro, memoización, GPU/CPU, LaTeX.",
-        "grammar": "Gramática ANTLR4, parsers TS/Py. Procedimientos, estructuras de control, operadores.",
-        "mcp": "Herramientas: read_conventions, read_doc, list_components, changelog_template, i18n_reminder."
-      }
+      "confidence": "Confianza",
+      "confidenceLevels": {
+        "high": "Alta",
+        "medium": "Media",
+        "low": "Baja"
+      },
+      "warning": "Advertencia",
+      "flipToExplanation": "Ver explicación",
+      "flipToResult": "Volver al paso",
+      "conceptTitle": "Explicación del paso",
+      "recurrenceEquation": "Ecuación de recurrencia",
+      "characteristicEquation": "Ecuación característica",
+      "finalTheta": "Conclusión asintótica (Theta)"
     }
   },
   "home": {
@@ -984,227 +958,16 @@
     "assistantTitle": "Experto en Interacción en Vivo de Análisis Algorítmico",
     "clearConversation": "Limpiar conversación",
     "backToHome": "Volver al inicio",
+    "closeAssistant": "Cerrar asistente",
     "unavailable": "AALIE no disponible",
     "apiKeyRequired": "AALIE requiere una API Key de Gemini para funcionar. Configura tu API Key para habilitar las funciones con IA. Puedes obtenerla en",
     "placeholder": "Escribe tu mensaje...",
     "helpRequest": "Ayúdame a solucionar este error",
     "retry": "Reintentar",
-    "errorGeneric": "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?"
-  },
-  "userGuide": {
-    "title": "Guía de Usuario",
-    "subtitle": "Aprende a utilizar el analizador de complejidad algorítmica con esta guía completa que cubre desde la sintaxis básica hasta el análisis avanzado de algoritmos.",
-    "toc": "Contenido",
-    "viewDetails": "Ver Detalles",
-    "modalClose": "Cerrar modal",
-    "introduccion": "Introducción",
-    "editor": "Uso del Editor",
-    "editorBasico": "Funciones Básicas",
-    "editorValidacion": "Validación en Tiempo Real",
-    "editorAtajos": "Atajos de Teclado",
-    "gramatica": "Sintaxis de la Gramática",
-    "gramaticaProcedimientos": "Procedimientos",
-    "gramaticaVariables": "Variables y Asignación",
-    "gramaticaEstructuras": "Estructuras de Control",
-    "gramaticaOperadores": "Operadores",
-    "gramaticaArrays": "Arrays",
-    "gramaticaPrint": "Sentencias PRINT",
-    "analisis": "Análisis de Complejidad",
-    "analisisEditor": "Desde el Editor Manual",
-    "analisisChatbot": "Desde AALIE",
-    "analisisResultados": "Interpretando Resultados",
-    "analisisLlm": "Comparación con LLM",
-    "analisisGpuCpu": "Análisis GPU vs CPU",
-    "analisisTrace": "Seguimiento de Pseudocódigo",
-    "ejemplos": "Ejemplos Rápidos",
-    "errores": "Solución de Problemas",
-    "introDesc1": "Bienvenido al analizador de complejidad algorítmica. Esta herramienta te permite escribir algoritmos en pseudocódigo y obtener automáticamente el análisis de su complejidad temporal (Big O).",
-    "introDesc2": "El sistema utiliza un lenguaje de pseudocódigo estructurado que es fácil de leer y escribir, con validación en tiempo real y sugerencias automáticas para ayudarte a escribir código correcto.",
-    "introTip": "Consejo",
-    "introTipDescPre": "Si eres nuevo, comienza revisando los ",
-    "introTipDescLinkText": "ejemplos",
-    "introTipDescPost": " para familiarizarte con la sintaxis.",
-    "editorBasicDesc": "El editor está basado en Monaco Editor (el mismo editor de Visual Studio Code) y ofrece características avanzadas:",
-    "editorBasic1": "Resaltado de sintaxis específico para el lenguaje de pseudocódigo",
-    "editorBasic2": "Autocompletado de palabras clave (BEGIN, END, FOR, WHILE, etc.)",
-    "editorBasic3": "Numeración de líneas automática",
-    "editorBasic4": "Indentación automática inteligente",
-    "editorBasic5": "Búsqueda y reemplazo de texto (Ctrl+F)",
-    "editorValidDesc": "El editor valida tu código mientras escribes, mostrando errores y advertencias de manera inmediata:",
-    "editorValid1": "Subrayado rojo: Errores de sintaxis que deben corregirse",
-    "editorValid2": "Subrayado amarillo: Advertencias o sugerencias de mejora",
-    "editorValid3": "Mensajes descriptivos al pasar el mouse sobre el error",
-    "editorValid4": "Indicadores en el margen izquierdo para errores graves",
-    "editorValidNote": "Nota",
-    "editorValidNoteDesc": "La validación ocurre en un Web Worker para no bloquear la interfaz, por lo que puede haber un pequeño retraso.",
-    "shortcutShortcut": "Atajo",
-    "shortcutAction": "Acción",
-    "shortcut1": "Guardar/Analizar código",
-    "shortcut2": "Buscar texto",
-    "shortcut3": "Buscar y reemplazar",
-    "shortcut4": "Comentar/descomentar línea",
-    "shortcut5": "Indentar selección",
-    "shortcut6": "Desindentar selección",
-    "gramProcDesc": "Los procedimientos son la unidad básica del lenguaje. Se definen así:",
-    "gramProcTypes": "Tipos de parámetros:",
-    "gramProcScalar": "Escalares:",
-    "gramProcArrayDim": "Arrays con dimensión:",
-    "gramProcArrayRange": "Arrays con rango:",
-    "gramProcTyped": "Objetos tipados:",
-    "gramVarDesc": "Las variables se asignan usando el operador de asignación. Se soportan múltiples notaciones:",
-    "gramVarImportant": "Importante",
-    "gramVarImportantDesc": "Todas las asignaciones deben terminar con punto y coma (;)",
-    "gramStructIf": "IF-THEN-ELSE",
-    "gramStructFor": "FOR",
-    "gramStructWhile": "WHILE",
-    "gramStructRepeat": "REPEAT-UNTIL",
-    "gramStructImportant": "Importante",
-    "gramStructImportantDesc": "Todas las estructuras de control requieren bloques BEGIN...END o llaves { }. No se permiten sentencias sueltas.",
-    "gramOpType": "Tipo",
-    "gramOpOps": "Operadores",
-    "gramOpPrec": "Precedencia",
-    "gramOpArith": "Aritméticos",
-    "gramOpRel": "Relacionales",
-    "gramOpLog": "Lógicos",
-    "gramOpPrecArith": "*, /, DIV, MOD > +, -",
-    "gramOpPrecRel": "Inferior a los lógicos",
-    "gramOpPrecLog": "NOT > AND > OR",
-    "gramOpExamples": "Ejemplos:",
-    "gramArraysDesc": "Declaración y uso de arrays:",
-    "gramPrintDesc": "La sentencia print permite mostrar valores en la consola:",
-    "gramPrintLiteral": "Cadenas literales:",
-    "gramPrintLiteralDesc": "Entre comillas dobles \"texto\"",
-    "gramPrintMulti": "Múltiples argumentos:",
-    "gramPrintMultiDesc": "Separados por coma, se concatenan automáticamente",
-    "gramPrintExpr": "Expresiones:",
-    "gramPrintExprDesc": "Puedes incluir variables y operaciones matemáticas",
-    "gramPrintEscape": "Escapar comillas:",
-    "gramPrintEscapeDesc": "Usa \\\" para comillas dentro del string",
-    "gramPrintNote": "Nota",
-    "gramPrintNoteDesc": "El costo de print es constante (O(1)) más el costo de evaluar sus argumentos.",
-    "analisisEditorDesc": "En el modo manual, puedes escribir código directamente en el editor y analizarlo:",
-    "analisisEditor1": "Escribe tu código:",
-    "analisisEditor1b": "El editor valida la sintaxis en tiempo real",
-    "analisisEditor2": "Verifica el parse:",
-    "analisisEditor2b": "Usa el botón \"Verificar Parse\" para validar la sintaxis",
-    "analisisEditor3": "Analiza complejidad:",
-    "analisisEditor3b": "Haz clic en \"Analizar Complejidad\" para iniciar el análisis completo",
-    "analisisEditor4": "Revisa resultados:",
-    "analisisEditor4b": "Se abrirá la página de resultados con tabla de costos y procedimientos detallados",
-    "analisisEditorTip": "Consejo",
-    "analisisEditorTipDesc": "Si hay errores de sintaxis, espera 3 segundos y aparecerá un botón \"Ayuda con IA\" que enviará tu código a AALIE para corrección automática.",
-    "analisisChatbotDesc": "También puedes analizar código directamente desde AALIE:",
-    "analisisChatbot1": "Pide código a AALIE:",
-    "analisisChatbot1b": "Solicita un algoritmo o pega código en el chat",
-    "analisisChatbot2": "Botón \"Analizar\":",
-    "analisisChatbot2b": "Cuando AALIE devuelve código en un bloque de pseudocódigo, aparecerá un botón verde \"Analizar\" junto al botón de copiar",
-    "analisisChatbot3": "Loader en el chat:",
-    "analisisChatbot3b": "El análisis se ejecuta directamente en la vista del chat con el mismo loader que el editor manual",
-    "analisisChatbot4": "Navegación automática:",
-    "analisisChatbot4b": "Al completar el análisis, se navega automáticamente a la página de resultados",
-    "analisisChatbotAdv": "Ventaja",
-    "analisisChatbotAdvDesc": "Puedes pedir correcciones a AALIE y analizar el código corregido sin salir del chat.",
-    "analisisResultDesc": "Una vez completado el análisis, verás:",
-    "analisisResult1": "Tabla de costos por línea:",
-    "analisisResult1b": "Muestra el costo elemental (Cₖ), número de ejecuciones y costo total por línea",
-    "analisisResult2": "Selector de casos:",
-    "analisisResult2b": "En la esquina superior derecha, cambia entre Mejor/Promedio/Peor caso",
-    "analisisResult3": "Tarjetas de resumen:",
-    "analisisResult3b": "Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con botones \"Ver Procedimiento\" en cada tarjeta",
-    "analisisResult4": "Procedimientos detallados:",
-    "analisisResult4a": "Procedimiento general: Haz clic en \"Ver Procedimiento\" en cualquier tarjeta para ver el análisis completo",
-    "analisisResult4b": "Procedimiento por línea: Haz clic en cualquier línea de la tabla para ver los pasos específicos de esa línea",
-    "analisisModes": "Modos de Análisis",
-    "bestCase": "Mejor Caso",
-    "bestCaseDesc": "Analiza el mejor caso del algoritmo, considerando:",
-    "bestCase1": "Ramas de IF con menos líneas de código",
-    "bestCase2": "Mínimo número de iteraciones en bucles",
-    "bestCase3": "Complejidad mínima esperada (cota inferior)",
-    "bestCaseEx": "Ejemplo:",
-    "bestCaseExDesc": "En búsqueda lineal, el best case es O(1) si el elemento está en la primera posición.",
-    "worstCase": "Peor Caso",
-    "worstCaseDesc": "Analiza el peor caso del algoritmo, considerando:",
-    "worstCase1": "Ramas de IF con más líneas de código",
-    "worstCase2": "Máximo número de iteraciones en bucles",
-    "worstCase3": "Complejidad máxima esperada (cota superior)",
-    "worstCaseEx": "Ejemplo:",
-    "worstCaseExDesc": "En búsqueda lineal, el worst case es O(n) si el elemento no existe o está al final.",
-    "avgCase": "Caso Promedio",
-    "avgCaseDesc": "Analiza el caso promedio usando modelos probabilísticos:",
-    "avgCase1": "Modelo Uniforme: Distribución uniforme de probabilidades (p = 1/2 por defecto)",
-    "avgCase2": "Modelo Simbólico: Probabilidades expresadas simbólicamente",
-    "avgCase3": "Esperanzas matemáticas (expectedRuns) para cada línea",
-    "avgCase4": "Complejidad promedio esperada A(n) = E[T(n)]",
-    "avgCaseEx": "Ejemplo:",
-    "avgCaseExDesc": "En búsqueda lineal, el average case es O(n/2) ≈ O(n) asumiendo distribución uniforme.",
-    "analisisResultNote": "Nota",
-    "analisisResultNoteDesc": "Los procedimientos muestran pasos detallados en LaTeX, desde la expresión original hasta la forma polinómica final y la notación asintótica. Para caso promedio, se muestra A(n) en lugar de T(n).",
-    "analisisLlmDesc": "El sistema permite comparar el análisis automático con un análisis independiente generado por un LLM (Gemini 2.5 Pro):",
-    "analisisLlm1": "Análisis Independiente:",
-    "analisisLlm1b": "El LLM analiza el código sin conocer el resultado del sistema",
-    "analisisLlm2": "Validación:",
-    "analisisLlm2b": "Compara ambos análisis y detecta discrepancias",
-    "analisisLlm3": "Nota de Validación:",
-    "analisisLlm3b": "Genera una nota breve (≤100 caracteres) indicando si el análisis es correcto",
-    "analisisLlmNote": "Nota",
-    "analisisLlmNoteDesc": "Las funciones con IA (como la comparación con LLM) requieren una API key de Gemini. Puedes configurarla en el footer de la aplicación.",
-    "analisisGpuDesc": "El sistema analiza si tu algoritmo es más adecuado para GPU o CPU mediante un sistema de scoring (0-100):",
-    "analisisGpuMetrics": "Métricas Analizadas",
-    "analisisGpuRec": "Recursión:",
-    "analisisGpuRecDesc": "Penaliza GPU (difícil de paralelizar)",
-    "analisisGpuBranch": "Bifurcación:",
-    "analisisGpuBranchDesc": "Penaliza GPU (divergencia de warps)",
-    "analisisGpuLoops": "Bucles:",
-    "analisisGpuLoopsDesc": "Favorece GPU si son independientes",
-    "analisisGpuArrays": "Arrays:",
-    "analisisGpuArraysDesc": "Favorece GPU (acceso paralelo)",
-    "analisisGpuOps": "Operaciones matemáticas:",
-    "analisisGpuOpsDesc": "Favorece GPU (ALUs especializadas)",
-    "analisisGpuRecs": "Recomendaciones",
-    "analisisGpuGpu": "GPU:",
-    "analisisGpuGpuDesc": "Score GPU >60 (altamente paralelizable)",
-    "analisisGpuCpuLabel": "CPU:",
-    "analisisGpuCpuDesc": "Score CPU >60 (secuencial o complejo)",
-    "analisisGpuMix": "Mixto:",
-    "analisisGpuMixDesc": "Ambos scores 40-60 (híbrido)",
-    "analisisTraceDesc": "El sistema permite visualizar la ejecución paso a paso de tu algoritmo con valores de entrada específicos:",
-    "analisisTraceIter": "Algoritmos Iterativos",
-    "analisisTraceIter1": "Instrumenta el código para capturar el estado en cada paso",
-    "analisisTraceIter2": "Muestra valores de variables en cada iteración",
-    "analisisTraceIter3": "Visualiza el flujo de ejecución con React Flow",
-    "analisisTraceIter4": "Permite ingresar valores de entrada personalizados",
-    "analisisTraceRec": "Algoritmos Recursivos",
-    "analisisTraceRec1": "Genera diagrama de árbol de llamadas recursivas con LLM (Gemini 2.0 Flash)",
-    "analisisTraceRec2": "Muestra llamadas recursivas con valores de entrada/salida",
-    "analisisTraceRec3": "Visualiza el árbol completo con React Flow",
-    "analisisTraceRec4": "Incluye explicación del proceso de recursión",
-    "analisisTraceNote": "Nota",
-    "analisisTraceNoteDesc": "Las funciones con IA (como la generación de diagramas de recursión) requieren una API key de Gemini. El seguimiento iterativo no requiere API key.",
-    "ejemplosDesc": "Aquí tienes algunos ejemplos simples para empezar:",
-    "ejemplo1": "Ejemplo 1: Factorial",
-    "ejemplo2": "Ejemplo 2: Búsqueda Lineal",
-    "ejemplosMore": "Más ejemplos",
-    "ejemplosMoreDescPre": "Para ver más ejemplos completos, visita la ",
-    "ejemplosMoreDescLinkText": "página de ejemplos",
-    "ejemplosMoreDescPost": ".",
-    "errorUnexpected": "Error: \"unexpected token\"",
-    "errorUnexpectedCause": "Causa:",
-    "errorUnexpectedCauseDesc": "Token inesperado en la sintaxis.",
-    "errorUnexpectedSol": "Solución:",
-    "errorUnexpectedSolDesc": "Verifica que todas las palabras clave estén en mayúsculas (BEGIN, END, IF, THEN, etc.) y que los bloques estén completos.",
-    "errorMissingBegin": "Error: \"missing BEGIN or END\"",
-    "errorMissingBeginCause": "Falta un bloque BEGIN...END en una estructura de control.",
-    "errorMissingBeginSol": "Todas las estructuras (IF, FOR, WHILE) requieren bloques completos. No se permiten sentencias sueltas.",
-    "errorMissingSemicolon": "Error: \"missing semicolon\"",
-    "errorMissingSemicolonCause": "Falta punto y coma al final de una sentencia.",
-    "errorMissingSemicolonSol": "Todas las asignaciones, declaraciones y llamadas deben terminar con punto y coma (;).",
-    "errorApiUnavailable": "API no disponible",
-    "errorApiCause": "El servidor backend no está respondiendo.",
-    "errorApiSol": "El editor seguirá funcionando con validación local, pero el análisis de complejidad no estará disponible. Verifica tu conexión o intenta más tarde.",
-    "backToDoc": "Volver a Documentación",
-    "viewExamples": "Ver Ejemplos",
-    "examplesLink": "ejemplos",
-    "examplesPageLink": "página de ejemplos"
+    "errorGeneric": "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
+    "launcherAriaLabel": "Abrir asistente de análisis",
+    "embeddedFrameTitle": "Asistente de análisis embebido",
+    "embeddedWelcome": "Soy AALIE. Puedo ayudarte a explicar lo que estás viendo, orientar los siguientes pasos y ampliar el contexto, pero el análisis formal de la app sigue siendo la fuente de verdad."
   },
   "privacy": {
     "title": "Política de Privacidad - AALIE",
@@ -1242,48 +1005,582 @@
     "metaDesc": "Política de privacidad de AALIE (Algorithmic Analysis Live Interaction Expert)"
   },
   "examples": {
-    "title": "Ejemplos de Algoritmos",
-    "subtitle": "Colección de algoritmos clásicos organizados por métodos de análisis. Los ejemplos están agrupados por: algoritmos básicos (unknown), iterativos, y recursivos clasificados según el método utilizado (iteración, teorema maestro, o árbol de recursión).",
-    "categories": {
-      "simple": "Algoritmos Unknown/Básicos",
-      "iterative": "Iterativos",
-      "recursive_iteration": "Recursivos (Método Iterativo)",
-      "recursive_master": "Recursivos (Teorema Maestro)",
-      "recursive_tree": "Recursivos (Árbol de Recursión)",
-      "recursive_characteristic": "Recursivos (Ecuación Característica)"
-    },
-    "categoryDesc": {
-      "simple": "Algoritmos básicos sin bucles complejos. Se clasificarán como 'unknown' en el análisis.",
-      "iterative": "Algoritmos con bucles FOR/WHILE. Totalmente soportados por el analizador iterativo.",
-      "recursive_iteration": "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro, Árbol de Recursión ni Ecuación Característica.",
-      "recursive_master": "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión ni Ecuación Característica.",
-      "recursive_tree": "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es divide-and-conquer. Incluye visualización del árbol y tabla por niveles.",
-      "recursive_characteristic": "Algoritmos recursivos analizados con el método de Ecuación Característica. Se usan cuando la recurrencia es lineal con desplazamientos constantes T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre el método de iteración. Detecta automáticamente casos de Programación Dinámica lineal y genera versión DP."
-    },
-    "exampleCount": "{count} ejemplo",
-    "exampleCountPlural": "{count} ejemplos",
+    "title": "Catálogo de Algoritmos",
+    "subtitle": "Explora ejemplos validados por parser y analizador. Solo se muestran algoritmos habilitados en el catálogo central.",
+    "catalogSummary": "{enabled} activos de {total} totales",
+    "typeSelectorTitle": "Elige una familia",
+    "typeSelectorSubtitle": "Cada familia conserva una definición didáctica clara y una publicación conservadora basada en validación real.",
+    "viewFamily": "Ver familia",
+    "globalSearchTitle": "Buscador global",
+    "globalSearchSubtitle": "Busca por nombre, resumen, etiquetas y categoría entre todos los algoritmos habilitados.",
+    "searchPlaceholder": "Buscar algoritmo, etiqueta o categoría...",
+    "searchAriaLabel": "Buscar en catálogo de ejemplos",
+    "emptyTitle": "Sin resultados",
+    "emptyDescription": "No encontramos algoritmos que coincidan con la búsqueda y filtros actuales.",
+    "viewAlgorithm": "Ver algoritmo",
+    "hideAlgorithm": "Ocultar algoritmo",
     "analyze": "Analizar",
-    "copyToAnalyzer": "Copiar y analizar",
-    "viewUserGuide": "Ver Guía de Usuario",
-    "viewCode": "Ver Código",
-    "hideCode": "Ocultar Código",
-    "copied": "Copiado",
-    "copy": "Copiar",
     "analyzing": "Analizando...",
-    "note": "Nota",
-    "homogeneous": "Homogénea",
-    "nonHomogeneous": "No Homogénea",
-    "dpLinear": "DP Lineal",
-    "toc": "Índice de contenidos",
-    "howToUse": "Cómo usar",
-    "howToUse1": "Ver Código: Haz clic para ver el código completo.",
-    "howToUse2": "Copiar: Copia el código al portapapeles.",
-    "howToUse3": "Analizar: Analiza directamente o pega en el",
-    "howToUse3Link": "analizador",
-    "howToUse4": "Explorar: El sistema calcula best/worst/average automáticamente.",
-    "methodsNote": "Nota sobre métodos",
+    "categorySummary": "{enabled} activos de {total} en esta categoría",
+    "categoryPanelTitle": "Descripción de categoría",
+    "filtersTitle": "Filtrar por métodos verificados",
     "backToUserGuide": "Guía de Usuario",
     "goToAnalyzer": "Ir a AALIE",
-    "pseudocode": "Pseudocódigo"
+    "backToExamplesHome": "Inicio de Ejemplos",
+    "catalogItems": {
+      "bogo-sort": {
+        "title": "Bogo Sort",
+        "summary": "Version didactica extrema para contrastar un ordenamiento ineficiente con el resto del catalogo iterativo.",
+        "tags": ["ordenamiento", "azar", "toy"]
+      },
+      "bubble-sort": {
+        "title": "Ordenamiento burbuja",
+        "summary": "Ordena comparando elementos adyacentes y sirve como referencia estable para los casos cuadraticos.",
+        "tags": ["ordenamiento", "cuadratico", "intercambios"]
+      },
+      "bucket-sort": {
+        "title": "Bucket Sort",
+        "summary": "Esqueleto iterativo para distribucion en cubetas; queda oculto hasta validar una version completamente aterrizada a la gramatica.",
+        "tags": ["ordenamiento", "cubetas", "distribucion"]
+      },
+      "counting-sort": {
+        "title": "Ordenamiento por conteo",
+        "summary": "Cuenta frecuencias y reconstruye el arreglo en varias pasadas lineales sobre indices y ocurrencias.",
+        "tags": ["ordenamiento", "frecuencias", "lineal"]
+      },
+      "dutch-national-flag": {
+        "title": "Bandera nacional holandesa",
+        "summary": "Mantiene tres regiones y es util para estudiar particiones lineales con varios punteros.",
+        "tags": ["particion", "dos punteros", "lineal"]
+      },
+      "euclides-iterativo-mcd": {
+        "title": "Euclides iterativo (MCD)",
+        "summary": "Caso corto y confiable para estudiar un bucle con reduccion geometrica en el tamaño del estado.",
+        "tags": ["mcd", "mod", "logaritmico"]
+      },
+      "factorial-iterativo": {
+        "title": "Factorial iterativo",
+        "summary": "Ejemplo lineal basico que recorre una variable de control simple y acumula un producto.",
+        "tags": ["factorial", "for", "lineal"]
+      },
+      "flood-fill-iterativo": {
+        "title": "Flood Fill iterativo",
+        "summary": "Modelo con pila explicita para una malla; permanece oculto hasta validar una variante robusta para trazas grandes.",
+        "tags": ["matriz", "pila", "relleno"]
+      },
+      "heapsort": {
+        "title": "Heapsort",
+        "summary": "Version compacta basada en heapify iterativo; queda deshabilitada mientras cerramos una validacion mas fina del soporte del heap.",
+        "tags": ["heap", "ordenamiento", "arbol implicito"]
+      },
+      "insertion-sort": {
+        "title": "Ordenamiento por insercion",
+        "summary": "Construye el arreglo ordenado insertando cada clave en su posicion y muestra un while interno clasico.",
+        "tags": ["ordenamiento", "insercion", "while"]
+      },
+      "jump-search": {
+        "title": "Busqueda por saltos",
+        "summary": "Alterna saltos de bloque con una fase lineal corta y resulta util para estudiar dos bucles consecutivos.",
+        "tags": ["busqueda", "saltos", "bloques"]
+      },
+      "kadane": {
+        "title": "Kadane",
+        "summary": "Mantiene un mejor prefijo local y uno global en una sola pasada lineal.",
+        "tags": ["subarreglo", "dp", "lineal"]
+      },
+      "linear-search": {
+        "title": "Busqueda lineal",
+        "summary": "Recorre secuencialmente el arreglo y sirve como referencia minima para busquedas iterativas.",
+        "tags": ["busqueda", "lineal", "for"]
+      },
+      "maximum-subarray-cuadratico": {
+        "title": "Maximum Subarray cuadratico",
+        "summary": "Recorre todos los inicios y expande sumas acumuladas para comparar con Kadane.",
+        "tags": ["subarreglo", "cuadratico", "doble bucle"]
+      },
+      "merge-dos-arreglos-ordenados": {
+        "title": "Merge de dos arreglos ordenados",
+        "summary": "Usa dos punteros y una salida temporal para estudiar una combinacion lineal clasica.",
+        "tags": ["merge", "dos punteros", "lineal"]
+      },
+      "newton-raphson-iterativo": {
+        "title": "Newton-Raphson iterativo",
+        "summary": "Ejemplo numerico con refinamientos sucesivos y corte por tolerancia.",
+        "tags": ["numerico", "aproximacion", "repeat"]
+      },
+      "pascal-triangle-bottom-up": {
+        "title": "Triangulo de Pascal bottom-up",
+        "summary": "Construccion tabular de una matriz triangular; por ahora permanece en el catalogo maestro pero no en la UI publica.",
+        "tags": ["pascal", "tabla", "matriz"]
+      },
+      "prefix-sum": {
+        "title": "Suma prefija",
+        "summary": "Construye una suma acumulada reutilizable y es ideal para estudiar dependencias lineales simples.",
+        "tags": ["prefijos", "acumulado", "lineal"]
+      },
+      "selection-sort": {
+        "title": "Ordenamiento por seleccion",
+        "summary": "Busca el minimo restante y lo coloca al frente en cada iteracion.",
+        "tags": ["ordenamiento", "seleccion", "cuadratico"]
+      },
+      "shell-sort": {
+        "title": "Ordenamiento Shell",
+        "summary": "Refina el arreglo por saltos decrecientes y muestra varios niveles de anidacion iterativa.",
+        "tags": ["ordenamiento", "gaps", "incrementos"]
+      },
+      "sieve-of-eratosthenes": {
+        "title": "Criba de Eratostenes",
+        "summary": "Marca multiplos en una tabla booleana y funciona bien para estudiar bucles anidados con saltos.",
+        "tags": ["primos", "criba", "matriz logica"]
+      },
+      "suma-de-arreglo": {
+        "title": "Suma de arreglo",
+        "summary": "Acumula todos los elementos del arreglo en un unico recorrido lineal.",
+        "tags": ["suma", "lineal", "for"]
+      },
+      "ternary-search-iterativo": {
+        "title": "Busqueda ternaria iterativa",
+        "summary": "Divide el rango en tres secciones por iteracion sobre un arreglo ordenado.",
+        "tags": ["busqueda", "ternaria", "logaritmico"]
+      },
+      "two-sum-con-hash": {
+        "title": "Dos sumas con hash",
+        "summary": "Queda en el catalogo maestro como recordatorio de futuros objetos auxiliares mas ricos.",
+        "tags": ["hash", "pares", "estructura auxiliar"]
+      },
+      "warshall-transitive-closure": {
+        "title": "Warshall para cierre transitivo",
+        "summary": "Triple bucle sobre una matriz; se mantiene deshabilitado hasta validar mejor el soporte de matrices bidimensionales.",
+        "tags": ["matriz", "grafo", "transitividad"]
+      },
+      "closest-pair-of-points": {
+        "title": "Par de puntos mas cercano",
+        "summary": "Esqueleto geometricamente fiel pero todavia no publicado mientras aterrizamos mejor la parte de franjas y puntos.",
+        "tags": ["geometria", "puntos", "franja"]
+      },
+      "convex-hull-divide-and-conquer": {
+        "title": "Envolvente convexa divide y vencerás",
+        "summary": "Se conserva como boceto de referencia para una futura version validada del casco convexo.",
+        "tags": ["geometria", "casco convexo", "merge"]
+      },
+      "cooley-tukey-fft": {
+        "title": "Cooley-Tukey FFT",
+        "summary": "FFT recursiva con pares e impares; permanece deshabilitada hasta que fijemos una version mas sobria para el parser.",
+        "tags": ["fft", "pares", "impares"]
+      },
+      "counting-inversions": {
+        "title": "Conteo de inversiones",
+        "summary": "Divide el arreglo, cuenta en cada mitad y acumula inversiones cruzadas al combinar.",
+        "tags": ["merge", "inversiones", "divide y venceras"]
+      },
+      "fast-multipole-skeleton-simplificado": {
+        "title": "Fast Multipole skeleton simplificado",
+        "summary": "Queda como placeholder honesto de un patron jerarquico que aun no esta listo para exponerse al usuario final.",
+        "tags": ["jerarquico", "geometria", "toy"]
+      },
+      "karatsuba-multiplication": {
+        "title": "Multiplicación de Karatsuba",
+        "summary": "Muestra una division ternaria del trabajo multiplicativo con combinacion algebraica al final.",
+        "tags": ["karatsuba", "multiplicacion", "subproblemas"]
+      },
+      "kth-smallest-mediana-de-medianas": {
+        "title": "K-th Smallest por medianas de medianas",
+        "summary": "Se mantiene como referencia avanzada hasta publicar una variante mas acotada del pivote determinista.",
+        "tags": ["seleccion", "medianas", "pivote"]
+      },
+      "majority-element-divide-and-conquer": {
+        "title": "Elemento mayoritario divide y vencerás",
+        "summary": "Obtiene candidatos por mitad y luego los valida en la fase de combinacion.",
+        "tags": ["mayoria", "combinacion", "recursivo"]
+      },
+      "matrix-chain-parenthesization-divide-and-conquer-naive": {
+        "title": "Parentización de cadena de matrices divide y vencerás ingenua",
+        "summary": "Modelo recursivo ingenuo de particiones de matrices; queda fuera de la UI mientras validamos una forma mas estable.",
+        "tags": ["matrices", "particiones", "naive"]
+      },
+      "max-min-tournament": {
+        "title": "Max-Min Tournament",
+        "summary": "Parte el arreglo en dos mitades y combina maximo y minimo desde cada rama.",
+        "tags": ["maximo", "minimo", "torneo"]
+      },
+      "merge-sort": {
+        "title": "Ordenamiento por mezcla",
+        "summary": "Divide el arreglo en dos mitades, ordena cada una y las mezcla en tiempo lineal.",
+        "tags": ["ordenamiento", "merge", "divide y venceras"]
+      },
+      "minimax-de-arbol-binario": {
+        "title": "Minimax de arbol binario",
+        "summary": "Boceto recursivo de un arbol binario de juego; se mantiene fuera de la UI hasta fijar mejor los nodos auxiliares.",
+        "tags": ["minimax", "arbol", "juegos"]
+      },
+      "nearest-points-by-strip-merge-variant": {
+        "title": "Puntos más cercanos por variante de franja y mezcla",
+        "summary": "Variante de cercania por franjas mantenida como borrador avanzado del catalogo maestro.",
+        "tags": ["geometria", "franja", "cercania"]
+      },
+      "polynomial-multiplication-divide-and-conquer": {
+        "title": "Multiplicación de polinomios divide y vencerás",
+        "summary": "Separa los polinomios en mitades y combina productos parciales al final.",
+        "tags": ["polinomios", "multiplicacion", "conquista"]
+      },
+      "post-office-recursive-partition": {
+        "title": "Post Office recursive partition",
+        "summary": "Placeholder de particiones recursivas de intervalos; no se publica aun porque requiere una forma mas concreta.",
+        "tags": ["intervalos", "particion", "clasico"]
+      },
+      "quadtree-construction": {
+        "title": "QuadTree Construction",
+        "summary": "Division en cuatro cuadrantes sobre una matriz; por ahora solo queda como referencia del catalogo maestro.",
+        "tags": ["quadtree", "matriz", "cuadrantes"]
+      },
+      "quick-sort": {
+        "title": "Ordenamiento rapido",
+        "summary": "Particiona alrededor de un pivote y resuelve recursivamente las dos regiones restantes.",
+        "tags": ["ordenamiento", "pivote", "particion"]
+      },
+      "range-sum-query-divide-and-conquer": {
+        "title": "Consulta de suma por rango divide y vencerás",
+        "summary": "Muestra la particion del rango en dos mitades, pero se deja fuera de la UI hasta tener una version mas afinada.",
+        "tags": ["rangos", "sumas", "segmentos"]
+      },
+      "segment-tree-construction": {
+        "title": "Construcción de árbol de segmentos",
+        "summary": "Construccion recursiva por intervalos que reservamos para una futura version mas completa.",
+        "tags": ["segment tree", "intervalos", "estructura"]
+      },
+      "skyline-problem-divide-and-conquer": {
+        "title": "Problema del skyline divide y vencerás",
+        "summary": "Problema clasico de line sweep y mezcla de perfiles que por ahora queda como registro avanzado.",
+        "tags": ["skyline", "perfil", "geometria"]
+      },
+      "strassen-matrix-multiplication": {
+        "title": "Multiplicacion de matrices de Strassen",
+        "summary": "Se incluye en el catalogo maestro, pero sigue deshabilitada hasta afinar la representacion matricial.",
+        "tags": ["strassen", "matrices", "7 productos"]
+      },
+      "tournament-tree-construction": {
+        "title": "Construcción de árbol de torneo",
+        "summary": "Divide el arreglo en dos ramas y combina ganadores locales en la raiz.",
+        "tags": ["torneo", "arbol", "estructura"]
+      },
+      "vlsi-closest-pair-style-partition": {
+        "title": "VLSI Closest-Pair style partition",
+        "summary": "Variante avanzada de particion geometrica que queda guardada solo en el catalogo maestro.",
+        "tags": ["vlsi", "geometria", "particion"]
+      },
+      "weighted-median-divide-and-conquer": {
+        "title": "Mediana ponderada divide y vencerás",
+        "summary": "Se mantiene como ejemplo avanzado de seleccion con pesos, aun fuera de la UI publica.",
+        "tags": ["mediana", "pesos", "seleccion"]
+      },
+      "z-order-recursive-matrix-traversal": {
+        "title": "Z-order recursive matrix traversal",
+        "summary": "Recorre una matriz por cuadrantes y deja visible un patron claro de division en cuatro subproblemas.",
+        "tags": ["matriz", "z-order", "cuadrantes"]
+      },
+      "binary-search-recursiva": {
+        "title": "Binary Search recursiva",
+        "summary": "Reduce el rango a una sola mitad y es uno de los casos mas confiables para el catalogo recursivo.",
+        "tags": ["busqueda", "mitad", "logaritmico"]
+      },
+      "binary-tree-height": {
+        "title": "Altura de arbol binario",
+        "summary": "Se conserva en el catalogo maestro, pero su forma de dos ramas queda fuera de la publicacion inicial.",
+        "tags": ["arbol", "altura", "dos ramas"]
+      },
+      "euclides-recursivo": {
+        "title": "Euclides recursivo",
+        "summary": "Caso pequeno y estable para una reduccion por modulo hasta llegar al divisor final.",
+        "tags": ["mcd", "mod", "recursivo"]
+      },
+      "exponenciacion-rapida": {
+        "title": "Exponenciacion rapida",
+        "summary": "Reduce el exponente a la mitad en cada llamada y reutiliza el subresultado central.",
+        "tags": ["potencias", "halving", "logaritmico"]
+      },
+      "fibonacci-search-recursiva": {
+        "title": "Fibonacci Search recursiva",
+        "summary": "Caso avanzado de busqueda ordenada que permanece oculto hasta validar mejor sus offsets.",
+        "tags": ["busqueda", "fibonacci", "offsets"]
+      },
+      "find-maximum-recursivo": {
+        "title": "Find Maximum recursivo",
+        "summary": "Procesa un elemento por llamada y compara contra el maximo del prefijo restante.",
+        "tags": ["maximo", "decremento", "lineal"]
+      },
+      "heapify-recursivo": {
+        "title": "Heapify recursivo",
+        "summary": "Modelo de heap implicito que queda en el catalogo maestro mientras afinamos su forma valida para UI publica.",
+        "tags": ["heap", "arbol implicito", "descenso"]
+      },
+      "insertion-sort-recursivo": {
+        "title": "Insertion Sort recursivo",
+        "summary": "Ordena el prefijo de longitud n-1 y luego inserta la ultima clave.",
+        "tags": ["ordenamiento", "insercion", "decremento"]
+      },
+      "interpolation-search-recursiva": {
+        "title": "Interpolation Search recursiva",
+        "summary": "Su posicion estimada hace mas delicado el soporte actual, por eso se mantiene oculta.",
+        "tags": ["busqueda", "interpolacion", "estimacion"]
+      },
+      "josephus-recursivo": {
+        "title": "Josephus recursivo",
+        "summary": "Reduce el problema en una persona por llamada y luego recompone la posicion sobreviviente.",
+        "tags": ["josephus", "clasico", "decremento"]
+      },
+      "kth-symbol-in-grammar": {
+        "title": "K-esimo simbolo en gramatica",
+        "summary": "Reduce la posicion y la fila hasta un caso base corto.",
+        "tags": ["gramatica", "simbolo", "halving"]
+      },
+      "linear-search-recursiva": {
+        "title": "Linear Search recursiva",
+        "summary": "Procesa una posicion por llamada y termina cuando encuentra el elemento o consume el arreglo.",
+        "tags": ["busqueda", "lineal", "recursivo"]
+      },
+      "linked-list-length": {
+        "title": "Longitud de lista enlazada",
+        "summary": "Avanza un nodo por llamada hasta llegar al final de la lista enlazada.",
+        "tags": ["lista", "longitud", "nodos"]
+      },
+      "lista-invertida-recursiva": {
+        "title": "Lista invertida recursiva",
+        "summary": "Procesa un nodo por llamada y reconstruye el orden al retornar.",
+        "tags": ["lista", "invertir", "nodos"]
+      },
+      "max-en-arreglo-divide-by-one": {
+        "title": "Max en arreglo divide-by-one",
+        "summary": "Reduce el problema en un elemento y compara contra el maximo del resto.",
+        "tags": ["maximo", "decremento", "arreglo"]
+      },
+      "numeros-binarios-por-division-entre-2": {
+        "title": "Numeros binarios por division entre 2",
+        "summary": "Reduce el numero a la mitad y reconstruye sus digitos al volver.",
+        "tags": ["binario", "division", "mitad"]
+      },
+      "potencia-modular-rapida": {
+        "title": "Potencia modular rapida",
+        "summary": "Reduce el exponente y conserva el modulo en cada combinacion.",
+        "tags": ["modular", "potencia", "halving"]
+      },
+      "recursive-selection-sort": {
+        "title": "Ordenamiento por seleccion recursivo",
+        "summary": "Fija la primera posicion, busca el minimo restante y continua sobre el sufijo.",
+        "tags": ["ordenamiento", "seleccion", "sufijo"]
+      },
+      "recursive-sum-of-digits": {
+        "title": "Suma recursiva de digitos",
+        "summary": "Recorta un digito por llamada hasta dejar el numero en cero.",
+        "tags": ["digitos", "suma", "division"]
+      },
+      "reverse-string-recursiva": {
+        "title": "Inversion recursiva de cadena",
+        "summary": "Intercambia extremos y reduce el intervalo hacia el centro.",
+        "tags": ["cadenas", "invertir", "dos indices"]
+      },
+      "ternary-search-recursiva": {
+        "title": "Ternary Search recursiva",
+        "summary": "Reduce el intervalo a uno de tres bloques posibles en cada llamada.",
+        "tags": ["busqueda", "ternaria", "bloques"]
+      },
+      "tower-of-logarithmic-halving-toy-example": {
+        "title": "Tower of logarithmic halving toy example",
+        "summary": "Ejemplo pedagogico artificial que dejamos fuera de la UI inicial.",
+        "tags": ["toy", "halving", "pedagogico"]
+      },
+      "traversal-inorder": {
+        "title": "Recorrido inorder",
+        "summary": "Permanece en el catalogo maestro, pero no en la UI inicial por su forma de dos ramas.",
+        "tags": ["arbol", "inorder", "dos ramas"]
+      },
+      "traversal-postorder": {
+        "title": "Recorrido postorder",
+        "summary": "Se mantiene como referencia interna hasta fijar mejor la publicacion de recorridos binarios.",
+        "tags": ["arbol", "postorder", "dos ramas"]
+      },
+      "traversal-preorder": {
+        "title": "Recorrido preorder",
+        "summary": "Se deja fuera de la UI inicial para mantener un lote conservador de arboles recursivos.",
+        "tags": ["arbol", "preorder", "dos ramas"]
+      },
+      "ackermann-truncado-pedagogico": {
+        "title": "Ackermann truncado pedagogico",
+        "summary": "Se conserva solo como recordatorio de un patron fuera de la cobertura prudente de produccion.",
+        "tags": ["ackermann", "toy", "no estandar"]
+      },
+      "catalan-recursivo-naive": {
+        "title": "Catalan recursivo naive",
+        "summary": "Ejemplo famoso pero mas delicado para el motor actual; por eso se mantiene oculto.",
+        "tags": ["catalan", "naive", "ramificado"]
+      },
+      "climbing-stairs": {
+        "title": "Escaleras recursivas",
+        "summary": "Cuenta caminos con pasos de 1 y 2, generando una recurrencia lineal clasica.",
+        "tags": ["escaleras", "fibonacci", "recurrencia"]
+      },
+      "coin-change-recursivo-naive": {
+        "title": "Coin Change recursivo naive",
+        "summary": "Modelo recursivo muy ramificado que seguimos guardando como ejemplo maestro no publicado.",
+        "tags": ["monedas", "naive", "ramas"]
+      },
+      "count-binary-strings-without-consecutive-ones": {
+        "title": "Contar cadenas binarias sin unos consecutivos",
+        "summary": "Recurrencia lineal clasica que conecta facilmente con ecuacion caracteristica.",
+        "tags": ["cadenas", "binarias", "sin consecutivos"]
+      },
+      "count-ways-to-reach-n": {
+        "title": "Contar formas de llegar a N",
+        "summary": "Otra recurrencia lineal corta para contar caminos con pequenos saltos.",
+        "tags": ["caminos", "pasos", "lineal"]
+      },
+      "derangements-recursivo": {
+        "title": "Derangements recursivo",
+        "summary": "Secuencia lineal con coeficientes variables que nos sirve para expandir el lote de secuencias.",
+        "tags": ["desarreglos", "secuencia", "lineal"]
+      },
+      "edit-distance-recursivo-naive": {
+        "title": "Edit Distance recursivo naive",
+        "summary": "Ejemplo clasico multi-rama que guardamos fuera de la publicacion inicial.",
+        "tags": ["distancia", "edicion", "naive"]
+      },
+      "factorial-recursivo": {
+        "title": "Factorial recursivo",
+        "summary": "Caso lineal sencillo que sigue siendo util para contrastar con su version iterativa.",
+        "tags": ["factorial", "lineal", "decremento"]
+      },
+      "fibonacci-recursivo": {
+        "title": "Fibonacci recursivo",
+        "summary": "Referencia central del catalogo para ecuacion caracteristica y crecimiento exponencial.",
+        "tags": ["fibonacci", "secuencia", "clasico"]
+      },
+      "friend-pairing-recursivo": {
+        "title": "Emparejamiento de amigos recursivo",
+        "summary": "Secuencia combinatoria con una rama individual y otra emparejada.",
+        "tags": ["parejas", "combinatoria", "recurrencia"]
+      },
+      "hanoi": {
+        "title": "Torres de Hanoi",
+        "summary": "Problema clasico con dos llamadas sobre n-1 y un trabajo local constante.",
+        "tags": ["hanoi", "clasico", "dos ramas"]
+      },
+      "house-robber-recursivo-naive": {
+        "title": "House Robber recursivo naive",
+        "summary": "Se mantiene como ejemplo avanzado no visible por la ramificacion y el maximo entre estados.",
+        "tags": ["house robber", "naive", "decision"]
+      },
+      "integer-partition-recursiva": {
+        "title": "Integer Partition recursiva",
+        "summary": "Permanece como muestra avanzada del catalogo maestro por su soporte aun parcial.",
+        "tags": ["particiones", "enteros", "ramificado"]
+      },
+      "k-step-stairs": {
+        "title": "Escaleras de K pasos",
+        "summary": "Version pedagogica de escaleras con varias ramas controladas por una constante fija.",
+        "tags": ["escaleras", "k pasos", "recurrencia"]
+      },
+      "lucas-numbers": {
+        "title": "Numeros de Lucas",
+        "summary": "Secuencia hermana de Fibonacci con distintas condiciones iniciales.",
+        "tags": ["lucas", "secuencia", "lineal"]
+      },
+      "pell-numbers": {
+        "title": "Numeros de Pell",
+        "summary": "Recurrencia lineal de segundo orden que amplia el lote de ecuacion caracteristica.",
+        "tags": ["pell", "secuencia", "ecuacion caracteristica"]
+      },
+      "perrin-sequence": {
+        "title": "Secuencia de Perrin",
+        "summary": "Secuencia lineal de orden tres util para ampliar el conjunto de ejemplos verificados.",
+        "tags": ["perrin", "orden 3", "secuencia"]
+      },
+      "recaman-truncado-pedagogico": {
+        "title": "Recaman truncado pedagogico",
+        "summary": "Se mantiene como ejemplo no visible por requerir reglas mas finas de secuencias auto-referentes.",
+        "tags": ["recaman", "toy", "autoreferencia"]
+      },
+      "rod-cutting-recursivo-naive": {
+        "title": "Rod Cutting recursivo naive",
+        "summary": "Ejemplo clasico ramificado reservado al catalogo maestro.",
+        "tags": ["rod cutting", "naive", "particiones"]
+      },
+      "subset-sum-recursivo-naive": {
+        "title": "Subset Sum recursivo naive",
+        "summary": "Se deja fuera de la UI inicial para mantener las badges publicas conservadoras.",
+        "tags": ["subset sum", "naive", "decision"]
+      },
+      "suma-de-1-a-n-recursiva": {
+        "title": "Suma de 1..n recursiva",
+        "summary": "Reduce en una unidad y acumula el termino actual.",
+        "tags": ["suma", "lineal", "decremento"]
+      },
+      "suma-de-arreglo-recursiva": {
+        "title": "Suma de arreglo recursiva",
+        "summary": "Consume un elemento por llamada y delega el resto del trabajo al sufijo.",
+        "tags": ["arreglo", "suma", "lineal"]
+      },
+      "tribonacci-recursivo": {
+        "title": "Tribonacci recursivo",
+        "summary": "Amplia el patron de Fibonacci a tres ramas sobre desplazamientos constantes.",
+        "tags": ["tribonacci", "orden 3", "secuencia"]
+      },
+      "ways-to-tile-2xn": {
+        "title": "Formas de embaldosar 2xn",
+        "summary": "Cuenta mosaicos 2xn con una recurrencia lineal corta y muy didactica.",
+        "tags": ["tiling", "domino", "secuencia"]
+      }
+    },
+    "categories": {
+      "iterativos": {
+        "label": "Iterativos",
+        "offText": "Resuelven el problema con ciclos y actualizaciones paso a paso."
+      },
+      "divide-y-venceras": {
+        "label": "Divide y vencerás",
+        "offText": "Parten el problema en varias partes más pequeñas, las resuelven y luego combinan el resultado."
+      },
+      "resta-y-venceras": {
+        "label": "Resta y vencerás",
+        "offText": "Reducen el problema a una versión más pequeña del mismo y repiten hasta llegar al caso base."
+      },
+      "resta-y-seras-vencido": {
+        "label": "Resta y serás vencido",
+        "offText": "Avanzan restando una parte pequeña del problema en cada llamada, normalmente en recurrencias lineales."
+      }
+    },
+    "families": {
+      "busqueda": "Búsqueda",
+      "ordenamiento": "Ordenamiento",
+      "matrices": "Matrices",
+      "numerico": "Numérico",
+      "geometria": "Geometría",
+      "secuencias": "Secuencias",
+      "estructuras": "Estructuras",
+      "clasicos": "Clásicos"
+    },
+    "kind": {
+      "iterative": "Iterativo",
+      "recursive": "Recursivo"
+    }
+  },
+  "contentUi": {
+    "progress": "Progreso",
+    "globalProgress": "Progreso global",
+    "estimatedTime": "Tiempo estimado",
+    "openModule": "Entrar al módulo",
+    "moduleGrid": "Módulos de la guía",
+    "tableOfContents": "Tabla de contenidos",
+    "searchPlaceholder": "Buscar en la guía",
+    "searchAriaLabel": "Buscar contenido en la guía",
+    "searchWithinModulePlaceholder": "Buscar dentro de este módulo",
+    "searchWithinModuleAriaLabel": "Buscar dentro del módulo actual",
+    "emptySearchTitle": "Sin resultados",
+    "emptySearchDescription": "No se encontraron coincidencias útiles en este catálogo.",
+    "backToGuide": "Volver a la guía",
+    "previousModule": "Módulo anterior",
+    "nextModule": "Siguiente módulo",
+    "completed": "Completado",
+    "references": "Referencias",
+    "viewSolution": "Ver solución",
+    "brokenLinkTooltip": "Contenido no disponible"
   }
 }

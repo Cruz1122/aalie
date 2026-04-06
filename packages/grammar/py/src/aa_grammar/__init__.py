@@ -13,8 +13,9 @@ __all__ = []
 # Importar solo lo esencial para que el paquete sea funcional
 try:
     # Solo importar las funciones críticas que necesita la API
-    from .api import parse_to_ast
-    __all__.append('parse_to_ast')
-except ImportError as e:
+    from .api import parse_to_ast  # noqa: F401
+
+    __all__.append("parse_to_ast")
+except ImportError:
     # Si falla, al menos el paquete será importable
     pass

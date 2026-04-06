@@ -3,9 +3,13 @@ Tests unitarios para app.modules.analysis.visitors.for_visitor.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 import pytest
+from sympy import Integer, Symbol
+
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
-from sympy import Symbol, Integer
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestForVisitor:
@@ -24,8 +28,13 @@ class TestForVisitor:
             "start": {"type": "number", "value": 1},
             "end": {"type": "identifier", "name": "n"},
             "body": [
-                {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}
-            ]
+                {
+                    "type": "Assign",
+                    "pos": {"line": 3},
+                    "target": {"type": "identifier", "name": "x"},
+                    "value": {"type": "number", "value": 1},
+                }
+            ],
         }
         self.analyzer.visitFor(node, mode="worst")
         assert len(self.analyzer.rows) > 0
@@ -46,10 +55,15 @@ class TestForVisitor:
                     "start": {"type": "number", "value": 1},
                     "end": {"type": "identifier", "name": "n"},
                     "body": [
-                        {"type": "Assign", "pos": {"line": 4}, "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}
-                    ]
+                        {
+                            "type": "Assign",
+                            "pos": {"line": 4},
+                            "target": {"type": "identifier", "name": "x"},
+                            "value": {"type": "number", "value": 1},
+                        }
+                    ],
                 }
-            ]
+            ],
         }
         self.analyzer.visitFor(node, mode="worst")
         assert len(self.analyzer.rows) > 0
@@ -89,7 +103,7 @@ class TestForVisitor:
             "type": "binary",
             "left": {"type": "identifier", "name": "a"},
             "op": "+",
-            "right": {"type": "number", "value": 1}
+            "right": {"type": "number", "value": 1},
         }
         result = self.analyzer._ast_expr_to_readable_str(expr)
         assert "a" in result
@@ -99,9 +113,7 @@ class TestForVisitor:
         """Test: Detecta return en el cuerpo del bucle"""
         body = {
             "type": "Block",
-            "body": [
-                {"type": "Return", "value": {"type": "number", "value": 1}}
-            ]
+            "body": [{"type": "Return", "value": {"type": "number", "value": 1}}],
         }
         result = self.analyzer._has_return_in_body(body)
         assert result
@@ -111,8 +123,12 @@ class TestForVisitor:
         body = {
             "type": "Block",
             "body": [
-                {"type": "Assign", "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}
-            ]
+                {
+                    "type": "Assign",
+                    "target": {"type": "identifier", "name": "x"},
+                    "value": {"type": "number", "value": 1},
+                }
+            ],
         }
         result = self.analyzer._has_return_in_body(body)
         assert not result
@@ -124,10 +140,8 @@ class TestForVisitor:
             "condition": {"type": "binary", "operator": ">", "left": {}, "right": {}},
             "consequent": {
                 "type": "block",
-                "body": [
-                    {"type": "Return", "value": {"type": "number", "value": 1}}
-                ]
-            }
+                "body": [{"type": "Return", "value": {"type": "number", "value": 1}}],
+            },
         }
         result = self.analyzer._has_return_in_body(body)
         assert result
@@ -139,10 +153,8 @@ class TestForVisitor:
             "condition": {"type": "binary", "operator": ">", "left": {}, "right": {}},
             "alternate": {
                 "type": "block",
-                "body": [
-                    {"type": "Return", "value": {"type": "number", "value": 0}}
-                ]
-            }
+                "body": [{"type": "Return", "value": {"type": "number", "value": 0}}],
+            },
         }
         result = self.analyzer._has_return_in_body(body)
         assert result
@@ -156,10 +168,8 @@ class TestForVisitor:
             "end": {"value": 10},
             "body": {
                 "type": "block",
-                "body": [
-                    {"type": "Return", "value": {"type": "number", "value": 1}}
-                ]
-            }
+                "body": [{"type": "Return", "value": {"type": "number", "value": 1}}],
+            },
         }
         result = self.analyzer._has_return_in_body(body)
         assert result
@@ -193,9 +203,9 @@ class TestForVisitor:
                 "type": "binary",
                 "operator": "+",
                 "left": {"type": "identifier", "name": "a"},
-                "right": {"type": "identifier", "name": "b"}
+                "right": {"type": "identifier", "name": "b"},
             },
-            "right": {"type": "identifier", "name": "c"}
+            "right": {"type": "identifier", "name": "c"},
         }
         result = self.analyzer._expr_to_str(expr)
         assert isinstance(result, str)
@@ -211,10 +221,8 @@ class TestForVisitor:
             "end": {"type": "identifier", "name": "n"},
             "body": {
                 "type": "Block",
-                "body": [
-                    {"type": "Return", "value": {"type": "number", "value": 1}}
-                ]
-            }
+                "body": [{"type": "Return", "value": {"type": "number", "value": 1}}],
+            },
         }
         initial_rows = len(self.analyzer.rows)
         self.analyzer.visitFor(node, mode="best")
@@ -230,10 +238,8 @@ class TestForVisitor:
             "end": {"type": "identifier", "name": "n"},
             "body": {
                 "type": "Block",
-                "body": [
-                    {"type": "Return", "value": {"type": "number", "value": 1}}
-                ]
-            }
+                "body": [{"type": "Return", "value": {"type": "number", "value": 1}}],
+            },
         }
         initial_rows = len(self.analyzer.rows)
         self.analyzer.visitFor(node, mode="avg")
@@ -245,12 +251,29 @@ class TestForVisitor:
             "type": "For",
             "pos": {"line": 2},
             "variable": "i",
-            "start": {"type": "binary", "operator": "+", "left": {"type": "number", "value": 1}, "right": {"type": "number", "value": 1}},
-            "end": {"type": "binary", "operator": "-", "left": {"type": "identifier", "name": "n"}, "right": {"type": "number", "value": 1}},
+            "start": {
+                "type": "binary",
+                "operator": "+",
+                "left": {"type": "number", "value": 1},
+                "right": {"type": "number", "value": 1},
+            },
+            "end": {
+                "type": "binary",
+                "operator": "-",
+                "left": {"type": "identifier", "name": "n"},
+                "right": {"type": "number", "value": 1},
+            },
             "body": {
                 "type": "Block",
-                "body": [{"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}]
-            }
+                "body": [
+                    {
+                        "type": "Assign",
+                        "pos": {"line": 3},
+                        "target": {"type": "identifier", "name": "x"},
+                        "value": {"type": "number", "value": 1},
+                    }
+                ],
+            },
         }
         initial_rows = len(self.analyzer.rows)
         self.analyzer.visitFor(node, mode="worst")
@@ -264,7 +287,7 @@ class TestForVisitor:
             "variable": "i",
             "start": {"type": "number", "value": 1},
             "end": {"type": "identifier", "name": "n"},
-            "body": None
+            "body": None,
         }
         initial_rows = len(self.analyzer.rows)
         self.analyzer.visitFor(node, mode="worst")
@@ -280,10 +303,14 @@ class TestForVisitor:
             "start": {"type": "number", "value": 1},
             "end": {"type": "identifier", "name": "n"},
             "body": [
-                {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}
-            ]
+                {
+                    "type": "Assign",
+                    "pos": {"line": 3},
+                    "target": {"type": "identifier", "name": "x"},
+                    "value": {"type": "number", "value": 1},
+                }
+            ],
         }
         initial_rows = len(self.analyzer.rows)
         self.analyzer.visitFor(node, mode="worst")
         assert len(self.analyzer.rows) > initial_rows
-

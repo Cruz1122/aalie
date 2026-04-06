@@ -1,4 +1,11 @@
-import type { AnalyzeOpenResponse, Program } from "./index";
+import type {
+  AnalysisStepBundle,
+  AnalyzeOpenResponse,
+  LoopInvariant,
+  Program,
+  TraceGraphCanonical,
+  WhileBlockView,
+} from "./index";
 
 export const SNAPSHOT_SCHEMA_VERSION = "1.0.0" as const;
 
@@ -135,6 +142,29 @@ export interface SnapshotTraceSummaryItem {
   warnings?: string[];
 }
 
+export interface SnapshotStructuralTraceClassification {
+  patternKind?: string;
+  confidence?: "high" | "medium" | "low";
+  evidence?: string[];
+}
+
+export interface SnapshotReportTraceGraph {
+  graph: TraceGraphCanonical;
+  patternKind?: string;
+  classification?: SnapshotStructuralTraceClassification;
+  summary?: {
+    totalSteps?: number;
+    totalCalls?: number;
+    maxRecursionDepth?: number;
+    algorithmKind?: string;
+  };
+  diagnostics?: {
+    truncated?: boolean;
+    truncationReason?: string;
+    warnings?: string[];
+  };
+}
+
 export interface SnapshotInput {
   originalPseudocode: string;
   normalizedPseudocode: SnapshotSection<string>;
@@ -158,9 +188,21 @@ export interface SnapshotInternal {
   intermediateMath: SnapshotSection<{
     proof?: NonNullable<AnalyzeOpenResponse["totals"]["proof"]>;
     characteristicEquation?: AnalyzeOpenResponse["totals"]["characteristic_equation"];
+    characteristicEquationStepByStep?: NonNullable<
+      AnalyzeOpenResponse["totals"]["characteristic_equation"]
+    >["step_by_step"];
     iteration?: AnalyzeOpenResponse["totals"]["iteration"];
+    iterationStepByStep?: NonNullable<
+      AnalyzeOpenResponse["totals"]["iteration"]
+    >["step_by_step"];
     master?: AnalyzeOpenResponse["totals"]["master"];
+    masterStepByStep?: NonNullable<
+      AnalyzeOpenResponse["totals"]["master"]
+    >["step_by_step"];
     recursionTree?: AnalyzeOpenResponse["totals"]["recursion_tree"];
+    recursionTreeStepByStep?: NonNullable<
+      AnalyzeOpenResponse["totals"]["recursion_tree"]
+    >["step_by_step"];
   }>;
 }
 
@@ -171,6 +213,7 @@ export interface SnapshotCaseResult {
   big_o?: string;
   big_omega?: string;
   big_theta?: string;
+  whileBlocks?: WhileBlockView[];
   explanationSteps?: string[];
   raw?: AnalyzeOpenResponse;
 }
@@ -181,9 +224,11 @@ export interface SnapshotGlobalResult {
 
 export interface IterativeSnapshotSection {
   lineCostTable: Record<SnapshotCase, AnalyzeOpenResponse["byLine"] | null>;
+  whileBlocks: Record<SnapshotCase, WhileBlockView[] | null>;
   summations: Record<SnapshotCase, string | null>;
   simplificationSteps: Record<SnapshotCase, string[] | null>;
   asymptoticProcedure: Record<SnapshotCase, string[] | null>;
+  caseStepByStep: Record<SnapshotCase, AnalysisStepBundle | null>;
   trace: SnapshotSection<
     Record<SnapshotCase, {
       steps: unknown[];
@@ -199,11 +244,10 @@ export interface IterativeSnapshotSection {
         warnings?: string[];
       };
       callTreeSource?: unknown;
+      reportTraceGraph?: SnapshotReportTraceGraph;
     } | null>
   >;
-  loopInvariant: SnapshotSection<{
-    description?: string;
-  }>;
+  loopInvariant: SnapshotSection<LoopInvariant>;
 }
 
 export interface RecursiveSnapshotSection {
@@ -211,9 +255,21 @@ export interface RecursiveSnapshotSection {
   selectedMethod: SnapshotSection<SnapshotRecursiveMethod>;
   methodsAvailable: SnapshotSection<SnapshotRecursiveMethod[]>;
   methodDetails: SnapshotSection<SnapshotRecursiveMethodDetail[]>;
+  presentation?: {
+    summary?: string;
+    conceptNote?: string;
+    warning?: string;
+    supportReason?: string;
+    renderHints?: {
+      stepExplanationStyle?: "italic";
+      latexExplanationSize?: "footnotesize";
+      markdownExplanationStyle?: "italic";
+    };
+  };
   rootsAndMultiplicities: SnapshotSection<
     Array<{ root: string; multiplicity: number }>
   >;
+  stepByStep: SnapshotSection<AnalysisStepBundle>;
   closedForm: SnapshotSection<{
     homogeneousSolution?: string;
     particularSolution?: string;
@@ -238,6 +294,7 @@ export interface RecursiveSnapshotSection {
         truncationReason?: string;
         warnings?: string[];
       };
+      reportTraceGraph?: SnapshotReportTraceGraph;
     } | null>
   >;
 }
@@ -254,20 +311,39 @@ export interface SnapshotLlmComparative {
 }
 
 export interface SnapshotGpuCpuComparative {
-  profile: "GPU" | "CPU" | "Mixto";
+  primaryRecommendation: "cpu" | "gpu" | "hybrid";
+  internalVerdict: "cpu" | "gpu" | "hybrid" | "inconclusive";
+  confidence: "high" | "medium" | "low";
+  scores: {
+    cpu: number;
+    gpu: number;
+    hybrid: number;
+  };
   summary: string;
-  explanation: string;
-  recommendation: string;
-  gpuScore: number;
-  cpuScore: number;
-  metrics: {
-    totalLoops: number;
-    maxLoopDepth: number;
-    conditionalsInLoops: number;
-    isRecursive: boolean;
-    recursiveCallCount: number;
-    arrayAccessCount: number;
-    callsInsideLoops: number;
+  reasons: {
+    positive: string[];
+    negative: string[];
+    blockers: string[];
+    opportunities: string[];
+  };
+  detectedPatterns: {
+    name: string;
+    confidence: number;
+    evidence: string[];
+  }[];
+  evidence: {
+    kind: string;
+    message: string;
+    location?: {
+      line?: number;
+      nodeId?: string;
+    };
+  }[];
+  diagnostics: {
+    controlRegularity: "regular" | "mixed" | "irregular" | "unknown";
+    memoryRegularity: "regular" | "mixed" | "irregular" | "unknown";
+    dependencyStrength: "none" | "weak" | "medium" | "strong" | "unknown";
+    parallelismType: "data" | "task" | "mixed" | "limited" | "unknown";
   };
 }
 

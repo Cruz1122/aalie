@@ -7,8 +7,10 @@ sin mirar nombres de variables.
 Author: @Cruz1122
 Version: 0.1.0
 """
-from typing import Any, Dict, Set, TYPE_CHECKING
-from ..ir.expr_utils import expr_vars, expr_kind, is_literal_true, is_literal_false
+
+from typing import TYPE_CHECKING, Any, Dict
+
+from ..ir.expr_utils import expr_kind, expr_vars, is_literal_false, is_literal_true
 
 if TYPE_CHECKING:
     from .symbol_table import SymbolTable
@@ -31,7 +33,12 @@ def infer_type_from_expr(expr: Any) -> str:
                 return "boolean"
             if isinstance(v, (int, float)):
                 return "numeric"
-            if isinstance(v, str) and v.lower() in ("true", "false", "verdadero", "falso"):
+            if isinstance(v, str) and v.lower() in (
+                "true",
+                "false",
+                "verdadero",
+                "falso",
+            ):
                 return "boolean"
             return "numeric"
         if t == "identifier":
@@ -82,7 +89,12 @@ def infer_type_from_usage(
         if op in ("==", "!=", "="):
             left = node.get("left")
             right = node.get("right")
-            if is_literal_true(right) or is_literal_false(right) or is_literal_true(left) or is_literal_false(left):
+            if (
+                is_literal_true(right)
+                or is_literal_false(right)
+                or is_literal_true(left)
+                or is_literal_false(left)
+            ):
                 return "boolean"
         if op in ("<", "<=", ">", ">=", "+", "-", "*", "/", "//", "mod", "div"):
             return "numeric"
@@ -133,7 +145,12 @@ def _infer_types_rec(node: Any, table: "SymbolTable", in_guard: bool) -> None:
             if var:
                 info = table.get_or_create(var)
                 if in_guard or op in ("and", "or", "==", "!=", "="):
-                    if is_literal_true(right) or is_literal_false(right) or is_literal_true(left) or is_literal_false(left):
+                    if (
+                        is_literal_true(right)
+                        or is_literal_false(right)
+                        or is_literal_true(left)
+                        or is_literal_false(left)
+                    ):
                         info.kind = "boolean"
                     elif op in ("and", "or"):
                         info.kind = "boolean"

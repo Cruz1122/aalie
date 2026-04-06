@@ -23,7 +23,7 @@ function getEnvOrDefault(name: string, fallback: string): string {
   return trimmed.length > 0 ? trimmed : fallback;
 }
 
-export const GEMINI_MODELS = {
+const GEMINI_MODELS = {
   parser_assist: getEnvOrDefault(
     "LLM_MODEL_PARSER_ASSIST",
     DEFAULT_GEMINI_MODELS.parser_assist,
@@ -34,11 +34,66 @@ export const GEMINI_MODELS = {
   explain: getEnvOrDefault("LLM_MODEL_EXPLAIN", DEFAULT_GEMINI_MODELS.explain),
 };
 
-export const GEMINI_ENDPOINT_BASE =
-  getEnvOrDefault("GEMINI_ENDPOINT_BASE", DEFAULT_GEMINI_ENDPOINT_BASE);
+export const GEMINI_ENDPOINT_BASE = getEnvOrDefault(
+  "GEMINI_ENDPOINT_BASE",
+  DEFAULT_GEMINI_ENDPOINT_BASE,
+);
+
+const STEP_MATH_ITEM_SCHEMA = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    kind: { type: "string" },
+    latex: { type: "string" },
+  },
+};
+
+const STEP_SCHEMA = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    index: { type: "number" },
+    kind: { type: "string" },
+    title: { type: "string" },
+    status: { type: "string" },
+    summary: { type: "string" },
+    conceptNote: { type: "string" },
+    warning: { type: "string" },
+    confidence: { type: "string" },
+    math: {
+      type: "object",
+      properties: {
+        primaryLatex: { type: "string" },
+        items: { type: "array", items: STEP_MATH_ITEM_SCHEMA },
+      },
+    },
+  },
+};
+
+const STEP_BUNDLE_SCHEMA = {
+  type: "object",
+  properties: {
+    method: { type: "string" },
+    version: { type: "string" },
+    overallStatus: { type: "string" },
+    steps: { type: "array", items: STEP_SCHEMA },
+  },
+};
+
+const ITERATIVE_CASE_SCHEMA = {
+  type: "object",
+  properties: {
+    T_open: { type: "string" },
+    T_polynomial: { type: "string" },
+    big_o: { type: "string" },
+    big_omega: { type: "string" },
+    big_theta: { type: "string" },
+    step_by_step: STEP_BUNDLE_SCHEMA,
+  },
+};
 
 // Parámetros por job (temperatura, tokens). Los prompts se obtienen de ./prompts según locale.
-export const JOB_CONFIG = {
+const JOB_CONFIG = {
   parser_assist: {
     temperature: 0.7,
     maxTokens: 16000,
@@ -69,45 +124,22 @@ export const JOB_CONFIG = {
         analysis: {
           type: "object",
           properties: {
-            worst: {
-              type: "object",
-              properties: {
-                T_open: { type: "string" },
-                T_polynomial: { type: "string" },
-                big_o: { type: "string" },
-                big_omega: { type: "string" },
-                big_theta: { type: "string" },
-              },
-            },
-            best: {
-              type: "object",
-              properties: {
-                T_open: { type: "string" },
-                T_polynomial: { type: "string" },
-                big_o: { type: "string" },
-                big_omega: { type: "string" },
-                big_theta: { type: "string" },
-              },
-            },
-            avg: {
-              type: "object",
-              properties: {
-                T_open: { type: "string" },
-                T_polynomial: { type: "string" },
-                big_o: { type: "string" },
-                big_omega: { type: "string" },
-                big_theta: { type: "string" },
-              },
-            },
+            worst: ITERATIVE_CASE_SCHEMA,
+            best: ITERATIVE_CASE_SCHEMA,
+            avg: ITERATIVE_CASE_SCHEMA,
             T_open: { type: "string" },
             T_polynomial: { type: "string" },
             big_o: { type: "string" },
             big_omega: { type: "string" },
             big_theta: { type: "string" },
+            step_by_step: STEP_BUNDLE_SCHEMA,
             recurrence: {
               type: "object",
               properties: {
-                type: { type: "string", enum: ["divide_conquer", "linear_shift"] },
+                type: {
+                  type: "string",
+                  enum: ["divide_conquer", "linear_shift"],
+                },
                 form: { type: "string" },
                 a: { type: "number" },
                 b: { type: "number" },
@@ -142,6 +174,7 @@ export const JOB_CONFIG = {
                 general_solution: { type: "string" },
                 closed_form: { type: "string" },
                 theta: { type: "string" },
+                step_by_step: STEP_BUNDLE_SCHEMA,
               },
             },
             master: {
@@ -149,8 +182,12 @@ export const JOB_CONFIG = {
               properties: {
                 case: { type: "number", enum: [1, 2, 3] },
                 nlogba: { type: "string" },
-                comparison: { type: "string", enum: ["smaller", "equal", "larger"] },
+                comparison: {
+                  type: "string",
+                  enum: ["smaller", "equal", "larger"],
+                },
                 theta: { type: "string" },
+                step_by_step: STEP_BUNDLE_SCHEMA,
               },
             },
             iteration: {
@@ -174,6 +211,7 @@ export const JOB_CONFIG = {
                   },
                 },
                 theta: { type: "string" },
+                step_by_step: STEP_BUNDLE_SCHEMA,
               },
             },
             recursion_tree: {
@@ -210,6 +248,7 @@ export const JOB_CONFIG = {
                   },
                 },
                 theta: { type: "string" },
+                step_by_step: STEP_BUNDLE_SCHEMA,
               },
             },
           },
@@ -226,13 +265,8 @@ export const JOB_CONFIG = {
 };
 
 // Helper para obtener modelo por job
-export function getModel(job: LLMJob): string {
+function getModel(job: LLMJob): string {
   return GEMINI_MODELS[job];
-}
-
-/** @deprecated Use getPromptByLocale from ./prompts. Mantenido por compatibilidad. */
-export function getPrompt(job: LLMJob, locale?: string) {
-  return getPromptByLocale(job, locale);
 }
 
 export interface JSONSchemaProperty {

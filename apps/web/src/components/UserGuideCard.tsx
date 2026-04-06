@@ -1,85 +1,83 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { ArrowRight, Clock3, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { memo, useMemo } from "react";
 
-import { UserGuideSection } from "@/types/user-guide";
+import type { ContentModuleSummary } from "@/lib/content/types";
 
+import NavigationLink from "./NavigationLink";
 import { UserGuideIcon } from "./UserGuideIcons";
 
 interface UserGuideCardProps {
-  section: UserGuideSection;
-  onOpenSection: (section: UserGuideSection) => void;
-  maxDescriptionChars?: number;
+  module: ContentModuleSummary;
+  progress: number;
 }
 
-function truncate(text: string, max = 100) {
-  if (!text) return "";
-  if (text.length <= max) return text;
-  return text.slice(0, max - 1).trimEnd() + "…";
-}
+export function UserGuideCard({ module, progress }: UserGuideCardProps) {
+  const t = useTranslations("contentUi");
 
-/**
- * Card para secciones de la guía de usuario.
- * Misma estructura visual que DocumentationCard.
- * Author: @Cruz1122
- * Version: 0.1.0
- */
-export const UserGuideCard = memo<UserGuideCardProps>(
-  ({ section, onOpenSection, maxDescriptionChars = 100 }) => {
-    const t = useTranslations("userGuide");
-    const shortDescription = useMemo(() => {
-      const desc = t(section.descriptionKey);
-      return truncate(desc, maxDescriptionChars);
-    }, [section.descriptionKey, maxDescriptionChars, t]);
+  return (
+    <article className="documentation-card glass-card relative flex h-full flex-col rounded-2xl border border-white/10 p-4 sm:p-5">
+      <div className="absolute right-4 top-4">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-100">
+          <Clock3 size={13} />
+          {module.estimatedMinutes ? `${module.estimatedMinutes} min` : "—"}
+        </span>
+      </div>
 
-    const handlePrimaryClick = () => {
-      onOpenSection(section);
-    };
-
-    return (
-      <article
-        className="documentation-card glass-card p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] border border-white/10 h-[300px] flex flex-col min-w-0 max-w-full overflow-hidden"
-        aria-labelledby={`user-guide-card-${section.id}-title`}
-      >
-        <div className="documentation-card-content flex-1 flex flex-col items-center justify-center text-center min-h-0 min-w-0 w-full overflow-hidden px-1">
-          <header className="flex flex-col items-center gap-2 mb-3 min-w-0 w-full">
-            <UserGuideIcon sectionId={section.id} size={36} />
-            <h2
-              id={`user-guide-card-${section.id}-title`}
-              className="text-base font-bold text-white leading-tight line-clamp-2 w-full min-w-0 break-words"
-              title={t(section.titleKey)}
-            >
-              {t(section.titleKey)}
-            </h2>
-          </header>
-
-          <p className="text-xs text-dark-text leading-snug line-clamp-2 mb-4 w-full min-w-0 break-words">
-            {shortDescription}
-          </p>
-
-          <div className="flex items-center justify-center min-h-[40px] shrink-0">
-            <button
-              onClick={handlePrimaryClick}
-              className="
-                inline-flex items-center gap-1.5 px-3 py-2 rounded-lg shrink-0
-                border border-slate-500/30 bg-slate-700/50 text-slate-300
-                hover:bg-slate-600/50 hover:text-white hover:border-slate-400/50
-                transition-all duration-200 font-medium text-xs
-                focus:outline-none focus:ring-2 focus:ring-slate-400/50 focus:ring-offset-2 focus:ring-offset-gray-900
-                hover:scale-105 active:scale-95
-              "
-              aria-label={`${t("viewDetails")} ${t(section.titleKey)}`}
-            >
-              <Info size={14} strokeWidth={2} />
-              {t("viewDetails")}
-            </button>
-          </div>
+      <header className="documentation-card-content gap-3">
+        <div className="text-center">
+          <UserGuideIcon
+            moduleId={module.moduleId}
+            size={24}
+            className="mx-auto"
+          />
+          <h2 className="mt-3 text-base font-bold leading-tight text-white sm:text-lg">
+            {module.title}
+          </h2>
         </div>
-      </article>
-    );
-  },
-);
+        {module.summary ? (
+          <p className="line-clamp-4 w-full self-stretch text-justify text-sm leading-relaxed text-slate-300">
+            {module.summary}
+          </p>
+        ) : null}
+      </header>
 
-UserGuideCard.displayName = "UserGuideCard";
+      <div className="mt-4 space-y-2.5">
+        <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+          <span className="inline-flex items-center gap-2">
+            <TrendingUp size={14} />
+            {t("progress")}
+          </span>
+          <span className="text-sm font-semibold tracking-normal text-slate-200">
+            {progress}%
+          </span>
+        </div>
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+          aria-label={`${module.title} ${t("progress")}`}
+          className="h-2.5 overflow-hidden rounded-full bg-white/5"
+        >
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-300 transition-[width]"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <NavigationLink
+          href={module.route}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-2.5 text-sm font-semibold text-sky-100 transition-colors hover:bg-sky-500/20"
+          title={module.title}
+        >
+          {t("openModule")}
+          <ArrowRight size={16} />
+        </NavigationLink>
+      </div>
+    </article>
+  );
+}

@@ -6,10 +6,14 @@ Valida que cada builder produzca nodes y edges válidos.
 Author: AALIE - Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 import pytest
 
 from app.modules.execution.derivations.structured_trace_builder import (
     build_structured_trace_result,
+)
+from app.modules.execution.derivations.structured_trace_models import (
+    StructuredTraceRenderConfig,
 )
 
 
@@ -45,13 +49,19 @@ class TestStructuredTraceBuilders:
                 "calls": [
                     {"id": "c1", "children": ["c2"], "params": {"n": 3}},
                     {"id": "c2", "children": ["c3"], "params": {"n": 2}},
-                    {"id": "c3", "children": [], "params": {"n": 1}, "is_base_case": True},
+                    {
+                        "id": "c3",
+                        "children": [],
+                        "params": {"n": 1},
+                        "is_base_case": True,
+                    },
                 ],
                 "root_calls": ["c1"],
             },
         }
         result = build_structured_trace_result(trace)
         assert result["graph"]["nodes"]
+        assert all(node.get("type") != "output" for node in result["graph"]["nodes"])
         assert result["patternKind"] in (
             "tail_recursive_linear",
             "binary_branch_recursive",
@@ -64,3 +74,28 @@ class TestStructuredTraceBuilders:
         result = build_structured_trace_result(trace)
         assert "graph" in result
         assert "patternKind" in result
+
+    def test_recursive_locale_es_localizes_final_label(self):
+        """Locale es debe reflejar etiquetas localizadas en el nodo de llamada."""
+        trace = {
+            "kind": "recursive",
+            "steps": [],
+            "recursionTree": {
+                "calls": [
+                    {
+                        "id": "c1",
+                        "children": [],
+                        "function_name": "mergeSort",
+                        "params": {"A": [3, 2, 1]},
+                        "final_params": {"A": [1, 2, 3]},
+                    }
+                ],
+                "root_calls": ["c1"],
+            },
+        }
+        result = build_structured_trace_result(
+            trace, StructuredTraceRenderConfig(locale="es")
+        )
+        labels = [n.get("data", {}).get("label", "") for n in result["graph"]["nodes"]]
+        joined = "\n".join(labels)
+        assert "estado final" in joined

@@ -3,11 +3,13 @@ Constructor del rastro de ejecución.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
-import json
-from sympy import Expr
+
 import copy
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional, Tuple
+
+from sympy import Expr
+from sympy.core.basic import Basic
 
 # Estimación de coste por operación primitiva (μs). Heurística basada en operaciones típicas.
 MICROSECONDS_PER_TOKEN = 3.0
@@ -45,6 +47,12 @@ def _serialize_value(value: Any) -> Any:
     """Convierte valores no serializables (ej. SymPy) a formas seguras."""
     if isinstance(value, Expr):
         return str(value)
+    if isinstance(value, Basic):
+        # SymPy BooleanTrue/BooleanFalse/Relational, etc.
+        try:
+            return bool(value)
+        except Exception:
+            return str(value)
     if isinstance(value, dict):
         return {k: _serialize_value(v) for k, v in value.items()}
     if isinstance(value, list):
@@ -55,6 +63,7 @@ def _serialize_value(value: Any) -> Any:
 @dataclass
 class ExecutionStep:
     """Un paso de ejecución individual."""
+
     id: str
     step_number: int
     line: Optional[int]
@@ -62,7 +71,9 @@ class ExecutionStep:
     variables: Dict[str, Any]  # variablesSnapshot
     variables_changed: Optional[Dict[str, Any]] = None  # Diff respecto al paso anterior
     iteration: Optional[Dict[str, Any]] = None  # Para bucles: {loopVar, currentValue, maxValue}
-    recursion: Optional[Dict[str, Any]] = None  # Para recursión: {depth, callId, params, parentCallId}
+    recursion: Optional[Dict[str, Any]] = (
+        None  # Para recursión: {depth, callId, params, parentCallId}
+    )
     cost: Optional[str] = None  # "C1", "C2", etc.
     accumulated_cost: Optional[str] = None  # Expresión acumulada
     description: Optional[str] = None  # Descripción del paso
@@ -74,33 +85,37 @@ class ExecutionStep:
 @dataclass
 class RecursionCall:
     """Una llamada recursiva en el árbol (árbol de llamadas recursivas)."""
+
     id: str
     depth: int
     params: Dict[str, Any]
     children: List[str]  # IDs de llamadas hijas
+    final_params: Optional[Dict[str, Any]] = None
     parent_id: Optional[str] = None
     function_name: Optional[str] = None
     entry_line: Optional[int] = None
     return_value: Optional[Any] = None
-    base_case: Optional[Dict[str, Any]] = None  # {detected: bool, conditionText?: str, matched?: bool}
+    base_case: Optional[Dict[str, Any]] = (
+        None  # {detected: bool, conditionText?: str, matched?: bool}
+    )
 
 
 class TraceBuilder:
     """
     Constructor del rastro de ejecución.
-    
+
     Acumula pasos de ejecución y construye el árbol de recursión si aplica.
-    
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
-    
+
     def __init__(self, build_detailed_trace: bool = True):
         """
         Inicializa el constructor de rastro.
-        
+
         Args:
             build_detailed_trace: Si False, no construye trace detallado (para recursivos/híbridos)
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.build_detailed_trace = build_detailed_trace
@@ -112,7 +127,7 @@ class TraceBuilder:
         self.cost_counter = 0
         self.accumulated_cost_parts: List[str] = []
         self._prev_variables: Optional[Dict[str, Any]] = None
-    
+
     def add_step(
         self,
         line: int,
@@ -128,7 +143,7 @@ class TraceBuilder:
     ) -> None:
         """
         Agrega un paso de ejecución.
-        
+
         Args:
             line: Número de línea ejecutada
             kind: Tipo de instrucción
@@ -137,20 +152,20 @@ class TraceBuilder:
             recursion: Información de recursión (si aplica)
             cost: Coste de este paso (ej: "C1")
             description: Descripción opcional del paso
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Si build_detailed_trace es False, no construir pasos detallados
         if not self.build_detailed_trace:
             return
-        
+
         self.step_counter += 1
-        
+
         # Generar coste si no se proporciona
         if cost is None:
             self.cost_counter += 1
             cost = f"C_{self.cost_counter}"
-        
+
         # Actualizar coste acumulado
         if cost:
             self.accumulated_cost_parts.append(cost)
@@ -166,53 +181,32 @@ class TraceBuilder:
         vchanged = variables_changed
         if vchanged is None and self._prev_variables is not None:
             vchanged = {
-                k: v for k, v in variables.items()
+                k: v
+                for k, v in variables.items()
                 if k not in self._prev_variables or self._prev_variables.get(k) != v
             }
             if not vchanged:
                 vchanged = None
-        self._prev_variables = variables.copy()
-
-        # #region agent log
-        try:
-            import json as _json, time as _time
-            _log_payload = {
-                "sessionId": "1b7cca",
-                "runId": "initial",
-                "hypothesisId": "H1",
-                "location": "execution/trace_builder.py:add_step",
-                "message": "execution_step_added",
-                "data": {
-                    "stepNumber": self.step_counter,
-                    "eventKind": effective_kind,
-                    "variablesChangedKeys": list(vchanged.keys()) if isinstance(vchanged, dict) else None,
-                },
-                "timestamp": int(_time.time() * 1000),
-            }
-            with open("c:\\dev\\algorithmic-analysis\\debug-1b7cca.log", "a", encoding="utf-8") as _f:
-                _f.write(_json.dumps(_log_payload) + "\n")
-        except Exception:
-            pass
-        # #endregion agent log
+        self._prev_variables = copy.deepcopy(variables)
 
         step = ExecutionStep(
             id=f"step_{self.step_counter}",
             step_number=self.step_counter,
             line=line if line else None,
             kind=effective_kind,
-            variables=variables.copy(),
-            variables_changed=vchanged,
-            iteration=iteration,
-            recursion=recursion,
+            variables=copy.deepcopy(variables),
+            variables_changed=copy.deepcopy(vchanged) if vchanged is not None else None,
+            iteration=copy.deepcopy(iteration) if iteration is not None else None,
+            recursion=copy.deepcopy(recursion) if recursion is not None else None,
             cost=cost,
             accumulated_cost=accumulated_cost,
             description=description,
-            decision=decision,
+            decision=copy.deepcopy(decision) if decision is not None else None,
             tokens=est_tokens,
             microseconds=est_microseconds,
         )
         self.steps.append(step)
-    
+
     def enter_recursion(
         self,
         call_id: str,
@@ -251,6 +245,11 @@ class TraceBuilder:
         if call_id in self.recursion_calls:
             self.recursion_calls[call_id].return_value = value
 
+    def record_final_params(self, call_id: str, params: Dict[str, Any]) -> None:
+        """Registra estado final de parámetros observables al salir de la llamada."""
+        if call_id in self.recursion_calls:
+            self.recursion_calls[call_id].final_params = copy.deepcopy(params)
+
     def record_base_case(
         self,
         call_id: str,
@@ -265,65 +264,63 @@ class TraceBuilder:
                 "conditionText": condition_text,
                 "matched": matched,
             }
-    
+
     def exit_recursion(self) -> None:
         """
         Registra el fin de una llamada recursiva.
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if self.recursion_stack:
             self.recursion_stack.pop()
-    
+
     def generate_call_id(self) -> str:
         """
         Genera un ID único para una llamada recursiva.
-        
+
         Returns:
             ID único de llamada
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.call_id_counter += 1
         return f"call_{self.call_id_counter}"
-    
+
     def build(self) -> Dict[str, Any]:
         """
         Construye el rastro final en formato JSON.
-        
+
         Returns:
             Diccionario con el rastro completo
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+
         def _step_to_dict(s: ExecutionStep) -> Dict[str, Any]:
             d = asdict(s)
             if d.get("variables_changed") is None:
                 d.pop("variables_changed", None)
             if d.get("recursion") and isinstance(d["recursion"], dict):
-                d["recursion"]["params"] = _serialize_value(
-                    d["recursion"].get("params", {})
-                )
+                d["recursion"]["params"] = _serialize_value(d["recursion"].get("params", {}))
             d["eventKind"] = d.get("kind", "")
             return d
 
-        result: Dict[str, Any] = {
-            "steps": [_step_to_dict(step) for step in self.steps]
-        }
-        
+        result: Dict[str, Any] = {"steps": [_step_to_dict(step) for step in self.steps]}
+
         # Agregar árbol de recursión si hay llamadas recursivas
         if self.recursion_calls:
             # Encontrar la raíz (llamada sin padre)
             root_calls = [
-                call_id for call_id, call in self.recursion_calls.items()
-                if call.depth == 0
+                call_id for call_id, call in self.recursion_calls.items() if call.depth == 0
             ]
-            
+
             calls_list = []
             for call_id in sorted(self.recursion_calls.keys()):
                 c = self.recursion_calls[call_id]
                 d = asdict(c)
                 d["params"] = _serialize_value(d.get("params", {}))
+                if d.get("final_params") is not None:
+                    d["final_params"] = _serialize_value(d.get("final_params", {}))
                 d["return_value"] = _serialize_value(d.get("return_value"))
                 if c.base_case is not None:
                     d["is_base_case"] = bool(
@@ -337,13 +334,13 @@ class TraceBuilder:
                 "root_calls": root_calls,
             }
             result["recursionTree"] = recursion_tree
-        
+
         return result
-    
+
     def reset(self) -> None:
         """
         Reinicia el constructor (útil para múltiples ejecuciones).
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.steps.clear()
@@ -354,4 +351,3 @@ class TraceBuilder:
         self.cost_counter = 0
         self.accumulated_cost_parts.clear()
         self._prev_variables = None
-

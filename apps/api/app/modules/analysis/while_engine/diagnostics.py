@@ -6,6 +6,7 @@ Reason codes estables y testeables.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from typing import Dict, Set
 
 REASON_CODES: Dict[str, str] = {

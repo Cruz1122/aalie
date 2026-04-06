@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aalie.dev/schemas/content/shared.schema.json",
+  "title": "AALIE Content Shared Definitions",
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idSlug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["foundational", "basic", "intermediate", "advanced"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "published", "archived"]
+    },
+    "sectionKind": {
+      "type": "string",
+      "enum": [
+        "overview",
+        "theory",
+        "example",
+        "practice",
+        "reference",
+        "troubleshooting"
+      ]
+    },
+    "targetRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["module", "chapter", "section", "block", "term", "resource", "external"]
+        },
+        "ref": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "searchMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "aliases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "prerequisiteRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["required", "recommended"]
+        }
+      }
+    },
+    "learningObjective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectiveId", "text"],
+      "properties": {
+        "objectiveId": {
+          "$ref": "#/$defs/idSlug"
+        },
+        "text": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "resourceSource": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "assetId"],
+          "properties": {
+            "kind": {
+              "const": "backendAsset"
+            },
+            "assetId": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "path"],
+          "properties": {
+            "kind": {
+              "const": "publicPath"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^/.+"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "url"],
+          "properties": {
+            "kind": {
+              "const": "externalUrl"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      ]
+    },
+    "imageResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resourceId", "kind", "source", "alt"],
+      "properties": {
+        "resourceId": {
+          "$ref": "#/$defs/idSlug"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["image", "figure"]
+        },
+        "source": {
+          "$ref": "#/$defs/resourceSource"
+        },
+        "alt": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "caption": {
+          "type": "string"
+        },
+        "credit": {
+          "type": "string"
+        }
+      }
+    },
+    "referenceResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resourceId", "kind", "label", "refType"],
+      "properties": {
+        "resourceId": {
+          "$ref": "#/$defs/idSlug"
+        },
+        "kind": {
+          "const": "reference"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "refType": {
+          "type": "string",
+          "enum": ["internal", "book", "paper", "website"]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["termId", "label", "definition"],
+      "properties": {
+        "termId": {
+          "$ref": "#/$defs/idSlug"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "definition": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    }
+  }
+}

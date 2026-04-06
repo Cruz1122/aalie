@@ -4,6 +4,7 @@ Carga de algoritmos (.txt) y especificaciones (json/yaml) desde _support.
 Author: AALIE reform
 Version: 0.1.0
 """
+
 import json
 from pathlib import Path
 from typing import Any, Dict

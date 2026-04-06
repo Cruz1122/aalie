@@ -11,8 +11,10 @@ import {
 import ReactDOM from "react-dom";
 
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
+import type { SnippetDefinition } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
+import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-support/parser/normalizeImportSuggestions";
+import { EditorSupportPanel } from "@/features/analyzer/editor-support/ui/EditorSupportPanel";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import {
   MAX_TXT_IMPORT_BYTES,
@@ -22,7 +24,7 @@ import {
 import { GrammarApiService } from "@/services/grammar-api";
 
 import AAButton from "./AAButton";
-import { AnalyzerEditor } from "./AnalyzerEditor";
+import { AnalyzerEditor, type AnalyzerEditorHandle } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
 import RepairModal from "./RepairModal";
 import TxtImportModal from "./TxtImportModal";
@@ -45,7 +47,6 @@ type TxtImportModalState = {
   details?: string[];
   showRepairAction?: boolean;
 };
-
 
 /**
  * Propiedades del componente ManualModeView.
@@ -106,7 +107,6 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     },
     ref,
   ) {
-    const isDesktop = useMediaQuery("(min-width: 1024px)");
     const t = useTranslations("analyzer.messages");
     const locale = useLocale();
     const tManual = useTranslations("analyzer.manualMode");
@@ -119,8 +119,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     const code = isControlled ? initialCode : internalCode;
     const setCode = useCallback(
       (value: string | ((prev: string) => string)) => {
-        const next =
-          typeof value === "function" ? value(code) : value;
+        const next = typeof value === "function" ? value(code) : value;
         if (!isControlled) setInternalCode(next);
         onCodeChange?.(next);
       },
@@ -146,9 +145,8 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     );
     const [isImportingTxt, setIsImportingTxt] = useState(false);
     const txtInputRef = useRef<HTMLInputElement | null>(null);
-    const [txtImportModal, setTxtImportModal] = useState<TxtImportModalState | null>(
-      null,
-    );
+    const [txtImportModal, setTxtImportModal] =
+      useState<TxtImportModalState | null>(null);
     const [showRepairModal, setShowRepairModal] = useState(false);
     const [pendingImportSourceForRepair, setPendingImportSourceForRepair] =
       useState<string | null>(null);
@@ -166,6 +164,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
       null,
     );
     const [hasValidApiKey, setHasValidApiKey] = useState<boolean>(false);
+    const editorRef = useRef<AnalyzerEditorHandle | null>(null);
 
     const { state: analysisState } = useAnalysisProgressContext();
     const { runAnalysis } = useRunAnalysis({
@@ -431,9 +430,16 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           setLocalParseOk(true);
           setPendingImportSourceForRepair(null);
           setPendingImportErrorsForRepair(undefined);
+          const suggestions = getImportNormalizationSuggestions(
+            validation.normalizedSource,
+          );
           setTxtImportModal({
             title: tView("txtImportSuccessTitle"),
             description: tView("txtImportSuccess"),
+            details:
+              suggestions.length > 0
+                ? suggestions.map((suggestion) => suggestion.reason)
+                : undefined,
           });
           return;
         }
@@ -463,7 +469,12 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           description: hasValidApiKey
             ? tView("txtImportParseFailed")
             : tView("txtImportParseFailedNoAi"),
-          details: errorDetails,
+          details: [
+            ...errorDetails,
+            ...getImportNormalizationSuggestions(
+              validation.normalizedSource,
+            ).map((suggestion) => suggestion.reason),
+          ],
           showRepairAction: hasValidApiKey,
         });
         setPendingImportSourceForRepair(validation.normalizedSource);
@@ -501,26 +512,68 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     );
 
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center">
-          {/* Contenedor flex: editor a la izquierda, botón Analizar a la derecha; items-start evita espacio muerto */}
-          <div className="flex flex-col lg:flex-row gap-6 w-full items-start">
-            {/* Editor de Código con Monaco - 75% en desktop, 100% en mobile; tooltips Verificar parse y Ver AST en esquina */}
-            <div className="w-full lg:w-[75%]">
-              <AnalyzerEditor
-                initialValue={code}
-                onChange={setCode}
-                onAstChange={setAst}
-                onParseStatusChange={handleParseStatusChange}
-                onVerifyParse={handleAnalyzeCode}
-                onViewAst={() => setShowAstModal(true)}
-                isVerifyingParse={isVerifyingParse}
-                canViewAst={localParseOk && ast != null}
-                hasCode={code.trim() !== ""}
-                verifyParseResult={verifyParseResult}
-                showAIHelpButton={showAIHelpButton && !!backendParseError && hasValidApiKey}
-                onAIHelpClick={async () => {
-                  const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
+          <div className="flex w-full flex-col gap-4">
+            <div className="flex min-h-0 flex-col gap-4 md:flex-row md:items-stretch">
+              <div className="h-[400px] min-h-0 min-w-0 flex-1 space-y-4 md:h-[490px] md:flex-none md:basis-[calc(100%-376px)] md:max-w-[calc(100%-376px)] lg:basis-[calc(100%-516px)] lg:max-w-[calc(100%-516px)] xl:flex-1 xl:basis-0 xl:max-w-none">
+                <AnalyzerEditor
+                  ref={editorRef}
+                  initialValue={code}
+                  onChange={setCode}
+                  onAstChange={setAst}
+                  onParseStatusChange={handleParseStatusChange}
+                  onVerifyParse={handleAnalyzeCode}
+                  onViewAst={() => setShowAstModal(true)}
+                  isVerifyingParse={isVerifyingParse}
+                  canViewAst={localParseOk && ast != null}
+                  hasCode={code.trim() !== ""}
+                  verifyParseResult={verifyParseResult}
+                  showAIHelpButton={
+                    showAIHelpButton && !!backendParseError && hasValidApiKey
+                  }
+                  topRightActions={
+                    <>
+                      <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => txtInputRef.current?.click()}
+                          disabled={isImportingTxt}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-500/20 bg-slate-500/12 text-slate-300/70 transition-all duration-300 ease-out hover:bg-slate-500/25 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+                          title={
+                            isImportingTxt
+                              ? tView("importingTxt")
+                              : tView("importTxt")
+                          }
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            {isImportingTxt ? "progress_activity" : "upload"}
+                          </span>
+                        </button>
+                      </div>
+                      <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={handleAnalyzeComplexity}
+                          disabled={
+                            isAnalyzing || !localParseOk || code.trim() === ""
+                          }
+                          className="inline-flex h-8 min-w-[95px] items-center justify-center rounded-full border border-blue-500/20 bg-blue-500/12 px-3 text-xs font-semibold text-blue-300/70 transition-all duration-300 ease-out hover:bg-blue-500/25 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40"
+                          title={
+                            isAnalyzing
+                              ? tManual("analyzing")
+                              : tManual("analyzeComplexity")
+                          }
+                        >
+                          {isAnalyzing
+                            ? tManual("analyzing")
+                            : tManual("analyzeComplexity")}
+                        </button>
+                      </div>
+                    </>
+                  }
+                  onAIHelpClick={async () => {
+                    const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
 
 **CÓDIGO ADJUNTO:**
 \`\`\`pseudocode
@@ -535,107 +588,67 @@ ${backendParseError}
 **SOLICITUD:**
 Por favor, analiza el código y el error, identifica la causa del problema y proporciona una solución corregida. Explica qué estaba mal y cómo solucionarlo.`;
 
-                  const newMessage: Message = {
-                    id: `user-help-${Date.now()}`,
-                    content: errorMessage,
-                    sender: "user",
-                    timestamp: new Date(),
-                  };
+                    const newMessage: Message = {
+                      id: `user-help-${Date.now()}`,
+                      content: errorMessage,
+                      sender: "user",
+                      timestamp: new Date(),
+                    };
 
-                  const codeHash = code.trim().slice(0, 100);
-                  const errorHash = backendParseError?.trim().slice(0, 50) || "";
-                  const messageExists = messages.some(
-                    (msg) =>
-                      msg.sender === "user" &&
-                      msg.content.includes("**CÓDIGO ADJUNTO:**") &&
-                      msg.content.includes(codeHash) &&
-                      msg.content.includes(errorHash),
-                  );
+                    const codeHash = code.trim().slice(0, 100);
+                    const errorHash =
+                      backendParseError?.trim().slice(0, 50) || "";
+                    const messageExists = messages.some(
+                      (msg) =>
+                        msg.sender === "user" &&
+                        msg.content.includes("**CÓDIGO ADJUNTO:**") &&
+                        msg.content.includes(codeHash) &&
+                        msg.content.includes(errorHash),
+                    );
 
-                  if (messageExists) {
-                    onSwitchToAIMode();
-                    setTimeout(() => onOpenChat(), 100);
-                    return;
-                  }
+                    if (messageExists) {
+                      onSwitchToAIMode();
+                      setTimeout(() => onOpenChat(), 100);
+                      return;
+                    }
 
-                  setMessages((prev) =>
-                    prev.length > 0
-                      ? [...prev, newMessage]
-                      : [
-                          {
-                            id: "welcome",
-                            content:
-                              "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-                            sender: "bot",
-                            timestamp: new Date(),
-                          },
-                          newMessage,
-                        ]
-                  );
+                    setMessages((prev) =>
+                      prev.length > 0
+                        ? [...prev, newMessage]
+                        : [
+                            {
+                              id: "welcome",
+                              content:
+                                "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                              sender: "bot",
+                              timestamp: new Date(),
+                            },
+                            newMessage,
+                          ],
+                    );
 
-                  setTimeout(() => {
-                    onSwitchToAIMode();
-                    setTimeout(() => onOpenChat(), 150);
-                  }, 100);
-                }}
-                height={isDesktop ? "420px" : "280px"}
-              />
-            </div>
-
-            {/* Botón Analizar - 25% en desktop, 100% en mobile; AAButton primary como cards de ejemplos */}
-            <div className="w-full lg:w-[25%] flex flex-col gap-3 relative z-10">
-              <button
-                type="button"
-                onClick={() => txtInputRef.current?.click()}
-                disabled={isImportingTxt}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-xl text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400/50 bg-gradient-to-br from-cyan-500/20 to-cyan-500/20 border border-cyan-500/30 hover:from-cyan-500/30 hover:to-cyan-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                {isImportingTxt ? (
-                  <>
-                    <span className="material-symbols-outlined text-base animate-spin">
-                      progress_activity
-                    </span>
-                    {tView("importingTxt")}
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-base">
-                      upload_file
-                    </span>
-                    {tView("importTxt")}
-                  </>
-                )}
-              </button>
-              <input
-                ref={txtInputRef}
-                type="file"
-                accept=".txt,text/plain"
-                className="hidden"
-                onChange={handleTxtImport}
-              />
-              <AAButton
-                onClick={handleAnalyzeComplexity}
-                disabled={isAnalyzing || !localParseOk || code.trim() === ""}
-                variant="primary"
-                size="lg"
-                className="w-full py-2.5 px-4 sm:px-6 text-xs sm:text-sm"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <span className="material-symbols-outlined text-base animate-spin">
-                      progress_activity
-                    </span>{" "}
-                    {tManual("analyzing")}
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-base">
-                      play_arrow
-                    </span>{" "}
-                    {tManual("analyzeComplexity")}
-                  </>
-                )}
-              </AAButton>
+                    setTimeout(() => {
+                      onSwitchToAIMode();
+                      setTimeout(() => onOpenChat(), 150);
+                    }, 100);
+                  }}
+                  height="100%"
+                />
+                <input
+                  ref={txtInputRef}
+                  type="file"
+                  accept=".txt,text/plain"
+                  className="hidden"
+                  onChange={handleTxtImport}
+                />
+              </div>
+              <div className="hidden h-[400px] min-h-0 shrink-0 overflow-hidden md:block md:h-[490px] md:w-[360px] lg:w-[500px] xl:w-[500px]">
+                <EditorSupportPanel
+                  onInsert={(snippet: SnippetDefinition) => {
+                    editorRef.current?.insertSnippet(snippet);
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -646,101 +659,101 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
             ReactDOM.createPortal(
               <div className="fixed inset-0 z-[9999] flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
                 <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
-                {/* Header compacto */}
-                <div className="glass-modal-header flex items-center justify-between px-5 py-3 rounded-t-xl border-b border-white/10">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-yellow-400">
-                      account_tree
-                    </span>
-                    <h2 className="text-lg font-bold text-white">
-                      {tView("abstractSyntaxTree")}
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => setShowAstModal(false)}
-                    className="text-slate-400 hover:text-white text-2xl leading-none transition-all hover:rotate-90 transform duration-200"
-                  >
-                    ×
-                  </button>
-                </div>
-
-                {/* Tabs para cambiar vista */}
-                <div className="flex gap-2 px-5 py-3 border-b border-white/10">
-                  <button
-                    onClick={() => setViewMode("tree")}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                      viewMode === "tree"
-                        ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base">
+                  {/* Header compacto */}
+                  <div className="glass-modal-header flex items-center justify-between px-5 py-3 rounded-t-xl border-b border-white/10">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-yellow-400">
                         account_tree
-                      </span>{" "}
-                      {tView("treeView")}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode("json")}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                      viewMode === "json"
-                        ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base">
-                        code
-                      </span>{" "}
-                      {tView("jsonView")}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Content con altura fija */}
-                <div className="h-[300px] overflow-auto p-5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
-                  {viewMode === "tree" ? (
-                    <ASTTreeView node={ast} />
-                  ) : (
-                    <pre className="text-xs text-slate-200 p-4 rounded-lg border border-white/10 overflow-x-auto font-mono h-full">
-                      {JSON.stringify(ast, null, 2)}
-                    </pre>
-                  )}
-                </div>
-
-                {/* Footer compacto */}
-                <div className="flex justify-between items-center gap-3 px-5 py-3 border-t border-white/10 rounded-b-xl">
-                  <div className="text-xs text-slate-400">
-                    {viewMode === "tree"
-                      ? tView("astTreeViewDesc")
-                      : tView("astJsonViewDesc")}
-                  </div>
-                  <div className="flex gap-2">
+                      </span>
+                      <h2 className="text-lg font-bold text-white">
+                        {tView("abstractSyntaxTree")}
+                      </h2>
+                    </div>
                     <button
-                      onClick={handleCopyJson}
-                      className={`glass-secondary px-4 py-2 text-xs font-semibold rounded-lg transition-all hover:scale-105 flex items-center gap-2 ${
-                        copied
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                          : "text-slate-200"
+                      onClick={() => setShowAstModal(false)}
+                      className="text-slate-400 hover:text-white text-2xl leading-none transition-all hover:rotate-90 transform duration-200"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* Tabs para cambiar vista */}
+                  <div className="flex gap-2 px-5 py-3 border-b border-white/10">
+                    <button
+                      onClick={() => setViewMode("tree")}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                        viewMode === "tree"
+                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                          : "text-slate-400 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      <span className="material-symbols-outlined text-sm">
-                        {copied ? "check" : "content_copy"}
+                      <span className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base">
+                          account_tree
+                        </span>{" "}
+                        {tView("treeView")}
                       </span>
-                      {copied ? tView("astModalCopied") : tView("copyJson")}
                     </button>
-                    <AAButton
-                      onClick={() => setShowAstModal(false)}
-                      variant="amber"
-                      size="sm"
+                    <button
+                      onClick={() => setViewMode("json")}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                        viewMode === "json"
+                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                      }`}
                     >
-                      {tCommon("close")}
-                    </AAButton>
+                      <span className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base">
+                          code
+                        </span>{" "}
+                        {tView("jsonView")}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Content con altura fija */}
+                  <div className="h-[300px] overflow-auto p-5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+                    {viewMode === "tree" ? (
+                      <ASTTreeView node={ast} />
+                    ) : (
+                      <pre className="text-xs text-slate-200 p-4 rounded-lg border border-white/10 overflow-x-auto font-mono h-full">
+                        {JSON.stringify(ast, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+
+                  {/* Footer compacto */}
+                  <div className="flex justify-between items-center gap-3 px-5 py-3 border-t border-white/10 rounded-b-xl">
+                    <div className="text-xs text-slate-400">
+                      {viewMode === "tree"
+                        ? tView("astTreeViewDesc")
+                        : tView("astJsonViewDesc")}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCopyJson}
+                        className={`glass-secondary px-4 py-2 text-xs font-semibold rounded-lg transition-all hover:scale-105 flex items-center gap-2 ${
+                          copied
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                            : "text-slate-200"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-sm">
+                          {copied ? "check" : "content_copy"}
+                        </span>
+                        {copied ? tView("astModalCopied") : tView("copyJson")}
+                      </button>
+                      <AAButton
+                        onClick={() => setShowAstModal(false)}
+                        variant="amber"
+                        size="sm"
+                      >
+                        {tCommon("close")}
+                      </AAButton>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>,
+              </div>,
               document.body,
             )}
 

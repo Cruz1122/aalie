@@ -1,60 +1,61 @@
-from typing import Dict, Optional, Any
-from sympy import Symbol, Integer, Rational
+from typing import Any, Dict, Optional
+
+from sympy import Integer, Rational, Symbol
 
 
 class AvgModel:
     """
     Modelo probabilístico para análisis de caso promedio.
-    
+
     Maneja dos modos:
     - uniform: probabilidad uniforme (p=1/2 por defecto para comparaciones simétricas)
     - symbolic: probabilidades simbólicas (p, q, p(i), etc.)
-    
+
     Permite definir predicados específicos con probabilidades explícitas.
-    
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
-    
+
     def __init__(self, mode: str = "uniform", predicates: Optional[Dict[str, str]] = None):
         """
         Inicializa el modelo probabilístico.
-        
+
         Args:
             mode: "uniform" | "symbolic"
             predicates: Diccionario opcional de predicados a probabilidades
                        ej: {"A[j] > A[j+1]": "1/2", "A[i] < pivot": "p"}
-                       
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if mode not in ("uniform", "symbolic"):
             raise ValueError(f"mode debe ser 'uniform' o 'symbolic', recibido: {mode}")
-        
+
         self.mode = mode
         self.predicates = predicates or {}
         self._symbol_counter = 0  # Para generar símbolos únicos p, q, r, etc.
-    
+
     def get_probability(self, predicate: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
         Obtiene la probabilidad para un predicado dado.
-        
+
         Args:
             predicate: String que describe el predicado (ej: "A[j] > A[j+1]")
             context: Contexto opcional (ej: variable de bucle actual)
-        
+
         Returns:
             String con la probabilidad (ej: "1/2", "p", "p(i)")
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Buscar predicado exacto en el diccionario
         if predicate in self.predicates:
             return self.predicates[predicate]
-        
+
         # Buscar predicados que contengan el predicado como subcadena (para flexibilidad)
         for key, value in self.predicates.items():
             if predicate in key or key in predicate:
                 return value
-        
+
         # Si no hay predicado explícito
         if self.mode == "uniform":
             # Para comparaciones simétricas entre dos elementos aleatorios, p = 1/2
@@ -71,36 +72,38 @@ class AvgModel:
                 symbol = symbols[self._symbol_counter % len(symbols)]
                 self._symbol_counter += 1
                 return symbol
-    
+
     def get_default_probability(self) -> str:
         """
         Obtiene la probabilidad por defecto del modelo.
-        
+
         Returns:
             "1/2" para uniform, "p" para symbolic
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if self.mode == "uniform":
             return "1/2"
         else:
             return "p"
-    
-    def get_probability_sympy(self, predicate: str, context: Optional[Dict[str, Any]] = None) -> Any:
+
+    def get_probability_sympy(
+        self, predicate: str, context: Optional[Dict[str, Any]] = None
+    ) -> Any:
         """
         Obtiene la probabilidad como expresión SymPy.
-        
+
         Args:
             predicate: String que describe el predicado
             context: Contexto opcional
-        
+
         Returns:
             Expresión SymPy (Rational, Symbol, o función)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         prob_str = self.get_probability(predicate, context)
-        
+
         try:
             # Intentar convertir a Rational (fracción)
             if "/" in prob_str:
@@ -109,18 +112,18 @@ class AvgModel:
                     num = int(parts[0].strip())
                     den = int(parts[1].strip())
                     return Rational(num, den)
-            
+
             # Intentar convertir a Integer
             if prob_str.isdigit():
                 return Integer(int(prob_str))
-            
+
             # Intentar convertir a float y luego a Rational
             try:
                 val = float(prob_str)
                 return Rational(int(val * 100), 100)  # Aproximación
             except ValueError:
                 pass
-            
+
             # Si es un símbolo como "p", "p(i)", etc.
             if "(" in prob_str and ")" in prob_str:
                 # Función como p(i)
@@ -129,33 +132,37 @@ class AvgModel:
                 var_sym = Symbol(var_name, integer=True)
                 # Retornar como función aplicada
                 from sympy import Function
+
                 p_func = Function(func_name)
                 return p_func(var_sym)
             else:
                 # Símbolo simple
                 return Symbol(prob_str, real=True, positive=True)
-        
+
         except Exception:
             # Fallback: símbolo genérico
             return Symbol("p", real=True, positive=True)
-    
+
     def get_model_info(self, locale: str = "en") -> Dict[str, str]:
         """
         Obtiene información del modelo para mostrar en la UI.
-        
+
         Args:
             locale: Código de idioma ("en" | "es")
-        
+
         Returns:
             Diccionario con mode y note (badge del modelo)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         from ..translations import get_note_labels
+
         labels = get_note_labels(locale)
         if self.mode == "uniform":
             if self.predicates:
-                predicates_str = ", ".join([f"{k}: {v}" for k, v in list(self.predicates.items())[:2]])
+                predicates_str = ", ".join(
+                    [f"{k}: {v}" for k, v in list(self.predicates.items())[:2]]
+                )
                 if len(self.predicates) > 2:
                     predicates_str += "..."
                 note = labels["model_uniform_predicates"].format(predicates_str=predicates_str)
@@ -163,24 +170,26 @@ class AvgModel:
                 note = labels["model_uniform_half"]
         else:  # symbolic
             if self.predicates:
-                predicates_str = ", ".join([f"{k}: {v}" for k, v in list(self.predicates.items())[:2]])
+                predicates_str = ", ".join(
+                    [f"{k}: {v}" for k, v in list(self.predicates.items())[:2]]
+                )
                 if len(self.predicates) > 2:
                     predicates_str += "..."
                 note = labels["model_symbolic_predicates"].format(predicates_str=predicates_str)
             else:
                 note = labels["model_symbolic_p"]
         return {"mode": self.mode, "note": note}
-    
+
     def has_symbols(self) -> bool:
         """
         Verifica si el modelo contiene símbolos probabilísticos.
-        
+
         Returns:
             True si hay símbolos (mode="symbolic" o predicados con símbolos)
         """
         if self.mode == "symbolic":
             return True
-        
+
         # Verificar si algún predicado contiene símbolos (no números)
         for prob_str in self.predicates.values():
             try:
@@ -195,6 +204,5 @@ class AvgModel:
             except (ValueError, AttributeError):
                 # No es un número, es un símbolo
                 return True
-        
-        return False
 
+        return False

@@ -4,6 +4,7 @@ Contrato base para patrones estructurales de WHILE.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -12,6 +13,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class TerminationResult:
     """Resultado de terminación."""
+
     proven_terminating: bool
     proven_non_terminating: bool
     not_proven: bool
@@ -20,14 +22,19 @@ class TerminationResult:
 @dataclass
 class IterationBoundResult:
     """Resultado de cota de iteraciones."""
+
     exact_symbolic_bound: Optional[str]
     asymptotic_bound: Optional[str]
     not_proven: bool
+    iterations_class: Optional[str] = None
+    evidence_level: Optional[str] = None
+    reason_code: Optional[str] = None
 
 
 @dataclass
 class CaseResult:
     """Resultado por caso (best/avg/worst)."""
+
     best_case: Optional[str]
     avg_case: Optional[str]
     worst_case: Optional[str]

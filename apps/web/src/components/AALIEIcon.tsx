@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 /**
  * Icono AALIE (logo del asistente de IA).
  * Reemplaza el icono smart_toy de Material Symbols.
@@ -12,15 +14,20 @@ interface AALIEIconProps {
   readonly size?: number;
 }
 
-export default function AALIEIcon({ className = "", size = 24 }: AALIEIconProps) {
+export default function AALIEIcon({
+  className = "",
+  size = 24,
+}: AALIEIconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1024 1024"
+      preserveAspectRatio="xMidYMid meet"
       width={size}
       height={size}
       className={className}
       fill="currentColor"
+      shapeRendering="geometricPrecision"
       aria-hidden
     >
       <g transform="translate(0,1024) scale(0.1,-0.1)">

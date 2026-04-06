@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       initial_variables,
       locale,
     } = body;
-    
+
     if (!source) {
       return NextResponse.json(
         {

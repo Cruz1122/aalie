@@ -1,0 +1,166 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-interpreting",
+  "slug": "interpreting-results",
+  "title": "Interpreting results",
+  "shortTitle": "Interpretation",
+  "order": 5,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "O, Ω, and Θ as bound language; comparing algorithms and relative growth. The CPU vs GPU panel connects theory with practice without confusing asymptotic order with raw chip speed.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 50,
+  "tags": ["big O", "Omega", "Theta", "comparison", "gpu", "cpu"],
+  "searchMeta": {
+    "aliases": ["asymptotic", "interpret"],
+    "keywords": ["bound", "limit", "hardware"]
+  },
+  "prerequisites": {
+    "modules": [{ "id": "mod-user-guide-recursive", "kind": "recommended" }],
+    "sections": []
+  },
+  "relatedModuleIds": ["mod-user-guide-recursive", "mod-user-guide-loop-invariant"],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-cotas",
+      "text": "Distinguish upper, lower, and tight bounds and relate them to available numeric and symbolic evidence."
+    },
+    {
+      "objectiveId": "obj-gpu-cpu",
+      "text": "Explain why asymptotic order does not depend on hardware and how execution in different environments still illustrates practical effects."
+    }
+  ],
+  "terms": [
+    {
+      "termId": "term-dominante",
+      "label": "dominant term",
+      "aliases": [],
+      "definition": "In a polynomial or sum of terms in n, the fastest-growing term that determines asymptotic order when lower-order terms and constants are ignored."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-notacion",
+      "slug": "notation-and-comparison",
+      "title": "Notation and comparison",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-omega-theta",
+          "slug": "bounds-and-dominant",
+          "title": "Bounds and dominant term",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 20,
+          "blocks": [
+            {
+              "id": "blk-m5-s1-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "O upper-bounds, Ω lower-bounds, and Θ means both match in order. In practice multiplicative constants and lower-order terms are dropped: the "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-dominante",
+                  "text": "dominant term",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " sets the order (e.g. n² + 1000n behaves like n² for large n)."
+                }
+              ]
+            },
+            {
+              "id": "blk-m5-s1-scale",
+              "type": "equationBlock",
+              "latex": "1 < \\log n < n < n\\log n < n^2 < n^3 < 2^n < n!"
+            },
+            {
+              "id": "blk-m5-s1-p2",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Comparing algorithms often uses limits of cost-function ratios: 0, ∞, or a constant tells you which grows faster or whether they share order. The tool may show comparisons to support decisions when the contract allows."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-gpu-cpu",
+          "slug": "cpu-and-gpu",
+          "title": "CPU, GPU, and theory",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "blocks": [
+            {
+              "id": "blk-m5-s2-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Asymptotic complexity describes how work scales with n, not milliseconds on a specific CPU. Therefore "
+                },
+                {
+                  "type": "strong",
+                  "text": "hardware does not change the growth order"
+                },
+                {
+                  "type": "text",
+                  "text": " you study in class. Still, observing execution across environments (e.g. CPU vs GPU) helps relate growth differences to practice when parallelism or memory bottlenecks matter."
+                }
+              ]
+            },
+            {
+              "id": "blk-m5-s2-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "lightbulb",
+              "title": "How to read the panel without contradicting theory",
+              "blocks": [
+                {
+                  "id": "blk-m5-s2-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Treat the panel as guidance on structural suitability (parallelism, access patterns), not as a scientific benchmark. Do not invent timings or claim asymptotic improvements just because the panel suggests an environment: formal analysis still rules the order."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m5-s2-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Precision",
+              "blocks": [
+                {
+                  "id": "blk-m5-s2-np",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Do not use the GPU/CPU panel to “prove” an O(·) bound: use it to connect practical intuition with the theoretical model you already justified with counting and structure."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -2,13 +2,14 @@
 
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 
 import { useTraceController } from "@/hooks/trace/useTraceController";
 import { useTraceRefreshOnAnalysis } from "@/hooks/trace/useTraceRefreshOnAnalysis";
+import { buildTraceFocusedPanelContext } from "@/lib/assistant/trace-focused-panel";
+import type { AssistantFocusedPanelContext } from "@/lib/assistant/types";
 import type { CaseType } from "@/types/trace";
-
 
 import ExecutionGraphView from "./ExecutionGraphView";
 import StructuredTraceContent from "./trace/StructuredTraceContent";
@@ -29,6 +30,9 @@ interface TraceDedicatedViewProps {
   onCaseChange: (caseType: CaseType) => void;
   onBack: () => void;
   hasApiKey?: boolean;
+  onAssistantFocusedPanelChange?: (
+    panel: AssistantFocusedPanelContext | null,
+  ) => void;
 }
 
 export default function TraceDedicatedView({
@@ -38,18 +42,19 @@ export default function TraceDedicatedView({
   onCaseChange,
   onBack,
   hasApiKey: _hasApiKey = false,
+  onAssistantFocusedPanelChange,
 }: TraceDedicatedViewProps) {
   const locale = useLocale();
   const t = useTranslations("analyzer.executionTrace");
+  const tCases = useTranslations("analyzer.cases");
   const [inputSize, setInputSize] = useState<number>(4);
   const [debouncedInputSize, setDebouncedInputSize] = useState<number>(4);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playSpeed] = useState(1000);
   const [isDiagramExpanded, setIsDiagramExpanded] = useState(false);
-  const [initialVariablesOverride, setInitialVariablesOverride] = useState<
-    Record<string, unknown> | null
-  >(null);
+  const [initialVariablesOverride, setInitialVariablesOverride] =
+    useState<Record<string, unknown> | null>(null);
 
   const {
     trace,
@@ -64,7 +69,7 @@ export default function TraceDedicatedView({
     setAlgorithmKind,
     setExampleArray,
     exampleArray,
-  fetchCompleted,
+    fetchCompleted,
   } = useTraceController(
     {
       source,
@@ -93,9 +98,19 @@ export default function TraceDedicatedView({
 
   const loadedParamsRef = useRef<string | null>(null);
   const previousSourceKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Evita arrastrar overrides de una ejecución/fuente anterior.
+    setInitialVariablesOverride(null);
+    loadedParamsRef.current = null;
+  }, [source]);
+
   useEffect(() => {
     if (!source) return;
-    const paramsKey = `${caseType}-${debouncedInputSize}-${source.substring(0, 100)}`;
+    const overrideKey = initialVariablesOverride
+      ? JSON.stringify(initialVariablesOverride)
+      : "auto";
+    const paramsKey = `${caseType}-${debouncedInputSize}-${source.substring(0, 100)}-${overrideKey}`;
     if (loadedParamsRef.current === paramsKey) return;
     loadedParamsRef.current = paramsKey;
     const sourceKey = source.substring(0, 100);
@@ -105,7 +120,7 @@ export default function TraceDedicatedView({
     }
     loadTraceWithReset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseType, debouncedInputSize, source, locale]);
+  }, [caseType, debouncedInputSize, source, locale, initialVariablesOverride]);
   // Cuando hay error, resetear el guard para que el usuario pueda reintentar
   useEffect(() => {
     if (error) {
@@ -127,8 +142,7 @@ export default function TraceDedicatedView({
   const isRecursiveOrHybrid =
     algorithmKind === "recursive" || algorithmKind === "hybrid";
 
-  const stepsToUse =
-    trace?.ok && trace?.trace?.steps ? trace.trace.steps : [];
+  const stepsToUse = trace?.ok && trace?.trace?.steps ? trace.trace.steps : [];
   const currentStepData =
     stepsToUse.length > 0 && currentStep < stepsToUse.length
       ? stepsToUse[currentStep]
@@ -136,26 +150,103 @@ export default function TraceDedicatedView({
   const currentLine = currentStepData?.line || 0;
   const totalSteps = stepsToUse.length;
 
+  const assistantInitialVariables = useMemo(() => {
+    if (
+      initialVariablesOverride &&
+      Object.keys(initialVariablesOverride).length > 0
+    ) {
+      return initialVariablesOverride;
+    }
+
+    const rootCallId = trace?.ok
+      ? trace.trace?.callTreeSource?.root_calls?.[0]
+      : null;
+    const rootCall =
+      rootCallId && trace?.ok
+        ? trace.trace?.callTreeSource?.calls?.find(
+            (call) => call.id === rootCallId,
+          )
+        : null;
+    if (rootCall?.params && Object.keys(rootCall.params).length > 0) {
+      return rootCall.params as Record<string, unknown>;
+    }
+
+    const firstStepVariables =
+      trace?.ok && trace.trace?.steps?.[0]?.variables
+        ? (trace.trace.steps[0].variables as Record<string, unknown>)
+        : null;
+    return firstStepVariables && Object.keys(firstStepVariables).length > 0
+      ? firstStepVariables
+      : null;
+  }, [initialVariablesOverride, trace]);
+
+  const assistantFocusedPanel = useMemo(
+    () =>
+      buildTraceFocusedPanelContext({
+        locale,
+        caseLabel: tCases(caseType),
+        traceKind: algorithmKind ?? traceConfig.kind,
+        inputSize: debouncedInputSize,
+        currentStepIndex: currentStep,
+        totalSteps,
+        currentStep: currentStepData,
+        initialVariables: assistantInitialVariables,
+        structuredTrace: structuredDiagram,
+        traceSummary: trace?.ok ? trace.trace?.summary : undefined,
+        loading,
+        error,
+        fetchCompleted,
+      }),
+    [
+      algorithmKind,
+      assistantInitialVariables,
+      caseType,
+      currentStep,
+      currentStepData,
+      debouncedInputSize,
+      error,
+      fetchCompleted,
+      loading,
+      locale,
+      structuredDiagram,
+      tCases,
+      totalSteps,
+      trace,
+      traceConfig.kind,
+    ],
+  );
+
+  useEffect(() => {
+    onAssistantFocusedPanelChange?.(assistantFocusedPanel);
+  }, [assistantFocusedPanel, onAssistantFocusedPanelChange]);
+
+  useEffect(
+    () => () => {
+      onAssistantFocusedPanelChange?.(null);
+    },
+    [onAssistantFocusedPanelChange],
+  );
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Content - misma estructura de grid y cards que la pantalla de análisis; sin loader al cambiar de vista */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Columna izquierda: pseudocódigo - misma estructura que análisis (glass-card) */}
-          <section className="lg:col-span-4 h-full">
-            <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col">
-              <TraceChatPanel
-                source={source}
-                currentLine={isRecursiveOrHybrid ? undefined : currentLine}
-                currentStep={currentStep}
-                totalSteps={isRecursiveOrHybrid ? 0 : totalSteps}
-                onBack={onBack}
-              />
-            </div>
-          </section>
+        {/* Columna izquierda: pseudocódigo - misma estructura que análisis (glass-card) */}
+        <section className="lg:col-span-4 h-full">
+          <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col">
+            <TraceChatPanel
+              source={source}
+              currentLine={isRecursiveOrHybrid ? undefined : currentLine}
+              currentStep={currentStep}
+              totalSteps={isRecursiveOrHybrid ? 0 : totalSteps}
+              onBack={onBack}
+            />
+          </div>
+        </section>
 
-          {/* Columna derecha: contenido principal - misma estructura que análisis */}
-          <section className="lg:col-span-8 h-full min-h-[420px]">
-            <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col min-h-0 overflow-hidden">
+        {/* Columna derecha: contenido principal - misma estructura que análisis */}
+        <section className="lg:col-span-8 h-full min-h-[420px]">
+          <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col min-h-0 overflow-hidden">
             <TraceStatusBanner
               loading={loading}
               error={error}
@@ -169,7 +260,9 @@ export default function TraceDedicatedView({
                   <div className="w-12 h-12 bg-purple-500/20 rounded-full animate-ping" />
                   <div className="absolute w-6 h-6 bg-purple-500 rounded-full" />
                 </div>
-                <p className="text-xs text-slate-400">{t("detectingAlgorithm")}</p>
+                <p className="text-xs text-slate-400">
+                  {t("detectingAlgorithm")}
+                </p>
               </div>
             ) : (
               <StructuredTraceContent
@@ -210,12 +303,12 @@ export default function TraceDedicatedView({
                 exampleArray={exampleArray}
                 setExampleArray={setExampleArray}
                 variant="dedicated"
-              fetchCompleted={fetchCompleted}
+                fetchCompleted={fetchCompleted}
               />
             )}
-            </div>
-          </section>
-        </div>
+          </div>
+        </section>
+      </div>
 
       {/* Expanded diagram modal - portal a body para overlay en toda la pantalla (evita cuadrado de blur por transform en ancestros) */}
       {isDiagramExpanded &&

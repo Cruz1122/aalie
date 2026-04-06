@@ -1,11 +1,9 @@
-/**
- * Tipos para el análisis GPU vs CPU
- */
+import type { HardwareSuitabilityReport } from "@/lib/hardware/types";
 
 export type GPUCPUProfile = "GPU" | "CPU" | "Mixto";
 
 /**
- * Métricas extraídas del AST
+ * Métricas extraídas del AST (Legacy, puede usarse transitoriamente)
  */
 export interface GPUCPUMetrics {
   totalLoops: number;
@@ -20,13 +18,4 @@ export interface GPUCPUMetrics {
 /**
  * Resultado completo del análisis GPU vs CPU
  */
-export interface GPUCPUAnalysisResult {
-  profile: GPUCPUProfile;
-  summary: string;
-  explanation: string;
-  recommendation: string;
-  metrics: GPUCPUMetrics;
-  gpuScore: number; // 0-100
-  cpuScore: number; // 0-100
-}
-
+export type GPUCPUAnalysisResult = HardwareSuitabilityReport;

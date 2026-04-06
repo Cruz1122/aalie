@@ -1,0 +1,28 @@
+{
+  "schema": "aalie.content.space",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "slug": "user-guide",
+  "kind": "guide",
+  "title": "Guía de usuario",
+  "description": "Guía pedagógica de Análisis y Diseño de Algoritmos usando AALIE como evidencia: medición, costo, iteración, recursión, interpretación, invariantes y límites del análisis.",
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "published",
+  "search": {
+    "enabled": true,
+    "indexText": true,
+    "indexStructure": true,
+    "indexTerms": true,
+    "indexReferences": true,
+    "indexCaptions": true
+  },
+  "progress": {
+    "unit": "section",
+    "paginationUnit": "section"
+  },
+  "theme": {
+    "icon": "menu_book",
+    "accentColor": "#0EA5E9"
+  }
+}
