@@ -24,14 +24,10 @@ def classify_loop_pattern(facts: LoopFacts) -> ClassificationResult:
 
     has_collection = bool(facts.collection_variables)
     effective_accumulators = [
-        variable
-        for variable in facts.accumulators
-        if variable not in facts.control_variables
+        variable for variable in facts.accumulators if variable not in facts.control_variables
     ]
     has_accumulator = bool(effective_accumulators)
-    has_conditional = (
-        facts.conditional_count > 0 or "has_conditional_comparison" in features
-    )
+    has_conditional = facts.conditional_count > 0 or "has_conditional_comparison" in features
     has_early_exit = facts.has_early_exit or "has_early_exit" in features
     has_monotonic = "has_monotonic_control_update" in features
     effective_targets = [
@@ -141,8 +137,7 @@ def classify_loop_pattern(facts: LoopFacts) -> ClassificationResult:
 
     # 7) sorting_pass
     sorting_condition = "has_swap_like_update" in features or (
-        "has_adjacent_collection_comparison" in features
-        and facts.collection_write_count > 0
+        "has_adjacent_collection_comparison" in features and facts.collection_write_count > 0
     )
     if sorting_condition and has_collection:
         reasons.extend(
@@ -281,11 +276,7 @@ def classify_loop_pattern(facts: LoopFacts) -> ClassificationResult:
             extrema_by_structure
             or extrema_by_name
             or "has_extrema_index_update" in features
-            or (
-                has_collection
-                and not has_accumulator
-                and facts.collection_write_count == 0
-            )
+            or (has_collection and not has_accumulator and facts.collection_write_count == 0)
         )
     )
     if extrema_condition:
@@ -336,9 +327,7 @@ def classify_loop_pattern(facts: LoopFacts) -> ClassificationResult:
         )
 
     # 13) counting
-    counting_name_hint = _var_name_hints(
-        effective_accumulators, "count", "cnt", "num", "total"
-    )
+    counting_name_hint = _var_name_hints(effective_accumulators, "count", "cnt", "num", "total")
     counting_condition = (
         has_accumulator
         and has_conditional
@@ -463,8 +452,7 @@ def classify_loop_pattern(facts: LoopFacts) -> ClassificationResult:
     # 19) state_refinement
     overlap = set(facts.body_writes).intersection(set(facts.condition_reads))
     object_field_refinement = (
-        "has_object_field_write" in features
-        and "has_collection_object_field_write" not in features
+        "has_object_field_write" in features and "has_collection_object_field_write" not in features
     )
     if (
         overlap

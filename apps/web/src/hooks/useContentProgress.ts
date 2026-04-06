@@ -125,17 +125,14 @@ export function useSectionCompletionTracking({
   module,
   sections,
 }: UseSectionCompletionTrackingOptions) {
-  const [version, setVersion] = useState(0);
   const [activeSectionId, setActiveSectionId] = useState<string | undefined>(
     sections[0]?.sectionId,
   );
 
-  useEffect(
-    () =>
-      subscribeToProgressChanges(() => {
-        setVersion((current) => current + 1);
-      }),
-    [],
+  const completedSectionIds = useSyncExternalStore(
+    subscribeToProgressChanges,
+    () => Array.from(getCompletedSectionIds(spaceId, module.moduleId)),
+    () => [],
   );
 
   useEffect(() => {
@@ -207,12 +204,6 @@ export function useSectionCompletionTracking({
       }
     };
   }, [module.moduleId, sections, spaceId]);
-
-  const completedSectionIds = useMemo(
-    () => Array.from(getCompletedSectionIds(spaceId, module.moduleId)),
-    [module.moduleId, spaceId, version],
-  );
-
   const percentage = useMemo(
     () => computeModuleProgress(module, completedSectionIds),
     [completedSectionIds, module],

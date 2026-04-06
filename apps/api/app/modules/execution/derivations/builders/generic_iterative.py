@@ -195,9 +195,7 @@ def build_generic_iterative(
         if event_kind == "loop_iter_enter":
             if loop_stack:
                 loop_stack[-1]["iter_index"] += 1
-            path = _iteration_path() or str(
-                step.get("iteration", {}).get("iteration", "?")
-            )
+            path = _iteration_path() or str(step.get("iteration", {}).get("iteration", "?"))
             iter_suffix = path.replace(".", "_")
             node_id = f"iter_{iter_suffix}_{step_num}"
             label = _step_to_label(step)
@@ -220,9 +218,7 @@ def build_generic_iterative(
                 ),
                 "nodeType": "iteration",
                 "last_vars": (
-                    step.get("variables")
-                    if isinstance(step.get("variables"), dict)
-                    else None
+                    step.get("variables") if isinstance(step.get("variables"), dict) else None
                 ),
             }
             if active_iterations:
@@ -268,9 +264,7 @@ def build_generic_iterative(
         if event_kind == "loop_iter_exit":
             _add_costs(step)
             _update_vars(step)
-            path = _iteration_path() or str(
-                step.get("iteration", {}).get("iteration", "?")
-            )
+            path = _iteration_path() or str(step.get("iteration", {}).get("iteration", "?"))
             iter_suffix = path.replace(".", "_")
             node_id = f"iter_end_{iter_suffix}_{step_num}"
             label = _step_to_label(step)

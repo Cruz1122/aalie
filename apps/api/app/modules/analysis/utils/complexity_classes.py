@@ -154,9 +154,7 @@ class ComplexityClasses:
                 return "1"
 
             # Todos los términos con el mismo grado total máximo (p. ej. 12*n y 12*m → Θ(n+m))
-            max_terms = [
-                t for t in terms if abs(_total_degree_in_size_syms(t) - best_deg) < 1e-9
-            ]
+            max_terms = [t for t in terms if abs(_total_degree_in_size_syms(t) - best_deg) < 1e-9]
 
             if not max_terms:
                 return "1"
@@ -284,9 +282,7 @@ class ComplexityClasses:
         #   3n(7*n+1) -> 3*n*(7*n+1)
         # Usamos lookbehind negativo para letras para no tocar llamadas a funciones
         # como log(n) o exp(n), pero sí permitir coeficientes numéricos antes de n.
-        expr_str = re.sub(
-            rf"(?<![a-zA-Z]){re.escape(variable)}\(", f"{variable}*(", expr_str
-        )
+        expr_str = re.sub(rf"(?<![a-zA-Z]){re.escape(variable)}\(", f"{variable}*(", expr_str)
 
         # Manejar fracciones LaTeX: \frac{a}{b} -> (a)/(b)
         # 1) Caso especial: fracciones anidadas simples \frac{\frac{n}{2}}{3}
@@ -405,9 +401,7 @@ class ComplexityClasses:
         except Exception:
             return expr
 
-    def _fallback_dominant_from_string(
-        self, polynomial: str, variable: str = "n"
-    ) -> str:
+    def _fallback_dominant_from_string(self, polynomial: str, variable: str = "n") -> str:
         """
         Heurística de último recurso: extrae un monomio dominante directamente del string
         sin usar SymPy. Garantiza devolver SIEMPRE un monomio (no la expresión entera).
@@ -523,9 +517,7 @@ class ComplexityClasses:
         if var_symbol is None:
             if free_symbols:
                 # Preferir nombres canónicos de tamaño cuando existan.
-                preferred = [
-                    s for s in free_symbols if getattr(s, "name", "") in ("n", "m", "N")
-                ]
+                preferred = [s for s in free_symbols if getattr(s, "name", "") in ("n", "m", "N")]
                 var_symbol = preferred[0] if preferred else next(iter(free_symbols))
             else:
                 return Integer(1)
@@ -575,9 +567,7 @@ class ComplexityClasses:
                         leading_monom = LM(poly)
                         result_term = leading_coeff * leading_monom
                         if var_symbol != var_symbol_for_poly:
-                            result_term = result_term.subs(
-                                var_symbol_for_poly, var_symbol
-                            )
+                            result_term = result_term.subs(var_symbol_for_poly, var_symbol)
                         return result_term
             except Exception:
                 # Ambos métodos fallaron, continuar con método alternativo
@@ -588,9 +578,7 @@ class ComplexityClasses:
         # NO usar term.has(var_symbol) porque los símbolos pueden ser objetos diferentes
         if expr_expanded.is_Add:
             terms = expr_expanded.args
-            max_complexity_level = (
-                -1
-            )  # -1: constante, 0: log(n), 1: n, 2: n*log(n), 3+: n^k
+            max_complexity_level = -1  # -1: constante, 0: log(n), 1: n, 2: n*log(n), 3+: n^k
             max_term = None
 
             for term in terms:

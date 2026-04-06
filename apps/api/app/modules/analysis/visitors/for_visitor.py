@@ -38,9 +38,7 @@ class ForVisitor:
         if hasattr(self, "expr_converter"):
             return self.expr_converter.ast_to_sympy(expr)
         # Fallback: usar método de BaseAnalyzer si existe
-        if hasattr(self, "_expr_to_sympy") and callable(
-            getattr(super(), "_expr_to_sympy", None)
-        ):
+        if hasattr(self, "_expr_to_sympy") and callable(getattr(super(), "_expr_to_sympy", None)):
             return super()._expr_to_sympy(expr)
         # Último fallback: convertir a string y luego a SymPy
         return self._str_to_sympy(self._expr_to_str(expr))
@@ -101,11 +99,7 @@ class ForVisitor:
         elif isinstance(expr, (int, float)):
             return str(expr)
         elif isinstance(expr, dict):
-            expr_type = (
-                expr.get("type", "").lower()
-                if isinstance(expr.get("type"), str)
-                else ""
-            )
+            expr_type = expr.get("type", "").lower() if isinstance(expr.get("type"), str) else ""
 
             if expr_type == "identifier":
                 return expr.get("name", "unknown")
@@ -233,9 +227,7 @@ class ForVisitor:
         elif node_type == "if":
             consequent = body_node.get("consequent")
             alternate = body_node.get("alternate")
-            if self._has_return_in_body(consequent) or self._has_return_in_body(
-                alternate
-            ):
+            if self._has_return_in_body(consequent) or self._has_return_in_body(alternate):
                 return True
 
         # Si es un FOR, WHILE, REPEAT, buscar en el cuerpo
@@ -297,9 +289,7 @@ class ForVisitor:
             # Evaluación inicial: i=1, condición verdadera, ejecuta cuerpo (encuentra y retorna)
             # Evaluación final: i=2, condición verdadera pero no ejecuta cuerpo (early return previo)
             header_count = Integer(2)
-            header_note = self._note(
-                "for_header_best", var=var, a_str=a_str, b_str=b_str
-            )
+            header_note = self._note("for_header_best", var=var, a_str=a_str, b_str=b_str)
         elif mode == "avg" and has_return:
             # En caso promedio con early return: E[iter] = (n+1)/2
             # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
@@ -317,17 +307,13 @@ class ForVisitor:
                 e_iter = (n_sym + Integer(1)) / Integer(2)
                 # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
                 header_count = e_iter + Integer(1)
-                header_note = self._note(
-                    "for_header_avg", var=var, a_str=a_str, b_str=b_str
-                )
+                header_note = self._note("for_header_avg", var=var, a_str=a_str, b_str=b_str)
             except Exception:
                 # Fallback: usar expresión simbólica genérica
                 n_sym = SymSymbol("n", integer=True, positive=True)
                 e_iter = (n_sym + Integer(1)) / Integer(2)
                 header_count = e_iter + Integer(1)
-                header_note = self._note(
-                    "for_header_avg", var=var, a_str=a_str, b_str=b_str
-                )
+                header_note = self._note("for_header_avg", var=var, a_str=a_str, b_str=b_str)
         else:
             # Cabecera normal: (b - a + 2) evaluaciones
             # La cabecera se evalúa: evaluación inicial + b - a evaluaciones de condición + 1 final = (b - a + 2)

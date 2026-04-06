@@ -71,9 +71,7 @@ def _find_guard_fin_var(while_node: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def _find_fin_update_step_var(
-    while_node: Dict[str, Any], fin_var: str
-) -> Optional[str]:
+def _find_fin_update_step_var(while_node: Dict[str, Any], fin_var: str) -> Optional[str]:
     """
     Para Jump Search en catálogo:
       fin <- fin + paso;
@@ -85,10 +83,7 @@ def _find_fin_update_step_var(
         if str(node.get("type", "")).lower() != "assign":
             continue
         target = node.get("target") or {}
-        if (
-            not isinstance(target, dict)
-            or str(target.get("type", "")).lower() != "identifier"
-        ):
+        if not isinstance(target, dict) or str(target.get("type", "")).lower() != "identifier":
             continue
         if str(target.get("name") or "").strip() != fin_var:
             continue

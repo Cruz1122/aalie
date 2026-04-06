@@ -1,8 +1,8 @@
 import "server-only";
 
+import { getSpaceBundle, validateCatalog, type LoadedSpaceBundle } from "@aa/content-catalog";
 import { cache } from "react";
 
-import { getSpaceBundle, validateCatalog, type LoadedSpaceBundle } from "@aa/content-catalog";
 
 import {
   buildUserGuideLandingDataFromBundle,

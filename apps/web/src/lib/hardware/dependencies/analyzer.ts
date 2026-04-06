@@ -8,7 +8,6 @@ import type {
   Repeat,
   If,
   Assign,
-  Return,
   Binary,
   Index,
   Identifier,

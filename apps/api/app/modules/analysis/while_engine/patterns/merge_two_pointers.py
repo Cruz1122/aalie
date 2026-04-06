@@ -64,9 +64,7 @@ class MergeTwoPointersPattern(WhilePattern):
         atoms = [
             a
             for a in (getattr(guard, "atoms", None) or [])
-            if isinstance(a, dict)
-            and a.get("bool_desired") is None
-            and a.get("op") in ("<", "<=")
+            if isinstance(a, dict) and a.get("bool_desired") is None and a.get("op") in ("<", "<=")
         ]
         if len(atoms) < 2:
             return IterationBoundResult(
@@ -87,6 +85,4 @@ class MergeTwoPointersPattern(WhilePattern):
         )
 
     def explain(self, while_ctx: Dict[str, Any]) -> list:
-        return [
-            "Merge two pointers: AND of two bounds; each iteration advances one index"
-        ]
+        return ["Merge two pointers: AND of two bounds; each iteration advances one index"]

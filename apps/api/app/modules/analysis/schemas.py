@@ -16,18 +16,12 @@ class AnalyzeRequest(BaseModel):
     source: str
     mode: str = "worst"  # "worst" | "best" | "avg" | "all"
     api_key: Optional[str] = None  # API Key de Gemini (opcional)
-    avgModel: Optional[AvgModelConfig] = (
-        None  # Modelo probabilístico para caso promedio
-    )
-    algorithm_kind: Optional[str] = (
-        None  # "iterative" | "recursive" | "hybrid" | "unknown"
-    )
+    avgModel: Optional[AvgModelConfig] = None  # Modelo probabilístico para caso promedio
+    algorithm_kind: Optional[str] = None  # "iterative" | "recursive" | "hybrid" | "unknown"
     preferred_method: Optional[str] = (
         None  # "characteristic_equation" | "iteration" | "recursion_tree" | "master"
     )
-    locale: Optional[str] = (
-        None  # "en" | "es" - idioma para etiquetas del procedimiento
-    )
+    locale: Optional[str] = None  # "en" | "es" - idioma para etiquetas del procedimiento
 
 
 class LineCost(BaseModel):
@@ -123,9 +117,7 @@ class TraceRequest(BaseModel):
     source: str
     case: str = "worst"  # "worst" | "best" | "avg"
     input_size: Optional[int] = None  # Tamaño de entrada concreto (ej: n=4)
-    initial_variables: Optional[Dict[str, Any]] = (
-        None  # Variables iniciales (ej: arrays)
-    )
+    initial_variables: Optional[Dict[str, Any]] = None  # Variables iniciales (ej: arrays)
     locale: Optional[str] = None  # "en" | "es" - idioma para descripciones de pasos
 
 

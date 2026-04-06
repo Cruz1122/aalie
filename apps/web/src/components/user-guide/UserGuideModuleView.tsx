@@ -5,7 +5,7 @@ import type {
   ReferenceResource,
   Term,
 } from "@aa/content-catalog";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { useEffect, useMemo } from "react";
 
 import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
@@ -47,7 +47,6 @@ function buildTermMap(
 
 export function UserGuideModuleView({ data }: UserGuideModuleViewProps) {
   const locale = useLocale();
-  const t = useTranslations("contentUi");
   const { finishNavigation } = useNavigation();
   const { runAnalysis } = useRunAnalysis();
   const { activeSectionId, percentage } = useSectionCompletionTracking({

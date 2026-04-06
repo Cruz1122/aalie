@@ -149,9 +149,7 @@ def _collect_assignments(node: Any, var_name: str, out: List[Dict[str, Any]]) ->
         target = node.get("target", {})
         if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
             if target.get("name", "") == var_name:
-                parsed = _parse_update(
-                    node.get("value"), var_name, local_assigned_vars=None
-                )
+                parsed = _parse_update(node.get("value"), var_name, local_assigned_vars=None)
                 if parsed:
                     out.append({**parsed, "node": node})
     if nt == "block":
@@ -184,9 +182,7 @@ def _updates_match(a: Dict, b: Dict) -> bool:
     if a.get("type") != b.get("type"):
         return False
     if a.get("type") == "num":
-        return a.get("operator") == b.get("operator") and a.get("constant") == b.get(
-            "constant"
-        )
+        return a.get("operator") == b.get("operator") and a.get("constant") == b.get("constant")
     if a.get("type") == "bool_assign":
         return a.get("value") == b.get("value")
     if a.get("type") == "mod_decrease":
@@ -207,9 +203,7 @@ def _must_may_if(
     else_branch = node.get("alternate")
 
     must_t, may_t = (
-        _must_may_stmt(then_branch, var_name, local_assigned_vars)
-        if then_branch
-        else ([], [])
+        _must_may_stmt(then_branch, var_name, local_assigned_vars) if then_branch else ([], [])
     )
     if not else_branch:
         return [], list({id(x): x for x in may_t + must_t}.values())
@@ -246,15 +240,11 @@ def _must_may_stmt(
     if nt == "for":
         # Todo dentro de un FOR se considera may update desde la perspectiva del WHILE:
         # el rango puede ser vacío (0 iteraciones) o la rama condicional interna puede no ejecutarse.
-        _, may_nested = _must_may_stmt(
-            node.get("body", {}), var_name, local_assigned_vars
-        )
+        _, may_nested = _must_may_stmt(node.get("body", {}), var_name, local_assigned_vars)
         return [], may_nested
     if nt in ("while", "repeat"):
         # Todo dentro de un bucle anidado se considera may update (ya que podría ejecutarse 0 veces)
-        _, may_nested = _must_may_stmt(
-            node.get("body", {}), var_name, local_assigned_vars
-        )
+        _, may_nested = _must_may_stmt(node.get("body", {}), var_name, local_assigned_vars)
         # También extraer del bloque interno directamente por si no es un "block" Node
         return [], may_nested
 
@@ -292,12 +282,8 @@ def _compute_summary_for_var(
             if u.get("value") is False and guard_desired is True:
                 kills_guard_must = True  # var=true → var<-false mata
             elif u.get("value") is True and guard_desired is False:
-                kills_guard_must = (
-                    True  # var=false → var<-true mata (bubble sort mejorado)
-                )
-        if (u.get("type") == "num" or u.get("type") == "mod_decrease") and u.get(
-            "monotone"
-        ):
+                kills_guard_must = True  # var=false → var<-true mata (bubble sort mejorado)
+        if (u.get("type") == "num" or u.get("type") == "mod_decrease") and u.get("monotone"):
             monotone_progress_must = True
 
     for u in may:
@@ -354,10 +340,7 @@ def summarize_updates(
             nt = (x.get("type", "") or "").lower()
             if nt == "assign":
                 tgt = x.get("target") or {}
-                if (
-                    isinstance(tgt, dict)
-                    and (tgt.get("type", "") or "").lower() == "identifier"
-                ):
+                if isinstance(tgt, dict) and (tgt.get("type", "") or "").lower() == "identifier":
                     name = tgt.get("name") or ""
                     if name:
                         out.add(str(name))
@@ -392,10 +375,7 @@ def summarize_updates(
                 for atom in atoms:
                     if not isinstance(atom, dict):
                         continue
-                    if (
-                        atom.get("var") == var_name
-                        and atom.get("bool_desired") is not None
-                    ):
+                    if atom.get("var") == var_name and atom.get("bool_desired") is not None:
                         desired = bool(atom.get("bool_desired"))
                         break
 

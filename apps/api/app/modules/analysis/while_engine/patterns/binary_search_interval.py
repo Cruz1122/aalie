@@ -21,9 +21,7 @@ class BinarySearchIntervalPattern(IntervalShrinkPattern):
     def matches(self, while_ctx: Dict[str, Any]) -> bool:
         signature = interval_shrink_signature(while_ctx)
         return bool(
-            signature
-            and signature.get("kind") == "midpoint"
-            and signature.get("divisor") == 2
+            signature and signature.get("kind") == "midpoint" and signature.get("divisor") == 2
         )
 
     def derive_termination(self, while_ctx: Dict[str, Any]) -> TerminationResult:

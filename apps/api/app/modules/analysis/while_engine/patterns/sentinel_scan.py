@@ -39,10 +39,7 @@ def _find_monotone_linear_index(updates: Any) -> Optional[str]:
             continue
         for u in getattr(summary, "must_updates", []) or []:
             if u.get("type") == "num" and u.get("monotone") is True:
-                if (
-                    u.get("operator") == "+"
-                    and str(u.get("constant", "")).strip() == "1"
-                ):
+                if u.get("operator") == "+" and str(u.get("constant", "")).strip() == "1":
                     return str(v_name)
     return None
 

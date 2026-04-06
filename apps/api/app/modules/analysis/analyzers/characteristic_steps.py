@@ -183,9 +183,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             step_id="ceq_s1",
             kind="recurrence_detected",
             title=(
-                "Recurrencia detectada"
-                if locale_key(ctx.locale) == "es"
-                else "Detected recurrence"
+                "Recurrencia detectada" if locale_key(ctx.locale) == "es" else "Detected recurrence"
             ),
             status="complete",
             confidence="high",
@@ -292,9 +290,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
     )
 
     roots_have_repetition = any(int(r.get("multiplicity", 1)) > 1 for r in ctx.roots)
-    step6_status: StepStatus = (
-        "partial" if ctx.has_complex_root_representation else "complete"
-    )
+    step6_status: StepStatus = "partial" if ctx.has_complex_root_representation else "complete"
     step6_key = (
         "roots_computed.partial"
         if step6_status == "partial"
@@ -320,9 +316,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             summary_key=step6_key,
             concept_key="concept.roots_computed",
             warning_key=(
-                "warning.complex_root_form_partial"
-                if step6_status == "partial"
-                else None
+                "warning.complex_root_form_partial" if step6_status == "partial" else None
             ),
             primary_latex=(
                 ",\\;".join(
@@ -335,9 +329,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
                 else None
             ),
             payload={"roots": ctx.roots},
-            codes=(
-                ["CEQ_COMPLEX_ROOT_FORM_PARTIAL"] if step6_status == "partial" else []
-            ),
+            codes=(["CEQ_COMPLEX_ROOT_FORM_PARTIAL"] if step6_status == "partial" else []),
         )
     )
 
@@ -348,9 +340,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             step_id="ceq_s7",
             kind="homogeneous_solution_built",
             title=(
-                "Solución homogénea"
-                if locale_key(ctx.locale) == "es"
-                else "Homogeneous solution"
+                "Solución homogénea" if locale_key(ctx.locale) == "es" else "Homogeneous solution"
             ),
             status="complete",
             confidence="high",
@@ -384,9 +374,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             step_id="ceq_s8",
             kind="particular_solution_built",
             title=(
-                "Solución particular"
-                if locale_key(ctx.locale) == "es"
-                else "Particular solution"
+                "Solución particular" if locale_key(ctx.locale) == "es" else "Particular solution"
             ),
             status=step8_status,
             confidence="high" if step8_status == "complete" else "low",
@@ -394,9 +382,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             concept_key="concept.particular_solution_built",
             warning_key=step8_warning,
             primary_latex=(
-                ctx.particular_solution
-                if ctx.particular_solution
-                else r"T_p(n)\;\text{N/A}"
+                ctx.particular_solution if ctx.particular_solution else r"T_p(n)\;\text{N/A}"
             ),
             payload={"g_n": ctx.g_n, "particular_solution": ctx.particular_solution},
             codes=step8_codes,
@@ -430,11 +416,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=9,
             step_id="ceq_s9",
             kind="general_solution_built",
-            title=(
-                "Solución general"
-                if locale_key(ctx.locale) == "es"
-                else "General solution"
-            ),
+            title=("Solución general" if locale_key(ctx.locale) == "es" else "General solution"),
             status=step9_status,
             confidence="medium" if step9_status == "partial" else "high",
             summary_key=step9_key,
@@ -508,9 +490,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             step_id="ceq_s11",
             kind="closed_form_simplified",
             title=(
-                "Simplificación final"
-                if locale_key(ctx.locale) == "es"
-                else "Final simplification"
+                "Simplificación final" if locale_key(ctx.locale) == "es" else "Final simplification"
             ),
             status=step11_status,
             confidence="medium" if step11_status == "partial" else "high",
@@ -520,18 +500,14 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
                 else "closed_form_simplified.complete"
             ),
             concept_key="concept.closed_form_simplified",
-            warning_key=(
-                "warning.simplification_partial" if step11_status == "partial" else None
-            ),
+            warning_key=("warning.simplification_partial" if step11_status == "partial" else None),
             primary_latex=ctx.closed_form,
             payload={"closed_form": ctx.closed_form},
             codes=["CEQ_SIMPLIFICATION_PARTIAL"] if step11_status == "partial" else [],
         )
     )
 
-    prior_partial = any(
-        s.get("status") in ("partial", "unsupported", "error") for s in steps
-    )
+    prior_partial = any(s.get("status") in ("partial", "unsupported", "error") for s in steps)
     step12_status: StepStatus = "partial" if prior_partial else "complete"
     steps.append(
         _make_step(

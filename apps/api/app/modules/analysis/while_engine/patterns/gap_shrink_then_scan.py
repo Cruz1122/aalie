@@ -17,9 +17,7 @@ def _op_norm(op: Any) -> str:
     return str(op or "").strip().lower()
 
 
-def _find_gap_update_constants(
-    while_node: Dict[str, Any]
-) -> Optional[Tuple[int, Optional[int]]]:
+def _find_gap_update_constants(while_node: Dict[str, Any]) -> Optional[Tuple[int, Optional[int]]]:
     """
     Intenta extraer constantes del update a gap:
       1) gap <- gap DIV c    -> devuelve (c, None)
@@ -41,16 +39,10 @@ def _find_gap_update_constants(
 
         if str(n.get("type", "")).lower() == "assign":
             target = n.get("target") or {}
-            if (
-                isinstance(target, dict)
-                and str(target.get("type", "")).lower() == "identifier"
-            ):
+            if isinstance(target, dict) and str(target.get("type", "")).lower() == "identifier":
                 if target.get("name") == "gap":
                     value = n.get("value") or {}
-                    if (
-                        isinstance(value, dict)
-                        and str(value.get("type", "")).lower() == "binary"
-                    ):
+                    if isinstance(value, dict) and str(value.get("type", "")).lower() == "binary":
                         op = _op_norm(value.get("op") or value.get("operator"))
                         if op in ("div", "/") or op == "div":
                             left = value.get("left") or {}
@@ -93,15 +85,13 @@ def _find_gap_update_constants(
                                     multiplicand = None
                                     if (
                                         isinstance(lleft, dict)
-                                        and str(lleft.get("type", "")).lower()
-                                        == "identifier"
+                                        and str(lleft.get("type", "")).lower() == "identifier"
                                         and lleft.get("name") == "gap"
                                     ):
                                         multiplicand = lright
                                     elif (
                                         isinstance(lright, dict)
-                                        and str(lright.get("type", "")).lower()
-                                        == "identifier"
+                                        and str(lright.get("type", "")).lower() == "identifier"
                                         and lright.get("name") == "gap"
                                     ):
                                         multiplicand = lleft
@@ -208,6 +198,4 @@ class GapShrinkThenScanPattern(WhilePattern):
         )
 
     def explain(self, while_ctx: Dict[str, Any]) -> list:
-        return [
-            "Gap shrink (DIV): outer while is logarithmic"
-        ]  # nota: clase pedagógica
+        return ["Gap shrink (DIV): outer while is logarithmic"]  # nota: clase pedagógica

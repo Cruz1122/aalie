@@ -99,20 +99,18 @@ def _is_adjacent_compare(test: Any, index_name: str) -> Optional[str]:
     array_name = _identifier_name(left.get("target"))
     if not array_name or _identifier_name(right.get("target")) != array_name:
         return None
-    if _is_index_of_array(
-        left, array_name, index_name
-    ) and _is_index_of_array_minus_one(right, array_name, index_name):
+    if _is_index_of_array(left, array_name, index_name) and _is_index_of_array_minus_one(
+        right, array_name, index_name
+    ):
         return array_name
-    if _is_index_of_array_minus_one(
-        left, array_name, index_name
-    ) and _is_index_of_array(right, array_name, index_name):
+    if _is_index_of_array_minus_one(left, array_name, index_name) and _is_index_of_array(
+        right, array_name, index_name
+    ):
         return array_name
     return None
 
 
-def _has_adjacent_swap(
-    statements: List[Dict[str, Any]], array_name: str, index_name: str
-) -> bool:
+def _has_adjacent_swap(statements: List[Dict[str, Any]], array_name: str, index_name: str) -> bool:
     saw_down_step = False
     saw_forward_value = False
     saw_backward_value = False

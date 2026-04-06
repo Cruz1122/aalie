@@ -27,8 +27,7 @@ def build_default_trace_inputs(
     uses_x = re.search(r"(^|[^A-Za-z0-9_])x([^A-Za-z0-9_]|$)", source, re.I) is not None
     uses_array_a = re.search(r"(^|[^A-Za-z0-9_])A\s*\[", source) is not None
     has_zero_check = (
-        re.search(r"n\s*[=<>]=\s*0|n\s*=\s*0|IF\s*\(\s*n\s*[=<>]=\s*0", source, re.I)
-        is not None
+        re.search(r"n\s*[=<>]=\s*0|n\s*=\s*0|IF\s*\(\s*n\s*[=<>]=\s*0", source, re.I) is not None
     )
     is_sorting_like = (
         re.search(
@@ -128,9 +127,7 @@ def build_trace_result(
             },
             "diagnostics": {
                 "truncated": trace.get("recursion_truncated", False),
-                "truncationReason": (
-                    "max_depth" if trace.get("recursion_truncated") else None
-                ),
+                "truncationReason": ("max_depth" if trace.get("recursion_truncated") else None),
                 "warnings": [],
             },
         }

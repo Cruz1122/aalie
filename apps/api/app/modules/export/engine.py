@@ -80,17 +80,11 @@ def _normalize_confidence(value: Any) -> float | None:
 
 def _extract_candidate_text(payload: Dict[str, Any]) -> str | None:
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
-    candidates = (
-        data.get("candidates") if isinstance(data.get("candidates"), list) else []
-    )
+    candidates = data.get("candidates") if isinstance(data.get("candidates"), list) else []
     candidate = candidates[0] if candidates and isinstance(candidates[0], dict) else {}
-    content = (
-        candidate.get("content") if isinstance(candidate.get("content"), dict) else {}
-    )
+    content = candidate.get("content") if isinstance(candidate.get("content"), dict) else {}
     parts = content.get("parts") if isinstance(content.get("parts"), list) else []
-    text = (
-        (parts[0] or {}).get("text") if parts and isinstance(parts[0], dict) else None
-    )
+    text = (parts[0] or {}).get("text") if parts and isinstance(parts[0], dict) else None
     return text if isinstance(text, str) else None
 
 
@@ -178,9 +172,7 @@ def render_report_result(export_state: Dict[str, Any]) -> Dict[str, Any]:
             )
     if "pdf" in formats:
         if not latex_content:
-            raise RuntimeError(
-                "LaTeX content was not generated before PDF compilation."
-            )
+            raise RuntimeError("LaTeX content was not generated before PDF compilation.")
         try:
             compiled = compile_latex_to_pdf(
                 latex_content,

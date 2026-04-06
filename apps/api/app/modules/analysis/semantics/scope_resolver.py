@@ -36,10 +36,7 @@ def _collect_assign_targets(expr: Any) -> Set[str]:
         t = (expr.get("type") or "").lower()
         if t == "assign":
             target = expr.get("target")
-            if (
-                isinstance(target, dict)
-                and target.get("type", "").lower() == "identifier"
-            ):
+            if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
                 return {target.get("name", "")}
             return expr_vars(target) if target else set()
         if t == "block":
@@ -84,10 +81,7 @@ class ScopeResolver:
 
         if t == "assign":
             target = node.get("target")
-            if (
-                isinstance(target, dict)
-                and target.get("type", "").lower() == "identifier"
-            ):
+            if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
                 name = target.get("name", "")
                 if name:
                     info = table.get_or_create(name)

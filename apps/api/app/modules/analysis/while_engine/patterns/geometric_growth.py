@@ -31,11 +31,7 @@ class GeometricGrowthPattern(WhilePattern):
                         if u.get("type") == "num" and u.get("operator") == "*":
                             const = u.get("constant", "1")
                             try:
-                                c = (
-                                    int(const)
-                                    if "." not in str(const)
-                                    else int(float(const))
-                                )
+                                c = int(const) if "." not in str(const) else int(float(const))
                                 if c > 1:
                                     return True
                             except (ValueError, TypeError):

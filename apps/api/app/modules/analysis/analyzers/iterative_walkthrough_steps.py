@@ -129,9 +129,7 @@ def _symbol_name(mode: str) -> str:
 
 
 def _line_refs(rows: List[Dict[str, Any]], locale: str) -> str:
-    numbers = sorted(
-        {int(row.get("line")) for row in rows if isinstance(row.get("line"), int)}
-    )
+    numbers = sorted({int(row.get("line")) for row in rows if isinstance(row.get("line"), int)})
     if not numbers:
         return _title(locale, "sin líneas numeradas", "no numbered lines")
     ranges: List[str] = []
@@ -180,9 +178,7 @@ def _line_closed_count_value(row: Dict[str, Any], mode: str) -> str:
 
 def _line_raw_count_value(row: Dict[str, Any], mode: str) -> str:
     if mode == "avg":
-        return str(
-            row.get("count_raw") or row.get("expectedRuns") or row.get("count") or "0"
-        )
+        return str(row.get("count_raw") or row.get("expectedRuns") or row.get("count") or "0")
     return str(row.get("count_raw") or row.get("count") or "0")
 
 
@@ -213,9 +209,7 @@ def _substitute_symbolic_constants(expression: Optional[str]) -> Optional[str]:
     return substituted
 
 
-def _dominant_term(
-    big_theta: Optional[str], simplified_expression: Optional[str]
-) -> str:
+def _dominant_term(big_theta: Optional[str], simplified_expression: Optional[str]) -> str:
     theta = str(big_theta or "").strip()
     if theta:
         normalized = theta.replace("\\Theta", "").strip()
@@ -439,17 +433,13 @@ def build_iterative_line_step_bundle(
     closed_count = _line_closed_count_value(row, mode)
     cost_formula = _build_line_cost_formula(row, mode)
     kind_label = _line_kind_label(row.get("kind"), locale)
-    count_summary_key = (
-        "iter_line.count.average" if mode == "avg" else "iter_line.count.standard"
-    )
+    count_summary_key = "iter_line.count.average" if mode == "avg" else "iter_line.count.standard"
     closure_summary_key = (
         "iter_line.summation_closed.average"
         if mode == "avg"
         else "iter_line.summation_closed.standard"
     )
-    cost_summary_key = (
-        "iter_line.cost.average" if mode == "avg" else "iter_line.cost.standard"
-    )
+    cost_summary_key = "iter_line.cost.average" if mode == "avg" else "iter_line.cost.standard"
     steps: List[Dict[str, Any]] = [
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
@@ -477,11 +467,7 @@ def build_iterative_line_step_bundle(
             kind="line_execution_count_resolved",
             title=_title(
                 locale,
-                (
-                    "Conteo de ejecuciones"
-                    if mode != "avg"
-                    else "Esperanza de ejecuciones"
-                ),
+                ("Conteo de ejecuciones" if mode != "avg" else "Esperanza de ejecuciones"),
                 "Execution count" if mode != "avg" else "Expected executions",
             ),
             status="complete",
@@ -577,9 +563,7 @@ def build_iterative_case_step_bundle(
     case_label = _case_label(mode, locale)
     symbol_name = _symbol_name(mode)
     line_refs = _line_refs(rows, locale)
-    model_note = avg_model_note or _title(
-        locale, "modelo disponible", "available model"
-    )
+    model_note = avg_model_note or _title(locale, "modelo disponible", "available model")
     hypotheses = [str(item).strip() for item in (hypotheses or []) if str(item).strip()]
     hypotheses_suffix = (
         (
@@ -593,16 +577,10 @@ def build_iterative_case_step_bundle(
         if hypotheses
         else ""
     )
-    summary_key_prefix = (
-        "iter_case.lines.average" if mode == "avg" else "iter_case.lines.standard"
-    )
-    counts_key = (
-        "iter_case.counts.average" if mode == "avg" else "iter_case.counts.standard"
-    )
+    summary_key_prefix = "iter_case.lines.average" if mode == "avg" else "iter_case.lines.standard"
+    counts_key = "iter_case.counts.average" if mode == "avg" else "iter_case.counts.standard"
     counts_concept_key = (
-        "concept.iter_case.counts.average"
-        if mode == "avg"
-        else "concept.iter_case.counts.standard"
+        "concept.iter_case.counts.average" if mode == "avg" else "concept.iter_case.counts.standard"
     )
     sum_key = "iter_case.sum.average" if mode == "avg" else "iter_case.sum.standard"
     steps: List[Dict[str, Any]] = [
@@ -666,9 +644,7 @@ def build_iterative_case_step_bundle(
             payload={"reportable": True, "mode": mode, "stage": "sum"},
         ),
     ]
-    case_count_summary_note, case_count_concept_note = _case_count_notation_notes(
-        mode, locale
-    )
+    case_count_summary_note, case_count_concept_note = _case_count_notation_notes(mode, locale)
     steps[1] = _append_step_notes(
         steps[1],
         summary_suffix=case_count_summary_note,
@@ -722,9 +698,7 @@ def build_iterative_case_step_bundle(
             )
         )
 
-    simplified_formula = (
-        simplified_expression or closed_sum_expression or raw_sum_expression
-    )
+    simplified_formula = simplified_expression or closed_sum_expression or raw_sum_expression
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
@@ -743,9 +717,7 @@ def build_iterative_case_step_bundle(
         )
     )
 
-    dominant = (
-        "\\infty" if has_unbounded else _dominant_term(big_theta, simplified_formula)
-    )
+    dominant = "\\infty" if has_unbounded else _dominant_term(big_theta, simplified_formula)
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
@@ -798,11 +770,7 @@ def build_iterative_case_step_bundle(
             "Conclusión asintótica",
             "Asymptotic conclusion",
         ),
-        status=(
-            "complete"
-            if has_unbounded or big_o or big_omega or big_theta
-            else "partial"
-        ),
+        status=("complete" if has_unbounded or big_o or big_omega or big_theta else "partial"),
         confidence="high",
         summary_key="iter_case.asymptotic",
         concept_key="concept.iter_case.asymptotic",

@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 
 import { UserGuideModuleView } from "@/components/user-guide/UserGuideModuleView";
+import { routing } from "@/i18n/routing";
 import {
   getUserGuideModuleData,
   getUserGuideStaticParams,
 } from "@/lib/content/user-guide";
-import { routing } from "@/i18n/routing";
 
 interface UserGuideModulePageProps {
   params: {

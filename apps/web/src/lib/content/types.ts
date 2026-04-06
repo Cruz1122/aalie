@@ -1,6 +1,5 @@
 import type {
   CatalogModule,
-  CatalogSpace,
   SearchIndexEntry,
 } from "@aa/content-catalog";
 
