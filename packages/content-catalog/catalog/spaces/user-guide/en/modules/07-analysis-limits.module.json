@@ -1,0 +1,168 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-analysis-limits",
+  "slug": "analysis-limits",
+  "title": "When analysis is not enough",
+  "shortTitle": "Limits",
+  "order": 7,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Ambiguity, partial results, and warnings. Parts of the analysis are heuristic; recognizing those limits is part of using AALIE wisely.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 30,
+  "tags": ["partial", "warning", "while", "recursion", "ambiguous"],
+  "searchMeta": {
+    "aliases": ["limitations", "inconclusive"],
+    "keywords": ["heuristic", "trust"]
+  },
+  "prerequisites": {
+    "modules": [{ "id": "mod-user-guide-loop-invariant", "kind": "recommended" }],
+    "sections": []
+  },
+  "relatedModuleIds": ["mod-user-guide-loop-invariant"],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-limites",
+      "text": "Identify typical situations (complex WHILE, multiple variables, off-pattern recursion) where output may be partial or inconclusive."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-limites",
+      "slug": "when-not-to-trust-blindly",
+      "title": "When not to trust blindly",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-parciales",
+          "slug": "partial-results",
+          "title": "Partial results and ambiguity",
+          "order": 1,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m7-s1-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When analysis cannot close a case, you will see partiality or warnings. That is not arbitrary failure: it means available evidence is insufficient for a strong conclusion under the engine’s rules. Next steps are to narrow the example, simplify the program, or add manual reasoning. Check the outcome in the "
+                },
+                {
+                  "type": "link",
+                  "text": "analyzer",
+                  "target": { "kind": "external", "ref": "/analyzer" }
+                },
+                {
+                  "type": "text",
+                  "text": " alongside "
+                },
+                {
+                  "type": "link",
+                  "text": "examples",
+                  "target": { "kind": "external", "ref": "/examples" }
+                },
+                {
+                  "type": "text",
+                  "text": " to see patterns the engine closes versus those that stay open."
+                }
+              ]
+            },
+            {
+              "id": "blk-m7-s1-algo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Example: WHILE with two coupled variables",
+              "code": "mystery(a, b) BEGIN\n  WHILE a > 0 AND b > 0 DO BEGIN\n    IF a > b THEN BEGIN\n      a <- a - b;\n    END ELSE BEGIN\n      b <- b - a;\n    END\n  END\n  RETURN a + b;\nEND",
+              "caption": "Iteration count depends on how a and b relate; without a clear invariant or bound, the engine may report partial analysis. Reduce the case (fixed values) and reason by hand before demanding a single label."
+            },
+            {
+              "id": "blk-m7-s1-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "WHILE with conditions that hide dependencies on several variables."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Recursion that does not fit supported patterns or exceeds internal limits."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Multiple size parameters when only one is modeled explicitly."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-warnings",
+          "slug": "warnings",
+          "title": "Warnings and honest reading",
+          "order": 2,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m7-s2-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Warnings connect the UI to the analyzer contract: read them before citing a result on an exam or report. If something is "
+                },
+                {
+                  "type": "strong",
+                  "text": "inconclusive"
+                },
+                {
+                  "type": "text",
+                  "text": ", say so and explain what evidence would be needed to strengthen the conclusion."
+                }
+              ]
+            },
+            {
+              "id": "blk-m7-s2-ev",
+              "type": "evidenceBlock",
+              "variant": "warning",
+              "icon": "error_outline",
+              "title": "Content not available in this version",
+              "blocks": [
+                {
+                  "id": "blk-m7-s2-unavail",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "This block illustrates the pattern for not-yet-published material: error icon, clear message, and no active link. In the guide, broken internal links are surfaced the same way for accessibility."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

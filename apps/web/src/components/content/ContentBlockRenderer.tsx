@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 import type { ContentTargetMap } from "@/lib/content/types";
 
 import { InlineRichTextRenderer } from "./InlineRichTextRenderer";
+import { MaterialIcon } from "./MaterialIcon";
 
 type ResourceEntry = ImageResource | ReferenceResource;
 
@@ -34,6 +35,14 @@ const frameToneClassNames: Record<string, string> = {
   example: "border-emerald-500/30 bg-emerald-500/10",
   exerciseSolution: "border-slate-500/30 bg-slate-800/60",
   exercise: "border-slate-500/30 bg-slate-800/60",
+};
+
+const evidenceVariantBorder: Record<string, string> = {
+  concept: "border-l-violet-400/50",
+  example: "border-l-emerald-400/50",
+  systemEvidence: "border-l-cyan-400/50",
+  interpretation: "border-l-amber-400/50",
+  warning: "border-l-rose-400/50",
 };
 
 function resolveLink(
@@ -178,7 +187,7 @@ export function ContentBlockRenderer({
     }
     case "paragraph":
       return (
-        <p id={block.id} className="text-sm leading-7 text-slate-200">
+        <p id={block.id} className="text-[15px] leading-7 text-slate-200">
           <InlineRichTextRenderer
             content={block.content}
             targetMap={targetMap}
@@ -240,6 +249,32 @@ export function ContentBlockRenderer({
         </section>
       );
     }
+    case "evidenceBlock":
+      return (
+        <section
+          id={block.id}
+          className={`border-0 border-l-2 py-1 pl-4 ${
+            evidenceVariantBorder[block.variant] ?? "border-l-slate-500/50"
+          }`}
+        >
+          <div className="flex gap-3">
+            <span className="mt-0.5 shrink-0 text-slate-400" aria-hidden>
+              <MaterialIcon name={block.icon} fontSize="small" />
+            </span>
+            <div className="min-w-0 flex-1 space-y-2">
+              {block.title ? (
+                <div className="text-xs font-medium text-slate-500">{block.title}</div>
+              ) : null}
+              <NestedBlocks
+                blocks={block.blocks}
+                targetMap={targetMap}
+                termsById={termsById}
+                resourcesById={resourcesById}
+              />
+            </div>
+          </div>
+        </section>
+      );
     case "exercise": {
       const solutionHref = block.solutionRef
         ? resolveLink("block", block.solutionRef, targetMap)?.href
@@ -272,17 +307,17 @@ export function ContentBlockRenderer({
     case "algorithm":
     case "code":
       return (
-        <section id={block.id} className="overflow-hidden rounded-2xl border border-white/10 bg-[#101923]">
+        <section id={block.id} className="overflow-hidden border border-white/10 bg-[#0d1219]">
           {block.title ? (
-            <header className="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">
+            <header className="border-b border-white/10 px-3 py-2 text-xs font-medium text-slate-400">
               {block.title}
             </header>
           ) : null}
-          <pre className="overflow-x-auto px-4 py-4 text-sm leading-6 text-slate-200">
+          <pre className="overflow-x-auto px-3 py-3 text-[13px] leading-6 text-slate-200">
             <code>{block.code}</code>
           </pre>
           {block.caption ? (
-            <footer className="border-t border-white/10 px-4 py-3 text-xs text-slate-400">
+            <footer className="border-t border-white/10 px-3 py-2 text-xs text-slate-500">
               {block.caption}
             </footer>
           ) : null}

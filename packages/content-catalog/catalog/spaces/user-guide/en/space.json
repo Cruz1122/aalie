@@ -5,7 +5,7 @@
   "slug": "user-guide",
   "kind": "guide",
   "title": "User Guide",
-  "description": "Modular catalog for learning AALIE editor workflows, visible grammar, and the real analysis pipeline.",
+  "description": "Pedagogical guide to algorithm design and analysis using AALIE as evidence: measurement, cost, iteration, recursion, interpretation, invariants, and analysis limits.",
   "locale": "en",
   "version": "1.0.0",
   "status": "published",

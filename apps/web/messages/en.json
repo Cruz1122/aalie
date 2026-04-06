@@ -1559,6 +1559,7 @@
     "nextModule": "Next module",
     "completed": "Completed",
     "references": "References",
-    "viewSolution": "View solution"
+    "viewSolution": "View solution",
+    "brokenLinkTooltip": "Content not available"
   }
 }

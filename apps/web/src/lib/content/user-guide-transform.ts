@@ -45,6 +45,7 @@ function summarizeBlock(block: ContentBlock): string[] {
     case "proof":
     case "example":
     case "exerciseSolution":
+    case "evidenceBlock":
       return block.blocks.flatMap(summarizeBlock);
     case "exercise":
       return [flattenInlineText(block.prompt)];

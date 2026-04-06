@@ -64,6 +64,7 @@ Aplica a espacios, módulos, capítulos, secciones, bloques, referencias interna
 
 - `/user-guide` y `/course` descubiertos como espacios distintos con el mismo contrato.
 - módulo teórico con `theorem`, `proof`, `exercise` y `figure` sin lógica ad hoc.
+- bloques `evidenceBlock` con `variant` + `icon` en un conjunto cerrado (Material Icons vía renderer web) para marcas pedagógicas sin acoplar el JSON a la implementación del motor.
 
 ### Ejemplos no soportados
 
@@ -75,6 +76,11 @@ Aplica a espacios, módulos, capítulos, secciones, bloques, referencias interna
 
 - esta spec no ejecuta aún la migración de la UI viva a páginas genéricas de contenido;
 - la persistencia cross-device de progreso queda fuera de esta fase.
+
+## Contenido de la guía de usuario (`user-guide`)
+
+- el texto de la guía no debe documentar el pipeline interno del analizador (p. ej. `parse → snapshot → export`); el lenguaje pedagógico expone **escribir → validar → analizar → interpretar**;
+- enlaces internos rotos en el catálogo deben resolverse o mostrarse como no disponibles en UI, sin navegación silenciosa a un destino vacío.
 
 ## Archivos relacionados
 

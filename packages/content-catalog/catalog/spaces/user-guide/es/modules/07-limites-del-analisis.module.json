@@ -1,0 +1,283 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-analysis-limits",
+  "slug": "limites-del-analisis",
+  "title": "Cuándo el análisis no es suficiente",
+  "shortTitle": "Límites",
+  "order": 7,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Cómo leer advertencias y resultados parciales en el analizador: qué significa «evidencia insuficiente» y qué hacer en la práctica (simplificar, contrastar con ejemplos, documentar).",
+  "difficulty": "advanced",
+  "estimatedMinutes": 38,
+  "tags": ["advertencia", "parcial", "analizador"],
+  "searchMeta": {
+    "aliases": ["limitaciones", "no concluyente"],
+    "keywords": ["while", "recursion"]
+  },
+  "prerequisites": {
+    "modules": [{ "id": "mod-user-guide-loop-invariant", "kind": "recommended" }],
+    "sections": []
+  },
+  "relatedModuleIds": ["mod-user-guide-loop-invariant"],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-limites",
+      "text": "Reconocer en la interfaz cuándo un resultado no es concluyente y actuar en consecuencia (no presentarlo como demostración completa)."
+    }
+  ],
+  "terms": [
+    {
+      "termId": "term-evidencia",
+      "label": "evidencia del analizador",
+      "aliases": [],
+      "definition": "Información que el motor puede obtener de tu programa con sus reglas internas (conteos, patrones soportados, etc.). No incluye todo lo que tú sabes por matemáticas externas."
+    },
+    {
+      "termId": "term-conclusion-fuerte",
+      "label": "conclusión fuerte",
+      "aliases": [],
+      "definition": "Resultado que el sistema considera bien respaldado por la evidencia automática disponible. Si falta evidencia, el resultado puede ser parcial o ir acompañado de advertencias."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-ug-m7-warning-banner",
+        "kind": "figure",
+        "source": { "kind": "backendAsset", "assetId": "ug-capture-warning-banner-es" },
+        "alt": "Captura pendiente: franja o cuadro de advertencia en el analizador.",
+        "caption": "Pantalla a capturar: mensaje de advertencia o resultado no concluyente visible junto al análisis."
+      },
+      {
+        "resourceId": "img-ug-m7-partial-badge",
+        "kind": "figure",
+        "source": { "kind": "backendAsset", "assetId": "ug-capture-partial-result-es" },
+        "alt": "Captura pendiente: indicador de análisis parcial.",
+        "caption": "Pantalla a capturar: estado «parcial» o equivalente en la UI si existe."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-limites",
+      "slug": "cuando-no-confiar",
+      "title": "Cuándo no confiar ciegamente en la etiqueta",
+      "order": 1,
+      "summary": "Lectura de advertencias y pasos prácticos.",
+      "sections": [
+        {
+          "sectionId": "sec-parciales",
+          "slug": "resultados-parciales",
+          "title": "Resultados parciales: qué significan en la aplicación",
+          "order": 1,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 16,
+          "blocks": [
+            {
+              "id": "blk-m7-s1-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Si el motor no puede cerrar el caso, verás señales de parcialidad o advertencias. Eso quiere decir: la "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-evidencia",
+                  "text": "evidencia del analizador",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " no alcanza para una "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-conclusion-fuerte",
+                  "text": "conclusión fuerte",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " bajo sus reglas. No es un capricho: evita afirmar de más. Tu siguiente paso es acotar el ejemplo (n pequeño), simplificar el programa o completar la demostración a mano."
+                }
+              ]
+            },
+            {
+              "id": "blk-m7-s1-algo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Ejemplo: WHILE con dos variables acopladas",
+              "code": "misterio(a, b) BEGIN\n  WHILE a > 0 AND b > 0 DO BEGIN\n    IF a > b THEN BEGIN\n      a <- a - b;\n    END ELSE BEGIN\n      b <- b - a;\n    END\n  END\n  RETURN a + b;\nEND",
+              "caption": "El número de vueltas depende de la relación entre a y b; sin un patrón reconocible, el motor puede mostrar análisis incompleto. Prueba valores concretos en el analizador y cuenta a mano."
+            },
+            {
+              "id": "blk-m7-s1-fig1",
+              "type": "figure",
+              "resourceRef": "img-ug-m7-warning-banner"
+            },
+            {
+              "id": "blk-m7-s1-p-app",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Flujo recomendado: ejecuta el análisis en el "
+                },
+                {
+                  "type": "link",
+                  "text": "analizador",
+                  "target": { "kind": "external", "ref": "/analyzer" }
+                },
+                {
+                  "type": "text",
+                  "text": ", lee el mensaje completo, toma captura para tus apuntes, abre un caso parecido desde "
+                },
+                {
+                  "type": "link",
+                  "text": "ejemplos",
+                  "target": { "kind": "external", "ref": "/examples" }
+                },
+                {
+                  "type": "text",
+                  "text": " donde el motor sí cierre el análisis y compara qué cambia."
+                }
+              ]
+            },
+            {
+              "id": "blk-m7-s1-fig2",
+              "type": "figure",
+              "resourceRef": "img-ug-m7-partial-badge"
+            },
+            {
+              "id": "blk-m7-s1-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "WHILE cuya condición mezcla varias variables de forma que el número de iteraciones no sigue un patrón simple."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Recursiones que no encajan en patrones soportados o que superan límites internos del motor."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Varios parámetros de tamaño cuando el modelo solo refleja uno explícitamente."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-warnings",
+          "slug": "advertencias",
+          "title": "Advertencias y lectura honesta del panel",
+          "order": 2,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m7-s2-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Antes de citar un resultado en un examen o informe, desplázate por todos los avisos visibles: iconos, texto en color o secciones colapsadas. Si algo es "
+                },
+                {
+                  "type": "strong",
+                  "text": "no concluyente"
+                },
+                {
+                  "type": "text",
+                  "text": ", dilo con tus palabras y explica qué "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-evidencia",
+                  "text": "evidencia",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": " faltaría para obtener una "
+                },
+                {
+                  "type": "term",
+                  "termRef": "term-conclusion-fuerte",
+                  "text": "conclusión fuerte",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-m7-s2-checklist",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "¿Hay banda o caja de advertencia? Captúrala."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "¿El conteo o el árbol se cortan por límite de profundidad? Anótalo."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "¿Puedes reproducir el comportamiento con n más pequeño? Guárdalo como anexo en el trabajo."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m7-s2-note",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Si un enlace interno no está disponible, la interfaz lo muestra con aviso accesible (por ejemplo enlace tachado o mensaje de «contenido no disponible»): el destino no está publicado en tu versión; no es un fallo de red."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

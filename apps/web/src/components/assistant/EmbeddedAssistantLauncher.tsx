@@ -37,13 +37,10 @@ export function EmbeddedAssistantLauncher({
     [locale, surface],
   );
 
+  /** Sincroniza el contexto con el iframe siempre que el frame esté listo, aunque el panel esté cerrado.
+   * Así el chat recibe landing vs módulo, sección activa, etc., antes de que el usuario vuelva a abrirlo. */
   const syncContext = useCallback(() => {
-    if (
-      !frameReady ||
-      !isOpen ||
-      !iframeRef.current?.contentWindow ||
-      !targetOrigin
-    ) {
+    if (!frameReady || !iframeRef.current?.contentWindow || !targetOrigin) {
       return;
     }
 
@@ -51,13 +48,13 @@ export function EmbeddedAssistantLauncher({
       createAssistantContextSyncMessage(surface, assistantContext),
       targetOrigin,
     );
-  }, [assistantContext, frameReady, isOpen, surface, targetOrigin]);
+  }, [assistantContext, frameReady, surface, targetOrigin]);
 
   useEffect(() => {
-    if (frameReady && isOpen) {
+    if (frameReady) {
       syncContext();
     }
-  }, [frameReady, isOpen, syncContext]);
+  }, [frameReady, syncContext]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {

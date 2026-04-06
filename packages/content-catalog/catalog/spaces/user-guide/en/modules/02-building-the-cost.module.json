@@ -1,0 +1,131 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-building-cost",
+  "slug": "building-the-cost",
+  "title": "How cost is built",
+  "shortTitle": "Cost",
+  "order": 2,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Sum of per-line costs, control structures, and dependence on n. Step-by-step tracing and execution counts give evidence; asymptotic conclusions remain yours to justify.",
+  "difficulty": "basic",
+  "estimatedMinutes": 40,
+  "tags": ["T(n)", "sum", "trace", "executions"],
+  "searchMeta": {
+    "aliases": ["build cost", "sum of costs"],
+    "keywords": ["header", "body", "while", "for"]
+  },
+  "prerequisites": {
+    "modules": [{ "id": "mod-user-guide-measure", "kind": "required" }],
+    "sections": []
+  },
+  "relatedModuleIds": ["mod-user-guide-measure", "mod-user-guide-iterative"],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-suma-costos",
+      "text": "Build T(n) as a sum of contributions per line or block using how many times each part runs."
+    },
+    {
+      "objectiveId": "obj-no-basta-notacion",
+      "text": "Recognize that citing asymptotic notation without counting evidence is not a complete analysis."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-costo-total",
+      "slug": "from-lines-to-total",
+      "title": "From lines to a total",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-suma-y-control",
+          "slug": "sum-and-control",
+          "title": "Sum of costs and control structures",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "blocks": [
+            {
+              "id": "blk-m2-s1-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A standard approach assigns a cost to each line (or block) and multiplies by how many times it runs. Control structures decide repetitions: an "
+                },
+                { "type": "inlineCode", "text": "IF" },
+                {
+                  "type": "text",
+                  "text": " chooses branches; a loop repeats its body according to the guard."
+                }
+              ]
+            },
+            {
+              "id": "blk-m2-s1-key",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "lightbulb",
+              "title": "Saying O(n) is not enough—you must justify it",
+              "blocks": [
+                {
+                  "id": "blk-m2-s1-key-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Notation summarizes growth, but analysis explains where it comes from: which lines dominate, how often they run, and why. AALIE shows executions and counts so you can tie evidence to your argument; copying the final label without the count leaves the analysis incomplete."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-cabecera-cuerpo",
+          "slug": "header-and-body",
+          "title": "Loop header and body",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m2-s2-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In many pedagogical models the loop condition is evaluated one more time than the body runs: when the condition fails, the body no longer runs but the check still does. That convention explains small differences between how often you see the header and the body in a trace. Use it to align manual counting with what the tool shows."
+                }
+              ]
+            },
+            {
+              "id": "blk-m2-s2-ev",
+              "type": "evidenceBlock",
+              "variant": "systemEvidence",
+              "icon": "analytics",
+              "title": "Execution evidence",
+              "blocks": [
+                {
+                  "id": "blk-m2-s2-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Step-by-step tracing shows the order lines and conditions are visited. Per-line execution counts summarize how much each part contributed. Together they let you verify hypotheses (e.g. body runs n times and exit check runs once more)."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

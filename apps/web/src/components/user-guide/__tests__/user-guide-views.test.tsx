@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import React from "react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,7 +10,6 @@ import {
   getUserGuideModuleFixture,
 } from "@/test/user-guide-fixtures";
 
-const pushMock = vi.fn();
 const startNavigationMock = vi.fn();
 const finishNavigationMock = vi.fn();
 const runAnalysisMock = vi.fn();
@@ -37,6 +36,7 @@ const translations: Record<string, string> = {
   "contentUi.completed": "Completado",
   "contentUi.references": "Referencias",
   "contentUi.viewSolution": "Ver solución",
+  "contentUi.brokenLinkTooltip": "Contenido no disponible",
 };
 
 vi.mock("next-intl", () => ({
@@ -46,7 +46,7 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("@/i18n/navigation", () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: vi.fn() }),
   Link: ({
     href,
     children,
@@ -118,7 +118,6 @@ vi.mock("@/components/assistant/EmbeddedAssistantLauncher", () => ({
 
 describe("User guide views", () => {
   beforeEach(() => {
-    pushMock.mockReset();
     startNavigationMock.mockReset();
     finishNavigationMock.mockReset();
     runAnalysisMock.mockReset();
@@ -128,50 +127,48 @@ describe("User guide views", () => {
 
     useContentProgressMock.mockReturnValue({
       moduleProgressById: {
-        "mod-introduccion": 50,
-        "mod-uso-del-editor": 33,
-        "mod-sintaxis-de-la-gramatica": 66,
-        "mod-analisis-de-complejidad": 0,
-        "mod-ejemplos-rapidos": 0,
-        "mod-solucion-de-problemas": 20,
+        "mod-user-guide-measure": 40,
+        "mod-user-guide-building-cost": 50,
+        "mod-user-guide-iterative": 33,
+        "mod-user-guide-recursive": 0,
+        "mod-user-guide-interpreting": 0,
+        "mod-user-guide-loop-invariant": 0,
+        "mod-user-guide-analysis-limits": 20,
       },
-      spaceProgress: 28,
+      spaceProgress: 20,
     });
 
     useSectionCompletionTrackingMock.mockReturnValue({
-      activeSectionId: "sec-procedimientos-y-call",
-      completedSectionIds: [
-        "sec-procedimientos-y-call",
-        "sec-variables-y-asignacion",
-      ],
+      activeSectionId: "sec-lineal-y-log",
+      completedSectionIds: ["sec-lineal-y-log", "sec-anidados"],
       percentage: 33,
     });
   });
 
-  it("renders six guide modules from catalog metadata and searches across the full guide", () => {
+  it("renders seven guide modules from catalog metadata and navigates from the grid", () => {
     render(<UserGuideLandingView data={getUserGuideLandingFixture("es")} />);
 
     expect(
       screen.getAllByRole("link", { name: "Entrar al módulo" }),
-    ).toHaveLength(6);
-    expect(screen.getAllByRole("progressbar")).toHaveLength(6);
-    expect(screen.getByText("Sintaxis de la gramática")).toBeInTheDocument();
+    ).toHaveLength(7);
+    expect(screen.getAllByRole("progressbar")).toHaveLength(7);
+    expect(screen.getByText("Algoritmos iterativos")).toBeInTheDocument();
     expect(finishNavigationMock).toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText("buscar guía"), {
-      target: { value: "semicolon" },
+    const limitsArticle = screen
+      .getByRole("heading", {
+        name: /Cuándo el análisis no es suficiente/i,
+      })
+      .closest("article");
+    expect(limitsArticle).toBeTruthy();
+    const enterLink = within(limitsArticle as HTMLElement).getByRole("link", {
+      name: "Entrar al módulo",
     });
+    expect(enterLink).toHaveAttribute("href", "/user-guide/limites-del-analisis");
 
-    expect(
-      screen.getByRole("button", { name: /missing semicolon/i }),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /missing semicolon/i }));
+    fireEvent.click(enterLink);
 
     expect(startNavigationMock).toHaveBeenCalled();
-    expect(pushMock).toHaveBeenCalledWith(
-      "/user-guide/solucion-de-problemas#missing-semicolon",
-    );
 
     const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(
       -1,
@@ -184,41 +181,38 @@ describe("User guide views", () => {
     );
   });
 
-  it("renders a full module page with toc, blocks, navigation and module-local search", () => {
+  it("renders a full module page with sections, blocks and prev/next navigation", () => {
     render(
       <UserGuideModuleView
-        data={getUserGuideModuleFixture("sintaxis-de-la-gramatica", "es")}
+        data={getUserGuideModuleFixture("algoritmos-iterativos", "es")}
       />,
     );
 
     expect(
-      screen.queryByText("Sintaxis de la gramática"),
+      screen.queryByText("Algoritmos iterativos"),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Tabla de contenidos")).toBeInTheDocument();
-    expect(screen.getAllByText("Procedimientos y CALL").length).toBeGreaterThan(
-      0,
-    );
+    expect(screen.queryByText("Tabla de contenidos")).not.toBeInTheDocument();
     expect(
-      screen.getAllByText("Variables y asignación").length,
+      screen.queryByLabelText("buscar en módulo"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText(/Patrones de bucles y la aplicación/i).length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText(/CALL procesar\(A, n\);/)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Módulo anterior/ }),
-    ).toHaveAttribute("href", "/user-guide/uso-del-editor");
+      screen.getAllByText(/Recorridos lineales y pasos/i).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText(/Patrones frecuentes/)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Siguiente módulo/ }),
-    ).toHaveAttribute("href", "/user-guide/analisis-de-complejidad");
-
-    fireEvent.change(screen.getByLabelText("buscar en módulo"), {
-      target: { value: "CALL" },
-    });
-
-    expect(
-      screen.getByRole("button", { name: /Procedimientos y CALL/i }),
+      screen.getByRole("heading", {
+        name: /WHILE: qué es en pseudocódigo y qué hace el analizador/i,
+      }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /missing semicolon/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: /Módulo anterior/ }),
+    ).toHaveAttribute("href", "/user-guide/como-se-construye-el-costo");
+    expect(
+      screen.getByRole("link", { name: /Siguiente módulo/ }),
+    ).toHaveAttribute("href", "/user-guide/algoritmos-recursivos");
 
     const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(
       -1,
@@ -232,10 +226,10 @@ describe("User guide views", () => {
       "module-page",
     );
     expect(launcherProps.assistantContext.guideSection?.id).toBe(
-      "sec-procedimientos-y-call",
+      "sec-lineal-y-log",
     );
     expect(launcherProps.assistantContext.guideSection?.title).toBe(
-      "Procedimientos y CALL",
+      "Recorridos lineales y pasos que «saltan» de tamaño",
     );
   });
 });

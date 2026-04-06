@@ -1,7 +1,9 @@
 "use client";
 
 import type { RichText } from "@aa/content-catalog";
+import { useTranslations } from "next-intl";
 
+import { MaterialIcon } from "@/components/content/MaterialIcon";
 import Formula from "@/components/Formula";
 import { Link } from "@/i18n/navigation";
 import type { ContentTargetMap } from "@/lib/content/types";
@@ -65,6 +67,8 @@ export function InlineRichTextRenderer({
   termsById = {},
   className = "",
 }: InlineRichTextRendererProps) {
+  const t = useTranslations("contentUi");
+
   return (
     <span className={className}>
       {content.map((span, index) => {
@@ -109,7 +113,31 @@ export function InlineRichTextRenderer({
                 ? span.target.ref
                 : targetMap[`${span.target.kind}:${span.target.ref}`]?.href;
 
-            return href ? renderLink(span.text, href, key) : <span key={key}>{span.text}</span>;
+            if (href) {
+              return renderLink(span.text, href, key);
+            }
+
+            if (span.target.kind === "external") {
+              return <span key={key}>{span.text}</span>;
+            }
+
+            const unavailable = t("brokenLinkTooltip");
+            return (
+              <span
+                key={key}
+                className="inline-flex max-w-full items-center gap-1 text-slate-500 pointer-events-none"
+                aria-disabled="true"
+                title={unavailable}
+              >
+                <MaterialIcon
+                  name="error_outline"
+                  fontSize="small"
+                  className="shrink-0 text-slate-500"
+                  aria-hidden
+                />
+                <span className="min-w-0">{span.text}</span>
+              </span>
+            );
           }
           case "term": {
             const term = termsById[span.termRef];

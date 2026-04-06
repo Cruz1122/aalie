@@ -6,56 +6,60 @@ import { getUserGuideLandingFixture } from "@/test/user-guide-fixtures";
 describe("searchContentIndex", () => {
   const landing = getUserGuideLandingFixture("es");
 
-  it("finds troubleshooting content by English parser term", () => {
+  it("finds the analysis limits module by partial keyword", () => {
     const results = searchContentIndex(
       landing.searchIndex,
       landing.modules,
-      "semicolon",
+      "parcial",
     );
 
-    expect(results[0]?.entry.title).toBe("missing semicolon");
-    expect(results[0]?.entry.route).toBe(
-      "/user-guide/solucion-de-problemas#missing-semicolon",
+    expect(results[0]?.entry.title.toLowerCase()).toContain("parcial");
+    expect(results[0]?.entry.route).toMatch(
+      /\/user-guide\/limites-del-analisis#/,
     );
   });
 
-  it("prioritizes grammar sections for control-flow syntax", () => {
-    const results = searchContentIndex(landing.searchIndex, landing.modules, "FOR");
+  it("finds the minimal syntax section by distinctive phrase", () => {
+    const results = searchContentIndex(
+      landing.searchIndex,
+      landing.modules,
+      "sintaxis mínima",
+    );
 
-    expect(results[0]?.entry.title).toBe("Estructuras de control");
-    expect(results[0]?.moduleTitle).toBe("Sintaxis de la gramática");
+    expect(results[0]?.entry.title).toBe("Sintaxis mínima para seguir la guía");
+    expect(results[0]?.moduleTitle).toBe("Cómo se mide un algoritmo");
   });
 
-  it("resolves CALL to the syntax module", () => {
+  it("resolves CALL to the first module syntax section", () => {
     const results = searchContentIndex(landing.searchIndex, landing.modules, "CALL");
 
-    expect(results[0]?.entry.title).toBe("Procedimientos y CALL");
+    expect(results[0]?.entry.title).toBe("Sintaxis mínima para seguir la guía");
     expect(results[0]?.entry.route).toBe(
-      "/user-guide/sintaxis-de-la-gramatica#procedimientos-y-call",
+      "/user-guide/como-se-mide-un-algoritmo#sintaxis-minima",
     );
   });
 
-  it("finds analysis workflow entries from a natural query", () => {
+  it("finds recursive module from a natural query", () => {
     const results = searchContentIndex(
       landing.searchIndex,
       landing.modules,
-      "analizar complejidad",
+      "recurrencia",
     );
 
-    expect(results[0]?.entry.title).toBe("Flujo desde el editor");
-    expect(results[0]?.moduleTitle).toBe("Análisis de complejidad");
+    expect(results[0]?.entry.title.toLowerCase()).toContain("recurrencia");
+    expect(results[0]?.moduleTitle).toBe("Algoritmos recursivos");
   });
 
-  it("keeps troubleshooting results discoverable for exact parser errors", () => {
+  it("keeps troubleshooting-style sections discoverable for warnings", () => {
     const results = searchContentIndex(
       landing.searchIndex,
       landing.modules,
-      "unexpected token",
+      "advertencias",
     );
 
-    expect(results[0]?.entry.title).toBe("unexpected token");
-    expect(results[0]?.entry.route).toBe(
-      "/user-guide/solucion-de-problemas#unexpected-token",
+    expect(results[0]?.entry.title.toLowerCase()).toContain("advertencias");
+    expect(results[0]?.entry.route).toMatch(
+      /\/user-guide\/limites-del-analisis#/,
     );
   });
 });

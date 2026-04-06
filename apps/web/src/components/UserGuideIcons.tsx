@@ -1,12 +1,13 @@
 "use client";
 
 const ICON_MAP: Record<string, string> = {
-  "mod-user-guide-introduccion": "info",
-  "mod-user-guide-editor": "edit_square",
-  "mod-user-guide-grammar": "functions",
-  "mod-user-guide-analysis": "analytics",
-  "mod-user-guide-examples": "lightbulb",
-  "mod-user-guide-troubleshooting": "bug_report",
+  "mod-user-guide-measure": "straighten",
+  "mod-user-guide-building-cost": "functions",
+  "mod-user-guide-iterative": "repeat",
+  "mod-user-guide-recursive": "account_tree",
+  "mod-user-guide-interpreting": "analytics",
+  "mod-user-guide-loop-invariant": "rule",
+  "mod-user-guide-analysis-limits": "warning",
 };
 
 interface UserGuideIconProps {

@@ -1580,6 +1580,7 @@
     "nextModule": "Siguiente módulo",
     "completed": "Completado",
     "references": "Referencias",
-    "viewSolution": "Ver solución"
+    "viewSolution": "Ver solución",
+    "brokenLinkTooltip": "Contenido no disponible"
   }
 }

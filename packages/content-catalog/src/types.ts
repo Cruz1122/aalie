@@ -201,6 +201,29 @@ export interface ExampleBlock extends BaseBlock {
   blocks: ContentBlock[];
 }
 
+export type EvidenceBlockVariant =
+  | "concept"
+  | "example"
+  | "systemEvidence"
+  | "interpretation"
+  | "warning";
+
+export type PedagogyIconName =
+  | "school"
+  | "science"
+  | "analytics"
+  | "lightbulb"
+  | "warning"
+  | "error_outline";
+
+export interface EvidenceBlock extends BaseBlock {
+  type: "evidenceBlock";
+  variant: EvidenceBlockVariant;
+  icon: PedagogyIconName;
+  title?: string;
+  blocks: ContentBlock[];
+}
+
 export interface ExerciseBlock extends BaseBlock {
   type: "exercise";
   title?: string;
@@ -280,6 +303,7 @@ export type ContentBlock =
   | NoteBlock
   | FramedBlock
   | ExampleBlock
+  | EvidenceBlock
   | ExerciseBlock
   | ExerciseSolutionBlock
   | CodeLikeBlock

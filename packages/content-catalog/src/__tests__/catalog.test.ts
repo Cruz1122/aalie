@@ -26,8 +26,8 @@ test("discoverSpaces loads published spaces and modules from filesystem", () => 
     "user-guide:en",
     "user-guide:es",
   ]);
-  assert.equal(getSpaceBundle("user-guide", "es").modules.length, 6);
-  assert.equal(getSpaceBundle("user-guide", "en").modules.length, 6);
+  assert.equal(getSpaceBundle("user-guide", "es").modules.length, 7);
+  assert.equal(getSpaceBundle("user-guide", "en").modules.length, 7);
 });
 
 test("routes are derived from space and module slugs without manual mapping", () => {
@@ -42,7 +42,7 @@ test("routes are derived from space and module slugs without manual mapping", ()
   assert.equal(deriveSpaceRoute(guideBundle.space), "/user-guide");
   assert.equal(
     deriveModuleRoute(guideBundle.space, guideBundle.modules[0].module),
-    "/user-guide/introduccion",
+    "/user-guide/como-se-mide-un-algoritmo",
   );
 });
 
@@ -65,35 +65,35 @@ test("resolveTarget finds internal sections, terms and blocks by neutral target 
 
   const section = resolveTarget(guideBundle, {
     kind: "section",
-    ref: "sec-variables-y-asignacion",
+    ref: "sec-operaciones-y-n",
   });
   const term = resolveTarget(guideBundle, {
     kind: "term",
-    ref: "term-monaco-editor",
+    ref: "term-tamano-entrada",
   });
   const block = resolveTarget(guideBundle, {
     kind: "block",
-    ref: "blk-grammar-assign-note-p1",
+    ref: "blk-m1-s1-intro",
   });
 
-  assert.equal(section?.title, "Variables y asignación");
-  assert.equal(term?.title, "Monaco Editor");
+  assert.equal(section?.title, "Operaciones y crecimiento con n");
+  assert.equal(term?.title, "tamaño de entrada");
   assert.equal(block?.kind, "block");
 });
 
 test("space helpers resolve bundles, module slugs, and aggregate search across modules", () => {
   const guideBundle = getSpaceBundle("user-guide", "en");
-  const module = getModuleBySlug(guideBundle, "grammar-syntax");
+  const module = getModuleBySlug(guideBundle, "measuring-an-algorithm");
   const entries = buildSpaceSearchIndex(guideBundle, {
-    moduleId: "mod-user-guide-grammar",
+    moduleId: "mod-user-guide-measure",
   });
 
-  assert.equal(module?.module.moduleId, "mod-user-guide-grammar");
+  assert.equal(module?.module.moduleId, "mod-user-guide-measure");
   assert.ok(
-    entries.some((entry) => entry.sectionId === "sec-procedimientos-y-call"),
+    entries.some((entry) => entry.sectionId === "sec-que-es-eficiencia"),
   );
   assert.ok(
-    entries.every((entry) => entry.moduleId === "mod-user-guide-grammar"),
+    entries.every((entry) => entry.moduleId === "mod-user-guide-measure"),
   );
 });
 

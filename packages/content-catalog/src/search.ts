@@ -73,6 +73,13 @@ function collectBlockSearchText(block: ContentBlock): string[] {
         "title" in block && typeof block.title === "string" ? block.title : "",
         ...block.blocks.flatMap(collectBlockSearchText),
       ];
+    case "evidenceBlock":
+      return [
+        block.variant,
+        block.icon,
+        block.title ?? "",
+        ...block.blocks.flatMap(collectBlockSearchText),
+      ];
     case "exercise":
       return [block.title ?? "", flattenInlineText(block.prompt)];
     case "algorithm":

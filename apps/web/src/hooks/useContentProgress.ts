@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import {
   computeModuleProgress,
@@ -14,37 +21,91 @@ import type {
   ContentSectionSummary,
 } from "@/lib/content/types";
 
+interface ProgressSnapshot {
+  moduleProgressById: Record<string, number>;
+  spaceProgress: number;
+}
+
+function buildProgressSnapshot(
+  spaceId: string,
+  modules: ContentModuleSummary[],
+): ProgressSnapshot {
+  const moduleProgressById = Object.fromEntries(
+    modules.map((module) => [
+      module.moduleId,
+      computeModuleProgress(
+        module,
+        getCompletedSectionIds(spaceId, module.moduleId),
+      ),
+    ]),
+  ) as Record<string, number>;
+
+  return {
+    moduleProgressById,
+    spaceProgress: computeSpaceProgress(spaceId, modules),
+  };
+}
+
+function buildEmptyProgressSnapshot(modules: ContentModuleSummary[]): ProgressSnapshot {
+  const moduleProgressById = Object.fromEntries(
+    modules.map((module) => [module.moduleId, 0]),
+  ) as Record<string, number>;
+  return { moduleProgressById, spaceProgress: 0 };
+}
+
+function snapshotsEqual(a: ProgressSnapshot, b: ProgressSnapshot): boolean {
+  if (a.spaceProgress !== b.spaceProgress) {
+    return false;
+  }
+  const aKeys = Object.keys(a.moduleProgressById);
+  const bKeys = Object.keys(b.moduleProgressById);
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+  for (const key of aKeys) {
+    if (a.moduleProgressById[key] !== b.moduleProgressById[key]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function useContentProgress(
   spaceId: string,
   modules: ContentModuleSummary[],
 ) {
-  const [version, setVersion] = useState(0);
+  const clientSnapshotRef = useRef<ProgressSnapshot | null>(null);
+  const serverSnapshotRef = useRef<ProgressSnapshot | null>(null);
 
-  useEffect(
-    () =>
-      subscribeToProgressChanges(() => {
-        setVersion((current) => current + 1);
-      }),
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => subscribeToProgressChanges(onStoreChange),
     [],
   );
 
-  const moduleProgressById = useMemo(
-    () =>
-      Object.fromEntries(
-        modules.map((module) => [
-          module.moduleId,
-          computeModuleProgress(
-            module,
-            getCompletedSectionIds(spaceId, module.moduleId),
-          ),
-        ]),
-      ) as Record<string, number>,
-    [modules, spaceId, version],
-  );
+  const getSnapshot = useCallback(() => {
+    const next = buildProgressSnapshot(spaceId, modules);
+    const prev = clientSnapshotRef.current;
+    if (prev && snapshotsEqual(prev, next)) {
+      return prev;
+    }
+    clientSnapshotRef.current = next;
+    return next;
+  }, [spaceId, modules]);
 
-  const spaceProgress = useMemo(
-    () => computeSpaceProgress(spaceId, modules),
-    [modules, spaceId, version],
+  const getServerSnapshot = useCallback(() => {
+    const next = buildEmptyProgressSnapshot(modules);
+    const prev = serverSnapshotRef.current;
+    if (prev && snapshotsEqual(prev, next)) {
+      return prev;
+    }
+    serverSnapshotRef.current = next;
+    return next;
+  }, [modules]);
+
+  const { moduleProgressById, spaceProgress } = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
   );
 
   return {

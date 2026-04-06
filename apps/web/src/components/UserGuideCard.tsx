@@ -25,23 +25,22 @@ export function UserGuideCard({ module, progress }: UserGuideCardProps) {
         </span>
       </div>
 
-      <header className="documentation-card-content gap-3 text-center">
-        <UserGuideIcon
-          moduleId={module.moduleId}
-          size={24}
-          className="mx-auto"
-        />
-
-        <div className="space-y-2">
-          <h2 className="text-base font-bold leading-tight text-white sm:text-lg">
+      <header className="documentation-card-content gap-3">
+        <div className="text-center">
+          <UserGuideIcon
+            moduleId={module.moduleId}
+            size={24}
+            className="mx-auto"
+          />
+          <h2 className="mt-3 text-base font-bold leading-tight text-white sm:text-lg">
             {module.title}
           </h2>
-          {module.summary ? (
-            <p className="line-clamp-4 max-w-[28ch] text-sm leading-5 text-slate-300">
-              {module.summary}
-            </p>
-          ) : null}
         </div>
+        {module.summary ? (
+          <p className="line-clamp-4 w-full self-stretch text-justify text-sm leading-relaxed text-slate-300">
+            {module.summary}
+          </p>
+        ) : null}
       </header>
 
       <div className="mt-4 space-y-2.5">

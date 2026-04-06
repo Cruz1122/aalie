@@ -43,6 +43,7 @@ export function walkBlocks(blocks: ContentBlock[]): ContentBlock[] {
       case "proof":
       case "example":
       case "exerciseSolution":
+      case "evidenceBlock":
         return [block, ...walkBlocks(block.blocks)];
       default:
         return [block];

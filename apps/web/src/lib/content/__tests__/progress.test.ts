@@ -11,26 +11,26 @@ import type { ContentModuleSummary } from "@/lib/content/types";
 
 const guideModules: ContentModuleSummary[] = [
   {
-    moduleId: "mod-introduccion",
-    slug: "introduccion",
-    title: "Introducción",
+    moduleId: "mod-user-guide-measure",
+    slug: "como-se-mide-un-algoritmo",
+    title: "Cómo se mide un algoritmo",
     summary: "Resumen",
     tags: [],
     order: 1,
-    route: "/user-guide/introduccion",
-    totalSections: 2,
-    totalTrackableSections: 2,
+    route: "/user-guide/como-se-mide-un-algoritmo",
+    totalSections: 3,
+    totalTrackableSections: 3,
   },
   {
-    moduleId: "mod-sintaxis-de-la-gramatica",
-    slug: "sintaxis-de-la-gramatica",
-    title: "Sintaxis",
+    moduleId: "mod-user-guide-building-cost",
+    slug: "como-se-construye-el-costo",
+    title: "Cómo se construye el costo",
     summary: "Resumen",
     tags: [],
     order: 2,
-    route: "/user-guide/sintaxis-de-la-gramatica",
-    totalSections: 6,
-    totalTrackableSections: 6,
+    route: "/user-guide/como-se-construye-el-costo",
+    totalSections: 2,
+    totalTrackableSections: 2,
   },
 ];
 
@@ -40,79 +40,55 @@ describe("content progress", () => {
   });
 
   it("stores completed sections by stable spaceId/moduleId/sectionId keys", () => {
-    markSectionCompleted("user-guide", "mod-introduccion", "sec-panorama-general");
-    markSectionCompleted("user-guide", "mod-introduccion", "sec-panorama-general");
-    markSectionCompleted(
-      "user-guide",
-      "mod-introduccion",
-      "sec-navegacion-y-siguientes-pasos",
-    );
+    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-que-es-eficiencia");
+    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-que-es-eficiencia");
+    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-operaciones-y-n");
 
     expect(
-      Array.from(
-        getCompletedSectionIds("user-guide", "mod-introduccion"),
-      ),
-    ).toEqual([
-      "sec-navegacion-y-siguientes-pasos",
-      "sec-panorama-general",
-    ]);
+      Array.from(getCompletedSectionIds("user-guide", "mod-user-guide-measure")),
+    ).toEqual(["sec-operaciones-y-n", "sec-que-es-eficiencia"]);
 
     expect(window.localStorage.getItem(CONTENT_PROGRESS_STORAGE_KEY)).toContain(
-      "mod-introduccion",
+      "mod-user-guide-measure",
     );
   });
 
   it("computes module progress from completed trackable sections", () => {
-    markSectionCompleted("user-guide", "mod-sintaxis-de-la-gramatica", "sec-call");
-    markSectionCompleted(
-      "user-guide",
-      "mod-sintaxis-de-la-gramatica",
-      "sec-control",
-    );
-    markSectionCompleted(
-      "user-guide",
-      "mod-sintaxis-de-la-gramatica",
-      "sec-operadores",
-    );
+    markSectionCompleted("user-guide", "mod-user-guide-building-cost", "sec-suma-y-control");
 
     const progress = computeModuleProgress(
       guideModules[1],
-      getCompletedSectionIds("user-guide", "mod-sintaxis-de-la-gramatica"),
+      getCompletedSectionIds("user-guide", "mod-user-guide-building-cost"),
     );
 
     expect(progress).toBe(50);
   });
 
   it("computes space progress across all published guide modules", () => {
-    markSectionCompleted("user-guide", "mod-introduccion", "sec-panorama-general");
-    markSectionCompleted("user-guide", "mod-introduccion", "sec-navegacion");
-    markSectionCompleted("user-guide", "mod-sintaxis-de-la-gramatica", "sec-call");
-    markSectionCompleted(
-      "user-guide",
-      "mod-sintaxis-de-la-gramatica",
-      "sec-asignacion",
-    );
+    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-que-es-eficiencia");
+    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-operaciones-y-n");
+    markSectionCompleted("user-guide", "mod-user-guide-building-cost", "sec-suma-y-control");
 
-    expect(computeSpaceProgress("user-guide", guideModules)).toBe(50);
+    expect(computeSpaceProgress("user-guide", guideModules)).toBe(60);
   });
 
   it("preserves progress across locales because locale is not part of the key", () => {
-    markSectionCompleted("user-guide", "mod-introduccion", "sec-panorama-general");
+    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-que-es-eficiencia");
 
     const spanishProgress = computeModuleProgress(
       guideModules[0],
-      getCompletedSectionIds("user-guide", "mod-introduccion"),
+      getCompletedSectionIds("user-guide", "mod-user-guide-measure"),
     );
     const englishProgress = computeModuleProgress(
       {
         ...guideModules[0],
-        title: "Introduction",
-        route: "/user-guide/introduction",
+        title: "How an algorithm is measured",
+        route: "/user-guide/measuring-an-algorithm",
       },
-      getCompletedSectionIds("user-guide", "mod-introduccion"),
+      getCompletedSectionIds("user-guide", "mod-user-guide-measure"),
     );
 
-    expect(spanishProgress).toBe(50);
-    expect(englishProgress).toBe(50);
+    expect(spanishProgress).toBe(33);
+    expect(englishProgress).toBe(33);
   });
 });

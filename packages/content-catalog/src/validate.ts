@@ -93,6 +93,7 @@ function collectBlockReferenceTokens(block: ContentBlock): ReferenceToken[] {
     case "proof":
     case "example":
     case "exerciseSolution":
+    case "evidenceBlock":
       return block.blocks.flatMap(collectBlockReferenceTokens);
     case "exercise":
       return [
@@ -162,6 +163,7 @@ function validateBlockSemantics(
     case "proof":
     case "example":
     case "exerciseSolution":
+    case "evidenceBlock":
       for (const nestedBlock of block.blocks) {
         validateBlockSemantics(nestedBlock, issues, filePath);
       }

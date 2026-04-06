@@ -30,6 +30,7 @@ Aplica a `block.schema.json`, a los módulos del catálogo y a cualquier UI futu
 - `theorem`
 - `proof`
 - `example`
+- `evidenceBlock`
 - `exercise`
 - `exerciseSolution`
 - `algorithm`
@@ -54,7 +55,7 @@ Aplica a `block.schema.json`, a los módulos del catálogo y a cualquier UI futu
 
 ### Reglas de nesting
 
-- pueden anidar `blocks[]`: `note`, `callout`, `definition`, `theorem`, `proof`, `example`, `exerciseSolution`;
+- pueden anidar `blocks[]`: `note`, `callout`, `definition`, `theorem`, `proof`, `example`, `evidenceBlock`, `exerciseSolution`;
 - no anidan `blocks[]`: `paragraph`, `quote`, `algorithm`, `code`, `table`, `image`, `figure`, `equationBlock`, `cheatsheet`, `referenceList`, `buttonRow`, `divider`;
 - `list` puede anidar `children[]` dentro de cada item.
 
@@ -77,6 +78,7 @@ Aplica a `block.schema.json`, a los módulos del catálogo y a cualquier UI futu
 - válido: `note` con `variant`, `title` y `blocks[]`.
 - válido: `table` con `columns[]` y `rows[].cells[]`.
 - válido: `example` que contiene `algorithm` y `paragraph`.
+- válido: `evidenceBlock` con `variant`, `icon` (conjunto cerrado) y `blocks[]` anidados.
 - no válido: `image` sin `resourceRef`.
 - no válido: `exercise` con `solutionRef` a un bloque inexistente.
 

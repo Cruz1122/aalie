@@ -5,7 +5,7 @@
   "slug": "user-guide",
   "kind": "guide",
   "title": "Guía de usuario",
-  "description": "Catálogo modular para aprender el editor, la gramática visible y el flujo real de análisis de AALIE.",
+  "description": "Guía pedagógica de Análisis y Diseño de Algoritmos usando AALIE como evidencia: medición, costo, iteración, recursión, interpretación, invariantes y límites del análisis.",
   "locale": "es",
   "version": "1.0.0",
   "status": "published",
