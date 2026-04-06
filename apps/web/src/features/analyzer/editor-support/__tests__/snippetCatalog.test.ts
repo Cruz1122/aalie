@@ -26,7 +26,9 @@ describe("snippet catalog", () => {
       "template-memoization-simple",
     );
     expect(resolveSnippetAlias("bubble", "en")?.id).toBe("catalog-bubble-sort");
-    expect(resolveSnippetAlias("burbuja", "es")?.id).toBe("catalog-bubble-sort");
+    expect(resolveSnippetAlias("burbuja", "es")?.id).toBe(
+      "catalog-bubble-sort",
+    );
   });
 
   it("returns ordered sections without empty visible categories", () => {
@@ -73,18 +75,19 @@ describe("snippet catalog", () => {
       "template-memoization-simple",
     ]);
     expect(templatesSection?.snippets).toHaveLength(109);
-    expect(templatesSection?.snippets.slice(0, 9).map((snippet) => snippet.id))
-      .toEqual([
-        "template-binary-search",
-        "template-factorial",
-        "template-fibonacci",
-        "template-merge-sort",
-        "template-quicksort",
-        "template-linear-traversal",
-        "template-array-sum",
-        "template-memoization-simple",
-        "template-dp-table",
-      ]);
+    expect(
+      templatesSection?.snippets.slice(0, 9).map((snippet) => snippet.id),
+    ).toEqual([
+      "template-binary-search",
+      "template-factorial",
+      "template-fibonacci",
+      "template-merge-sort",
+      "template-quicksort",
+      "template-linear-traversal",
+      "template-array-sum",
+      "template-memoization-simple",
+      "template-dp-table",
+    ]);
     expect(
       templatesSection?.snippets.some((snippet) =>
         snippet.id.startsWith("catalog-"),
@@ -96,7 +99,9 @@ describe("snippet catalog", () => {
     const sections = getCategorizedSnippets().filter(
       (section) => section.category !== "recommended",
     );
-    expect(sections.every((section) => section.snippets.length !== 1)).toBe(true);
+    expect(sections.every((section) => section.snippets.length !== 1)).toBe(
+      true,
+    );
   });
 
   it("keeps the completion catalog expanded with all example algorithms", () => {

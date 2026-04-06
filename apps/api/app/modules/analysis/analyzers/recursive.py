@@ -2340,7 +2340,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Señal fuerte de quicksort: existe una asignación a pivote/pivot desde un acceso a array (A[...])
         # y existe al menos un bucle (FOR/WHILE) típico de partición.
         has_partition_loop = False
-        has_pivot_from_array = False
+        has_pivot_assignment = False
         for n in _walk(body):
             nt = str(n.get("type", "")).lower()
             if nt in {"for", "while", "repeat"}:
@@ -2352,14 +2352,16 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     isinstance(tgt, dict)
                     and str(tgt.get("type", "")).lower() == "identifier"
                     and str(tgt.get("name") or "").lower() in {"pivot", "pivote"}
-                    and isinstance(val, dict)
-                    and str(val.get("type", "")).lower() in {"index", "arrayaccess"}
                 ):
-                    has_pivot_from_array = True
+                    if isinstance(val, dict):
+                        val_type = str(val.get("type", "")).lower()
+                        # Aceptar pivote tomado desde A[...] o desde un límite (izq/left).
+                        if val_type in {"index", "arrayaccess", "identifier", "number", "literal"}:
+                            has_pivot_assignment = True
 
         # Evitar falsos positivos como búsqueda binaria (que también tiene dos llamadas en ramas),
-        # pero no tiene bucle de partición ni asigna pivote desde A[...].
-        if not (has_partition_loop and has_pivot_from_array):
+        # pero no tiene bucle de partición ni asignación de pivote.
+        if not (has_partition_loop and has_pivot_assignment):
             return False
 
         params = proc_def.get("params") or []

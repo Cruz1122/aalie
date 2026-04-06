@@ -238,7 +238,10 @@ const buildCopy = (
 });
 
 const createExample = (
-  item: Omit<ExampleCatalogItem, "copy" | "catalogTier" | "sourceCodeByLocale"> & {
+  item: Omit<
+    ExampleCatalogItem,
+    "copy" | "catalogTier" | "sourceCodeByLocale"
+  > & {
     titleEs: string;
     titleEn: string;
     summaryEs: string;

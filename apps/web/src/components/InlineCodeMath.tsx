@@ -167,16 +167,28 @@ function normalizeInlineCodeMath(value: string): string {
     return "";
   }
 
-  if (trimmed.startsWith("$$") && trimmed.endsWith("$$") && trimmed.length > 4) {
+  if (
+    trimmed.startsWith("$$") &&
+    trimmed.endsWith("$$") &&
+    trimmed.length > 4
+  ) {
     return trimmed.slice(2, -2).trim();
   }
   if (trimmed.startsWith("$") && trimmed.endsWith("$") && trimmed.length > 2) {
     return trimmed.slice(1, -1).trim();
   }
-  if (trimmed.startsWith("\\(") && trimmed.endsWith("\\)") && trimmed.length > 4) {
+  if (
+    trimmed.startsWith("\\(") &&
+    trimmed.endsWith("\\)") &&
+    trimmed.length > 4
+  ) {
     return trimmed.slice(2, -2).trim();
   }
-  if (trimmed.startsWith("\\[") && trimmed.endsWith("\\]") && trimmed.length > 4) {
+  if (
+    trimmed.startsWith("\\[") &&
+    trimmed.endsWith("\\]") &&
+    trimmed.length > 4
+  ) {
     return trimmed.slice(2, -2).trim();
   }
 
@@ -193,10 +205,7 @@ export default function InlineCodeMath({
     [value],
   );
   const Tag = asCode ? "code" : "span";
-  const rootClassName = [
-    asCode ? "inline-code-math-chip" : "",
-    className || "",
-  ]
+  const rootClassName = [asCode ? "inline-code-math-chip" : "", className || ""]
     .filter(Boolean)
     .join(" ");
 

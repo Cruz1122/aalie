@@ -13,7 +13,9 @@ function normalizeAlias(value: string): string {
     .trim();
 }
 
-function buildSnippetAliasMap(locale: SupportedLocale): Map<string, SnippetDefinition> {
+function buildSnippetAliasMap(
+  locale: SupportedLocale,
+): Map<string, SnippetDefinition> {
   const aliases = new Map<string, SnippetDefinition>();
 
   for (const snippet of completionSnippetCatalog) {
@@ -27,16 +29,20 @@ function buildSnippetAliasMap(locale: SupportedLocale): Map<string, SnippetDefin
   return aliases;
 }
 
-const SNIPPET_ALIAS_MAPS: Record<SupportedLocale, Map<string, SnippetDefinition>> =
-  {
-    es: buildSnippetAliasMap("es"),
-    en: buildSnippetAliasMap("en"),
-  };
+const SNIPPET_ALIAS_MAPS: Record<
+  SupportedLocale,
+  Map<string, SnippetDefinition>
+> = {
+  es: buildSnippetAliasMap("es"),
+  en: buildSnippetAliasMap("en"),
+};
 
 export function resolveSnippetAlias(
   input: string,
   locale = "es",
 ): SnippetDefinition | null {
   const normalizedLocale: SupportedLocale = locale === "en" ? "en" : "es";
-  return SNIPPET_ALIAS_MAPS[normalizedLocale].get(normalizeAlias(input)) ?? null;
+  return (
+    SNIPPET_ALIAS_MAPS[normalizedLocale].get(normalizeAlias(input)) ?? null
+  );
 }

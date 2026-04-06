@@ -1,2 +1,4 @@
 [tool.ruff]
 extend-exclude = ["packages/grammar/out/py"]
+line-length = 100
+target-version = "py311"

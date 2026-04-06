@@ -114,7 +114,10 @@ type HighlightReplacement = {
   latexValue: string | null;
 };
 
-function markHighlightTerms(text: string, terms: string[]): {
+function markHighlightTerms(
+  text: string,
+  terms: string[],
+): {
   content: string;
   replacements: Map<string, HighlightReplacement>;
 } {
@@ -201,7 +204,10 @@ function InlineLatexText({
       {segments.map((segment, index) => {
         if (segment.kind === "latex-block") {
           return (
-            <span key={`b-${index}`} className="my-1 inline-block max-w-full overflow-x-auto align-middle">
+            <span
+              key={`b-${index}`}
+              className="my-1 inline-block max-w-full overflow-x-auto align-middle"
+            >
               <Formula latex={segment.value} display />
             </span>
           );
@@ -256,7 +262,10 @@ function HighlightedInvariantText({
   terms: string[];
   inlineHighlightClass: string;
 }>) {
-  const { content: markedContent, replacements } = markHighlightTerms(content, terms);
+  const { content: markedContent, replacements } = markHighlightTerms(
+    content,
+    terms,
+  );
   const tokenPattern = /@@LI_HL_\d+@@/g;
   const nodes: React.ReactNode[] = [];
   let cursor = 0;
@@ -266,12 +275,7 @@ function HighlightedInvariantText({
     const start = match.index;
     if (start > cursor) {
       const plainText = markedContent.slice(cursor, start);
-      nodes.push(
-        <InlineLatexText
-          key={`plain-${cursor}`}
-          text={plainText}
-        />,
-      );
+      nodes.push(<InlineLatexText key={`plain-${cursor}`} text={plainText} />);
     }
 
     const token = match[0];

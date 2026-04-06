@@ -6,15 +6,60 @@ export interface ImportNormalizationSuggestion {
 }
 
 const NORMALIZATION_RULES = [
-  { id: "assign-unicode", from: "🡨", to: "<-", reason: "Usa <- para asignación." },
-  { id: "comment-unicode", from: "►", to: "//", reason: "El comentario oficial debe empezar con //." },
-  { id: "le-unicode", from: "≤", to: "<=", reason: "Usa <= como relacional visible." },
-  { id: "ge-unicode", from: "≥", to: ">=", reason: "Usa >= como relacional visible." },
-  { id: "neq-unicode", from: "≠", to: "!=", reason: "Usa != como relacional visible." },
-  { id: "neq-pascal", from: "<>", to: "!=", reason: "Usa != como desigualdad visible." },
-  { id: "assign-pascal", from: ":=", to: "<-", reason: "El operador oficial visible de asignación es <-." },
-  { id: "assign-arrow", from: "←", to: "<-", reason: "Usa <- como asignación visible." },
-  { id: "assign-long-arrow", from: "⟵", to: "<-", reason: "Usa <- como asignación visible." },
+  {
+    id: "assign-unicode",
+    from: "🡨",
+    to: "<-",
+    reason: "Usa <- para asignación.",
+  },
+  {
+    id: "comment-unicode",
+    from: "►",
+    to: "//",
+    reason: "El comentario oficial debe empezar con //.",
+  },
+  {
+    id: "le-unicode",
+    from: "≤",
+    to: "<=",
+    reason: "Usa <= como relacional visible.",
+  },
+  {
+    id: "ge-unicode",
+    from: "≥",
+    to: ">=",
+    reason: "Usa >= como relacional visible.",
+  },
+  {
+    id: "neq-unicode",
+    from: "≠",
+    to: "!=",
+    reason: "Usa != como relacional visible.",
+  },
+  {
+    id: "neq-pascal",
+    from: "<>",
+    to: "!=",
+    reason: "Usa != como desigualdad visible.",
+  },
+  {
+    id: "assign-pascal",
+    from: ":=",
+    to: "<-",
+    reason: "El operador oficial visible de asignación es <-.",
+  },
+  {
+    id: "assign-arrow",
+    from: "←",
+    to: "<-",
+    reason: "Usa <- como asignación visible.",
+  },
+  {
+    id: "assign-long-arrow",
+    from: "⟵",
+    to: "<-",
+    reason: "Usa <- como asignación visible.",
+  },
 ] as const;
 
 const KEYWORD_REGEX =
@@ -37,7 +82,8 @@ export function getImportNormalizationSuggestions(
       id: "keywords-uppercase",
       from: lowercaseKeywords[0],
       to: lowercaseKeywords[0].toUpperCase(),
-      reason: "Conviene escribir las keywords en mayúscula para seguir el estilo oficial.",
+      reason:
+        "Conviene escribir las keywords en mayúscula para seguir el estilo oficial.",
     });
   }
 

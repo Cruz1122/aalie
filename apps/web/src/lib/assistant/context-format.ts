@@ -72,7 +72,9 @@ function sanitizeExampleSection(
     title: truncateText(section.title, MAX_ITEM_CHARS) || "Examples section",
     description: truncateText(section.description, 600),
     exampleCount:
-      typeof section.exampleCount === "number" ? section.exampleCount : undefined,
+      typeof section.exampleCount === "number"
+        ? section.exampleCount
+        : undefined,
     kind: section.kind,
   };
 }
@@ -136,17 +138,19 @@ export function sanitizeAssistantContext(
           ),
           hasCaseVariability:
             context.formalAnalysisSummary.hasCaseVariability === true,
-          cases: context.formalAnalysisSummary.cases?.slice(0, 3).map((entry) => ({
-            caseId: entry.caseId,
-            bigO: truncateText(entry.bigO, MAX_ITEM_CHARS),
-            bigOmega: truncateText(entry.bigOmega, MAX_ITEM_CHARS),
-            bigTheta: truncateText(entry.bigTheta, MAX_ITEM_CHARS),
-            efficiencyEquation: truncateText(entry.efficiencyEquation, 320),
-            groupedCostExpression: truncateText(
-              entry.groupedCostExpression,
-              320,
-            ),
-          })),
+          cases: context.formalAnalysisSummary.cases
+            ?.slice(0, 3)
+            .map((entry) => ({
+              caseId: entry.caseId,
+              bigO: truncateText(entry.bigO, MAX_ITEM_CHARS),
+              bigOmega: truncateText(entry.bigOmega, MAX_ITEM_CHARS),
+              bigTheta: truncateText(entry.bigTheta, MAX_ITEM_CHARS),
+              efficiencyEquation: truncateText(entry.efficiencyEquation, 320),
+              groupedCostExpression: truncateText(
+                entry.groupedCostExpression,
+                320,
+              ),
+            })),
           notes: compactList(context.formalAnalysisSummary.notes),
         }
       : undefined,
@@ -183,7 +187,9 @@ function formatKeyValue(label: string, value: string | undefined) {
   return value ? `- ${label}: ${value}` : null;
 }
 
-export function buildAssistantSystemSupplement(context: AssistantContext): string {
+export function buildAssistantSystemSupplement(
+  context: AssistantContext,
+): string {
   const isSpanish = context.locale.toLowerCase().startsWith("es");
 
   if (isSpanish) {
@@ -215,7 +221,9 @@ EMBEDDED ASSISTANT RULES
 `.trim();
 }
 
-export function formatAssistantContextForPrompt(context: AssistantContext): string {
+export function formatAssistantContextForPrompt(
+  context: AssistantContext,
+): string {
   const safeContext = sanitizeAssistantContext(context);
   const sections: string[] = [];
 
@@ -336,7 +344,9 @@ export function formatAssistantContextForPrompt(context: AssistantContext): stri
         sections.push(`  efficiencyEquation: ${entry.efficiencyEquation}`);
       }
       if (entry.groupedCostExpression) {
-        sections.push(`  groupedCostExpression: ${entry.groupedCostExpression}`);
+        sections.push(
+          `  groupedCostExpression: ${entry.groupedCostExpression}`,
+        );
       }
     });
 
@@ -361,9 +371,7 @@ export function formatAssistantContextForPrompt(context: AssistantContext): stri
         .filter((value): value is string => Boolean(value))
         .join(", ");
 
-      sections.push(
-        `- ${section.title}${details ? ` (${details})` : ""}`,
-      );
+      sections.push(`- ${section.title}${details ? ` (${details})` : ""}`);
       if (section.description) {
         sections.push(`  description: ${section.description}`);
       }
@@ -398,7 +406,10 @@ export function formatAssistantContextForPrompt(context: AssistantContext): stri
     });
   }
 
-  if (safeContext.availableFeatures && safeContext.availableFeatures.length > 0) {
+  if (
+    safeContext.availableFeatures &&
+    safeContext.availableFeatures.length > 0
+  ) {
     sections.push("");
     sections.push("FUNCIONALIDADES RELEVANTES DE LA APP");
     safeContext.availableFeatures.forEach((feature) => {

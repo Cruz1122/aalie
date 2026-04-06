@@ -7,16 +7,28 @@ export function normalizeInlineMathValue(value: string): string {
     return "";
   }
 
-  if (trimmed.startsWith("$$") && trimmed.endsWith("$$") && trimmed.length > 4) {
+  if (
+    trimmed.startsWith("$$") &&
+    trimmed.endsWith("$$") &&
+    trimmed.length > 4
+  ) {
     return trimmed.slice(2, -2).trim();
   }
   if (trimmed.startsWith("$") && trimmed.endsWith("$") && trimmed.length > 2) {
     return trimmed.slice(1, -1).trim();
   }
-  if (trimmed.startsWith("\\(") && trimmed.endsWith("\\)") && trimmed.length > 4) {
+  if (
+    trimmed.startsWith("\\(") &&
+    trimmed.endsWith("\\)") &&
+    trimmed.length > 4
+  ) {
     return trimmed.slice(2, -2).trim();
   }
-  if (trimmed.startsWith("\\[") && trimmed.endsWith("\\]") && trimmed.length > 4) {
+  if (
+    trimmed.startsWith("\\[") &&
+    trimmed.endsWith("\\]") &&
+    trimmed.length > 4
+  ) {
     return trimmed.slice(2, -2).trim();
   }
 

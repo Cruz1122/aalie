@@ -46,7 +46,9 @@ function buildProgressSnapshot(
   };
 }
 
-function buildEmptyProgressSnapshot(modules: ContentModuleSummary[]): ProgressSnapshot {
+function buildEmptyProgressSnapshot(
+  modules: ContentModuleSummary[],
+): ProgressSnapshot {
   const moduleProgressById = Object.fromEntries(
     modules.map((module) => [module.moduleId, 0]),
   ) as Record<string, number>;
@@ -142,9 +144,13 @@ export function useSectionCompletionTracking({
 
     const ratios = new Map<string, number>();
     const timers = new Map<string, number>();
-    const sectionById = new Map(sections.map((section) => [section.sectionId, section]));
+    const sectionById = new Map(
+      sections.map((section) => [section.sectionId, section]),
+    );
     const elements = Array.from(
-      globalThis.document.querySelectorAll<HTMLElement>("[data-content-section-id]"),
+      globalThis.document.querySelectorAll<HTMLElement>(
+        "[data-content-section-id]",
+      ),
     );
 
     const syncActiveSection = () => {
@@ -160,7 +166,9 @@ export function useSectionCompletionTracking({
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          const sectionId = entry.target.getAttribute("data-content-section-id");
+          const sectionId = entry.target.getAttribute(
+            "data-content-section-id",
+          );
           if (!sectionId) {
             continue;
           }

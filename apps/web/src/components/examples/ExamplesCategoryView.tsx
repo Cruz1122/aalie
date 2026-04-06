@@ -129,7 +129,8 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
   const selectedExample = useMemo(
     () =>
       selectedSlug != null
-        ? visibleExamples.find((example) => example.slug === selectedSlug) || null
+        ? visibleExamples.find((example) => example.slug === selectedSlug) ||
+          null
         : null,
     [selectedSlug, visibleExamples],
   );

@@ -40,12 +40,26 @@ describe("content progress", () => {
   });
 
   it("stores completed sections by stable spaceId/moduleId/sectionId keys", () => {
-    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-que-es-eficiencia");
-    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-que-es-eficiencia");
-    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-operaciones-y-n");
+    markSectionCompleted(
+      "user-guide",
+      "mod-user-guide-measure",
+      "sec-que-es-eficiencia",
+    );
+    markSectionCompleted(
+      "user-guide",
+      "mod-user-guide-measure",
+      "sec-que-es-eficiencia",
+    );
+    markSectionCompleted(
+      "user-guide",
+      "mod-user-guide-measure",
+      "sec-operaciones-y-n",
+    );
 
     expect(
-      Array.from(getCompletedSectionIds("user-guide", "mod-user-guide-measure")),
+      Array.from(
+        getCompletedSectionIds("user-guide", "mod-user-guide-measure"),
+      ),
     ).toEqual(["sec-operaciones-y-n", "sec-que-es-eficiencia"]);
 
     expect(window.localStorage.getItem(CONTENT_PROGRESS_STORAGE_KEY)).toContain(
@@ -54,7 +68,11 @@ describe("content progress", () => {
   });
 
   it("computes module progress from completed trackable sections", () => {
-    markSectionCompleted("user-guide", "mod-user-guide-building-cost", "sec-suma-y-control");
+    markSectionCompleted(
+      "user-guide",
+      "mod-user-guide-building-cost",
+      "sec-suma-y-control",
+    );
 
     const progress = computeModuleProgress(
       guideModules[1],
@@ -65,15 +83,31 @@ describe("content progress", () => {
   });
 
   it("computes space progress across all published guide modules", () => {
-    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-que-es-eficiencia");
-    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-operaciones-y-n");
-    markSectionCompleted("user-guide", "mod-user-guide-building-cost", "sec-suma-y-control");
+    markSectionCompleted(
+      "user-guide",
+      "mod-user-guide-measure",
+      "sec-que-es-eficiencia",
+    );
+    markSectionCompleted(
+      "user-guide",
+      "mod-user-guide-measure",
+      "sec-operaciones-y-n",
+    );
+    markSectionCompleted(
+      "user-guide",
+      "mod-user-guide-building-cost",
+      "sec-suma-y-control",
+    );
 
     expect(computeSpaceProgress("user-guide", guideModules)).toBe(60);
   });
 
   it("preserves progress across locales because locale is not part of the key", () => {
-    markSectionCompleted("user-guide", "mod-user-guide-measure", "sec-que-es-eficiencia");
+    markSectionCompleted(
+      "user-guide",
+      "mod-user-guide-measure",
+      "sec-que-es-eficiencia",
+    );
 
     const spanishProgress = computeModuleProgress(
       guideModules[0],

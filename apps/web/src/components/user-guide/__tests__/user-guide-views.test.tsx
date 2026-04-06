@@ -164,7 +164,10 @@ describe("User guide views", () => {
     const enterLink = within(limitsArticle as HTMLElement).getByRole("link", {
       name: "Entrar al módulo",
     });
-    expect(enterLink).toHaveAttribute("href", "/user-guide/limites-del-analisis");
+    expect(enterLink).toHaveAttribute(
+      "href",
+      "/user-guide/limites-del-analisis",
+    );
 
     fireEvent.click(enterLink);
 
@@ -188,13 +191,9 @@ describe("User guide views", () => {
       />,
     );
 
-    expect(
-      screen.queryByText("Algoritmos iterativos"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Algoritmos iterativos")).not.toBeInTheDocument();
     expect(screen.queryByText("Tabla de contenidos")).not.toBeInTheDocument();
-    expect(
-      screen.queryByLabelText("buscar en módulo"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("buscar en módulo")).not.toBeInTheDocument();
     expect(
       screen.getAllByText(/Patrones de bucles y la aplicación/i).length,
     ).toBeGreaterThan(0);

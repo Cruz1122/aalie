@@ -72,7 +72,10 @@ export function PaginationControls({
 }: Readonly<PaginationControlsProps>) {
   if (totalPages <= 1) {
     return reserveSpace ? (
-      <div className="flex h-7 items-center justify-center" aria-hidden="true" />
+      <div
+        className="flex h-7 items-center justify-center"
+        aria-hidden="true"
+      />
     ) : null;
   }
 

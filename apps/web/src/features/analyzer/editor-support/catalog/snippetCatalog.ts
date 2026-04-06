@@ -60,8 +60,7 @@ export type SnippetLocalizationFields = Pick<
   | "expectedUseCase"
 >;
 
-export type SnippetLocalizationOverrides =
-  Partial<SnippetLocalizationFields>;
+export type SnippetLocalizationOverrides = Partial<SnippetLocalizationFields>;
 
 const coreSnippets: SnippetDefinition[] = [
   {
@@ -94,7 +93,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "IF (${1:condicion}) THEN BEGIN\n  ${2}\nEND",
     placeholders: ["condicion"],
     documentationShort: "Inserta un bloque IF completo.",
-    documentationPedagogical: "Úsalo cuando una acción ocurre solo si se cumple una condición.",
+    documentationPedagogical:
+      "Úsalo cuando una acción ocurre solo si se cumple una condición.",
     preview: "IF (condicion) THEN BEGIN ... END",
     contextRules: ["lineStart", "selectionWrap"],
     requiresSelection: false,
@@ -114,7 +114,8 @@ const coreSnippets: SnippetDefinition[] = [
       "IF (${1:condicion}) THEN BEGIN\n  ${2}\nEND ELSE BEGIN\n  ${3}\nEND",
     placeholders: ["condicion"],
     documentationShort: "Inserta un bloque IF / ELSE completo.",
-    documentationPedagogical: "Úsalo cuando necesitas una acción para el caso verdadero y otra para el falso.",
+    documentationPedagogical:
+      "Úsalo cuando necesitas una acción para el caso verdadero y otra para el falso.",
     preview: "IF (...) THEN BEGIN ... END ELSE BEGIN ... END",
     contextRules: ["lineStart", "selectionWrap"],
     requiresSelection: false,
@@ -133,7 +134,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "WHILE (${1:condicion}) DO BEGIN\n  ${2}\nEND",
     placeholders: ["condicion"],
     documentationShort: "Inserta un ciclo WHILE con bloque completo.",
-    documentationPedagogical: "Úsalo cuando repites mientras la condición siga siendo verdadera.",
+    documentationPedagogical:
+      "Úsalo cuando repites mientras la condición siga siendo verdadera.",
     preview: "WHILE (...) DO BEGIN ... END",
     contextRules: ["lineStart", "selectionWrap"],
     requiresSelection: false,
@@ -149,11 +151,11 @@ const coreSnippets: SnippetDefinition[] = [
     priority: 992,
     aliases: ["for"],
     insertKind: "block",
-    insertText:
-      "FOR ${1:i} <- ${2:1} TO ${3:n} DO BEGIN\n  ${4}\nEND",
+    insertText: "FOR ${1:i} <- ${2:1} TO ${3:n} DO BEGIN\n  ${4}\nEND",
     placeholders: ["i", "1", "n"],
     documentationShort: "Inserta un ciclo FOR con contador y límite superior.",
-    documentationPedagogical: "Úsalo cuando sabes desde el inicio cuántas repeticiones necesitas.",
+    documentationPedagogical:
+      "Úsalo cuando sabes desde el inicio cuántas repeticiones necesitas.",
     preview: "FOR i <- 1 TO n DO BEGIN ... END",
     contextRules: ["lineStart", "selectionWrap"],
     requiresSelection: false,
@@ -172,7 +174,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "RETURN ${1:valor};",
     placeholders: ["valor"],
     documentationShort: "Inserta un retorno con expresión.",
-    documentationPedagogical: "Úsalo cuando el algoritmo debe entregar un resultado.",
+    documentationPedagogical:
+      "Úsalo cuando el algoritmo debe entregar un resultado.",
     preview: "RETURN valor;",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -191,7 +194,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "CALL ${1:subrutina}(${2:parametros});",
     placeholders: ["subrutina", "parametros"],
     documentationShort: "Inserta una llamada-sentencia con ; final.",
-    documentationPedagogical: "Úsalo cuando llamas una subrutina como sentencia independiente.",
+    documentationPedagogical:
+      "Úsalo cuando llamas una subrutina como sentencia independiente.",
     preview: "CALL subrutina(parametros);",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -210,7 +214,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "${1:A}[${2:i}]",
     placeholders: ["A", "i"],
     documentationShort: "Inserta acceso a una posición de arreglo.",
-    documentationPedagogical: "Úsalo cuando necesitas leer o escribir un elemento concreto.",
+    documentationPedagogical:
+      "Úsalo cuando necesitas leer o escribir un elemento concreto.",
     preview: "A[i]",
     contextRules: ["inline"],
     requiresSelection: false,
@@ -229,7 +234,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "length(${1:A})",
     placeholders: ["A"],
     documentationShort: "Inserta la función length sobre un arreglo.",
-    documentationPedagogical: "Úsalo cuando necesitas el tamaño lógico de una estructura indexable.",
+    documentationPedagogical:
+      "Úsalo cuando necesitas el tamaño lógico de una estructura indexable.",
     preview: "length(A)",
     contextRules: ["inline"],
     requiresSelection: false,
@@ -249,7 +255,8 @@ const coreSnippets: SnippetDefinition[] = [
       "IF (${1:n <= 1}) THEN BEGIN\n  RETURN ${2:resultado_base};\nEND",
     placeholders: ["n <= 1", "resultado_base"],
     documentationShort: "Inserta un caso base recursivo con RETURN.",
-    documentationPedagogical: "Úsalo para detener la recursión cuando ya no debes seguir dividiendo el problema.",
+    documentationPedagogical:
+      "Úsalo para detener la recursión cuando ya no debes seguir dividiendo el problema.",
     preview: "IF (n <= 1) THEN BEGIN RETURN ...; END",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -268,7 +275,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "RETURN ${1:funcion}(${2:parametros});",
     placeholders: ["funcion", "parametros"],
     documentationShort: "Inserta un retorno con llamada recursiva.",
-    documentationPedagogical: "Úsalo cuando el resultado sale de resolver un caso más pequeño.",
+    documentationPedagogical:
+      "Úsalo cuando el resultado sale de resolver un caso más pequeño.",
     preview: "RETURN f(...);",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -306,7 +314,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "${1:a} <= ${2:b}",
     placeholders: ["a", "b"],
     documentationShort: "Inserta una comparación menor o igual en ASCII.",
-    documentationPedagogical: "Úsalo cuando el valor izquierdo puede ser menor o igual al derecho.",
+    documentationPedagogical:
+      "Úsalo cuando el valor izquierdo puede ser menor o igual al derecho.",
     preview: "a <= b",
     contextRules: ["inline"],
     requiresSelection: false,
@@ -325,7 +334,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "${1:a} >= ${2:b}",
     placeholders: ["a", "b"],
     documentationShort: "Inserta una comparación mayor o igual en ASCII.",
-    documentationPedagogical: "Úsalo cuando el valor izquierdo puede ser mayor o igual al derecho.",
+    documentationPedagogical:
+      "Úsalo cuando el valor izquierdo puede ser mayor o igual al derecho.",
     preview: "a >= b",
     contextRules: ["inline"],
     requiresSelection: false,
@@ -344,7 +354,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "REPEAT\n  ${1}\nUNTIL (${2:condicion});",
     placeholders: ["", "condicion"],
     documentationShort: "Inserta un ciclo REPEAT / UNTIL.",
-    documentationPedagogical: "Úsalo cuando el bloque corre una vez antes de validar la condición.",
+    documentationPedagogical:
+      "Úsalo cuando el bloque corre una vez antes de validar la condición.",
     preview: "REPEAT ... UNTIL (...)",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -363,7 +374,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "BEGIN\n  ${1}\nEND",
     placeholders: [""],
     documentationShort: "Inserta o envuelve un bloque BEGIN / END.",
-    documentationPedagogical: "Úsalo para agrupar varias sentencias dentro de una estructura de control.",
+    documentationPedagogical:
+      "Úsalo para agrupar varias sentencias dentro de una estructura de control.",
     preview: "BEGIN ... END",
     contextRules: ["selectionWrap", "lineStart"],
     requiresSelection: false,
@@ -382,7 +394,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "${1:nombre}(${2:parametros}) BEGIN\n  ${3}\nEND",
     placeholders: ["nombre", "parametros"],
     documentationShort: "Inserta la firma base de un algoritmo.",
-    documentationPedagogical: "Úsalo para empezar una solución completa con la forma oficial del parser.",
+    documentationPedagogical:
+      "Úsalo para empezar una solución completa con la forma oficial del parser.",
     preview: "nombre(parametros) BEGIN ... END",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -400,8 +413,10 @@ const coreSnippets: SnippetDefinition[] = [
     insertKind: "inline",
     insertText: "// ${1:comentario}",
     placeholders: ["comentario"],
-    documentationShort: "Inserta un comentario de línea con la sintaxis oficial //.",
-    documentationPedagogical: "Úsalo para notas breves sin afectar el parseo del algoritmo.",
+    documentationShort:
+      "Inserta un comentario de línea con la sintaxis oficial //.",
+    documentationPedagogical:
+      "Úsalo para notas breves sin afectar el parseo del algoritmo.",
     preview: "// comentario",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -420,7 +435,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "${1:A}[${2:i}..${3:j}]",
     placeholders: ["A", "i", "j"],
     documentationShort: "Inserta una referencia por rango dentro de corchetes.",
-    documentationPedagogical: "Úsalo cuando quieres expresar un tramo del arreglo con inicio y fin.",
+    documentationPedagogical:
+      "Úsalo cuando quieres expresar un tramo del arreglo con inicio y fin.",
     preview: "A[i..j]",
     contextRules: ["inline"],
     requiresSelection: false,
@@ -439,7 +455,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "RETURN ${1:n} * ${2:funcion}(${3:n - 1});",
     placeholders: ["n", "funcion", "n - 1"],
     documentationShort: "Inserta un patrón de retorno recursivo lineal.",
-    documentationPedagogical: "Úsalo cuando el problema se reduce a una sola llamada más pequeña.",
+    documentationPedagogical:
+      "Úsalo cuando el problema se reduce a una sola llamada más pequeña.",
     preview: "RETURN n * f(n - 1);",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -458,7 +475,8 @@ const coreSnippets: SnippetDefinition[] = [
     insertText: "${1:dp}[${2:i}] <- ${1:dp}[${2:i} - 1] + ${1:dp}[${2:i} - 2];",
     placeholders: ["dp", "i"],
     documentationShort: "Inserta una transición simple sobre una tabla DP.",
-    documentationPedagogical: "Úsalo cuando el estado actual depende de estados ya calculados.",
+    documentationPedagogical:
+      "Úsalo cuando el estado actual depende de estados ya calculados.",
     preview: "dp[i] <- dp[i - 1] + dp[i - 2];",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -476,8 +494,10 @@ const coreSnippets: SnippetDefinition[] = [
     insertKind: "inline",
     insertText: "Class ${1:Nombre} { ${2:atributo} }",
     placeholders: ["Nombre", "atributo"],
-    documentationShort: "Inserta una definición compacta de clase soportada por la gramática.",
-    documentationPedagogical: "Úsalo solo cuando realmente trabajas con objetos en pseudocódigo soportado.",
+    documentationShort:
+      "Inserta una definición compacta de clase soportada por la gramática.",
+    documentationPedagogical:
+      "Úsalo solo cuando realmente trabajas con objetos en pseudocódigo soportado.",
     preview: "Class Nombre { attr }",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -498,7 +518,9 @@ export const activeSnippetCatalog = snippetCatalog.filter(
 
 export const completionSnippetCatalog: SnippetDefinition[] = [
   ...activeSnippetCatalog,
-  ...algorithmCompletionSnippets.filter((snippet) => snippet.status === "active"),
+  ...algorithmCompletionSnippets.filter(
+    (snippet) => snippet.status === "active",
+  ),
 ];
 
 export const recommendedSnippetIds = [
@@ -609,7 +631,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     shortLabel: "IF",
     insertText: "IF (${1:condition}) THEN BEGIN\n  ${2}\nEND",
     documentationShort: "Inserts a complete IF block.",
-    documentationPedagogical: "Use it when an action happens only if a condition is true.",
+    documentationPedagogical:
+      "Use it when an action happens only if a condition is true.",
     preview: "IF (condition) THEN BEGIN ... END",
   },
   "if-else": {
@@ -618,7 +641,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     insertText:
       "IF (${1:condition}) THEN BEGIN\n  ${2}\nEND ELSE BEGIN\n  ${3}\nEND",
     documentationShort: "Inserts a complete IF / ELSE block.",
-    documentationPedagogical: "Use it when you need one action for the true case and another for the false case.",
+    documentationPedagogical:
+      "Use it when you need one action for the true case and another for the false case.",
     preview: "IF (...) THEN BEGIN ... END ELSE BEGIN ... END",
   },
   while: {
@@ -626,7 +650,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     shortLabel: "WHILE",
     insertText: "WHILE (${1:condition}) DO BEGIN\n  ${2}\nEND",
     documentationShort: "Inserts a WHILE loop with a complete block.",
-    documentationPedagogical: "Use it when you repeat while a condition stays true.",
+    documentationPedagogical:
+      "Use it when you repeat while a condition stays true.",
     preview: "WHILE (...) DO BEGIN ... END",
   },
   for: {
@@ -634,7 +659,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     shortLabel: "FOR",
     insertText: "FOR ${1:i} <- ${2:1} TO ${3:n} DO BEGIN\n  ${4}\nEND",
     documentationShort: "Inserts a FOR loop with counter and upper bound.",
-    documentationPedagogical: "Use it when you already know how many repetitions you need.",
+    documentationPedagogical:
+      "Use it when you already know how many repetitions you need.",
     preview: "FOR i <- 1 TO n DO BEGIN ... END",
   },
   "return-value": {
@@ -643,7 +669,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     aliases: ["return", "result"],
     insertText: "RETURN ${1:value};",
     documentationShort: "Inserts a return with an expression.",
-    documentationPedagogical: "Use it when the algorithm must produce a result.",
+    documentationPedagogical:
+      "Use it when the algorithm must produce a result.",
     preview: "RETURN value;",
   },
   call: {
@@ -651,31 +678,34 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     shortLabel: "CALL",
     insertText: "CALL ${1:subroutine}(${2:params});",
     documentationShort: "Inserts a statement call with a trailing semicolon.",
-    documentationPedagogical: "Use it when you call a subroutine as an independent statement.",
+    documentationPedagogical:
+      "Use it when you call a subroutine as an independent statement.",
     preview: "CALL subroutine(params);",
   },
   "array-index": {
     label: "A[i]",
     shortLabel: "A[i]",
     documentationShort: "Inserts access to an array position.",
-    documentationPedagogical: "Use it when you need to read or write a concrete element.",
+    documentationPedagogical:
+      "Use it when you need to read or write a concrete element.",
     preview: "A[i]",
   },
   length: {
     label: "length(A)",
     shortLabel: "length(A)",
     documentationShort: "Inserts the length function over an array.",
-    documentationPedagogical: "Use it when you need the logical size of an indexable structure.",
+    documentationPedagogical:
+      "Use it when you need the logical size of an indexable structure.",
     preview: "length(A)",
   },
   "base-case": {
     label: "Base case",
     shortLabel: "Base case",
     aliases: ["base", "basecase"],
-    insertText:
-      "IF (${1:n <= 1}) THEN BEGIN\n  RETURN ${2:base_result};\nEND",
+    insertText: "IF (${1:n <= 1}) THEN BEGIN\n  RETURN ${2:base_result};\nEND",
     documentationShort: "Inserts a recursive base case with RETURN.",
-    documentationPedagogical: "Use it to stop recursion when the problem should no longer be divided.",
+    documentationPedagogical:
+      "Use it to stop recursion when the problem should no longer be divided.",
     preview: "IF (n <= 1) THEN BEGIN RETURN ...; END",
   },
   "recursive-call": {
@@ -684,7 +714,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     aliases: ["recursive", "recurse"],
     insertText: "RETURN ${1:function}(${2:params});",
     documentationShort: "Inserts a return with a recursive call.",
-    documentationPedagogical: "Use it when the result depends on solving a smaller version of the problem.",
+    documentationPedagogical:
+      "Use it when the result depends on solving a smaller version of the problem.",
     preview: "RETURN f(...);",
   },
   "comparison-ne": {
@@ -698,14 +729,16 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     label: "Comparison <=",
     shortLabel: "<=",
     documentationShort: "Inserts a less-than-or-equal comparison in ASCII.",
-    documentationPedagogical: "Use it when the left value can be smaller than or equal to the right one.",
+    documentationPedagogical:
+      "Use it when the left value can be smaller than or equal to the right one.",
     preview: "a <= b",
   },
   "comparison-ge": {
     label: "Comparison >=",
     shortLabel: ">=",
     documentationShort: "Inserts a greater-than-or-equal comparison in ASCII.",
-    documentationPedagogical: "Use it when the left value can be greater than or equal to the right one.",
+    documentationPedagogical:
+      "Use it when the left value can be greater than or equal to the right one.",
     preview: "a >= b",
   },
   "repeat-until": {
@@ -713,14 +746,16 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     shortLabel: "REPEAT",
     insertText: "REPEAT\n  ${1}\nUNTIL (${2:condition});",
     documentationShort: "Inserts a REPEAT / UNTIL loop.",
-    documentationPedagogical: "Use it when the body must run at least once before checking the condition.",
+    documentationPedagogical:
+      "Use it when the body must run at least once before checking the condition.",
     preview: "REPEAT ... UNTIL (...)",
   },
   "begin-end": {
     label: "BEGIN / END",
     shortLabel: "BEGIN / END",
     documentationShort: "Inserts or wraps a BEGIN / END block.",
-    documentationPedagogical: "Use it to group several statements inside a control structure.",
+    documentationPedagogical:
+      "Use it to group several statements inside a control structure.",
     preview: "BEGIN ... END",
   },
   "algorithm-header": {
@@ -729,7 +764,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     aliases: ["header", "algorithm", "procedure"],
     insertText: "${1:name}(${2:params}) BEGIN\n  ${3}\nEND",
     documentationShort: "Inserts the base signature of an algorithm.",
-    documentationPedagogical: "Use it to start a complete solution with the official parser shape.",
+    documentationPedagogical:
+      "Use it to start a complete solution with the official parser shape.",
     preview: "name(params) BEGIN ... END",
   },
   comment: {
@@ -737,14 +773,16 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     shortLabel: "Comment",
     insertText: "// ${1:comment}",
     documentationShort: "Inserts a line comment with the official // syntax.",
-    documentationPedagogical: "Use it for short notes without affecting algorithm parsing.",
+    documentationPedagogical:
+      "Use it for short notes without affecting algorithm parsing.",
     preview: "// comment",
   },
   "array-slice": {
     label: "A[i..j]",
     shortLabel: "A[i..j]",
     documentationShort: "Inserts a ranged reference inside brackets.",
-    documentationPedagogical: "Use it when you want to express a slice with start and end.",
+    documentationPedagogical:
+      "Use it when you want to express a slice with start and end.",
     preview: "A[i..j]",
   },
   "rec-linear": {
@@ -752,22 +790,26 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     shortLabel: "Linear recursion",
     insertText: "RETURN ${1:n} * ${2:function}(${3:n - 1});",
     documentationShort: "Inserts a linear recursive return pattern.",
-    documentationPedagogical: "Use it when the problem is reduced to a single smaller call.",
+    documentationPedagogical:
+      "Use it when the problem is reduced to a single smaller call.",
     preview: "RETURN n * f(n - 1);",
   },
   "dp-transition": {
     label: "Simple transition",
     shortLabel: "DP transition",
     documentationShort: "Inserts a simple transition over a DP table.",
-    documentationPedagogical: "Use it when the current state depends on already computed states.",
+    documentationPedagogical:
+      "Use it when the current state depends on already computed states.",
     preview: "dp[i] <- dp[i - 1] + dp[i - 2];",
   },
   "class-definition": {
     label: "Class definition",
     shortLabel: "Class",
     insertText: "Class ${1:Name} { ${2:attribute} }",
-    documentationShort: "Inserts a compact class definition supported by the grammar.",
-    documentationPedagogical: "Use it only when you are really working with objects in supported pseudocode.",
+    documentationShort:
+      "Inserts a compact class definition supported by the grammar.",
+    documentationPedagogical:
+      "Use it only when you are really working with objects in supported pseudocode.",
     preview: "Class Name { attr }",
   },
   "template-binary-search": {
@@ -794,7 +836,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
       "END",
     ].join("\n"),
     documentationShort: "Inserts a recursive binary search template.",
-    documentationPedagogical: "Use it when the range is split in half at each step.",
+    documentationPedagogical:
+      "Use it when the range is split in half at each step.",
     preview: "Signature + base case + midpoint + recursive calls",
     expectedUseCase: "Practice divide and conquer over a sorted array.",
   },
@@ -802,7 +845,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     label: "Factorial",
     shortLabel: "Factorial",
     documentationShort: "Inserts a linear recursive factorial template.",
-    documentationPedagogical: "Use it to practice base case and simple recursive return.",
+    documentationPedagogical:
+      "Use it to practice base case and simple recursive return.",
     preview: "Base case + return n * factorial(n - 1)",
     expectedUseCase: "Introduction to linear recursion.",
   },
@@ -810,7 +854,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     label: "Fibonacci",
     shortLabel: "Fibonacci",
     documentationShort: "Inserts the classic recursive Fibonacci version.",
-    documentationPedagogical: "Use it to practice double-branch recursion and compare it with DP.",
+    documentationPedagogical:
+      "Use it to practice double-branch recursion and compare it with DP.",
     preview: "Base case + two recursive calls",
     expectedUseCase: "Practice branching recursion and DP discussion.",
   },
@@ -830,9 +875,11 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
       "END",
     ].join("\n"),
     documentationShort: "Inserts a base merge sort template.",
-    documentationPedagogical: "Use it to practice divide and conquer with explicit combine step.",
+    documentationPedagogical:
+      "Use it to practice divide and conquer with explicit combine step.",
     preview: "Split + two CALLs + merge",
-    expectedUseCase: "Practice divide-and-conquer recursion with combine phase.",
+    expectedUseCase:
+      "Practice divide-and-conquer recursion with combine phase.",
   },
   "template-quicksort": {
     label: "Quicksort",
@@ -849,9 +896,11 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
       "END",
     ].join("\n"),
     documentationShort: "Inserts a base quicksort template.",
-    documentationPedagogical: "Use it to practice writing and partially analyzing recursive partitioning.",
+    documentationPedagogical:
+      "Use it to practice writing and partially analyzing recursive partitioning.",
     preview: "partition + two recursive CALLs",
-    expectedUseCase: "Writing practice and guided analysis with partial engine coverage.",
+    expectedUseCase:
+      "Writing practice and guided analysis with partial engine coverage.",
   },
   "template-linear-traversal": {
     label: "Linear traversal",
@@ -866,7 +915,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
       "END",
     ].join("\n"),
     documentationShort: "Inserts a base template to traverse an array.",
-    documentationPedagogical: "Use it when the algorithm visits each position once.",
+    documentationPedagogical:
+      "Use it when the algorithm visits each position once.",
     preview: "FOR i <- 1 TO n",
     expectedUseCase: "Skeleton for linear algorithms over arrays.",
   },
@@ -884,7 +934,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
       "END",
     ].join("\n"),
     documentationShort: "Inserts an accumulated-sum template over an array.",
-    documentationPedagogical: "Use it to practice accumulators and full traversals.",
+    documentationPedagogical:
+      "Use it to practice accumulators and full traversals.",
     preview: "sum <- sum + A[i]",
     expectedUseCase: "Iterative algorithms with accumulator.",
   },
@@ -892,7 +943,8 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
     label: "Simple memoization",
     shortLabel: "Memo",
     documentationShort: "Inserts a recursive template with memoization.",
-    documentationPedagogical: "Use it when you want to remember already computed results.",
+    documentationPedagogical:
+      "Use it when you want to remember already computed results.",
     preview: "Memo check + save + return",
     expectedUseCase: "Practice recursion optimization with cache.",
   },
@@ -910,8 +962,10 @@ const EN_LOCALIZATION: Partial<Record<string, SnippetLocalizationOverrides>> = {
       "  RETURN dp[n];",
       "END",
     ].join("\n"),
-    documentationShort: "Inserts a base tabulated dynamic-programming template.",
-    documentationPedagogical: "Use it when the result is built from base cases upward.",
+    documentationShort:
+      "Inserts a base tabulated dynamic-programming template.",
+    documentationPedagogical:
+      "Use it when the result is built from base cases upward.",
     preview: "Base cases + FOR + dp[i]",
     expectedUseCase: "Practice bottom-up tabulation.",
   },

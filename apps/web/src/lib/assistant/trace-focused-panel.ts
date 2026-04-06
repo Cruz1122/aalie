@@ -1,4 +1,8 @@
-import type { StructuredTrace, ExecutionStep, TraceSummary } from "@/types/trace";
+import type {
+  StructuredTrace,
+  ExecutionStep,
+  TraceSummary,
+} from "@/types/trace";
 
 import type { AssistantFocusedPanelContext } from "./types";
 
@@ -65,7 +69,10 @@ function formatVariablePreview(
   return preview.length > 0 ? preview.join(", ") : null;
 }
 
-function formatTraceKind(locale: string, traceKind?: string | null): string | null {
+function formatTraceKind(
+  locale: string,
+  traceKind?: string | null,
+): string | null {
   if (!traceKind) {
     return null;
   }
@@ -93,13 +100,17 @@ function buildRepresentativeNodeSummary(
   }
 
   const labels = nodes
-    .map((node) => truncateText((node.data.label || "").split("\n")[0] || "", 60))
+    .map((node) =>
+      truncateText((node.data.label || "").split("\n")[0] || "", 60),
+    )
     .filter((label) => label.length > 0);
   const uniqueLabels = Array.from(new Set(labels)).slice(0, 3);
   return uniqueLabels.length > 0 ? uniqueLabels.join(" | ") : null;
 }
 
-function buildNodeTypeSummary(structuredTrace?: StructuredTrace | null): string | null {
+function buildNodeTypeSummary(
+  structuredTrace?: StructuredTrace | null,
+): string | null {
   const nodes = structuredTrace?.graph.nodes;
   if (!nodes || nodes.length === 0) {
     return null;
@@ -199,7 +210,10 @@ export function buildTraceFocusedPanelContext({
         ? text(`linea ${currentStep.line}`, `line ${currentStep.line}`)
         : null;
     const eventNote = currentStep.eventKind
-      ? text(`evento ${currentStep.eventKind}`, `event ${currentStep.eventKind}`)
+      ? text(
+          `evento ${currentStep.eventKind}`,
+          `event ${currentStep.eventKind}`,
+        )
       : null;
     notes.push(
       `${stepHeader}${lineNote || eventNote ? ` (${[lineNote, eventNote].filter(Boolean).join(", ")})` : ""}.`,

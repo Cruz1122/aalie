@@ -121,7 +121,11 @@ export function ExampleCatalogCard({
   const recursive = isRecursiveCategory(example.category);
   const tier: CatalogTier = example.catalogTier;
   const tierLabel =
-    tier === "blocked" ? "Bloqueado" : tier === "experimental" ? "Experimental" : null;
+    tier === "blocked"
+      ? "Bloqueado"
+      : tier === "experimental"
+        ? "Experimental"
+        : null;
   const kindLabel = recursive
     ? t("examples.kind.recursive")
     : t("examples.kind.iterative");

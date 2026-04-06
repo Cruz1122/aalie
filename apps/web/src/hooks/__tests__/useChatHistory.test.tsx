@@ -41,7 +41,10 @@ describe("useChatHistory", () => {
 
   it("migrates embedded history from sessionStorage when localStorage is empty", () => {
     const storageKey = getEmbeddedAssistantChatStorageKey();
-    sessionStorage.setItem(storageKey, JSON.stringify([buildMessage("legacy-1")]));
+    sessionStorage.setItem(
+      storageKey,
+      JSON.stringify([buildMessage("legacy-1")]),
+    );
 
     const history = renderHook(() =>
       useChatHistory(storageKey, {

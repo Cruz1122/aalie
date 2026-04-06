@@ -19,7 +19,7 @@
     "lint:api": "cd infra && docker compose exec -T api ruff check .",
     "lint:api:local": "cd apps/api && python3 -m ruff check app",
     "lint:api:fix": "cd apps/api && python3 -m ruff check app --fix",
-    "format:api": "cd infra && docker compose exec -T api black .",
+    "format:api": "cd infra && docker compose exec -T api ruff format .",
     "lint:all": "pnpm run lint:web || true && pnpm run lint:api",
     "format:all": "pnpm run format:web || true && pnpm run format:api",
     "test:api": "cd apps/api && python -m pytest tests/ -v",

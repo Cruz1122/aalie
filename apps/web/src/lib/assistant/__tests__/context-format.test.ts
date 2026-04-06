@@ -112,7 +112,7 @@ describe("assistant context formatting", () => {
     expect(supplement).toContain("fuente de verdad");
     expect(supplement.toLowerCase()).toContain("no sustituyas");
     expect(supplement.toLowerCase()).toContain("comparación con llm");
-    expect(supplement.toLowerCase()).toContain("evita repetir \"en aalie\"");
+    expect(supplement.toLowerCase()).toContain('evita repetir "en aalie"');
     expect(supplement.toLowerCase()).toContain("referencia principal");
   });
 

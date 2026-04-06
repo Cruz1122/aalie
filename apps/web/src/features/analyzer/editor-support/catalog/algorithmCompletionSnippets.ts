@@ -41,7 +41,10 @@ function buildAliases(
   example: ExampleCatalogItem,
   locale: ExampleLocale,
 ): string[] {
-  const aliases = new Set<string>([example.slug, example.slug.replace(/-/g, "")]);
+  const aliases = new Set<string>([
+    example.slug,
+    example.slug.replace(/-/g, ""),
+  ]);
   const sources = [
     getLocalizedExampleSource(example, "es"),
     getLocalizedExampleSource(example, "en"),

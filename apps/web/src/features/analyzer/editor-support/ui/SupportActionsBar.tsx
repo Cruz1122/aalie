@@ -24,7 +24,9 @@ export function SupportActionsBar({
   className,
 }: Readonly<SupportActionsBarProps>) {
   return (
-    <div className={["flex flex-col gap-3", className].filter(Boolean).join(" ")}>
+    <div
+      className={["flex flex-col gap-3", className].filter(Boolean).join(" ")}
+    >
       <div className="flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"

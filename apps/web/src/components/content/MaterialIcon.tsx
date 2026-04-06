@@ -10,10 +10,7 @@ import Warning from "@mui/icons-material/Warning";
 import type { SvgIconProps } from "@mui/material/SvgIcon";
 import type { ComponentType } from "react";
 
-const ICON_COMPONENTS: Record<
-  PedagogyIconName,
-  ComponentType<SvgIconProps>
-> = {
+const ICON_COMPONENTS: Record<PedagogyIconName, ComponentType<SvgIconProps>> = {
   school: School,
   science: Science,
   analytics: Analytics,

@@ -150,7 +150,9 @@ describe("Examples views", () => {
       target: { value: "fibonacci" },
     });
 
-    const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(-1)?.[0] as {
+    const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(
+      -1,
+    )?.[0] as {
       assistantContext: {
         exampleSections?: Array<{ title: string }>;
         visibleExamples?: Array<{ title: string; source?: string }>;
@@ -166,7 +168,9 @@ describe("Examples views", () => {
       launcherProps.assistantContext.visibleExamples?.[0]?.source,
     ).toContain("BEGIN");
 
-    const firstResult = screen.getAllByRole("button", { name: /fibonacci/i })[0];
+    const firstResult = screen.getAllByRole("button", {
+      name: /fibonacci/i,
+    })[0];
     fireEvent.click(firstResult);
     expect(pushMock).toHaveBeenCalledTimes(1);
     expect(pushMock.mock.calls[0][0]).toMatch(/^\/examples\/.+\?example=.+/);
@@ -187,14 +191,16 @@ describe("Examples views", () => {
     fireEvent.click(analyzeButtons[0]);
     expect(runAnalysisMock).toHaveBeenCalledTimes(1);
 
-    const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(-1)?.[0] as {
+    const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(
+      -1,
+    )?.[0] as {
       assistantContext: {
         visibleExamples?: Array<{ title: string; source?: string }>;
       };
     };
-    expect(launcherProps.assistantContext.visibleExamples?.length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      launcherProps.assistantContext.visibleExamples?.length,
+    ).toBeGreaterThan(0);
     expect(
       launcherProps.assistantContext.visibleExamples?.every((example) =>
         example.source?.includes("BEGIN"),

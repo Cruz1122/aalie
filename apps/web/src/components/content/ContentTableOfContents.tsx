@@ -18,29 +18,31 @@ export function ContentTableOfContents({
   const t = useTranslations("contentUi");
   const completed = new Set(completedSectionIds);
   const chapters = Array.from(
-    sections.reduce(
-      (acc, section) => {
-        const key = `${section.chapterId}:${section.chapterSlug}`;
-        const current = acc.get(key) ?? {
-          chapterId: section.chapterId,
-          chapterSlug: section.chapterSlug,
-          chapterTitle: section.chapterTitle,
-          sections: [] as ContentSectionSummary[],
-        };
-        current.sections.push(section);
-        acc.set(key, current);
-        return acc;
-      },
-      new Map<
-        string,
-        {
-          chapterId: string;
-          chapterSlug: string;
-          chapterTitle: string;
-          sections: ContentSectionSummary[];
-        }
-      >(),
-    ).values(),
+    sections
+      .reduce(
+        (acc, section) => {
+          const key = `${section.chapterId}:${section.chapterSlug}`;
+          const current = acc.get(key) ?? {
+            chapterId: section.chapterId,
+            chapterSlug: section.chapterSlug,
+            chapterTitle: section.chapterTitle,
+            sections: [] as ContentSectionSummary[],
+          };
+          current.sections.push(section);
+          acc.set(key, current);
+          return acc;
+        },
+        new Map<
+          string,
+          {
+            chapterId: string;
+            chapterSlug: string;
+            chapterTitle: string;
+            sections: ContentSectionSummary[];
+          }
+        >(),
+      )
+      .values(),
   );
 
   return (
@@ -50,7 +52,11 @@ export function ContentTableOfContents({
       </div>
       <nav className="space-y-4" aria-label={t("tableOfContents")}>
         {chapters.map((chapter) => (
-          <div key={chapter.chapterId} id={chapter.chapterSlug} className="space-y-2">
+          <div
+            key={chapter.chapterId}
+            id={chapter.chapterSlug}
+            className="space-y-2"
+          >
             <a
               href={`#${chapter.chapterSlug}`}
               className="block text-sm font-semibold text-white transition-colors hover:text-sky-200"

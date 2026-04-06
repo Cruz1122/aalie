@@ -52,8 +52,20 @@ describe("trace focused panel context", () => {
             },
           ],
           edges: [
-            { id: "e1", source: "1", target: "2", label: "", type: "smoothstep" },
-            { id: "e2", source: "2", target: "3", label: "", type: "smoothstep" },
+            {
+              id: "e1",
+              source: "1",
+              target: "2",
+              label: "",
+              type: "smoothstep",
+            },
+            {
+              id: "e2",
+              source: "2",
+              target: "3",
+              label: "",
+              type: "smoothstep",
+            },
           ],
         },
       },
@@ -74,7 +86,9 @@ describe("trace focused panel context", () => {
         expect.stringContaining("Caso visible en seguimiento: peor"),
         expect.stringContaining("Parametros iniciales visibles"),
         expect.stringContaining("Diagrama visible: 3 nodos y 2 conexiones"),
-        expect.stringContaining("Patron estructural visible: divide_merge_recurse"),
+        expect.stringContaining(
+          "Patron estructural visible: divide_merge_recurse",
+        ),
         expect.stringContaining("Nodos representativos visibles"),
       ]),
     );
@@ -100,7 +114,9 @@ describe("trace focused panel context", () => {
     expect(panel.notes).toEqual(
       expect.arrayContaining([
         expect.stringContaining("Visible initial parameters"),
-        expect.stringContaining("No diagram is visible for the current parameters"),
+        expect.stringContaining(
+          "No diagram is visible for the current parameters",
+        ),
       ]),
     );
   });

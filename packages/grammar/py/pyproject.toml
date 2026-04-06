@@ -25,7 +25,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
-    "black>=22.0.0",
     "isort>=5.10.0",
 ]
 
@@ -35,13 +34,10 @@ where = ["src"]
 [tool.setuptools.package-dir]
 "" = "src"
 
-[tool.black]
-line-length = 88
-target-version = ['py311']
-
 [tool.ruff]
 extend-exclude = ["src/aa_grammar/generated"]
+line-length = 88
 
 [tool.isort]
-profile = "black"
+profile = "ruff"
 line_length = 88

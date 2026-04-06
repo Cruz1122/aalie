@@ -7,13 +7,22 @@ export function registerPseudocodeCommands(
   editor.addCommand(monaco.KeyCode.Tab, () => {
     const suggestState = editor.getContribution(
       "editor.contrib.suggestController",
-    ) as { model?: { state?: number }; widget?: { value?: { isExpanded?: boolean } } } | null;
+    ) as {
+      model?: { state?: number };
+      widget?: { value?: { isExpanded?: boolean } };
+    } | null;
 
     const inlineController = editor.getContribution(
       "editor.contrib.inlineCompletionsController",
-    ) as { model?: { state?: { ghostText?: unknown } }; commitCurrentSuggestion?: () => void } | null;
+    ) as {
+      model?: { state?: { ghostText?: unknown } };
+      commitCurrentSuggestion?: () => void;
+    } | null;
 
-    if (inlineController?.model?.state?.ghostText && inlineController.commitCurrentSuggestion) {
+    if (
+      inlineController?.model?.state?.ghostText &&
+      inlineController.commitCurrentSuggestion
+    ) {
       inlineController.commitCurrentSuggestion();
       return;
     }
@@ -29,9 +38,15 @@ export function registerPseudocodeCommands(
   editor.addCommand(monaco.KeyCode.RightArrow, () => {
     const inlineController = editor.getContribution(
       "editor.contrib.inlineCompletionsController",
-    ) as { model?: { state?: { ghostText?: unknown } }; commitCurrentSuggestion?: () => void } | null;
+    ) as {
+      model?: { state?: { ghostText?: unknown } };
+      commitCurrentSuggestion?: () => void;
+    } | null;
 
-    if (inlineController?.model?.state?.ghostText && inlineController.commitCurrentSuggestion) {
+    if (
+      inlineController?.model?.state?.ghostText &&
+      inlineController.commitCurrentSuggestion
+    ) {
       inlineController.commitCurrentSuggestion();
       return;
     }

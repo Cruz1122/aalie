@@ -28,9 +28,7 @@ describe("context insertion rules", () => {
   it("keeps the closing line indented in nested block insertions", () => {
     expect(
       applyContextIndentation(
-        resolveSnippetPlainText(
-          "WHILE (${1:condicion}) DO BEGIN\n  ${2}\nEND",
-        ),
+        resolveSnippetPlainText("WHILE (${1:condicion}) DO BEGIN\n  ${2}\nEND"),
         "  ",
       ),
     ).toBe("WHILE (condicion) DO BEGIN\n    \n  END");

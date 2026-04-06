@@ -52,7 +52,11 @@ export function isGeminiLikeError(error: unknown): boolean {
   }
 
   const rawMessage =
-    error instanceof Error ? error.message : typeof error === "string" ? error : "";
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "";
 
   return (
     rawMessage.includes("Gemini") ||

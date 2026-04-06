@@ -33,8 +33,7 @@ const IDENTIFIER_KEYWORDS = new Set([
 ]);
 
 const SIGNATURE_REGEX = /^\s*[A-Za-z_][A-Za-z0-9_]*\s*\(([^)]*)\)\s*BEGIN\b/gm;
-const ASSIGNMENT_REGEX =
-  /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(?:\[[^\]]+\])?\s*<-/;
+const ASSIGNMENT_REGEX = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(?:\[[^\]]+\])?\s*<-/;
 const FOR_LOOP_REGEX = /^\s*FOR\s+([A-Za-z_][A-Za-z0-9_]*)\s*<-/;
 
 export interface IdentifierCompletionCandidate {
@@ -64,7 +63,9 @@ function normalizeCompletionText(value: string): string {
 }
 
 function matchesPrefix(value: string, prefix: string): boolean {
-  return prefix.length === 0 || normalizeCompletionText(value).startsWith(prefix);
+  return (
+    prefix.length === 0 || normalizeCompletionText(value).startsWith(prefix)
+  );
 }
 
 function pushIdentifierCandidate(

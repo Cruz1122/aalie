@@ -13,7 +13,10 @@ function inferCompletionKind(
   if (snippet.insertKind === "template") {
     return monaco.languages.CompletionItemKind.Module;
   }
-  if (snippet.insertKind === "block" || snippet.insertKind === "wrap-selection") {
+  if (
+    snippet.insertKind === "block" ||
+    snippet.insertKind === "wrap-selection"
+  ) {
     return monaco.languages.CompletionItemKind.Snippet;
   }
   return monaco.languages.CompletionItemKind.Keyword;
