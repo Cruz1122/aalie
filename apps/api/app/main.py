@@ -18,6 +18,7 @@ from .core.config import get_cors_allowed_origins, get_cors_enabled
 from .modules.analysis.router import router as analyze_router
 from .modules.classification.router import router as classify_router
 from .modules.export.router import router as export_router
+from .modules.llm.router import router as llm_router
 from .modules.parsing.router import router as parse_router
 
 # Cargar variables de entorno desde .env
@@ -58,6 +59,7 @@ def create_app() -> FastAPI:
     app.include_router(parse_router)
     app.include_router(analyze_router)
     app.include_router(classify_router)
+    app.include_router(llm_router)
     app.include_router(export_router)
 
     return app

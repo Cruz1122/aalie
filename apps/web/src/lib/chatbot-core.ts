@@ -1,6 +1,7 @@
 "use client";
 
 import type { AssistantContext, ChatMessage } from "@/lib/assistant/types";
+import { getNormalizedLlmText } from "@/lib/llm-response";
 
 export type LLMIntent = "parser_assist" | "general";
 
@@ -138,8 +139,7 @@ export async function getLLMResponse(
       throw error;
     }
 
-    const content =
-      result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const content = getNormalizedLlmText(result);
     if (!content || String(content).trim().length === 0) {
       throw new Error(t ? t("emptyLlmResponse") : "Empty LLM response");
     }

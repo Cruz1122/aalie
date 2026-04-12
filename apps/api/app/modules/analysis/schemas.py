@@ -15,7 +15,6 @@ class AvgModelConfig(BaseModel):
 class AnalyzeRequest(BaseModel):
     source: str
     mode: str = "worst"  # "worst" | "best" | "avg" | "all"
-    api_key: Optional[str] = None  # API Key de Gemini (opcional)
     avgModel: Optional[AvgModelConfig] = None  # Modelo probabilístico para caso promedio
     algorithm_kind: Optional[str] = None  # "iterative" | "recursive" | "hybrid" | "unknown"
     preferred_method: Optional[str] = (

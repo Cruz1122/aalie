@@ -8,27 +8,27 @@ Documentar dónde entra el LLM en AALIE y dejar claro que es un subsistema auxil
 
 ## Alcance
 
-Cubre configuración, jobs, rutas BFF y dependencias de entorno del frontend.
+Cubre configuración, jobs, rutas de proxy interno en Next y el backend FastAPI como gateway LLM.
 
 ## Fuente de verdad
 
+- `apps/api/app/modules/llm/`
 - `apps/web/src/app/api/llm/`
 - `apps/web/src/hooks/useApiKey.ts`
 - `apps/web/src/components/ChatBot.tsx`
 - `apps/web/src/components/assistant/EmbeddedAssistantLauncher.tsx`
-- `apps/web/src/app/[locale]/assistant-frame/page.tsx`
-- `apps/web/src/lib/assistant/`
 
 ## Estructura
 
 ### Punto de integración
 
-El LLM vive en el frontend/BFF de Next, no en la API FastAPI. Las rutas `/api/llm/*`:
+El LLM vive en backend FastAPI (`/llm` y `/llm/status`) como unico punto autorizado para hablar con proveedores.
 
-- seleccionan modelo y prompt;
-- resuelven API key;
-- llaman al proveedor Gemini;
-- devuelven payloads para chat, repair y compare.
+Las rutas `/api/llm/*` de Next funcionan como proxy interno para el navegador:
+
+- reciben requests del frontend;
+- reenvian al backend FastAPI;
+- no contienen API keys de proveedor ni detalles del SDK/provider.
 
 El asistente embebido vive como una composición frontend:
 
@@ -56,8 +56,8 @@ El asistente embebido vive como una composición frontend:
 ### Configuración
 
 - endpoint configurable por `GEMINI_ENDPOINT_BASE`;
-- modelos por job configurables por `LLM_MODEL_*`;
-- disponibilidad de API key por `API_KEY` del servidor o `NEXT_PUBLIC_API_KEY`/localStorage del cliente.
+- modelos configurables por `LLM_MODEL_CLASSIFY`, `LLM_MODEL_PARSER_ASSIST`, `LLM_MODEL_GENERAL`, `LLM_MODEL_REPAIR`, `LLM_MODEL_COMPARE`, `LLM_MODEL_RECURSION_DIAGRAM`, `LLM_MODEL_GENERATE_DIAGRAM`;
+- disponibilidad de API key por `API_KEY` del servidor o `localStorage` del cliente (reenviada al backend).
 
 ### Contexto estructurado del asistente
 
@@ -88,8 +88,8 @@ En `analyzer`, el contexto puede incluir además detalles curados de:
 
 ## Limites conocidos
 
-- Cuotas, errores del proveedor y cambios de modelo son externos al backend determinista.
-- Los contratos de salida del proveedor deben normalizarse antes de usarse en UI o export.
+- Cuotas, errores del proveedor y cambios de modelo siguen siendo externos al motor determinista.
+- El backend normaliza errores y encapsula respuestas del proveedor para evitar acoplamiento directo desde UI.
 
 ## Archivos relacionados
 
