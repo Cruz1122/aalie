@@ -57,6 +57,11 @@ import {
 } from "@/lib/extract-core-data";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { buildLlmComparisonPayload } from "@/lib/llm-compare-payload";
+import {
+  getNormalizedLlmStructured,
+  getNormalizedLlmText,
+  parseJsonFromText,
+} from "@/lib/llm-response";
 import { translateLlmError } from "@/lib/llm-error-translator";
 import { getSavedCase, saveCase } from "@/lib/polynomial";
 import {
@@ -698,16 +703,14 @@ export default function AnalyzerPage() {
 
         setTxtImportModal({
           title: tView("txtImportGrammarTitle"),
-          description: hasApiKey
-            ? tView("txtImportParseFailed")
-            : tView("txtImportParseFailedNoAi"),
+          description: tView("txtImportParseFailed"),
           details: [
             ...errorDetails,
             ...getImportNormalizationSuggestions(
               validation.normalizedSource,
             ).map((suggestion) => suggestion.reason),
           ],
-          showRepairAction: hasApiKey,
+          showRepairAction: true,
         });
         setPendingImportSourceForRepair(validation.normalizedSource);
         setPendingImportErrorsForRepair(errors);
@@ -814,14 +817,12 @@ export default function AnalyzerPage() {
       setAnalysisMessage(getMessage("classifying"));
       let kind: ClassifyResponse["kind"];
       try {
-        const apiKey = getApiKey();
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             source,
             mode: "local",
-            apiKey: apiKey || undefined,
           }),
         });
 
@@ -919,14 +920,10 @@ export default function AnalyzerPage() {
         progressBeforeAnalysis = 55;
       }
 
-      // Obtener API key (solo necesitamos la key, no el status completo)
-      const apiKey = getApiKey();
-
       // Realizar una sola petición que trae todos los casos (worst, best y avg)
       const analyzeBody: {
         source: string;
         mode: string;
-        api_key?: string;
         avgModel?: { mode: string; predicates?: Record<string, string> };
         algorithm_kind?: string;
         preferred_method?: MethodType;
@@ -945,9 +942,6 @@ export default function AnalyzerPage() {
       // Solo agregar preferred_method si es recursivo y hay un método seleccionado
       if (isRecursive && selectedMethod) {
         analyzeBody.preferred_method = selectedMethod;
-      }
-      if (apiKey) {
-        analyzeBody.api_key = apiKey; // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
       }
 
       // Actualizar mensaje antes de iniciar el análisis real
@@ -1361,10 +1355,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
       setComparisonMessage("Generando comparación...");
 
-      // Extraer datos del LLM
-      const llmResponseText =
-        result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!llmResponseText) {
+      const structuredPayload =
+        getNormalizedLlmStructured<Record<string, unknown>>(result);
+      const llmResponseText = getNormalizedLlmText(result);
+      if (!llmResponseText && !structuredPayload) {
         throw new Error("No se recibió respuesta del LLM");
       }
 
@@ -1375,15 +1369,17 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         note?: string;
         algorithm_type?: string;
       };
-      try {
-        llmResponse = JSON.parse(llmResponseText);
-      } catch {
-        // Intentar extraer JSON si está dentro de un bloque de código
-        const jsonMatch = llmResponseText.match(
-          /```(?:json)?\s*(\{[\s\S]*\})\s*```/,
-        );
-        if (jsonMatch) {
-          llmResponse = JSON.parse(jsonMatch[1]);
+      if (structuredPayload && typeof structuredPayload === "object") {
+        llmResponse = structuredPayload;
+      } else {
+        const parsed = parseJsonFromText<Record<string, unknown>>(llmResponseText);
+        if (parsed) {
+          llmResponse = parsed as {
+            analysis?: Record<string, unknown>;
+            time_complexity?: Record<string, unknown>;
+            note?: string;
+            algorithm_type?: string;
+          };
         } else {
           throw new Error(tMessages("llmParseError"));
         }
@@ -3588,21 +3584,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         {!localParseOk && (
                           <button
                             onClick={() => setShowRepairModal(true)}
-                            disabled={!hasApiKey}
-                            className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                            className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 relative group"
                           >
                             <span className="material-symbols-outlined text-sm">
                               auto_awesome
                             </span>
-                            {!hasApiKey ? (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                                {tView("apiKeyRequired")}
-                              </div>
-                            ) : (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                                {tView("repairWithAI")}
-                              </div>
-                            )}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                              {tView("repairWithAI")}
+                            </div>
                           </button>
                         )}
                         <button

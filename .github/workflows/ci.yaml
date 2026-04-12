@@ -277,11 +277,8 @@ jobs:
             fi
           fi
 
-      - name: ESLint (web)
+      - name: ESLint + Prettier (web)
         run: pnpm -C apps/web lint
-
-      - name: Prettier (web)  
-        run: pnpm -C apps/web format
 
   lint-api:
     name: "Lint (api: ruff check)"

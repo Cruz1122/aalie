@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRef, useEffect, useMemo, useState } from "react";
 
 import { getApiKey } from "@/hooks/useApiKey";
+import { getNormalizedLlmText } from "@/lib/llm-response";
 import { translateLlmError } from "@/lib/llm-error-translator";
 import type {
   CaseType,
@@ -415,8 +416,7 @@ export default function StructuredTraceContent({
         throw new Error(result?.error || tMessages("unknownLlmError"));
       }
 
-      const content =
-        result?.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      const content = getNormalizedLlmText(result);
       const normalizedContent = String(content).trim();
       if (!normalizedContent) {
         throw new Error(tMessages("emptyLlmResponse"));

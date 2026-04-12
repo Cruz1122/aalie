@@ -27,20 +27,20 @@ interface ContentBlockRendererProps {
 const frameToneClassNames: Record<string, string> = {
   info: "border-sky-500/30 bg-sky-500/10",
   warning: "border-amber-500/30 bg-amber-500/10",
-  success: "border-emerald-500/30 bg-emerald-500/10",
+  success: "border-primary/30 bg-primary/10",
   danger: "border-rose-500/30 bg-rose-500/10",
   callout: "border-cyan-500/30 bg-cyan-500/10",
   definition: "border-violet-500/30 bg-violet-500/10",
   theorem: "border-indigo-500/30 bg-indigo-500/10",
   proof: "border-fuchsia-500/30 bg-fuchsia-500/10",
-  example: "border-emerald-500/30 bg-emerald-500/10",
+  example: "border-primary/30 bg-primary/10",
   exerciseSolution: "border-slate-500/30 bg-slate-800/60",
   exercise: "border-slate-500/30 bg-slate-800/60",
 };
 
 const evidenceVariantBorder: Record<string, string> = {
   concept: "border-l-violet-400/50",
-  example: "border-l-emerald-400/50",
+  example: "border-l-primary/55",
   systemEvidence: "border-l-cyan-400/50",
   interpretation: "border-l-amber-400/50",
   warning: "border-l-rose-400/50",

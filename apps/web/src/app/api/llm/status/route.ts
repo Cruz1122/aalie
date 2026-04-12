@@ -1,40 +1,52 @@
 import { NextRequest } from "next/server";
 
-import { LLM_EXPORTABLE_CONFIG } from "../llm-config";
-
 export const runtime = "nodejs";
 
-// Validar formato de API_KEY de Gemini
-function validateApiKey(key: string | undefined): boolean {
-  if (!key || typeof key !== "string") {
-    return false;
+function getApiBase(): string {
+  const a = process.env.API_INTERNAL_BASE_URL?.replace(/\/+$/, "");
+  if (a) {
+    return a.startsWith("http://") || a.startsWith("https://")
+      ? a
+      : `https://${a}`;
   }
-  const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
-  return API_KEY_REGEX.test(key.trim());
+  const b = process.env.API_BASE_URL?.replace(/\/+$/, "");
+  if (b) {
+    return b.startsWith("http://") || b.startsWith("https://")
+      ? b
+      : `https://${b}`;
+  }
+  return process.env.DOCKER ? "http://api:8000" : "http://localhost:8000";
 }
 
 export async function GET(_req: NextRequest) {
   try {
-    // Verificar si hay API_KEY en las variables de entorno del servidor
-    const serverApiKey = process.env.API_KEY;
-    const hasServerApiKey = validateApiKey(serverApiKey);
-
-    const status = {
-      timestamp: new Date().toISOString(),
-      config: LLM_EXPORTABLE_CONFIG,
-      jobs: LLM_EXPORTABLE_CONFIG.jobs,
-      apiKey: {
-        serverAvailable: hasServerApiKey,
-        // No exponemos la API_KEY real por seguridad
-      },
-    };
-    return new Response(JSON.stringify({ ok: true, status }), {
-      status: 200,
-      headers: { "content-type": "application/json" },
+    const apiBase = getApiBase();
+    const response = await fetch(`${apiBase}/llm/status`, {
+      method: "GET",
+      cache: "no-store",
     });
+
+    const data = await response.json().catch(() => null);
+    if (data && typeof data === "object") {
+      return new Response(JSON.stringify(data), {
+        status: response.status,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        error: `Bad backend response (${response.status})`,
+      }),
+      {
+        status: 502,
+        headers: { "content-type": "application/json" },
+      },
+    );
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    console.error("[LLM Status] Error:", error);
+    console.error("[LLM Status Proxy] Error:", error);
     return new Response(
       JSON.stringify({
         ok: false,

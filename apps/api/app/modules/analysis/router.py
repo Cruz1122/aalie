@@ -45,7 +45,6 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
     return analyze_algorithm(
         source=payload.source,
         mode=payload.mode,
-        api_key=payload.api_key,
         avg_model=avg_model,
         algorithm_kind=payload.algorithm_kind,
         preferred_method=payload.preferred_method,

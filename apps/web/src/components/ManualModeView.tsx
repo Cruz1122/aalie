@@ -466,16 +466,14 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
 
         setTxtImportModal({
           title: tView("txtImportGrammarTitle"),
-          description: hasValidApiKey
-            ? tView("txtImportParseFailed")
-            : tView("txtImportParseFailedNoAi"),
+          description: tView("txtImportParseFailed"),
           details: [
             ...errorDetails,
             ...getImportNormalizationSuggestions(
               validation.normalizedSource,
             ).map((suggestion) => suggestion.reason),
           ],
-          showRepairAction: hasValidApiKey,
+          showRepairAction: true,
         });
         setPendingImportSourceForRepair(validation.normalizedSource);
         setPendingImportErrorsForRepair(errors);

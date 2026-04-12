@@ -72,10 +72,24 @@ function snapshotsEqual(a: ProgressSnapshot, b: ProgressSnapshot): boolean {
   return true;
 }
 
+function sectionIdsSnapshotEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((id, i) => id === sortedB[i]);
+}
+
+const EMPTY_COMPLETED_SECTION_IDS: string[] = [];
+
 export function useContentProgress(
   spaceId: string,
   modules: ContentModuleSummary[],
 ) {
+  const modulesRef = useRef(modules);
+  modulesRef.current = modules;
+
   const clientSnapshotRef = useRef<ProgressSnapshot | null>(null);
   const serverSnapshotRef = useRef<ProgressSnapshot | null>(null);
 
@@ -85,24 +99,24 @@ export function useContentProgress(
   );
 
   const getSnapshot = useCallback(() => {
-    const next = buildProgressSnapshot(spaceId, modules);
+    const next = buildProgressSnapshot(spaceId, modulesRef.current);
     const prev = clientSnapshotRef.current;
     if (prev && snapshotsEqual(prev, next)) {
       return prev;
     }
     clientSnapshotRef.current = next;
     return next;
-  }, [spaceId, modules]);
+  }, [spaceId]);
 
   const getServerSnapshot = useCallback(() => {
-    const next = buildEmptyProgressSnapshot(modules);
+    const next = buildEmptyProgressSnapshot(modulesRef.current);
     const prev = serverSnapshotRef.current;
     if (prev && snapshotsEqual(prev, next)) {
       return prev;
     }
     serverSnapshotRef.current = next;
     return next;
-  }, [modules]);
+  }, []);
 
   const { moduleProgressById, spaceProgress } = useSyncExternalStore(
     subscribe,
@@ -131,10 +145,22 @@ export function useSectionCompletionTracking({
     sections[0]?.sectionId,
   );
 
+  const completedSectionIdsRef = useRef<string[]>(EMPTY_COMPLETED_SECTION_IDS);
+
+  const getCompletedSectionIdsSnapshot = useCallback((): string[] => {
+    const next = Array.from(getCompletedSectionIds(spaceId, module.moduleId));
+    const prev = completedSectionIdsRef.current;
+    if (prev && sectionIdsSnapshotEqual(prev, next)) {
+      return prev;
+    }
+    completedSectionIdsRef.current = next;
+    return next;
+  }, [spaceId, module.moduleId]);
+
   const completedSectionIds = useSyncExternalStore(
     subscribeToProgressChanges,
-    () => Array.from(getCompletedSectionIds(spaceId, module.moduleId)),
-    () => [],
+    getCompletedSectionIdsSnapshot,
+    () => EMPTY_COMPLETED_SECTION_IDS,
   );
 
   useEffect(() => {

@@ -8,17 +8,24 @@ Documentar los endpoints BFF del subsistema LLM y la forma de sus payloads visib
 
 ## Alcance
 
-Cubre `/api/llm`, `/api/llm/status` y `/api/llm/classify`.
+Cubre `/api/llm`, `/api/llm/status`, `/api/llm/classify`, `/llm` y `/llm/status`.
 
 ## Fuente de verdad
 
 - `apps/web/src/app/api/llm/route.ts`
 - `apps/web/src/app/api/llm/status/route.ts`
-- `apps/web/src/app/api/llm/llm-config.ts`
+- `apps/api/app/modules/llm/router.py`
+- `apps/api/app/modules/llm/service.py`
+- `apps/api/app/modules/llm/config.py`
 
 ## Estructura
 
 ### `POST /api/llm`
+
+- endpoint proxy del frontend hacia backend `/llm`;
+- el navegador nunca llama proveedor externo directamente.
+
+### `POST /llm`
 
 - jobs: `parser_assist`, `general`, `repair`, `compare`, `explain`
 - request base:
@@ -41,11 +48,16 @@ Cubre `/api/llm`, `/api/llm/status` y `/api/llm/classify`.
 {
   "ok": true,
   "data": {},
-  "model": "gemini-..."
+  "model": "gemini-...",
+  "requestId": "uuid"
 }
 ```
 
 ### `GET /api/llm/status`
+
+- proxy del frontend hacia backend `/llm/status`.
+
+### `GET /llm/status`
 
 - expone `config`, `jobs` y disponibilidad de API key del servidor;
 - no expone la API key real.
@@ -63,8 +75,8 @@ Cubre `/api/llm`, `/api/llm/status` y `/api/llm/classify`.
 
 ## Limites conocidos
 
-- este contrato depende del proveedor Gemini y puede requerir normalizacion adicional en consumidores;
-- errores de cuota, timeout o proveedor se devuelven como errores del BFF.
+- el backend esta preparado para multi-provider, pero actualmente solo implementa Gemini;
+- errores de cuota, timeout o proveedor se normalizan en backend con `errorCode`.
 
 ## Archivos relacionados
 

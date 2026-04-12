@@ -136,7 +136,7 @@ export function ExampleCatalogCard({
   return (
     <article
       id={`example-${example.id}`}
-      className={`glass-card flex h-[340px] flex-col overflow-hidden rounded-2xl border border-white/10 p-4 transition-all duration-200 hover:border-white/20 ${
+      className={`glass-card flex h-[340px] flex-col overflow-hidden rounded-2xl border border-white/10 p-4 transition-shadow duration-200 ${
         highlighted ? "ring-2 ring-primary/50" : ""
       }`}
     >
