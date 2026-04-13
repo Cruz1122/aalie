@@ -188,11 +188,12 @@ def create_provider() -> BaseLLMProvider:
 def resolve_api_key(request_api_key: str | None) -> Tuple[str | None, bool]:
     import os
 
+    if _validate_api_key(request_api_key):
+        return request_api_key.strip(), False
+
     server_key = os.getenv("API_KEY")
     if _validate_api_key(server_key):
         return server_key, True
-    if _validate_api_key(request_api_key):
-        return request_api_key.strip(), False
     return None, False
 
 
