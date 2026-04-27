@@ -1,0 +1,804 @@
+{
+  "schemaVersion": "1.0.0",
+  "datasetId": "ada-quiz-bank-sample",
+  "locale": "es-CO",
+  "courseId": "ada",
+  "taxonomyVersion": "1.0.0",
+  "questions": [
+    {
+      "questionId": "ada-asymptotic-notation-basic-001",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "cognitiveLevel": "understand",
+      "topic": "asymptotic_notation",
+      "tags": ["big_o", "upper_bound", "formal_definition"],
+      "skillIds": ["skill.asymptotic.big_o.upper-bound-interpretation"],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Que expresa que \\(f(n) \\in O(g(n))\\)?"
+          }
+        ]
+      },
+      "options": [
+        {
+          "optionId": "a",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Que \\(f(n)\\) esta acotada superiormente por \\(g(n)\\), salvo constante multiplicativa."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcto. Big-O representa una cota superior asintotica."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "big-o"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "b",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Que \\(f(n)\\) y \\(g(n)\\) son exactamente la misma funcion."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto. Big-O no exige igualdad literal ni crecimiento exacto."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "big-o"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "c",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Que \\(f(n)\\) crece estrictamente mas rapido que \\(g(n)\\)."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto. Esa idea se relaciona con \\(\\omega(g(n))\\), no con Big-O."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "little-omega"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "correctOptionIds": ["a"]
+      },
+      "gradingPolicy": {
+        "mode": "all_or_nothing",
+        "maxScore": 1,
+        "penalty": 0
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Existen constantes \\(c > 0\\) y \\(n_0\\) tales que, para todo \\(n \\ge n_0\\), se cumple \\(0 \\le f(n) \\le c g(n)\\)."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "notacion-asintotica",
+          "chapterId": "big-o"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1,
+        "estimatedTimeSec": 45,
+        "targetMastery": 0.75,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": ["skill.asymptotic.big_o.upper-bound-interpretation"],
+        "exposureLimit": 3,
+        "cooldownSessions": 2,
+        "discrimination": "medium"
+      }
+    },
+    {
+      "questionId": "ada-big-o-basic-truefalse-001",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "true_false",
+      "difficulty": "basic",
+      "cognitiveLevel": "recall",
+      "topic": "asymptotic_notation",
+      "tags": ["big_o", "upper_bound", "definition"],
+      "skillIds": ["skill.asymptotic.big_o.formal-definition"],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Verdadero o falso: \\(f(n) \\in O(g(n))\\) significa que \\(g(n)\\) es una cota superior asintotica de \\(f(n)\\)."
+          }
+        ]
+      },
+      "options": [
+        {
+          "optionId": "true",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Verdadero"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcto. Esa es precisamente la interpretacion de Big-O."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "big-o"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "false",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Falso"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto. Big-O define una cota superior, no una equivalencia exacta."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "big-o"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "correctOptionIds": ["true"]
+      },
+      "gradingPolicy": {
+        "mode": "all_or_nothing",
+        "maxScore": 1,
+        "penalty": 0
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Big-O expresa cota superior asintotica: para n suficientemente grande, \\(f(n)\\) no supera a \\(c g(n)\\)."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "notacion-asintotica",
+          "chapterId": "big-o"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1,
+        "estimatedTimeSec": 30,
+        "targetMastery": 0.7,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": ["skill.asymptotic.big_o.formal-definition"],
+        "exposureLimit": 3,
+        "cooldownSessions": 1,
+        "discrimination": "low"
+      }
+    },
+    {
+      "questionId": "ada-asymptotic-notation-intermediate-001",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "multiple_choice",
+      "difficulty": "intermediate",
+      "cognitiveLevel": "apply",
+      "topic": "asymptotic_notation",
+      "tags": ["theta", "big_o", "big_omega", "limits"],
+      "skillIds": ["skill.asymptotic.theta.identify-equivalent-order"],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Sea \\(f(n) = 3n^2 + 5n\\). Selecciona todas las afirmaciones correctas."
+          }
+        ]
+      },
+      "options": [
+        {
+          "optionId": "a",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "\\(f(n) \\in O(n^2)\\)"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcto. \\(n^2\\) acota superiormente a \\(3n^2+5n\\) salvo constante."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "big-o"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "b",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "\\(f(n) \\in \\Omega(n^2)\\)"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcto. Tambien esta acotada inferiormente por una constante positiva por \\(n^2\\)."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "omega"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "c",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "\\(f(n) \\in \\Theta(n^2)\\)"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcto. El termino dominante es cuadratico; la cota es ajustada."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "theta"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "d",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "\\(f(n) \\in o(n^2)\\)"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto. Little-o exigiria crecimiento estrictamente menor que \\(n^2\\)."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "notacion-asintotica",
+                "chapterId": "little-o"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "correctOptionIds": ["a", "b", "c"]
+      },
+      "gradingPolicy": {
+        "mode": "exact_set",
+        "maxScore": 1,
+        "penalty": 0
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "El termino dominante de \\(3n^2+5n\\) es \\(n^2\\), por eso pertenece a O, Omega y Theta de \\(n^2\\), pero no a little-o de \\(n^2\\)."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "notacion-asintotica",
+          "chapterId": "theta"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1,
+        "estimatedTimeSec": 90,
+        "targetMastery": 0.8,
+        "prerequisiteSkillIds": ["skill.asymptotic.big_o.upper-bound-interpretation"],
+        "reinforcesSkillIds": ["skill.asymptotic.theta.identify-equivalent-order"],
+        "exposureLimit": 3,
+        "cooldownSessions": 2,
+        "discrimination": "high"
+      }
+    },
+    {
+      "questionId": "ada-loop-invariant-intermediate-001",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "ordering",
+      "difficulty": "intermediate",
+      "cognitiveLevel": "understand",
+      "topic": "loop_invariant",
+      "tags": ["correctness", "initialization", "maintenance", "termination"],
+      "skillIds": ["skill.correctness.loop-invariant.three-moments"],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Ordena los tres momentos obligatorios para demostrar un loop invariant."
+          }
+        ]
+      },
+      "options": [
+        {
+          "optionId": "initialization",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Inicializacion: probar que la propiedad es cierta antes de la primera iteracion."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Este paso va primero: antes de razonar sobre iteraciones, se prueba que la propiedad arranca siendo cierta."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "loop-invariant",
+                "chapterId": "momentos"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "maintenance",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Mantenimiento: si era cierta antes de una iteracion, sigue siendo cierta antes de la siguiente."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Este paso va despues de inicializacion."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "loop-invariant",
+                "chapterId": "momentos"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "termination",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Terminacion: usar la propiedad y la condicion de salida para demostrar correctitud."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Este paso va al final y conecta el invariante con el resultado del algoritmo."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "loop-invariant",
+                "chapterId": "momentos"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "orderedOptionIds": ["initialization", "maintenance", "termination"]
+      },
+      "gradingPolicy": {
+        "mode": "ordered_exact",
+        "maxScore": 1,
+        "penalty": 0
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "La prueba del invariante de ciclo se estructura en inicializacion, mantenimiento y terminacion."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "loop-invariant",
+          "chapterId": "momentos"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1,
+        "estimatedTimeSec": 75,
+        "targetMastery": 0.75,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": ["skill.correctness.loop-invariant.three-moments"],
+        "exposureLimit": 3,
+        "cooldownSessions": 2,
+        "discrimination": "medium"
+      }
+    },
+    {
+      "questionId": "ada-recurrence-methods-intermediate-001",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "match_pairs",
+      "difficulty": "intermediate",
+      "cognitiveLevel": "analyze",
+      "topic": "recurrence_equations",
+      "tags": ["divide_and_conquer", "master_theorem", "characteristic_equation", "recursion_tree_method"],
+      "skillIds": ["skill.recurrences.method-selection"],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Empareja cada metodo con la familia de recurrencias donde aplica de forma mas natural."
+          }
+        ]
+      },
+      "leftItems": [
+        {
+          "leftId": "master",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Teorema maestro"
+              }
+            ]
+          }
+        },
+        {
+          "leftId": "characteristic",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Ecuacion caracteristica"
+              }
+            ]
+          }
+        },
+        {
+          "leftId": "recursion_tree",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Arbol de recursion"
+              }
+            ]
+          }
+        }
+      ],
+      "rightItems": [
+        {
+          "rightId": "dyv-canonical",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Recurrencias tipo \\(aT(n/b)+f(n)\\)."
+              }
+            ]
+          }
+        },
+        {
+          "rightId": "linear-homogeneous",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Recurrencias lineales homogeneas con desplazamientos \\(T(n-1), T(n-2)\\)."
+              }
+            ]
+          }
+        },
+        {
+          "rightId": "branching-cost",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Recurrencias donde conviene analizar costo por nivel y hojas."
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "master",
+            "rightId": "dyv-canonical"
+          },
+          {
+            "leftId": "characteristic",
+            "rightId": "linear-homogeneous"
+          },
+          {
+            "leftId": "recursion_tree",
+            "rightId": "branching-cost"
+          }
+        ]
+      },
+      "gradingPolicy": {
+        "mode": "pairwise",
+        "maxScore": 1,
+        "penalty": 0
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Cada metodo responde a una forma distinta de recurrencia; elegir bien evita errores de analisis."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "ecuaciones-recurrencia",
+          "chapterId": "clasificacion-metodos"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1.25,
+        "estimatedTimeSec": 120,
+        "targetMastery": 0.8,
+        "prerequisiteSkillIds": ["skill.recurrences.identify-form"],
+        "reinforcesSkillIds": ["skill.recurrences.method-selection"],
+        "exposureLimit": 3,
+        "cooldownSessions": 3,
+        "discrimination": "high"
+      }
+    },
+    {
+      "questionId": "ada-greedy-advanced-001",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "single_choice",
+      "difficulty": "advanced",
+      "cognitiveLevel": "analyze",
+      "topic": "greedy_algorithms",
+      "tags": ["greedy", "optimality", "counterexample", "local_optimum"],
+      "skillIds": ["skill.greedy.optimality.justification"],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Cual afirmacion describe mejor la obligacion central al proponer un algoritmo voraz?"
+          }
+        ]
+      },
+      "options": [
+        {
+          "optionId": "a",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Basta con mostrar que en cada etapa toma una decision rapida."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto. La rapidez de decision no demuestra optimalidad."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "algoritmos-voraces",
+                "chapterId": "optimalidad"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "b",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Debe demostrarse que decisiones localmente optimas conducen a optimo global, o exhibir contraejemplo."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcto. La justificacion de optimalidad es el nucleo de un enfoque voraz."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "algoritmos-voraces",
+                "chapterId": "optimalidad"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "c",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Debe recorrer todo el espacio de soluciones antes de elegir."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto. Eso es mas propio de backtracking o branch and bound."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "backtracking",
+                "chapterId": "espacio-soluciones"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "correctOptionIds": ["b"]
+      },
+      "gradingPolicy": {
+        "mode": "all_or_nothing",
+        "maxScore": 1,
+        "penalty": 0
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "En algoritmos voraces, la carga de prueba esta en justificar que la eleccion local preserva optimalidad global."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "algoritmos-voraces",
+          "chapterId": "optimalidad"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1.25,
+        "estimatedTimeSec": 150,
+        "targetMastery": 0.8,
+        "prerequisiteSkillIds": ["skill.greedy.elements.identify"],
+        "reinforcesSkillIds": ["skill.greedy.optimality.justification"],
+        "exposureLimit": 3,
+        "cooldownSessions": 3,
+        "discrimination": "high"
+      }
+    }
+  ]
+}
