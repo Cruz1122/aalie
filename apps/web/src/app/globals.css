@@ -48,6 +48,12 @@
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Quizzes: cards sin cambio visual en hover */
+.quiz-no-hover:hover {
+  background: rgba(24, 36, 49, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
 /* glass-button eliminado: usar AAButton con variant="primary" (estilo de cards de ejemplos) */
 
 .glass-secondary {

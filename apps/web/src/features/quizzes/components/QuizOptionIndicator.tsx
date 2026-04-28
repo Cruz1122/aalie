@@ -1,0 +1,69 @@
+"use client";
+
+import type { QuizOptionKind, QuizOptionState } from "./types";
+
+export interface QuizOptionIndicatorProps {
+  kind: QuizOptionKind;
+  state?: QuizOptionState;
+  checked?: boolean;
+  index?: number;
+  disabled?: boolean;
+}
+
+function getIconColor(state: QuizOptionState, disabled: boolean): string {
+  if (disabled || state === "disabled") return "text-slate-500";
+  if (state === "correct") return "text-emerald-300";
+  if (state === "incorrect") return "text-rose-300";
+  if (state === "revealed") return "text-amber-300";
+  if (state === "selected") return "text-sky-300";
+  return "text-slate-300";
+}
+
+export function QuizOptionIndicator({
+  kind,
+  state = "idle",
+  checked = false,
+  disabled = false,
+}: QuizOptionIndicatorProps) {
+  const effectiveState =
+    state === "idle" && checked ? "selected" : disabled ? "disabled" : state;
+  const color = getIconColor(effectiveState, disabled);
+
+  if (kind === "neutral") {
+    return (
+      <span aria-hidden="true" className="inline-flex h-6 w-6 shrink-0 items-center justify-center">
+        <span className={`material-symbols-outlined text-[18px] leading-none ${color}`}>
+          drag_indicator
+        </span>
+      </span>
+    );
+  }
+
+  const iconName =
+    effectiveState === "idle"
+      ? kind === "single"
+        ? "radio_button_unchecked"
+        : "check_box_outline_blank"
+      : effectiveState === "selected"
+        ? kind === "single"
+          ? "radio_button_checked"
+          : "check_box"
+        : effectiveState === "correct"
+          ? "check_circle"
+          : effectiveState === "incorrect"
+            ? "cancel"
+            : effectiveState === "revealed"
+              ? "visibility"
+              : kind === "single"
+                ? "radio_button_unchecked"
+                : "check_box_outline_blank";
+
+  return (
+    <span aria-hidden="true" className="inline-flex h-6 w-6 shrink-0 items-center justify-center">
+      <span className={`material-symbols-outlined text-[20px] leading-none ${color}`}>
+        {iconName}
+      </span>
+    </span>
+  );
+}
+

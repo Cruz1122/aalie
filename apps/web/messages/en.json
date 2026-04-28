@@ -14,9 +14,86 @@
     "home": "Home",
     "analyzer": "Analyzer",
     "examples": "Examples",
+    "quiz": "Quizzes",
     "about": "About Us",
     "openMenu": "Open menu",
     "howToUse": "How to use"
+  },
+  "quizzes": {
+    "title": "ADA Quiz",
+    "subtitle": "Answer a short quiz based on your course progress.",
+    "actions": {
+      "start": "Start quiz",
+      "loadingSession": "Loading...",
+      "previous": "Previous",
+      "next": "Next",
+      "finish": "Finish attempt",
+      "evaluating": "Evaluating..."
+    },
+    "labels": {
+      "attemptId": "attemptId"
+    },
+    "validation": {
+      "incomplete": "Select an answer before continuing."
+    },
+    "meta": {
+      "question": "Question",
+      "questionNumber": "Question #{current}",
+      "progress": "Question {current} of {total}",
+      "topic": "Topic",
+      "type": "Type",
+      "difficulty": {
+        "basic": "Basic",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      }
+    },
+    "ordering": {
+      "up": "Move up",
+      "down": "Move down"
+    },
+    "matching": {
+      "title": "Choose a pair",
+      "selectOption": "Select an option",
+      "helperText": "Choose the concept that best matches this item."
+    },
+    "topics": {
+      "asymptotic_notation": "Asymptotic notation",
+      "elementary_operations": "Elementary operations",
+      "limits": "Limits",
+      "loop_invariant": "Loop invariant",
+      "recurrence_equations": "Recurrence equations"
+    },
+    "empty": {
+      "title": "No questions",
+      "noQuestions": "No questions are available for this content yet."
+    },
+    "error": {
+      "title": "Error",
+      "backend": "Could not load the quiz. Check your backend connection and try again.",
+      "unsupportedQuestion": "This question has a format not supported by the interface."
+    },
+    "result": {
+      "title": "Attempt result",
+      "score": "Score: {score} / {maxScore}",
+      "accuracy": "Accuracy: {percent}%",
+      "grade": "Grade",
+      "correct": "Correct:",
+      "incorrect": "Incorrect:",
+      "headlineExcellent": "Great job! You really mastered this topic.",
+      "headlineGreat": "Nice work! You are doing very well.",
+      "headlineClose": "Very close! A quick review and you got this.",
+      "headlineKeepGoing": "Keep going! Every attempt makes you stronger.",
+      "areasIntro": "It is recommended to review this topic before the next attempt:",
+      "areaLabelBigOUpperBoundInterpretation": "Upper-bound interpretation (Big-O)",
+      "areaLabelLimitsSeriesGrowthComparison": "Series growth comparison",
+      "none": "None",
+      "correctLabel": "Correct",
+      "incorrectLabel": "Incorrect",
+      "feedback": "Answer feedback",
+      "explanation": "General explanation",
+      "goToContent": "Go to content ({chapterId})"
+    }
   },
   "footer": {
     "languageLabel": "Language",
@@ -150,7 +227,7 @@
         },
         "master": {
           "name": "Master Theorem",
-          "description": "For standard divide-and-conquer recurrences T(n) = a·T(n/b) + f(n)."
+          "description": "For standard divide-and-conquer recurrences T(n) = aÃ‚Â·T(n/b) + f(n)."
         }
       }
     },
@@ -242,8 +319,8 @@
       "tPolynomial": "Polynomial form:",
       "tOpen": "Complete efficiency equation:",
       "bigO": "Big-O",
-      "bigOmega": "Big-Ω",
-      "bigTheta": "Big-Θ",
+      "bigOmega": "Big-ÃŽÂ©",
+      "bigTheta": "Big-ÃŽËœ",
       "boundUpper": "Upper bound:",
       "boundLower": "Lower bound:",
       "boundAvg": "Average bound:",
@@ -261,17 +338,17 @@
       "parameters": "Parameters:",
       "gnCalculation": "Calculation of g(n):",
       "comparison": "Comparison:",
-      "case1Desc": "→ Case 1: f(n) is polynomially smaller than g(n)",
-      "case2Desc": "→ Case 2: f(n) equals g(n)",
-      "case3Desc": "→ Case 3: f(n) is polynomially larger than g(n)",
+      "case1Desc": "Ã¢â€ â€™ Case 1: f(n) is polynomially smaller than g(n)",
+      "case2Desc": "Ã¢â€ â€™ Case 2: f(n) equals g(n)",
+      "case3Desc": "Ã¢â€ â€™ Case 3: f(n) is polynomially larger than g(n)",
       "regularityCondition": "Regularity Condition:",
-      "regularityVerified": "Verified: ∃c < 1, ∃n₀: a·f(n/b) ≤ c·f(n) for n ≥ n₀",
+      "regularityVerified": "Verified: Ã¢Ë†Æ’c < 1, Ã¢Ë†Æ’nÃ¢â€šâ‚¬: aÃ‚Â·f(n/b) Ã¢â€°Â¤ cÃ‚Â·f(n) for n Ã¢â€°Â¥ nÃ¢â€šâ‚¬",
       "regularityAssumed": "Assumed: Regularity condition is assumed to hold",
       "homogeneousSolution": "Homogeneous solution:",
       "particularSolution": "Particular solution:",
       "generalSolution": "General solution:",
       "closedForm": "Closed form:",
-      "thetaFinalResult": "Θ (Final Result):",
+      "thetaFinalResult": "ÃŽËœ (Final Result):",
       "gFunction": "Function g(n):",
       "expansions": "Expansions:",
       "generalForm": "General form:",
@@ -483,7 +560,7 @@
       "graphNoEdges": "The received graph contains no edges",
       "truncationWarning": "Execution was truncated: {reason}",
       "timeUnitNs": "ns",
-      "timeUnitUs": "μs",
+      "timeUnitUs": "ÃŽÂ¼s",
       "timeUnitMs": "ms",
       "timeUnitS": "s",
       "resetToAuto": "Reset to auto",
@@ -545,18 +622,18 @@
       "lineNotFound": "No information found for line {line}",
       "lineAnalysis": "Line {line} Analysis",
       "operationType": "Operation type:",
-      "elementalCost": "Elemental cost (Cₖ):",
+      "elementalCost": "Elemental cost (CÃ¢â€šâ€“):",
       "elementalCostDesc": "Basic computational cost of this operation",
       "expectedExecutions": "Expected executions:",
       "numExecutions": "Number of executions:",
-      "expectedExecutionsDesc": "Expected number of times this line executes (E[N_ℓ])",
+      "expectedExecutionsDesc": "Expected number of times this line executes (E[N_Ã¢â€žâ€œ])",
       "numExecutionsDesc": "How many times this line executes",
       "lineCostDerivation": "Step by step of how this cost was derived:",
       "notes": "Notes:",
       "lineCost": "Line cost:",
       "lineCostAvg": "Expected line cost:",
       "lineCostDesc": "Product of elemental cost by number of executions",
-      "lineCostAvgDesc": "Product of elemental cost by expected executions (C_ℓ · E[N_ℓ])",
+      "lineCostAvgDesc": "Product of elemental cost by expected executions (C_Ã¢â€žâ€œ Ã‚Â· E[N_Ã¢â€žâ€œ])",
       "analysisContext": "Analysis Context",
       "efficiencyEq": "Complete efficiency equation:",
       "efficiencyEqAvg": "Average efficiency equation A(n):",
@@ -575,7 +652,7 @@
       "stepDefAvgCase": "Average case definition",
       "stepUniformModel": "Uniform model",
       "stepLinearity": "Linearity of expectation",
-      "stepCalcE": "E[N_ℓ] calculation per line",
+      "stepCalcE": "E[N_Ã¢â€žâ€œ] calculation per line",
       "stepSimplification": "Simplification",
       "stepPolynomialForm": "Polynomial form",
       "stepAsymptotic": "Asymptotic notation",
@@ -717,8 +794,8 @@
       "case2": "Case 2",
       "case3": "Case 3",
       "regularity": "Regularity:",
-      "regularityVerified": "✓ Verified",
-      "regularityAssumed": "⚠ Assumed",
+      "regularityVerified": "Ã¢Å“â€œ Verified",
+      "regularityAssumed": "Ã¢Å¡Â  Assumed",
       "proofSteps": "Proof Steps",
       "stepsCount": "({count} steps)",
       "noStepsAvailable": "No steps available",
@@ -787,7 +864,7 @@
       "duplicateSubproblems": "Duplicate subproblems:",
       "zoomHint": "Use mouse to zoom and pan. Press Esc to close.",
       "irregularTree": "Tree with duplicate subproblems (e.g. Fibonacci)",
-      "duplicateSubproblem": "⚠ Duplicate subproblem ({count}x)",
+      "duplicateSubproblem": "Ã¢Å¡Â  Duplicate subproblem ({count}x)",
       "nodeCount": "{count} node{plural}",
       "returns": "Returns"
     },
@@ -1563,3 +1640,5 @@
     "brokenLinkTooltip": "Content not available"
   }
 }
+
+

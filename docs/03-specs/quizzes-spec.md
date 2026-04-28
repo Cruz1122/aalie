@@ -77,7 +77,7 @@ dataset JSON
 	-> validación de dataset
 	-> backend recibe contexto del estudiante
 	-> backend selecciona preguntas
-	-> backend entrega sesión al frontend
+	-> backend entrega intento al frontend
 	-> frontend renderiza
 	-> estudiante responde
 	-> evaluación determinista
@@ -118,7 +118,7 @@ Contexto de estudiante esperado:
 
 ## Outputs
 
-Payload de sesión hacia frontend:
+Payload de intento hacia frontend:
 
 ```json
 {
@@ -142,7 +142,7 @@ Respuesta del estudiante por tipo:
 - `ordering`: `orderedOptionIds[]`
 - `match_pairs`: `pairs[]`
 
-Resultado de sesión:
+Resultado de intento:
 
 ```json
 {
@@ -238,7 +238,7 @@ Reglas:
 - respuesta canónica mal formada;
 - pregunta sin feedback por opción;
 - taxonomía no reconocida;
-- no hay suficientes preguntas para filtros de sesión.
+- no hay suficientes preguntas para filtros de intento.
 
 ## Degradación permitida
 
@@ -285,7 +285,7 @@ Cambios incompatibles:
 - frontend renderiza los cinco tipos soportados;
 - frontend renderiza prompt, opciones, explicación y feedback con el mismo renderer;
 - evaluación no usa LLM;
-- resultado de sesión produce áreas a reforzar con links de contenido;
+- resultado de intento produce áreas a reforzar con links de contenido;
 - el banco puede crecer a 500 preguntas sin modificar lógica base.
 
 ## Limites conocidos
