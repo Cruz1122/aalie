@@ -7,6 +7,7 @@ export type QuizOptionState =
   | "selected"
   | "correct"
   | "incorrect"
+  | "partial"
   | "disabled"
   | "revealed";
 

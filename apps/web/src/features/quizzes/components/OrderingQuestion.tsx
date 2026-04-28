@@ -1,15 +1,19 @@
 "use client";
 
 import type { QuizQuestion } from "@aa/types";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import RenderableContent from "@/components/content/RenderableContent";
+
+import { surfaceClassesForQuizOptionState } from "./quizOptionSurface";
+import type { QuizOptionState } from "./types";
 
 interface Props {
   question: QuizQuestion;
   value: string[];
   onChange: (value: string[]) => void;
   disabled?: boolean;
+  optionStateById?: Record<string, QuizOptionState>;
 }
 
 function reorderByTarget(
@@ -32,8 +36,11 @@ export function OrderingQuestion({
   value,
   onChange,
   disabled = false,
+  optionStateById,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
+  const pointerCaptureRef = useRef<{ el: Element; id: number } | null>(null);
+
   const ordered = useMemo(
     () =>
       value.length > 0
@@ -41,6 +48,42 @@ export function OrderingQuestion({
         : (question.options ?? []).map((item) => item.optionId),
     [question.options, value],
   );
+
+  function endDrag() {
+    if (pointerCaptureRef.current) {
+      try {
+        (pointerCaptureRef.current.el as HTMLElement).releasePointerCapture(
+          pointerCaptureRef.current.id,
+        );
+      } catch {
+        // already released
+      }
+      pointerCaptureRef.current = null;
+    }
+    setDragId(null);
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLElement>, optionId: string) {
+    if (disabled) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    pointerCaptureRef.current = { el: e.currentTarget, id: e.pointerId };
+    setDragId(optionId);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLElement>, currentDragId: string) {
+    if (!dragId || disabled) return;
+    // Temporarily release to hit-test, then recapture
+    const el = e.currentTarget;
+    el.releasePointerCapture(e.pointerId);
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    el.setPointerCapture(e.pointerId);
+
+    const article = hit?.closest("article[data-option-id]");
+    const targetId = article?.getAttribute("data-option-id");
+    if (targetId && targetId !== currentDragId) {
+      onChange(reorderByTarget(ordered, currentDragId, targetId));
+    }
+  }
 
   return (
     <div className="space-y-2.5">
@@ -50,49 +93,32 @@ export function OrderingQuestion({
         );
         if (!option) return null;
         const isDragging = dragId === optionId;
+        const reviewMode = Boolean(disabled && optionStateById);
+        const rowState = optionStateById?.[optionId] ?? "idle";
+        const reviewSurface = surfaceClassesForQuizOptionState(rowState);
+        const practiceSurface = isDragging
+          ? "!border-primary/40 !bg-primary/10"
+          : surfaceClassesForQuizOptionState("idle");
+        const articleSurface = reviewMode ? reviewSurface : practiceSurface;
 
         return (
           <article
             key={optionId}
-            draggable={!disabled}
-            className={`glass-card rounded-xl border border-white/10 p-3 transition-colors ${
-              isDragging
-                ? "!border-primary/40 !bg-primary/10 hover:!border-primary/40 hover:!bg-primary/10"
-                : "bg-white/5 hover:!border-white/10 hover:!bg-white/5"
-            } ${disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
-            onDragStart={(event) => {
-              setDragId(optionId);
-              event.dataTransfer.effectAllowed = "move";
-              event.dataTransfer.setData("text/plain", optionId);
-              const article = event.currentTarget;
-              const rect = article.getBoundingClientRect();
-              event.dataTransfer.setDragImage(
-                article,
-                Math.max(8, rect.width * 0.08),
-                Math.max(8, rect.height * 0.2),
-              );
+            data-option-id={optionId}
+            className={`rounded-xl border border-solid p-3 transition-colors select-none sm:p-3.5 ${articleSurface}`}
+            style={{
+              cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
+              touchAction: disabled ? "auto" : "none",
             }}
-            onDragOver={(event) => {
-              if (disabled || !dragId || dragId === optionId) return;
-              event.preventDefault();
-            }}
-            onDragEnter={(event) => {
-              if (disabled || !dragId || dragId === optionId) return;
-              event.preventDefault();
-              const next = reorderByTarget(ordered, dragId, optionId);
-              onChange(next);
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-              if (disabled || !dragId) return;
-              setDragId(null);
-            }}
-            onDragEnd={() => setDragId(null)}
+            onPointerDown={(e) => handlePointerDown(e, optionId)}
+            onPointerMove={(e) => handlePointerMove(e, optionId)}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
           >
             <div className="flex items-center gap-3">
               <span
                 aria-hidden="true"
-                className={`inline-flex h-6 w-6 shrink-0 items-center justify-center text-slate-400 transition-colors ${disabled ? "opacity-50" : "hover:text-slate-200"}`}
+                className={`inline-flex h-6 w-6 shrink-0 items-center justify-center text-slate-400 transition-colors ${disabled ? "opacity-50" : ""}`}
               >
                 <span className="material-symbols-outlined text-[18px] leading-none">
                   drag_indicator

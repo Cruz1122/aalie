@@ -17,6 +17,10 @@ import { DefinitionsConceptsQuestion } from "./DefinitionsConceptsQuestion";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
 import { OrderingQuestion } from "./OrderingQuestion";
 import { QuizErrorState } from "./QuizErrorState";
+import {
+  buildMatchRowStateByLeftId,
+  buildOrderingStateById,
+} from "./quizOptionSurface";
 import { QuizQuestionMeta } from "./QuizQuestionMeta";
 import { SingleChoiceQuestion } from "./SingleChoiceQuestion";
 import { TrueFalseQuestion } from "./TrueFalseQuestion";
@@ -70,6 +74,23 @@ function getPairs(answer: StudentAnswer): QuizPair[] {
   return [];
 }
 
+function isPartiallyCorrectSelection(
+  selected: Set<string>,
+  correct: Set<string>,
+): boolean {
+  if (selected.size === 0 || correct.size === 0) return false;
+
+  const selectedCorrectCount = Array.from(selected).filter((id) =>
+    correct.has(id),
+  ).length;
+
+  const hasSomeCorrect = selectedCorrectCount > 0;
+  const hasAllCorrect =
+    selected.size === correct.size && selectedCorrectCount === correct.size;
+
+  return hasSomeCorrect && !hasAllCorrect;
+}
+
 function buildOptionStateById(
   question: QuizQuestion,
   result: QuizQuestionResult,
@@ -78,11 +99,21 @@ function buildOptionStateById(
   const correct = new Set(result.correctAnswer?.correctOptionIds ?? []);
   const stateById: Record<string, QuizOptionState> = {};
 
+  const isMultiple = question.type === "multiple_choice";
+  const isPartial = isMultiple && isPartiallyCorrectSelection(selected, correct);
+
   for (const option of question.options ?? []) {
     const isSelected = selected.has(option.optionId);
     const isCorrect = correct.has(option.optionId);
+    
     if (isSelected && isCorrect) {
-      stateById[option.optionId] = "correct";
+      if (result.isCorrect) {
+        stateById[option.optionId] = "correct";
+      } else if (isPartial) {
+        stateById[option.optionId] = "partial";
+      } else {
+        stateById[option.optionId] = "correct";
+      }
       continue;
     }
     if (isSelected && !isCorrect) {
@@ -112,7 +143,7 @@ function QuestionCardShell({
   return (
     <article className="glass-card quiz-no-hover relative flex h-full min-h-0 flex-col rounded-2xl border border-white/10 bg-[rgba(24,36,49,0.94)] p-4 sm:p-5">
       <span
-        className={`absolute right-4 top-4 rounded-full border px-2.5 py-1 text-xs ${DIFFICULTY_CLASSNAMES[question.difficulty]}`}
+        className={`absolute right-3 top-3 rounded-full border px-2.5 py-1 text-xs sm:right-4 sm:top-4 ${DIFFICULTY_CLASSNAMES[question.difficulty]}`}
       >
         {t(`meta.difficulty.${question.difficulty}`)}
       </span>
@@ -195,6 +226,8 @@ export function QuizQuestionReviewCard({
 }: QuizQuestionReviewCardProps) {
   const t = useTranslations("quizzes");
   const stateById = buildOptionStateById(question, result);
+  const orderingStateById = buildOrderingStateById(question, result);
+  const matchRowStateByLeftId = buildMatchRowStateByLeftId(question, result);
 
   return (
     <QuestionCardShell question={question} index={index}>
@@ -237,6 +270,7 @@ export function QuizQuestionReviewCard({
           value={getOrderedOptionIds(question, result.studentAnswer)}
           onChange={() => undefined}
           disabled
+          optionStateById={orderingStateById}
         />
       ) : null}
 
@@ -246,17 +280,15 @@ export function QuizQuestionReviewCard({
           value={getPairs(result.studentAnswer)}
           onChange={() => undefined}
           disabled
+          rowStateByLeftId={matchRowStateByLeftId}
         />
       ) : null}
 
       {result.explanation.blocks.length > 0 ? (
-        <div className="mt-3">
-          <p className="text-xs font-medium text-slate-400">
-            {t("result.explanation")}
-          </p>
+        <div className="mt-3 text-[11px] italic leading-relaxed text-slate-400">
           <RenderableContent
             content={result.explanation}
-            className="mt-1 text-xs text-slate-400"
+            className="[&>*]:mb-0 text-[11px] italic leading-relaxed text-slate-400"
           />
         </div>
       ) : null}
@@ -323,20 +355,20 @@ export function QuizResultView({ result }: { result: QuizSessionResult }) {
     // Skill IDs (e.g., 'skill.asymptotic.big_o.upper-bound-interpretation')
     // are mapped directly to nested keys under the 'quizzes' namespace.
     try {
-      return t(area as any);
+      return t(area as Parameters<typeof t>[0]);
     } catch {
       return area;
     }
   });
 
   return (
-    <div className="flex h-full min-h-0 flex-col justify-center text-center">
-      <div className="mx-auto w-full max-w-xl">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="scrollbar-custom mx-auto w-full max-w-xl overflow-y-auto py-2 text-center">
         <span
           aria-hidden="true"
           className={`material-symbols-outlined leading-none ${iconColor}`}
           style={{
-            fontSize: "6rem",
+            fontSize: "clamp(3.5rem, 12vw, 6rem)",
             lineHeight: 1,
             fontVariationSettings: '"FILL" 1, "wght" 500, "GRAD" 0, "opsz" 48',
           }}

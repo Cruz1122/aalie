@@ -79,8 +79,8 @@ export function QuizSessionView() {
 
   return (
     <section
-      className="glass-card quiz-no-hover mx-auto flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[rgba(24,36,49,0.94)] p-6 text-slate-100"
-      style={{ height: "650px", minHeight: "650px", maxHeight: "650px" }}
+      className="glass-card quiz-no-hover mx-auto flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[rgba(24,36,49,0.94)] p-4 text-slate-100 sm:p-6"
+      style={{ minHeight: "540px", maxHeight: "calc(100svh - 2rem)" }}
     >
       <h1 className="text-center text-xl font-semibold">{t("title")}</h1>
       <p className="mt-2 text-center text-sm text-slate-300">{t("subtitle")}</p>
@@ -113,10 +113,13 @@ export function QuizSessionView() {
 
       {!result && questions.length > 0 && currentQuestion ? (
         <div className="mt-6 flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
-          <div className="h-2 w-full rounded bg-slate-800">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
             <div
-              className="h-2 rounded bg-primary"
-              style={{ width: `${((currentIndex + 1) / total) * 100}%` }}
+              className="h-full w-full rounded-full bg-primary transition-transform duration-300 ease-out"
+              style={{
+                transform: `scaleX(${(currentIndex + 1) / total})`,
+                transformOrigin: "left center",
+              }}
             />
           </div>
 
@@ -147,7 +150,7 @@ export function QuizSessionView() {
             </p>
           ) : null}
 
-          <div className="mt-auto flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-auto flex flex-wrap justify-center gap-2">
             <button
               type="button"
               disabled={currentIndex === 0}
@@ -155,12 +158,12 @@ export function QuizSessionView() {
                 setShowIncompleteHint(false);
                 setCurrentIndex((prev) => Math.max(0, prev - 1));
               }}
-              className="inline-flex h-9 min-w-36 items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 min-w-[4.5rem] items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:min-w-36"
             >
               <span className="material-symbols-outlined text-base leading-none">
                 arrow_back
               </span>
-              {t("actions.previous")}
+              <span className="hidden sm:inline">{t("actions.previous")}</span>
             </button>
             <button
               type="button"
@@ -173,9 +176,9 @@ export function QuizSessionView() {
                 setShowIncompleteHint(false);
                 setCurrentIndex((prev) => Math.min(total - 1, prev + 1));
               }}
-              className="inline-flex h-9 min-w-36 items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 min-w-[4.5rem] items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:min-w-36"
             >
-              {t("actions.next")}
+              <span className="hidden sm:inline">{t("actions.next")}</span>
               <span className="material-symbols-outlined text-base leading-none">
                 arrow_forward
               </span>
@@ -184,7 +187,7 @@ export function QuizSessionView() {
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit || loading}
-              className={`inline-flex h-9 min-w-36 items-center justify-center gap-2 rounded-lg border px-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`inline-flex h-10 min-w-36 items-center justify-center gap-2 rounded-lg border px-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 ${
                 !canSubmit || loading
                   ? "border-white/10 bg-white/5 text-slate-300"
                   : "border-primary/50 bg-primary/20 text-sky-100 hover:bg-primary/30"
@@ -215,17 +218,17 @@ export function QuizSessionView() {
             <QuizErrorState message={t("error.unsupportedQuestion")} />
           )}
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             <button
               type="button"
               disabled={reviewIndex === 0}
               onClick={() => setReviewIndex((prev) => Math.max(0, prev - 1))}
-              className="inline-flex h-9 min-w-36 items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 min-w-[4.5rem] items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:min-w-36"
             >
               <span className="material-symbols-outlined text-base leading-none">
                 arrow_back
               </span>
-              {t("actions.previous")}
+              <span className="hidden sm:inline">{t("actions.previous")}</span>
             </button>
             <button
               type="button"
@@ -233,9 +236,9 @@ export function QuizSessionView() {
               onClick={() =>
                 setReviewIndex((prev) => Math.min(reviewTotal - 1, prev + 1))
               }
-              className="inline-flex h-9 min-w-36 items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 min-w-[4.5rem] items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:min-w-36"
             >
-              {t("actions.next")}
+              <span className="hidden sm:inline">{t("actions.next")}</span>
               <span className="material-symbols-outlined text-base leading-none">
                 arrow_forward
               </span>
@@ -244,7 +247,7 @@ export function QuizSessionView() {
               type="button"
               onClick={handleStart}
               disabled={loading}
-              className="inline-flex h-9 min-w-36 items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/20 px-3 text-sm text-sky-100 transition-colors hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 min-w-36 items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/20 px-3 text-sm text-sky-100 transition-colors hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9"
             >
               <span className="material-symbols-outlined text-base leading-none">
                 replay

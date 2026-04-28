@@ -30,7 +30,7 @@ export function MultipleChoiceQuestion({
     feedback: (
       <RenderableContent
         content={{ blocks: option.feedback.blocks }}
-        className="[&>*]:mb-0 text-xs"
+        className="[&>*]:mb-0 text-[11px] italic leading-relaxed text-slate-400"
       />
     ),
   }));

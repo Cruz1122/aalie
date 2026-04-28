@@ -6,12 +6,15 @@ import { useTranslations } from "next-intl";
 import RenderableContent from "@/components/content/RenderableContent";
 
 import { Dropdown } from "./Dropdown";
+import { surfaceClassesForQuizOptionState } from "./quizOptionSurface";
+import type { QuizOptionState } from "./types";
 
 interface Props {
   question: QuizQuestion;
   value: QuizPair[];
   onChange: (value: QuizPair[]) => void;
   disabled?: boolean;
+  rowStateByLeftId?: Record<string, QuizOptionState>;
 }
 
 function toMap(pairs: QuizPair[]): Record<string, string> {
@@ -23,24 +26,33 @@ export function DefinitionsConceptsQuestion({
   value,
   onChange,
   disabled = false,
+  rowStateByLeftId,
 }: Props) {
   const t = useTranslations("quizzes");
   const selectedMap = toMap(value);
 
   return (
     <div className="space-y-2">
-      {(question.leftItems ?? []).map((leftItem) => (
+      {(question.leftItems ?? []).map((leftItem) => {
+        const leftId = leftItem.leftId ?? "";
+        const rowState = rowStateByLeftId?.[leftId] ?? "idle";
+        const reviewRow = rowStateByLeftId !== undefined;
+        const outerSurface = reviewRow
+          ? surfaceClassesForQuizOptionState(rowState)
+          : "!border-slate-600/55 !bg-[rgba(24,36,49,0.94)] hover:!border-slate-500/60 hover:!bg-[rgba(28,42,56,0.98)]";
+
+        return (
         <div
           key={leftItem.leftId}
-          className="glass-card grid items-stretch gap-2 rounded-xl border border-slate-700/55 bg-white/5 p-2.5 hover:!border-slate-700/55 hover:!bg-white/5 sm:grid-cols-2"
+          className={`grid items-stretch gap-2 rounded-xl border border-solid p-2.5 sm:grid-cols-2 ${outerSurface}`}
         >
-          <div className="flex h-11 items-center rounded-lg border border-white/10 bg-[#182431] px-3">
+          <div className="flex min-h-11 items-center rounded-lg border border-solid border-slate-600/45 bg-[#182431] px-3 py-2">
             <RenderableContent
               content={leftItem.content}
               className="w-full text-sm leading-relaxed text-slate-100"
             />
           </div>
-          <div className="h-11">
+          <div className="min-h-11">
             <Dropdown
               id={`match-${leftItem.leftId ?? "unknown"}`}
               label={t("matching.selectOption")}
@@ -55,7 +67,14 @@ export function DefinitionsConceptsQuestion({
               itemToString={(item) => item?.text ?? ""}
               itemToValue={(item) => item.value}
               className="h-full"
-              triggerClassName="h-full rounded-lg"
+              invalid={reviewRow && rowState === "incorrect"}
+              triggerClassName={`h-full rounded-lg ${
+                reviewRow && rowState === "correct"
+                  ? "!border-emerald-300/45 !bg-emerald-500/15"
+                  : !reviewRow
+                    ? "!border-slate-600/50 !bg-[#182431] hover:!border-slate-500/55"
+                    : ""
+              }`}
               disabled={disabled}
               value={selectedMap[leftItem.leftId ?? ""] ?? ""}
               onChange={(rightId) => {
@@ -70,7 +89,8 @@ export function DefinitionsConceptsQuestion({
             />
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
