@@ -320,13 +320,13 @@ export function QuizResultView({ result }: { result: QuizSessionResult }) {
           ? "border-amber-400/35 bg-amber-500/10 text-amber-300"
           : "border-rose-400/35 bg-rose-500/10 text-rose-300";
   const formattedAreas = result.areasToImprove.map((area) => {
-    if (area === "skill.asymptotic.big_o.upper-bound-interpretation") {
-      return t("result.areaLabelBigOUpperBoundInterpretation");
+    // Skill IDs (e.g., 'skill.asymptotic.big_o.upper-bound-interpretation')
+    // are mapped directly to nested keys under the 'quizzes' namespace.
+    try {
+      return t(area as any);
+    } catch {
+      return area;
     }
-    if (area === "skill.limits.series.growth-comparison") {
-      return t("result.areaLabelLimitsSeriesGrowthComparison");
-    }
-    return area;
   });
 
   return (

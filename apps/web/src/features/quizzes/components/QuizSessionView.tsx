@@ -1,6 +1,6 @@
 "use client";
 
-import type { QuizQuestion, StudentAnswer } from "@aa/types";
+import type { QuizQuestion } from "@aa/types";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
@@ -10,39 +10,11 @@ import {
   QuizResultView,
 } from "@/features/quizzes/components/QuizQuestionCard";
 import { useQuizSession } from "@/features/quizzes/hooks/useQuizSession";
+import { toStudentAnswers } from "@/features/quizzes/lib/quizAnswerAdapters";
+import { type AnswerState, isQuestionComplete } from "@/features/quizzes/lib/quizCompletion";
 
 import { QuizEmptyState } from "./QuizEmptyState";
 import { QuizErrorState } from "./QuizErrorState";
-
-type AnswerState = {
-  selectedOptionIds?: string[];
-  orderedOptionIds?: string[];
-  pairs?: Array<{ leftId: string; rightId: string }>;
-};
-
-function isQuestionComplete(
-  question: QuizQuestion,
-  answer: AnswerState | undefined,
-): boolean {
-  if (question.type === "single_choice" || question.type === "true_false") {
-    return !!answer?.selectedOptionIds?.[0];
-  }
-  if (question.type === "multiple_choice") {
-    return (answer?.selectedOptionIds?.length ?? 0) > 0;
-  }
-  if (question.type === "ordering") {
-    return (
-      (answer?.orderedOptionIds?.length ?? 0) > 0 ||
-      (question.options?.length ?? 0) > 0
-    );
-  }
-  if (question.type === "match_pairs") {
-    const leftCount = question.leftItems?.length ?? 0;
-    const pairCount = answer?.pairs?.length ?? 0;
-    return leftCount > 0 && pairCount >= leftCount;
-  }
-  return false;
-}
 
 export function QuizSessionView() {
   const t = useTranslations("quizzes");
@@ -87,34 +59,7 @@ export function QuizSessionView() {
   };
 
   const handleSubmit = async () => {
-    const answers: StudentAnswer[] = questions.map((question) => {
-      const answer = answersByQuestion[question.questionId] ?? {};
-      if (question.type === "single_choice" || question.type === "true_false") {
-        return {
-          questionId: question.questionId,
-          selectedOptionIds: answer.selectedOptionIds ?? [],
-        };
-      }
-      if (question.type === "multiple_choice") {
-        return {
-          questionId: question.questionId,
-          selectedOptionIds: answer.selectedOptionIds ?? [],
-        };
-      }
-      if (question.type === "ordering") {
-        return {
-          questionId: question.questionId,
-          orderedOptionIds:
-            answer.orderedOptionIds ??
-            (question.options ?? []).map((item) => item.optionId),
-        };
-      }
-      return {
-        questionId: question.questionId,
-        pairs: answer.pairs ?? [],
-      };
-    });
-
+    const answers = toStudentAnswers(questions, answersByQuestion);
     await submitAnswers(answers);
     setReviewIndex(0);
     setShowIncompleteHint(false);

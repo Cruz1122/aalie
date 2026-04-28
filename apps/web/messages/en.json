@@ -85,14 +85,43 @@
       "headlineClose": "Very close! A quick review and you got this.",
       "headlineKeepGoing": "Keep going! Every attempt makes you stronger.",
       "areasIntro": "It is recommended to review this topic before the next attempt:",
-      "areaLabelBigOUpperBoundInterpretation": "Upper-bound interpretation (Big-O)",
-      "areaLabelLimitsSeriesGrowthComparison": "Series growth comparison",
       "none": "None",
       "correctLabel": "Correct",
       "incorrectLabel": "Incorrect",
       "feedback": "Answer feedback",
       "explanation": "General explanation",
       "goToContent": "Go to content ({chapterId})"
+    },
+    "skill": {
+      "asymptotic": {
+        "big_o": {
+          "upper-bound-interpretation": "Upper-bound interpretation (Big-O)"
+        },
+        "theta": {
+          "identify-equivalent-order": "Identify equivalent order (Theta)"
+        }
+      },
+      "elementary": {
+        "operations": {
+          "counting": "Operation counting"
+        }
+      },
+      "limits": {
+        "series": {
+          "growth-comparison": "Series growth comparison"
+        }
+      },
+      "correctness": {
+        "loop-invariant": {
+          "three-moments": "Loop invariant (Initialization, Maintenance, Termination)"
+        }
+      },
+      "recurrences": {
+        "method-selection": "Recurrence solving method selection",
+        "master": {
+          "case-selection": "Master Theorem case selection"
+        }
+      }
     }
   },
   "footer": {
@@ -227,7 +256,7 @@
         },
         "master": {
           "name": "Master Theorem",
-          "description": "For standard divide-and-conquer recurrences T(n) = aÃ‚Â·T(n/b) + f(n)."
+          "description": "For standard divide-and-conquer recurrences T(n) = a·T(n/b) + f(n)."
         }
       }
     },
@@ -319,8 +348,8 @@
       "tPolynomial": "Polynomial form:",
       "tOpen": "Complete efficiency equation:",
       "bigO": "Big-O",
-      "bigOmega": "Big-ÃŽÂ©",
-      "bigTheta": "Big-ÃŽËœ",
+      "bigOmega": "Big-Ω",
+      "bigTheta": "Big-Θ",
       "boundUpper": "Upper bound:",
       "boundLower": "Lower bound:",
       "boundAvg": "Average bound:",
@@ -338,17 +367,17 @@
       "parameters": "Parameters:",
       "gnCalculation": "Calculation of g(n):",
       "comparison": "Comparison:",
-      "case1Desc": "Ã¢â€ â€™ Case 1: f(n) is polynomially smaller than g(n)",
-      "case2Desc": "Ã¢â€ â€™ Case 2: f(n) equals g(n)",
-      "case3Desc": "Ã¢â€ â€™ Case 3: f(n) is polynomially larger than g(n)",
+      "case1Desc": "→ Case 1: f(n) is polynomially smaller than g(n)",
+      "case2Desc": "→ Case 2: f(n) equals g(n)",
+      "case3Desc": "→ Case 3: f(n) is polynomially larger than g(n)",
       "regularityCondition": "Regularity Condition:",
-      "regularityVerified": "Verified: Ã¢Ë†Æ’c < 1, Ã¢Ë†Æ’nÃ¢â€šâ‚¬: aÃ‚Â·f(n/b) Ã¢â€°Â¤ cÃ‚Â·f(n) for n Ã¢â€°Â¥ nÃ¢â€šâ‚¬",
+      "regularityVerified": "Verified: ∃c < 1, ∃n₀: a·f(n/b) ≤ c·f(n) for n ≥ n₀",
       "regularityAssumed": "Assumed: Regularity condition is assumed to hold",
       "homogeneousSolution": "Homogeneous solution:",
       "particularSolution": "Particular solution:",
       "generalSolution": "General solution:",
       "closedForm": "Closed form:",
-      "thetaFinalResult": "ÃŽËœ (Final Result):",
+      "thetaFinalResult": "Θ (Final Result):",
       "gFunction": "Function g(n):",
       "expansions": "Expansions:",
       "generalForm": "General form:",
@@ -560,7 +589,7 @@
       "graphNoEdges": "The received graph contains no edges",
       "truncationWarning": "Execution was truncated: {reason}",
       "timeUnitNs": "ns",
-      "timeUnitUs": "ÃŽÂ¼s",
+      "timeUnitUs": "μs",
       "timeUnitMs": "ms",
       "timeUnitS": "s",
       "resetToAuto": "Reset to auto",
@@ -622,18 +651,18 @@
       "lineNotFound": "No information found for line {line}",
       "lineAnalysis": "Line {line} Analysis",
       "operationType": "Operation type:",
-      "elementalCost": "Elemental cost (CÃ¢â€šâ€“):",
+      "elementalCost": "Elemental cost (Cᵢ):",
       "elementalCostDesc": "Basic computational cost of this operation",
       "expectedExecutions": "Expected executions:",
       "numExecutions": "Number of executions:",
-      "expectedExecutionsDesc": "Expected number of times this line executes (E[N_Ã¢â€žâ€œ])",
+      "expectedExecutionsDesc": "Expected number of times this line executes (E[N_ℓ])",
       "numExecutionsDesc": "How many times this line executes",
       "lineCostDerivation": "Step by step of how this cost was derived:",
       "notes": "Notes:",
       "lineCost": "Line cost:",
       "lineCostAvg": "Expected line cost:",
       "lineCostDesc": "Product of elemental cost by number of executions",
-      "lineCostAvgDesc": "Product of elemental cost by expected executions (C_Ã¢â€žâ€œ Ã‚Â· E[N_Ã¢â€žâ€œ])",
+      "lineCostAvgDesc": "Product of elemental cost by expected executions (C_ℓ · E[N_ℓ])",
       "analysisContext": "Analysis Context",
       "efficiencyEq": "Complete efficiency equation:",
       "efficiencyEqAvg": "Average efficiency equation A(n):",
@@ -652,7 +681,7 @@
       "stepDefAvgCase": "Average case definition",
       "stepUniformModel": "Uniform model",
       "stepLinearity": "Linearity of expectation",
-      "stepCalcE": "E[N_Ã¢â€žâ€œ] calculation per line",
+      "stepCalcE": "E[N_ℓ] calculation per line",
       "stepSimplification": "Simplification",
       "stepPolynomialForm": "Polynomial form",
       "stepAsymptotic": "Asymptotic notation",
@@ -794,8 +823,8 @@
       "case2": "Case 2",
       "case3": "Case 3",
       "regularity": "Regularity:",
-      "regularityVerified": "Ã¢Å“â€œ Verified",
-      "regularityAssumed": "Ã¢Å¡Â  Assumed",
+      "regularityVerified": "✓ Verified",
+      "regularityAssumed": "⚠ Assumed",
       "proofSteps": "Proof Steps",
       "stepsCount": "({count} steps)",
       "noStepsAvailable": "No steps available",
@@ -864,7 +893,7 @@
       "duplicateSubproblems": "Duplicate subproblems:",
       "zoomHint": "Use mouse to zoom and pan. Press Esc to close.",
       "irregularTree": "Tree with duplicate subproblems (e.g. Fibonacci)",
-      "duplicateSubproblem": "Ã¢Å¡Â  Duplicate subproblem ({count}x)",
+      "duplicateSubproblem": "⚠ Duplicate subproblem ({count}x)",
       "nodeCount": "{count} node{plural}",
       "returns": "Returns"
     },
