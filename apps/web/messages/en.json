@@ -941,7 +941,13 @@
         "evidenceTitle": "Snippet that shows the pattern",
         "lineLabel": "Line {start}{end}",
         "omittedBody": "Part of the body was omitted to show only the relevant structure.",
-        "noEvidence": "AALIE did not find a clear enough fragment to show as evidence."
+        "noEvidence": "AALIE did not find a clear enough fragment to show as evidence.",
+        "factsTitle": "What evidence AALIE saw",
+        "diagnosticsTitle": "Diagnostics and doubts"
+      },
+      "evidenceFacts": {
+        "exclusive_interval_partition": "The interval is split by a fractional cut and then only one recursive branch is explored.",
+        "single_branch_after_interval_split": "After splitting the interval, the algorithm continues only through the branch that contains the relevant subproblem."
       },
       "divide_and_conquer": {
         "title": "Divide and Conquer",

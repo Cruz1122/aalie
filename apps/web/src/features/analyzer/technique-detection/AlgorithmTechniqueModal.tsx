@@ -6,10 +6,7 @@ import AALIEEmotionIcon from "@/components/AALIEEmotionIcon";
 import BaseModalContainer from "@/components/modals/BaseModalContainer";
 
 import { getTechniquePresentation } from "./techniquePresentation";
-import type {
-  TechniqueDetectionResult,
-  TechniqueEvidenceSnippet,
-} from "./techniqueTypes";
+import type { TechniqueDetectionResult } from "./techniqueTypes";
 
 export function AlgorithmTechniqueModal({
   open,
@@ -45,16 +42,16 @@ export function AlgorithmTechniqueModal({
       sizeClassName="w-[min(95vw,720px)] h-[82vh]"
       panelClassName={`text-slate-100 shadow-2xl backdrop-blur-md ${tonePanelClassName}`}
       panelStyle={tonePanelStyle}
-      contentClassName="relative flex h-full flex-col justify-center gap-6 p-6"
+      contentClassName="relative flex h-full flex-col justify-center gap-5 p-6"
     >
       <button
         type="button"
         onClick={() => onOpenChange(false)}
-        className="absolute right-6 top-6 text-slate-300 transition-colors hover:bg-white/10 hover:text-white rounded-lg p-2"
+        className="absolute right-6 top-6 rounded-lg p-2 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
         title={tCommon("close")}
         aria-label={tCommon("close")}
       >
-        ✕
+        X
       </button>
 
       <div className="flex flex-col items-center text-center">
@@ -69,11 +66,31 @@ export function AlgorithmTechniqueModal({
         />
       </div>
 
-      <EvidenceCodeBlock snippet={detection.evidenceSnippet} />
+      <EvidenceCodeBlock snippet={detection.evidence.compactSnippet} />
 
-      <p className="text-sm leading-6 text-slate-300">
-        {detection.explanation}
-      </p>
+      <section className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-300/75">
+          {tTechnique("modal.factsTitle")}
+        </h3>
+        <ul className="space-y-2 text-sm leading-6 text-slate-300">
+          {detection.evidence.explanationFacts.map((fact) => (
+            <li key={fact}>• {fact}</li>
+          ))}
+        </ul>
+      </section>
+
+      {detection.diagnostics.length > 0 ? (
+        <section className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-300/75">
+            {tTechnique("modal.diagnosticsTitle")}
+          </h3>
+          <ul className="space-y-2 text-sm leading-6 text-slate-300/85">
+            {detection.diagnostics.map((diagnostic) => (
+              <li key={diagnostic}>• {diagnostic}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <p className="text-sm leading-6 text-slate-300">
         <span>{presentation.whyItMatters}</span>{" "}
@@ -83,46 +100,28 @@ export function AlgorithmTechniqueModal({
   );
 }
 
-function EvidenceCodeBlock({ snippet }: { snippet: TechniqueEvidenceSnippet }) {
+function EvidenceCodeBlock({ snippet }: { snippet: string }) {
   const tTechnique = useTranslations("analyzer.techniques");
 
-  if (!snippet || snippet.kind === "none" || !snippet.code.trim()) {
+  if (!snippet.trim()) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-slate-400">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-slate-300/85 shadow-inner shadow-black/10">
         {tTechnique("modal.noEvidence")}
       </div>
     );
   }
 
   return (
-    <figure className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
+    <figure className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/45 shadow-inner shadow-black/10 backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 py-2">
         <span className="text-xs font-medium text-slate-300">
           {tTechnique("modal.evidenceTitle")}
         </span>
-
-        {snippet.startLine ? (
-          <span className="text-[11px] text-slate-500">
-            {tTechnique("modal.lineLabel", {
-              start: snippet.startLine,
-              end:
-                snippet.endLine && snippet.endLine !== snippet.startLine
-                  ? `–${snippet.endLine}`
-                  : "",
-            })}
-          </span>
-        ) : null}
       </div>
 
-      <pre className="max-h-[24vh] overflow-auto px-4 py-3 text-xs leading-5 text-slate-200">
-        <code>{snippet.code}</code>
+      <pre className="scrollbar-custom max-h-[24vh] overflow-auto px-4 py-3 text-xs leading-5 text-slate-200">
+        <code>{snippet}</code>
       </pre>
-
-      {snippet.omittedBody ? (
-        <figcaption className="border-t border-white/10 px-4 py-2 text-[11px] text-slate-500">
-          {tTechnique("modal.omittedBody")}
-        </figcaption>
-      ) : null}
     </figure>
   );
 }

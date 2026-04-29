@@ -941,7 +941,13 @@
         "evidenceTitle": "Fragmento que evidencia la forma",
         "lineLabel": "Línea {start}{end}",
         "omittedBody": "Se omitió parte del cuerpo para mostrar solo la estructura relevante.",
-        "noEvidence": "AALIE no encontró un fragmento suficientemente claro para mostrar como evidencia."
+        "noEvidence": "AALIE no encontró un fragmento suficientemente claro para mostrar como evidencia.",
+        "factsTitle": "Qué evidencia vio AALIE",
+        "diagnosticsTitle": "Diagnósticos y dudas"
+      },
+      "evidenceFacts": {
+        "exclusive_interval_partition": "El intervalo se divide por un corte fraccional y luego solo se explora una rama recursiva.",
+        "single_branch_after_interval_split": "Después de partir el intervalo, el algoritmo continúa solo por la rama que contiene el subproblema relevante."
       },
       "divide_and_conquer": {
         "title": "Divide y vencerás",
@@ -1066,16 +1072,16 @@
         "commonMistake": "Forzar una etiqueta solo porque el algoritmo se parece superficialmente a un ejemplo conocido."
       },
       "explanations": {
-        "branch_and_bound": "Este fragmento explora ramas de forma recursiva, retrocede sobre decisiones previas y adem?s poda usando comparaciones de cota. Por eso AALIE lo interpreta como Branch and Bound.",
-        "dp_top_down": "Este fragmento consulta una tabla antes de recalcular y luego guarda el resultado obtenido. Esa combinaci?n de recursi?n con memoria es la se?al t?pica de Programaci?n Din?mica top-down.",
-        "dp_bottom_up": "Este fragmento llena una tabla con ciclos y cada estado depende de valores ya calculados. Por eso AALIE lo interpreta como Programaci?n Din?mica bottom-up.",
-        "backtracking": "Este fragmento construye una soluci?n parcial, explora recursivamente y luego deshace decisiones para probar otras opciones. Ese patr?n es caracter?stico de Backtracking.",
-        "divide_and_conquer": "Este fragmento hace varias llamadas recursivas sobre subproblemas divididos por mitad, punto medio o partici?n de rango. Por eso AALIE lo interpreta como Divide y Vencer?s.",
-        "decrease_and_be_conquered": "Este fragmento hace varias llamadas recursivas reduciendo el tama?o por resta. Como no aparece una tabla consultada antes de calcular, esos subproblemas pueden repetirse. Por eso AALIE lo interpreta como Resta y Ser?s Vencido.",
-        "decrease_and_conquer": "Este fragmento reduce el problema por resta y mantiene una llamada recursiva dominante. Por eso AALIE lo interpreta como Resta y Vencer?s.",
-        "greedy": "Este fragmento toma decisiones locales que se mantienen sin retroceso ni reutilizaci?n de estados previos. Esa forma sugiere una estrategia voraz, aunque AALIE la reporta con cautela.",
-        "iterative": "Aqu? predominan los ciclos y no aparecen se?ales claras de recursi?n, memoizaci?n o b?squeda por ramas. Por eso AALIE lo interpreta como un algoritmo iterativo.",
-        "unknown": "No hay se?ales suficientes en el AST para clasificar la t?cnica con seguridad."
+        "branch_and_bound": "Este fragmento explora ramas de forma recursiva, retrocede sobre decisiones previas y además poda usando comparaciones de cota. Por eso AALIE lo interpreta como Branch and Bound.",
+        "dp_top_down": "Este fragmento consulta una tabla antes de recalcular y luego guarda el resultado obtenido. Esa combinación de recursión con memoria es la señal típica de Programación Dinámica top-down.",
+        "dp_bottom_up": "Este fragmento llena una tabla con ciclos y cada estado depende de valores ya calculados. Por eso AALIE lo interpreta como Programación Dinámica bottom-up.",
+        "backtracking": "Este fragmento construye una solución parcial, explora recursivamente y luego deshace decisiones para probar otras opciones. Ese patrón es característico de Backtracking.",
+        "divide_and_conquer": "Este fragmento hace varias llamadas recursivas sobre subproblemas divididos por mitad, punto medio o partición de rango. Por eso AALIE lo interpreta como Divide y Vencerás.",
+        "decrease_and_be_conquered": "Este fragmento hace varias llamadas recursivas reduciendo el tamaño por resta. Como no aparece una tabla consultada antes de calcular, esos subproblemas pueden repetirse. Por eso AALIE lo interpreta como Resta y Serás Vencido.",
+        "decrease_and_conquer": "Este fragmento reduce el problema por resta y mantiene una llamada recursiva dominante. Por eso AALIE lo interpreta como Resta y Vencerás.",
+        "greedy": "Este fragmento toma decisiones locales que se mantienen sin retroceso ni reutilización de estados previos. Esa forma sugiere una estrategia voraz, aunque AALIE la reporta con cautela.",
+        "iterative": "Aquí predominan los ciclos y no aparecen señales claras de recursión, memoización o búsqueda por ramas. Por eso AALIE lo interpreta como un algoritmo iterativo.",
+        "unknown": "No hay señales suficientes en el AST para clasificar la técnica con seguridad."
       }
     },
     "repairModal": {
@@ -1784,15 +1790,15 @@
         "offText": "Resuelven el problema con ciclos y actualizaciones paso a paso."
       },
       "divide-y-venceras": {
-        "label": "Divide y vencer?s",
-        "offText": "Parten el problema en varias partes m?s peque?as, las resuelven y luego combinan el resultado."
+        "label": "Divide y vencerás",
+        "offText": "Parten el problema en varias partes más pequeñas, las resuelven y luego combinan el resultado."
       },
       "resta-y-venceras": {
-        "label": "Resta y vencer?s",
-        "offText": "Reducen el problema a una versi?n m?s peque?a del mismo y repiten hasta llegar al caso base."
+        "label": "Resta y vencerás",
+        "offText": "Reducen el problema a una versión más pequeña del mismo y repiten hasta llegar al caso base."
       },
       "resta-y-seras-vencido": {
-        "label": "Resta y ser?s vencido",
+        "label": "Resta y serás vencido",
         "offText": "Abren varias ramas recursivas sobre subproblemas muy parecidos y por eso el costo suele dispararse."
       }
     },

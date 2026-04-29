@@ -47,7 +47,7 @@ export function getTechniquePresentation(
       whyItMatters: t("decrease_and_conquer.whyItMatters"),
       commonMistake: t("decrease_and_conquer.commonMistake"),
     },
-    decrease_and_be_conquered: {
+    recursive_expansion: {
       title: t("decrease_and_be_conquered.title"),
       shortMessage: t("decrease_and_be_conquered.shortMessage"),
       icon: "worried",
