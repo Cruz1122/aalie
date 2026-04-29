@@ -4,10 +4,15 @@ import AALIEEmotionIcon, {
 import type { ExampleCategory } from "@/lib/examples/catalog";
 
 const CATEGORY_ICON_MAP: Record<ExampleCategory, AALIEEmotionIconName> = {
-  iterativos: "neutral",
-  "divide-y-venceras": "happy",
-  "resta-y-venceras": "satisfied",
-  "resta-y-seras-vencido": "worried",
+  iterative: "neutral",
+  divide_and_conquer: "happy",
+  decrease_and_conquer: "satisfied",
+  decrease_and_get_conquered: "worried",
+  dp_top_down: "thinking",
+  dp_bottom_up: "focused",
+  greedy: "alert",
+  backtracking: "curious",
+  branch_and_bound: "determined",
 };
 
 export default function AALIECategoryIcon({

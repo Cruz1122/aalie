@@ -15,8 +15,8 @@ They are meant to block regressions where the detector:
 
 - Recursive Binary Search -> `decrease_and_conquer`
 - Recursive Ternary Search -> `decrease_and_conquer`
-- Fibonacci -> `recursive_expansion`
-- Hanoi -> `recursive_expansion`
+- Fibonacci -> `decrease_and_get_conquered`
+- Hanoi -> `decrease_and_get_conquered`
 - Generic k-way recursive split -> `divide_and_conquer`
 - Prefix Sum must not be strong `dp_bottom_up`
 - Counting Sort must not be strong `dp_bottom_up`

@@ -18,11 +18,11 @@ import {
   buildAssistantExampleListContext,
 } from "@/lib/examples/assistant-context";
 import {
+  categoryHasRecursiveMethods,
   filterByMethods,
   getCategoryMeta,
   getExamplesByCategory,
   getLocalizedExampleSource,
-  isRecursiveCategory,
   type ExampleCatalogItem,
   type ExampleCategory,
   type ExampleLocale,
@@ -70,7 +70,7 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
   }, [finishNavigation]);
 
   const meta = getCategoryMeta(category);
-  const recursiveCategory = isRecursiveCategory(category);
+  const hasMethodFilters = categoryHasRecursiveMethods(category);
   const selectedSlug = searchParams.get("example");
 
   const visibleExamples = useMemo(() => {
@@ -108,15 +108,13 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
         locale,
       ),
     );
-    return recursiveCategory
-      ? filterByMethods(sorted, selectedMethods)
-      : sorted;
+    return hasMethodFilters ? filterByMethods(sorted, selectedMethods) : sorted;
   }, [
     catalogItems,
     category,
+    hasMethodFilters,
     locale,
     query,
-    recursiveCategory,
     selectedMethods,
     tGlobal,
   ]);
@@ -167,13 +165,13 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
       surface: "examples",
       locale,
       pageContext: {
-        route: `/examples/${category}`,
+        route: `/examples/${meta.slug}`,
         view: "category",
         title: tGlobal(CATEGORY_LABEL_KEYS[category]),
         description: tGlobal(CATEGORY_OFFTEXT_KEYS[category]),
         query: query.trim() || undefined,
         filters:
-          recursiveCategory && selectedMethods.length > 0
+          hasMethodFilters && selectedMethods.length > 0
             ? selectedMethods
             : undefined,
         notes: [
@@ -201,9 +199,10 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
     [
       catalogItems,
       category,
+      hasMethodFilters,
       locale,
+      meta.slug,
       query,
-      recursiveCategory,
       selectedExample,
       selectedMethods,
       selectedSlug,
@@ -220,7 +219,7 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
           <PageHeader
             icon={
               <AALIECategoryIcon
-                category={meta.slug}
+                category={category}
                 size={28}
                 className="text-primary"
               />
@@ -236,16 +235,16 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
               placeholder={t("searchPlaceholder")}
               ariaLabel={t("searchAriaLabel")}
               filtersButtonAriaLabel={
-                recursiveCategory ? t("filtersTitle") : undefined
+                hasMethodFilters ? t("filtersTitle") : undefined
               }
               onToggleFilters={
-                recursiveCategory
+                hasMethodFilters
                   ? () => setFiltersOpen((prev) => !prev)
                   : undefined
               }
-              filtersActive={recursiveCategory ? filtersOpen : false}
+              filtersActive={hasMethodFilters ? filtersOpen : false}
               filtersDropdown={
-                recursiveCategory ? (
+                hasMethodFilters ? (
                   <ExamplesMethodFilters
                     selectedMethods={selectedMethods}
                     onToggle={toggleMethod}

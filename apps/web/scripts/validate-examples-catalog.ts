@@ -1,6 +1,6 @@
 import {
+  categoryHasRecursiveMethods,
   examplesCatalog,
-  isRecursiveCategory,
   RECURSIVE_METHOD_BADGE_TO_METHOD,
   type RecursiveMethodBadge,
 } from "@/lib/examples/catalog";
@@ -66,11 +66,11 @@ async function main(): Promise<void> {
       continue;
     }
 
-    if (!isRecursiveCategory(example.category)) {
+    if (!categoryHasRecursiveMethods(example.category)) {
       if (example.verifiedMethods.length > 0) {
         hardFailures += 1;
         console.error(
-          `ERROR [${example.slug}] iterative example has verifiedMethods populated`,
+          `ERROR [${example.slug}] category without recursive methods has verifiedMethods populated`,
         );
       }
       continue;

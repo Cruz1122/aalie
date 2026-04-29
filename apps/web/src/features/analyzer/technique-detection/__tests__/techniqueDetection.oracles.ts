@@ -13,7 +13,7 @@ export const TECHNIQUE_ORACLES: TechniqueOracle[] = [
   {
     id: "binary-search-recursive-is-divide-and-conquer",
     expectedTechnique: "divide_and_conquer",
-    forbiddenTechniques: ["recursive_expansion", "decrease_and_conquer"],
+    forbiddenTechniques: ["decrease_and_get_conquered", "decrease_and_conquer"],
     requiredRoles: ["recursive_call"],
     source: `
 binarySearchRec(A[n], x, inicio, fin) BEGIN
@@ -38,7 +38,7 @@ END
   {
     id: "ternary-search-recursive-is-divide-and-conquer",
     expectedTechnique: "divide_and_conquer",
-    forbiddenTechniques: ["recursive_expansion", "decrease_and_conquer"],
+    forbiddenTechniques: ["decrease_and_get_conquered", "decrease_and_conquer"],
     requiredRoles: ["recursive_call"],
     source: `
 ternarySearchRec(A[n], x, inicio, fin) BEGIN
@@ -73,8 +73,8 @@ END
 `,
   },
   {
-    id: "fibonacci-is-recursive-expansion",
-    expectedTechnique: "recursive_expansion",
+    id: "fibonacci-is-decrease-and-get-conquered",
+    expectedTechnique: "decrease_and_get_conquered",
     requiredRoles: ["recursive_call"],
     source: `
 fibonacci(n) BEGIN
@@ -86,8 +86,8 @@ END
 `,
   },
   {
-    id: "hanoi-is-recursive-expansion",
-    expectedTechnique: "recursive_expansion",
+    id: "hanoi-is-decrease-and-get-conquered",
+    expectedTechnique: "decrease_and_get_conquered",
     requiredRoles: ["recursive_call"],
     source: `
 hanoi(n, origen, destino, auxiliar) BEGIN
@@ -242,7 +242,7 @@ END
   {
     id: "quick-sort-inline-partition-is-divide-and-conquer",
     expectedTechnique: "divide_and_conquer",
-    forbiddenTechniques: ["recursive_expansion", "decrease_and_conquer"],
+    forbiddenTechniques: ["decrease_and_get_conquered", "decrease_and_conquer"],
     requiredRoles: ["recursive_call"],
     source: `
 quickSort(A[n], izq, der) BEGIN
@@ -271,7 +271,7 @@ END
   {
     id: "merge-sort-is-divide-and-conquer",
     expectedTechnique: "divide_and_conquer",
-    forbiddenTechniques: ["recursive_expansion", "decrease_and_conquer"],
+    forbiddenTechniques: ["decrease_and_get_conquered", "decrease_and_conquer"],
     requiredRoles: ["recursive_call"],
     source: `
 mergeSort(A[n], inicio, fin) BEGIN
@@ -355,7 +355,7 @@ END
   {
     id: "fast-power-is-decrease-and-conquer",
     expectedTechnique: "decrease_and_conquer",
-    forbiddenTechniques: ["divide_and_conquer", "recursive_expansion"],
+    forbiddenTechniques: ["divide_and_conquer", "decrease_and_get_conquered"],
     source: `
 fastPower(x, n) BEGIN
     IF (n = 0) THEN BEGIN
@@ -373,7 +373,7 @@ END
   {
     id: "factorial-recursivo-is-decrease-and-conquer",
     expectedTechnique: "decrease_and_conquer",
-    forbiddenTechniques: ["divide_and_conquer", "recursive_expansion"],
+    forbiddenTechniques: ["divide_and_conquer", "decrease_and_get_conquered"],
     source: `
 factorialRecursivo(n) BEGIN
     IF (n <= 1) THEN BEGIN
@@ -384,8 +384,8 @@ END
 `,
   },
   {
-    id: "climbing-stairs-is-recursive-expansion",
-    expectedTechnique: "recursive_expansion",
+    id: "climbing-stairs-is-decrease-and-get-conquered",
+    expectedTechnique: "decrease_and_get_conquered",
     forbiddenTechniques: ["divide_and_conquer", "decrease_and_conquer"],
     source: `
 climbingStairs(n) BEGIN
@@ -415,7 +415,7 @@ END
   {
     id: "euclides-recursivo-is-decrease-and-conquer",
     expectedTechnique: "decrease_and_conquer",
-    forbiddenTechniques: ["divide_and_conquer", "recursive_expansion"],
+    forbiddenTechniques: ["divide_and_conquer", "decrease_and_get_conquered"],
     source: `
 euclidesRecursivo(a, b) BEGIN
     IF (b = 0) THEN BEGIN
@@ -428,7 +428,7 @@ END
   {
     id: "conteo-regresivo-is-decrease-and-conquer",
     expectedTechnique: "decrease_and_conquer",
-    forbiddenTechniques: ["divide_and_conquer", "recursive_expansion"],
+    forbiddenTechniques: ["divide_and_conquer", "decrease_and_get_conquered"],
     source: `
 conteoRegresivo(n) BEGIN
     IF (n <= 0) THEN BEGIN
@@ -488,7 +488,7 @@ END
   {
     id: "quick-sort-rand-is-divide-and-conquer",
     expectedTechnique: "divide_and_conquer",
-    forbiddenTechniques: ["recursive_expansion", "decrease_and_conquer"],
+    forbiddenTechniques: ["decrease_and_get_conquered", "decrease_and_conquer"],
     source: `
 quickSortRand(A[n], izq, der) BEGIN
     IF (izq < der) THEN BEGIN
@@ -520,7 +520,7 @@ END
   {
     id: "quick-sort-median3-is-divide-and-conquer",
     expectedTechnique: "divide_and_conquer",
-    forbiddenTechniques: ["recursive_expansion", "decrease_and_conquer"],
+    forbiddenTechniques: ["decrease_and_get_conquered", "decrease_and_conquer"],
     source: `
 quickSortMedian3(A[n], izq, der) BEGIN
     IF (izq < der) THEN BEGIN
@@ -569,7 +569,7 @@ END
   {
     id: "quick-sort-3way-partition-is-divide-and-conquer",
     expectedTechnique: "divide_and_conquer",
-    forbiddenTechniques: ["recursive_expansion", "decrease_and_conquer"],
+    forbiddenTechniques: ["decrease_and_get_conquered", "decrease_and_conquer"],
     source: `
 quickSort3Way(A[n], izq, der) BEGIN
     IF (izq < der) THEN BEGIN

@@ -2,7 +2,7 @@ import type { TechniqueRule } from "./ruleTypes";
 import { confidenceFromScore } from "./score";
 
 export const recursiveExpansionRule: TechniqueRule = {
-  id: "recursive_expansion",
+  id: "decrease_and_get_conquered",
   priority: 55,
 
   evaluate(facts) {
@@ -68,7 +68,7 @@ export const recursiveExpansionRule: TechniqueRule = {
     }
 
     return {
-      technique: "recursive_expansion",
+      technique: "decrease_and_get_conquered",
       matched: score >= 65,
       score,
       confidence: confidenceFromScore(score),

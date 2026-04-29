@@ -21,8 +21,8 @@ describe("assistant context formatting", () => {
       },
       exampleSections: [
         {
-          id: "divide-y-venceras",
-          slug: "divide-y-venceras",
+          id: "divide_and_conquer",
+          slug: "divide-and-conquer",
           title: "Divide y vencerás",
           description: "Subdivide el problema",
           exampleCount: 6,

@@ -5,7 +5,7 @@ export type TechniqueId =
   | "backtracking"
   | "divide_and_conquer"
   | "decrease_and_conquer"
-  | "recursive_expansion"
+  | "decrease_and_get_conquered"
   | "greedy"
   | "iterative"
   | "unknown";

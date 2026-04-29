@@ -28,18 +28,32 @@ vi.mock("next-intl", () => ({
         analyze: "Analizar",
         analyzing: "Analizando...",
         filtersTitle: "Filtros",
+        "kind.recursive": "Recursivo",
+        "kind.iterative": "Iterativo",
         "examples.kind.recursive": "Recursivo",
         "examples.kind.iterative": "Iterativo",
-        "examples.categories.iterativos.label": "Iterativos",
-        "examples.categories.divide-y-venceras.label": "Divide y vencerás",
-        "examples.categories.resta-y-venceras.label": "Resta y vencerás",
-        "examples.categories.resta-y-seras-vencido.label":
+        "examples.categories.iterative.title": "Iterativos",
+        "examples.categories.divideAndConquer.title": "Divide y vencerás",
+        "examples.categories.decreaseAndConquer.title": "Resta y vencerás",
+        "examples.categories.decreaseAndGetConquered.title":
           "Resta y serás vencido",
-        "examples.categories.iterativos.offText": "Iterativos desc",
-        "examples.categories.divide-y-venceras.offText": "Divide desc",
-        "examples.categories.resta-y-venceras.offText": "Resta desc",
-        "examples.categories.resta-y-seras-vencido.offText":
+        "examples.categories.dpTopDown.title":
+          "Programación dinámica top-down",
+        "examples.categories.dpBottomUp.title":
+          "Programación dinámica bottom-up",
+        "examples.categories.greedy.title": "Voraces",
+        "examples.categories.backtracking.title": "Backtracking",
+        "examples.categories.branchAndBound.title": "Branch and Bound",
+        "examples.categories.iterative.summary": "Iterativos desc",
+        "examples.categories.divideAndConquer.summary": "Divide desc",
+        "examples.categories.decreaseAndConquer.summary": "Resta desc",
+        "examples.categories.decreaseAndGetConquered.summary":
           "Resta constante desc",
+        "examples.categories.dpTopDown.summary": "DP TD desc",
+        "examples.categories.dpBottomUp.summary": "DP BU desc",
+        "examples.categories.greedy.summary": "Greedy desc",
+        "examples.categories.backtracking.summary": "Backtracking desc",
+        "examples.categories.branchAndBound.summary": "B&B desc",
         "examples.families.busqueda": "Búsqueda",
         "examples.families.ordenamiento": "Ordenamiento",
         "examples.families.matrices": "Matrices",
@@ -144,7 +158,7 @@ describe("Examples views", () => {
   });
 
   it("shows top results dropdown and redirects from home", () => {
-    render(<ExamplesHomeView />);
+    render(<ExamplesHomeView page={1} />);
 
     fireEvent.change(screen.getByLabelText("buscar ejemplos"), {
       target: { value: "fibonacci" },
@@ -158,7 +172,7 @@ describe("Examples views", () => {
         visibleExamples?: Array<{ title: string; source?: string }>;
       };
     };
-    expect(launcherProps.assistantContext.exampleSections).toHaveLength(4);
+    expect(launcherProps.assistantContext.exampleSections).toHaveLength(9);
     expect(
       launcherProps.assistantContext.exampleSections?.some(
         (section) => section.title === "Divide y vencerás",
@@ -177,8 +191,8 @@ describe("Examples views", () => {
     expect(finishNavigationMock).toHaveBeenCalled();
   });
 
-  it("shows method filters for recursive category and calls analyze", () => {
-    render(<ExamplesCategoryView category="divide-y-venceras" />);
+  it("shows method filters for categories with recursive methods and calls analyze", () => {
+    render(<ExamplesCategoryView category="divide_and_conquer" />);
 
     const toggleFilters = screen.getByRole("button", { name: /Filtros/i });
     fireEvent.click(toggleFilters);
@@ -209,7 +223,7 @@ describe("Examples views", () => {
   });
 
   it("hides recursive method filters for iterative category", () => {
-    render(<ExamplesCategoryView category="iterativos" />);
+    render(<ExamplesCategoryView category="iterative" />);
     expect(screen.queryByText("Filtros")).not.toBeInTheDocument();
   });
 });

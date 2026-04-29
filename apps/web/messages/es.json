@@ -652,7 +652,7 @@
       "lineNotFound": "No se encontró información para la línea {line}",
       "lineAnalysis": "Análisis de Línea {line}",
       "operationType": "Tipo de operación:",
-      "elementalCost": "Costo elemental (Cᵢ):",
+      "elementalCost": "Costo elemental (Cáµ¢):",
       "elementalCostDesc": "Costo computacional básico de esta operación",
       "expectedExecutions": "Esperanza de ejecuciones:",
       "numExecutions": "Número de ejecuciones:",
@@ -1785,21 +1785,41 @@
       }
     },
     "categories": {
-      "iterativos": {
-        "label": "Iterativos",
-        "offText": "Resuelven el problema con ciclos y actualizaciones paso a paso."
+      "iterative": {
+        "title": "Iterativos",
+        "summary": "Algoritmos con bucles, acumuladores, tablas simples o recorridos secuenciales."
       },
-      "divide-y-venceras": {
-        "label": "Divide y vencerás",
-        "offText": "Parten el problema en varias partes más pequeñas, las resuelven y luego combinan el resultado."
+      "divideAndConquer": {
+        "title": "Divide y vencerás",
+        "summary": "Algoritmos que dividen el problema en regiones, particiones o subproblemas."
       },
-      "resta-y-venceras": {
-        "label": "Resta y vencerás",
-        "offText": "Reducen el problema a una versión más pequeña del mismo y repiten hasta llegar al caso base."
+      "decreaseAndConquer": {
+        "title": "Resta y vencerás",
+        "summary": "Algoritmos con una llamada dominante y reducción aditiva del tamaño."
       },
-      "resta-y-seras-vencido": {
-        "label": "Resta y serás vencido",
-        "offText": "Abren varias ramas recursivas sobre subproblemas muy parecidos y por eso el costo suele dispararse."
+      "decreaseAndGetConquered": {
+        "title": "Resta y serás vencido",
+        "summary": "Algoritmos con varias llamadas recursivas co-ejecutadas, todas por reducción aditiva."
+      },
+      "dpTopDown": {
+        "title": "Programación dinámica top-down",
+        "summary": "Recursión con memoización explícita de subproblemas."
+      },
+      "dpBottomUp": {
+        "title": "Programación dinámica bottom-up",
+        "summary": "Construcción iterativa de estados desde casos base."
+      },
+      "greedy": {
+        "title": "Voraces",
+        "summary": "Algoritmos que toman decisiones locales irreversibles."
+      },
+      "backtracking": {
+        "title": "Backtracking",
+        "summary": "Exploración de decisiones con mutación, recursión y deshacer."
+      },
+      "branchAndBound": {
+        "title": "Branch and Bound",
+        "summary": "Búsqueda de optimización con cotas y poda de ramas."
       }
     },
     "families": {

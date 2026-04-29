@@ -19,7 +19,7 @@ vi.mock("next-intl", () => ({
         "examples.families.secuencias": "Secuencias",
         "examples.families.estructuras": "Estructuras",
         "examples.families.clasicos": "Clásicos",
-        "examples.categories.resta-y-seras-vencido.label":
+        "examples.categories.decreaseAndGetConquered.title":
           "Resta y serás vencido",
         "analyzer.methods.masterTheorem": "Teorema Maestro",
         "analyzer.methods.iterationMethod": "Método de iteración",
@@ -51,7 +51,7 @@ if (!example) {
   throw new Error("missing fixture example");
 }
 
-const binaryExample = findExampleBySlug("binary-search-iterativa");
+const binaryExample = findExampleBySlug("binary-search-recursiva");
 if (!binaryExample) {
   throw new Error("missing binary search fixture example");
 }
@@ -118,14 +118,14 @@ describe("ExampleCatalogCard", () => {
       screen.getByText(
         (_, node) =>
           node?.tagName === "CODE" &&
-          (node.textContent?.includes("left <- 1;") ?? false),
+          (node.textContent?.includes("recursiveBinarySearch") ?? false),
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
         (_, node) =>
           node?.tagName === "CODE" &&
-          (node.textContent?.includes("WHILE (left <= right) DO BEGIN") ??
+          (node.textContent?.includes("middle <- (start + right) DIV 2;") ??
             false),
       ),
     ).toBeInTheDocument();
