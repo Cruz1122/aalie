@@ -8,12 +8,13 @@ interface BaseModalContainerProps {
   onClose: () => void;
   children: React.ReactNode;
   title?: React.ReactNode;
-  titleIcon?: string;
+  titleIcon?: React.ReactNode;
   titleIconClassName?: string;
   closeAriaLabel?: string;
   sizeClassName?: string;
   zIndexClassName?: string;
   panelClassName?: string;
+  panelStyle?: React.CSSProperties;
   headerClassName?: string;
   contentClassName?: string;
   contentProps?: React.HTMLAttributes<HTMLDivElement>;
@@ -36,6 +37,7 @@ export default function BaseModalContainer({
   sizeClassName = DEFAULT_SIZE,
   zIndexClassName = "z-50",
   panelClassName = "",
+  panelStyle,
   headerClassName = "",
   contentClassName = "",
   contentProps,
@@ -85,19 +87,22 @@ export default function BaseModalContainer({
       />
       <div
         className={`relative z-10 ${sizeClassName} rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4 ${panelClassName}`}
+        style={panelStyle}
       >
         {showHeader && (
           <div
             className={`flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header ${headerClassName}`}
           >
             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              {titleIcon ? (
+              {typeof titleIcon === "string" ? (
                 <span
                   className={`material-symbols-outlined ${titleIconClassName}`}
                 >
                   {titleIcon}
                 </span>
-              ) : null}
+              ) : (
+                titleIcon
+              )}
               {title}
             </h3>
             {showCloseButton && (

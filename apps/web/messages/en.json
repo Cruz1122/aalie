@@ -935,6 +935,149 @@
       "aiHelp": "AI Help",
       "defaultCode": "binarySearch(A[n], x, start, high) BEGIN\n  IF (start > high) THEN BEGIN\n    RETURN -1;\n  END\n  mid <- (start + high) / 2;\n  IF (A[mid] = x) THEN BEGIN\n    RETURN mid;\n  END\n  ELSE BEGIN\n    IF (x < A[mid]) THEN BEGIN\n      RETURN binarySearch(A, x, start, mid - 1);\n    END\n    ELSE BEGIN\n      RETURN binarySearch(A, x, mid + 1, high);\n    END\n  END\nEND"
     },
+    "techniques": {
+      "openDetailsAriaLabel": "View explanation for this technique",
+      "modal": {
+        "evidenceTitle": "Snippet that shows the pattern",
+        "lineLabel": "Line {start}{end}",
+        "omittedBody": "Part of the body was omitted to show only the relevant structure.",
+        "noEvidence": "AALIE did not find a clear enough fragment to show as evidence."
+      },
+      "divide_and_conquer": {
+        "title": "Divide and Conquer",
+        "shortMessage": "Split the problem into smaller parts and then combine the answers.",
+        "plainMeaning": "The algorithm breaks a large problem into smaller subproblems, solves them separately, and then combines the results.",
+        "howToRecognize": [
+          "Several recursive calls appear.",
+          "Arguments shrink by division, midpoint, or split ranges.",
+          "The typical form is T(n) = aT(n/b) + f(n)."
+        ],
+        "whyItMatters": "It often leads to recursion-tree or Master-Theorem analysis. This is the family behind algorithms such as Merge Sort.",
+        "commonMistake": "Not every multiple-recursion pattern is Divide and Conquer. If it shrinks by subtraction and repeats subproblems, it may be Decrease and Get Conquered."
+      },
+      "decrease_and_conquer": {
+        "title": "Decrease and Conquer",
+        "shortMessage": "You reduce the problem step by step without opening too many branches.",
+        "plainMeaning": "The algorithm solves the problem by reducing it to a slightly smaller version, such as n-1 or n-c.",
+        "howToRecognize": [
+          "There is one dominant recursive call.",
+          "The argument decreases by subtraction.",
+          "The typical form is T(n) = T(n-b) + f(n)."
+        ],
+        "whyItMatters": "It usually creates deep but not explosive recursion trees. It is common in factorial or recursive sum examples.",
+        "commonMistake": "If two or more recursive calls shrink by subtraction, this is no longer the simple case."
+      },
+      "decrease_and_be_conquered": {
+        "title": "Decrease and Get Conquered",
+        "shortMessage": "There are repeated branches, and that can explode if you do not store results.",
+        "plainMeaning": "The algorithm opens several recursive calls that shrink by subtraction. Many branches can end up recomputing the same result again.",
+        "howToRecognize": [
+          "There are two or more recursive calls.",
+          "Arguments go down like n-1, n-2, or n-c.",
+          "No table is detected to avoid repeated states.",
+          "The typical form is T(n) = aT(n-b) + f(n), with a > 1."
+        ],
+        "whyItMatters": "It is the classic signal of recursive inefficiency and often suggests very fast growth.",
+        "commonMistake": "Do not confuse it with Dynamic Programming. If memoization exists, the story changes."
+      },
+      "dp_top_down": {
+        "title": "Top-down DP",
+        "shortMessage": "There is recursion with memory to avoid repeating work.",
+        "plainMeaning": "The algorithm starts from the large problem and goes down recursively, but before recalculating it checks whether that state was already stored.",
+        "howToRecognize": [
+          "There is recursion.",
+          "Before computing, it checks an indexed table.",
+          "After computing, it stores the result."
+        ],
+        "whyItMatters": "It turns repetitive recursion into a much more efficient solution by solving each subproblem only once.",
+        "commonMistake": "Having an array is not enough. There must be real reuse of previous results."
+      },
+      "dp_bottom_up": {
+        "title": "Bottom-up DP",
+        "shortMessage": "You build from small cases until you solve the whole problem.",
+        "plainMeaning": "The algorithm fills a table iteratively, starting from base cases and moving toward larger states.",
+        "howToRecognize": [
+          "It does not need recursion.",
+          "Loops fill a table.",
+          "Each cell uses states that were already computed."
+        ],
+        "whyItMatters": "It avoids recursion-stack overhead and often has better constants when the table is filled in a regular way.",
+        "commonMistake": "Not every array filled inside a loop is DP. It must represent problem states."
+      },
+      "greedy": {
+        "title": "Greedy",
+        "shortMessage": "You make local decisions. It is useful, but it must be justified.",
+        "plainMeaning": "The algorithm chooses the best available option at each step and keeps that decision.",
+        "howToRecognize": [
+          "There is repeated local selection.",
+          "The decision is added to the solution.",
+          "There is no backtracking or reconsideration."
+        ],
+        "whyItMatters": "It can be very fast, but it is only correct if greedy-choice property and optimal substructure are justified.",
+        "commonMistake": "Something that looks locally reasonable is not automatically globally optimal."
+      },
+      "backtracking": {
+        "title": "Backtracking",
+        "shortMessage": "You explore options and go back when a branch does not work.",
+        "plainMeaning": "The algorithm builds partial solutions, checks whether they remain valid, and goes back when it finds a contradiction.",
+        "howToRecognize": [
+          "There is recursion.",
+          "A partial solution is modified.",
+          "After the recursive call, the modification is undone.",
+          "There are feasibility conditions."
+        ],
+        "whyItMatters": "It is better than brute force because it does not wait until the end to discard impossible solutions.",
+        "commonMistake": "If it also uses optimization bounds, it is probably already Branch and Bound."
+      },
+      "branch_and_bound": {
+        "title": "Branch and Bound",
+        "shortMessage": "You explore branches, but prune the ones that cannot beat the best solution.",
+        "plainMeaning": "It is optimization-oriented backtracking. It uses bounds to decide whether a branch is worth exploring.",
+        "howToRecognize": [
+          "There is a decision tree.",
+          "There is pruning.",
+          "There is comparison against a bound or the best known solution."
+        ],
+        "whyItMatters": "It reduces unnecessary search while preserving optimality when the bounds are well designed.",
+        "commonMistake": "Having an if-statement is not enough. There must be a bound that discards branches because they cannot improve the solution."
+      },
+      "iterative": {
+        "title": "Iterative",
+        "shortMessage": "It looks mainly like a loop-based algorithm.",
+        "plainMeaning": "The algorithm repeats instructions through loops, without strong signs of recursion, memoization, or branch-based search.",
+        "howToRecognize": [
+          "FOR, WHILE, or REPEAT appear.",
+          "There are no recursive calls.",
+          "The cost is usually analyzed by counting how many times each line runs."
+        ],
+        "whyItMatters": "It helps explain per-line costs, summations, best and worst cases, and loop invariants.",
+        "commonMistake": "An iterative algorithm can also be bottom-up DP or greedy. The detector only reports the most likely label."
+      },
+      "unknown": {
+        "title": "Not conclusive yet",
+        "shortMessage": "There are still not enough signals to classify the technique.",
+        "plainMeaning": "The detector did not find a clear enough pattern in the AST.",
+        "howToRecognize": [
+          "Code is missing.",
+          "Parsing has not produced an AST yet.",
+          "The structure does not match a covered technique."
+        ],
+        "whyItMatters": "It is better not to classify than to sell the wrong technique.",
+        "commonMistake": "Do not force a label just because the algorithm superficially resembles a known example."
+      },
+      "explanations": {
+        "branch_and_bound": "This fragment explores branches recursively, backtracks over previous decisions, and also prunes using bound comparisons. That is why AALIE interprets it as Branch and Bound.",
+        "dp_top_down": "This fragment checks a table before recalculating and then stores the computed result. That combination of recursion and memory is the typical sign of top-down Dynamic Programming.",
+        "dp_bottom_up": "This fragment fills a table with loops, and each state depends on values that were already computed. That is why AALIE interprets it as bottom-up Dynamic Programming.",
+        "backtracking": "This fragment builds a partial solution, explores recursively, and then undoes decisions to try other options. That pattern is characteristic of Backtracking.",
+        "divide_and_conquer": "This fragment makes several recursive calls over subproblems split by halves, midpoint, or range partition. That is why AALIE interprets it as Divide and Conquer.",
+        "decrease_and_be_conquered": "This fragment makes several recursive calls while reducing the size by subtraction. Since no table is consulted before computing, those subproblems may repeat. That is why AALIE interprets it as Decrease and Get Conquered.",
+        "decrease_and_conquer": "This fragment reduces the problem by subtraction and keeps one dominant recursive call. That is why AALIE interprets it as Decrease and Conquer.",
+        "greedy": "This fragment makes local decisions that remain in place without backtracking or reuse of previous states. That shape suggests a greedy strategy, although AALIE reports it cautiously.",
+        "iterative": "Loops dominate here, and there are no clear signs of recursion, memoization, or branch-based search. That is why AALIE interprets it as an iterative algorithm.",
+        "unknown": "There are not enough signals in the AST to classify the technique safely."
+      }
+    },
     "repairModal": {
       "repairing": "Repairing algorithm...",
       "mayTakeSeconds": "This may take a few seconds",
@@ -1628,8 +1771,8 @@
         "offText": "They reduce the problem to a smaller version of itself and repeat until reaching the base case."
       },
       "resta-y-seras-vencido": {
-        "label": "Decrease by a constant",
-        "offText": "They advance by removing a small part of the problem on each call, usually in linear recurrences."
+        "label": "Decrease and Get Conquered",
+        "offText": "They open several recursive branches over very similar subproblems, so the cost usually grows fast."
       }
     },
     "families": {
@@ -1669,5 +1812,3 @@
     "brokenLinkTooltip": "Content not available"
   }
 }
-
-

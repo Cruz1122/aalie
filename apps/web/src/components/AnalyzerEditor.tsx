@@ -7,6 +7,7 @@ import {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -17,6 +18,9 @@ import { insertSnippetIntoEditor } from "@/features/analyzer/editor-support/mona
 import { registerPseudocodeCommands } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCommands";
 import { registerPseudocodeCompletionProvider } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCompletionProvider";
 import { useDebouncedSyntaxHints } from "@/features/analyzer/editor-support/parser/validateSourceDebounced";
+import { AlgorithmTechniqueCard } from "@/features/analyzer/technique-detection/AlgorithmTechniqueCard";
+import { AlgorithmTechniqueModal } from "@/features/analyzer/technique-detection/AlgorithmTechniqueModal";
+import { detectTechniqueFromAst } from "@/features/analyzer/technique-detection/detectTechniqueFromAst";
 
 import AALIEIcon from "./AALIEIcon";
 import { useParseWorker } from "../hooks/useParseWorker";
@@ -99,6 +103,7 @@ export const AnalyzerEditor = forwardRef<
   } = props;
   const [code, setCode] = useState(initialValue);
   const tManual = useTranslations("analyzer.manualMode");
+  const tTechnique = useTranslations("analyzer.techniques");
   const locale = useLocale();
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoReact | null>(null);
@@ -106,6 +111,7 @@ export const AnalyzerEditor = forwardRef<
   const rafLayoutRef = useRef<number | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [monacoMountKey, setMonacoMountKey] = useState(0);
+  const [techniqueModalOpen, setTechniqueModalOpen] = useState(false);
   const didRemountAfterZeroHeightRef = useRef(false);
   const [, setMeasuredHeight] = useState<number | null>(null);
   const lastMeasuredHeightRef = useRef<number | null>(null);
@@ -133,6 +139,11 @@ export const AnalyzerEditor = forwardRef<
   // Parsear código con worker
   const parseResult = useParseWorker(code);
   const syntaxHints = useDebouncedSyntaxHints(parseResult);
+  const techniqueDetection = useMemo(
+    () => detectTechniqueFromAst(parseResult.ast, code, tTechnique),
+    [code, parseResult.ast, tTechnique],
+  );
+  const showTechniqueCard = code.trim().length > 0;
 
   // Actualizar markers cuando cambien los errores
   useEffect(() => {
@@ -267,8 +278,8 @@ export const AnalyzerEditor = forwardRef<
   const monacoHeightProp = height ?? "100%";
   const editorPadding =
     topRightActions != null || onVerifyParse != null || onViewAst != null
-      ? { top: 44, bottom: 36 }
-      : { top: 20, bottom: 24 };
+      ? { top: 44, bottom: 88 }
+      : { top: 20, bottom: 84 };
   const hasLocalParseErrors =
     Boolean(code.trim()) &&
     !parseResult.isParsing &&
@@ -451,7 +462,18 @@ export const AnalyzerEditor = forwardRef<
             },
           }}
         />
+        {showTechniqueCard && (
+          <AlgorithmTechniqueCard
+            detection={techniqueDetection}
+            onOpenDetails={() => setTechniqueModalOpen(true)}
+          />
+        )}
       </div>
+      <AlgorithmTechniqueModal
+        open={techniqueModalOpen}
+        onOpenChange={setTechniqueModalOpen}
+        detection={techniqueDetection}
+      />
     </div>
   );
 });

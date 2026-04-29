@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
 
+import AALIECategoryIcon from "@/components/AALIECategoryIcon";
 import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -217,7 +218,13 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
       <main className="z-10 flex-1 p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
-            icon={meta.icon}
+            icon={
+              <AALIECategoryIcon
+                category={meta.slug}
+                size={28}
+                className="text-primary"
+              />
+            }
             title={tGlobal(CATEGORY_LABEL_KEYS[category])}
             description={tGlobal(CATEGORY_OFFTEXT_KEYS[category])}
           />

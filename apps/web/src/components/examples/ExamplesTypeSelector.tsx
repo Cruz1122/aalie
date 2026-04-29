@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import React from "react";
 
+import AALIECategoryIcon from "@/components/AALIECategoryIcon";
 import NavigationLink from "@/components/NavigationLink";
 import {
   EXAMPLE_CATEGORY_ORDER,
@@ -30,12 +31,11 @@ export function ExamplesTypeSelector({ ctaLabel }: ExamplesTypeSelectorProps) {
               key={category}
               className="glass-card grid h-full min-h-[300px] content-center grid-rows-[60px_50px_80px_100px] place-items-center rounded-md p-8 text-center xl:min-h-[68vh]"
             >
-              <span
-                className="material-symbols-outlined leading-none text-primary"
-                style={{ fontSize: "2.75rem" }}
-              >
-                {meta.icon}
-              </span>
+              <AALIECategoryIcon
+                category={meta.slug}
+                size={52}
+                className="text-primary"
+              />
               <h3 className="line-clamp-2 text-xl font-bold text-white">
                 {t(CATEGORY_LABEL_KEYS[category])}
               </h3>

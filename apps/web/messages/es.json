@@ -935,6 +935,149 @@
       "aiHelp": "Ayuda con IA",
       "defaultCode": "busquedaBinaria(A[n], x, inicio, fin) BEGIN\n  IF (inicio > fin) THEN BEGIN\n    RETURN -1;\n  END\n  mitad <- (inicio + fin) / 2;\n  IF (A[mitad] = x) THEN BEGIN\n    RETURN mitad;\n  END\n  ELSE BEGIN\n    IF (x < A[mitad]) THEN BEGIN\n      RETURN busquedaBinaria(A, x, inicio, mitad - 1);\n    END\n    ELSE BEGIN\n      RETURN busquedaBinaria(A, x, mitad + 1, fin);\n    END\n  END\nEND"
     },
+    "techniques": {
+      "openDetailsAriaLabel": "Ver explicación de esta técnica",
+      "modal": {
+        "evidenceTitle": "Fragmento que evidencia la forma",
+        "lineLabel": "Línea {start}{end}",
+        "omittedBody": "Se omitió parte del cuerpo para mostrar solo la estructura relevante.",
+        "noEvidence": "AALIE no encontró un fragmento suficientemente claro para mostrar como evidencia."
+      },
+      "divide_and_conquer": {
+        "title": "Divide y vencerás",
+        "shortMessage": "Divide el problema en partes más pequeñas y luego combina respuestas.",
+        "plainMeaning": "El algoritmo rompe un problema grande en subproblemas más pequeños, los resuelve por separado y después une los resultados.",
+        "howToRecognize": [
+          "Aparecen varias llamadas recursivas.",
+          "Los argumentos se reducen con división, punto medio o rangos partidos.",
+          "La forma típica es T(n) = aT(n/b) + f(n)."
+        ],
+        "whyItMatters": "Suele llevar a análisis con árbol de recursión o Teorema Maestro. Es la familia de algoritmos como Merge Sort.",
+        "commonMistake": "No toda recursión múltiple es Divide y Vencerás. Si reduce por resta y repite subproblemas, puede ser Resta y Serás Vencido."
+      },
+      "decrease_and_conquer": {
+        "title": "Resta y vencerás",
+        "shortMessage": "Reduces el problema paso a paso sin abrir demasiadas ramas.",
+        "plainMeaning": "El algoritmo resuelve el problema reduciéndolo a una versión apenas más pequeña, como n-1 o n-c.",
+        "howToRecognize": [
+          "Hay una sola llamada recursiva dominante.",
+          "El argumento baja por resta.",
+          "La forma típica es T(n) = T(n-b) + f(n)."
+        ],
+        "whyItMatters": "Suele producir árboles profundos, pero no explosivos. Es común en factorial o suma recursiva.",
+        "commonMistake": "Si aparecen dos o más llamadas reducidas por resta, ya no es este caso simple."
+      },
+      "decrease_and_be_conquered": {
+        "title": "Resta y serás vencido",
+        "shortMessage": "Hay ramas repetidas y eso puede explotar si no guardas resultados.",
+        "plainMeaning": "El algoritmo abre varias llamadas recursivas que reducen por resta. Muchas ramas pueden terminar calculando lo mismo otra vez.",
+        "howToRecognize": [
+          "Hay dos o más llamadas recursivas.",
+          "Los argumentos bajan como n-1, n-2 o n-c.",
+          "No se detecta una tabla que evite repetir estados.",
+          "La forma típica es T(n) = aT(n-b) + f(n), con a > 1."
+        ],
+        "whyItMatters": "Es la señal clásica de ineficiencia recursiva y suele anticipar crecimiento muy rápido.",
+        "commonMistake": "No lo confundas con Programación Dinámica. Si hay memoización, la historia cambia."
+      },
+      "dp_top_down": {
+        "title": "PD top-down",
+        "shortMessage": "Hay recursión con memoria para no repetir trabajo.",
+        "plainMeaning": "El algoritmo empieza desde el problema grande y baja recursivamente, pero antes de recalcular revisa si ese estado ya estaba guardado.",
+        "howToRecognize": [
+          "Hay recursión.",
+          "Antes de calcular, consulta una tabla indexada.",
+          "Después de calcular, guarda el resultado."
+        ],
+        "whyItMatters": "Convierte una recursión repetitiva en una solución mucho más eficiente, resolviendo cada subproblema una sola vez.",
+        "commonMistake": "Tener un arreglo no basta. Debe existir reutilización real de resultados."
+      },
+      "dp_bottom_up": {
+        "title": "PD bottom-up",
+        "shortMessage": "Construyes desde casos pequeños hasta resolver el problema completo.",
+        "plainMeaning": "El algoritmo llena una tabla de forma iterativa, empezando por casos base y avanzando hacia estados más grandes.",
+        "howToRecognize": [
+          "No necesita recursión.",
+          "Hay ciclos llenando una tabla.",
+          "Cada celda usa estados ya calculados."
+        ],
+        "whyItMatters": "Evita la pila de recursión y suele tener mejores constantes cuando la tabla se llena de forma regular.",
+        "commonMistake": "No todo arreglo llenado en un ciclo es PD. Debe representar estados del problema."
+      },
+      "greedy": {
+        "title": "Voraz",
+        "shortMessage": "Tomas decisiones locales. Es útil, pero hay que justificarlo.",
+        "plainMeaning": "El algoritmo elige en cada paso la mejor opción disponible y se queda con esa decisión.",
+        "howToRecognize": [
+          "Hay selección local repetida.",
+          "La decisión se agrega a la solución.",
+          "No hay retroceso ni reconsideración."
+        ],
+        "whyItMatters": "Puede ser muy rápido, pero solo es correcto si se demuestra propiedad voraz y subestructura óptima.",
+        "commonMistake": "Que algo parezca razonable localmente no significa que sea óptimo globalmente."
+      },
+      "backtracking": {
+        "title": "Backtracking",
+        "shortMessage": "Exploras opciones y retrocedes cuando una rama no sirve.",
+        "plainMeaning": "El algoritmo construye soluciones parciales, prueba si siguen siendo válidas y vuelve atrás cuando encuentra una contradicción.",
+        "howToRecognize": [
+          "Hay recursión.",
+          "Se modifica una solución parcial.",
+          "Después de recursar, se deshace la modificación.",
+          "Hay condiciones de factibilidad."
+        ],
+        "whyItMatters": "Es mejor que fuerza bruta porque no espera al final para descartar soluciones imposibles.",
+        "commonMistake": "Si además usa cotas de optimización, probablemente ya es Branch and Bound."
+      },
+      "branch_and_bound": {
+        "title": "Branch and Bound",
+        "shortMessage": "Exploras ramas, pero podas las que no pueden mejorar la mejor solución.",
+        "plainMeaning": "Es backtracking orientado a optimización. Usa cotas para decidir si vale la pena seguir explorando una rama.",
+        "howToRecognize": [
+          "Hay árbol de decisiones.",
+          "Hay poda.",
+          "Hay comparación contra una cota o mejor solución conocida."
+        ],
+        "whyItMatters": "Reduce búsqueda innecesaria y conserva garantía de optimalidad cuando las cotas están bien diseñadas.",
+        "commonMistake": "No basta con tener un if. Debe haber una cota que descarte ramas por no poder mejorar la solución."
+      },
+      "iterative": {
+        "title": "Iterativo",
+        "shortMessage": "Parece un algoritmo basado principalmente en ciclos.",
+        "plainMeaning": "El algoritmo repite instrucciones con ciclos, sin señales fuertes de recursión, memoización o búsqueda por ramas.",
+        "howToRecognize": [
+          "Aparecen FOR, WHILE o REPEAT.",
+          "No hay llamadas recursivas.",
+          "El costo se suele analizar contando cuántas veces se ejecuta cada línea."
+        ],
+        "whyItMatters": "Permite explicar costos por línea, sumatorias, casos mejor o peor e invariantes de ciclo.",
+        "commonMistake": "Un algoritmo iterativo también puede ser PD bottom-up o voraz. El detector solo dice lo más probable."
+      },
+      "unknown": {
+        "title": "Aún no concluyente",
+        "shortMessage": "Todavía no hay señales suficientes para clasificar la técnica.",
+        "plainMeaning": "El detector no encontró un patrón suficientemente claro en el AST.",
+        "howToRecognize": [
+          "Falta código.",
+          "El parse aún no produjo AST.",
+          "La estructura no coincide con una técnica cubierta."
+        ],
+        "whyItMatters": "Es mejor no clasificar que vender una técnica incorrecta.",
+        "commonMistake": "Forzar una etiqueta solo porque el algoritmo se parece superficialmente a un ejemplo conocido."
+      },
+      "explanations": {
+        "branch_and_bound": "Este fragmento explora ramas de forma recursiva, retrocede sobre decisiones previas y adem?s poda usando comparaciones de cota. Por eso AALIE lo interpreta como Branch and Bound.",
+        "dp_top_down": "Este fragmento consulta una tabla antes de recalcular y luego guarda el resultado obtenido. Esa combinaci?n de recursi?n con memoria es la se?al t?pica de Programaci?n Din?mica top-down.",
+        "dp_bottom_up": "Este fragmento llena una tabla con ciclos y cada estado depende de valores ya calculados. Por eso AALIE lo interpreta como Programaci?n Din?mica bottom-up.",
+        "backtracking": "Este fragmento construye una soluci?n parcial, explora recursivamente y luego deshace decisiones para probar otras opciones. Ese patr?n es caracter?stico de Backtracking.",
+        "divide_and_conquer": "Este fragmento hace varias llamadas recursivas sobre subproblemas divididos por mitad, punto medio o partici?n de rango. Por eso AALIE lo interpreta como Divide y Vencer?s.",
+        "decrease_and_be_conquered": "Este fragmento hace varias llamadas recursivas reduciendo el tama?o por resta. Como no aparece una tabla consultada antes de calcular, esos subproblemas pueden repetirse. Por eso AALIE lo interpreta como Resta y Ser?s Vencido.",
+        "decrease_and_conquer": "Este fragmento reduce el problema por resta y mantiene una llamada recursiva dominante. Por eso AALIE lo interpreta como Resta y Vencer?s.",
+        "greedy": "Este fragmento toma decisiones locales que se mantienen sin retroceso ni reutilizaci?n de estados previos. Esa forma sugiere una estrategia voraz, aunque AALIE la reporta con cautela.",
+        "iterative": "Aqu? predominan los ciclos y no aparecen se?ales claras de recursi?n, memoizaci?n o b?squeda por ramas. Por eso AALIE lo interpreta como un algoritmo iterativo.",
+        "unknown": "No hay se?ales suficientes en el AST para clasificar la t?cnica con seguridad."
+      }
+    },
     "repairModal": {
       "repairing": "Reparando algoritmo...",
       "mayTakeSeconds": "Esto puede tardar unos segundos",
@@ -1641,16 +1784,16 @@
         "offText": "Resuelven el problema con ciclos y actualizaciones paso a paso."
       },
       "divide-y-venceras": {
-        "label": "Divide y vencerás",
-        "offText": "Parten el problema en varias partes más pequeñas, las resuelven y luego combinan el resultado."
+        "label": "Divide y vencer?s",
+        "offText": "Parten el problema en varias partes m?s peque?as, las resuelven y luego combinan el resultado."
       },
       "resta-y-venceras": {
-        "label": "Resta y vencerás",
-        "offText": "Reducen el problema a una versión más pequeña del mismo y repiten hasta llegar al caso base."
+        "label": "Resta y vencer?s",
+        "offText": "Reducen el problema a una versi?n m?s peque?a del mismo y repiten hasta llegar al caso base."
       },
       "resta-y-seras-vencido": {
-        "label": "Resta y serás vencido",
-        "offText": "Avanzan restando una parte pequeña del problema en cada llamada, normalmente en recurrencias lineales."
+        "label": "Resta y ser?s vencido",
+        "offText": "Abren varias ramas recursivas sobre subproblemas muy parecidos y por eso el costo suele dispararse."
       }
     },
     "families": {
@@ -1690,5 +1833,3 @@
     "brokenLinkTooltip": "Contenido no disponible"
   }
 }
-
-

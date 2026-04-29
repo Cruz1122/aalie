@@ -44,7 +44,6 @@ export interface ExampleCatalogItem {
 
 export interface ExampleCategoryMeta {
   slug: ExampleCategory;
-  icon: string;
 }
 
 export const EXAMPLE_CATEGORY_ORDER: ExampleCategory[] = [
@@ -60,19 +59,15 @@ export const EXAMPLE_CATEGORY_META: Record<
 > = {
   iterativos: {
     slug: "iterativos",
-    icon: "loop",
   },
   "divide-y-venceras": {
     slug: "divide-y-venceras",
-    icon: "sentiment_very_satisfied",
   },
   "resta-y-venceras": {
     slug: "resta-y-venceras",
-    icon: "sentiment_satisfied",
   },
   "resta-y-seras-vencido": {
     slug: "resta-y-seras-vencido",
-    icon: "sentiment_dissatisfied",
   },
 };
 
