@@ -25,6 +25,7 @@ COPY apps/web/package.json apps/web/
 # Manifests de paquetes workspace usados por web
 COPY packages/grammar/package.json packages/grammar/
 COPY packages/types/package.json packages/types/
+COPY packages/content-catalog/package.json packages/content-catalog/
 
 # Instalar dependencias de workspaces para entorno dev en contenedor.
 # Se usa --no-frozen-lockfile para evitar bloqueo si package.json cambió y

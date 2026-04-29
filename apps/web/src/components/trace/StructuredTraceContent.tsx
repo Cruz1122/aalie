@@ -700,6 +700,7 @@ export default function StructuredTraceContent({
                     onRegenerate={handleRegenerate}
                     onExpand={() => setIsDiagramExpanded(true)}
                     traceConfig={traceConfig}
+                    traceDiagnostics={trace?.trace?.diagnostics ?? null}
                     fetchCompleted={fetchCompleted}
                     frameStyle="border"
                   />
@@ -721,6 +722,7 @@ export default function StructuredTraceContent({
                     onRegenerate={handleRegenerate}
                     onExpand={() => setIsDiagramExpanded(true)}
                     traceConfig={traceConfig}
+                    traceDiagnostics={trace?.trace?.diagnostics ?? null}
                     fetchCompleted={fetchCompleted}
                     frameStyle="border"
                   />

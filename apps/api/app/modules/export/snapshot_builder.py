@@ -906,6 +906,9 @@ def build_snapshot(
                                         (trace.get("trace") or {}).get("callTreeSource")
                                     )
                                     or ((trace.get("trace") or {}).get("recursionTree")),
+                                    "structuredTrace": (
+                                        (trace.get("derived") or {}).get("structuredTrace")
+                                    ),
                                     "reportTraceGraph": _resolve_report_trace_graph(trace),
                                 }
                                 if isinstance(trace, dict) and isinstance(trace.get("trace"), dict)
@@ -1015,6 +1018,9 @@ def build_snapshot(
                                         "summary": ((trace.get("trace") or {}).get("summary")),
                                         "diagnostics": (
                                             (trace.get("trace") or {}).get("diagnostics")
+                                        ),
+                                        "structuredTrace": (
+                                            (trace.get("derived") or {}).get("structuredTrace")
                                         ),
                                         "reportTraceGraph": _resolve_report_trace_graph(trace),
                                     }

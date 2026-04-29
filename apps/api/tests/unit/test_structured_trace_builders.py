@@ -62,6 +62,11 @@ class TestStructuredTraceBuilders:
         result = build_structured_trace_result(trace)
         assert result["graph"]["nodes"]
         assert all(node.get("type") != "output" for node in result["graph"]["nodes"])
+        depths = [node.get("data", {}).get("depth") for node in result["graph"]["nodes"]]
+        assert any(depth == 0 for depth in depths)
+        node_types = {node.get("data", {}).get("nodeType") for node in result["graph"]["nodes"]}
+        assert "call" in node_types or "base_return" in node_types
+        assert any(node.get("data", {}).get("phase") for node in result["graph"]["nodes"])
         assert result["patternKind"] in (
             "tail_recursive_linear",
             "binary_branch_recursive",

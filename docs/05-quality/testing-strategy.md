@@ -80,8 +80,34 @@ Las pruebas críticas deben ser auténticas: `input -> expected output real`, no
 
 ## Ejemplos
 
-- `mergeSort` y `factorial` como algoritmos canónicos recursivos.
+- `mergeSort`, `factorial`, `fibonacci` y `binarySearchRecursive` como algoritmos canónicos recursivos.
+- para trace recursivo, validar tanto la vista automática como el seguimiento manual guiado sobre el mismo `structuredTrace`.
 - `while_linear` y `euclides` como oraculos WHILE.
+
+## Checklist de validación manual
+
+Usa estos casos canónicos para revisar que la experiencia automática y la guiada estén alineadas:
+
+- `mergeSort`:
+	- verificar llamadas divididas por subproblemas;
+	- comprobar que la profundidad aumenta y luego regresa con retornos visibles;
+	- revisar que el árbol no inventa ramas cuando la traza está truncada.
+- `factorial`:
+	- verificar una sola rama recursiva con expansión lineal;
+	- confirmar que el retorno aparece como evento separado;
+	- validar que la explicación metodológica coincide con el trace.
+- `fibonacci`:
+	- verificar múltiples llamadas hijas por nivel;
+	- confirmar que el stepping por pasos y por niveles conserva el orden real de ejecución;
+	- revisar que la visualización distingue la construcción del árbol del análisis matemático.
+- `binarySearchRecursive`:
+	- confirmar que el árbol muestra profundidad logarítmica;
+	- revisar que la navegación por niveles facilita entender la reducción del intervalo;
+	- validar que el resultado final no introduce nodos ni retornos ausentes.
+- traza parcial o profunda:
+	- comprobar degradación limpia a `unknown` o vista parcial;
+	- verificar que la UI mantiene el contrato sin reinterpretar `steps`;
+	- revisar que export y snapshot conservan la información disponible sin forzar conclusiones.
 
 ## Limites conocidos
 

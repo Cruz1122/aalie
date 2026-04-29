@@ -83,6 +83,14 @@ Aplica a `/analyze/trace`, `trace_service`, `execution/schemas` y consumidores f
 - `classification` resume la lectura estructural derivada y debe ser coherente con `patternKind`.
 - si `structuredTrace` no puede derivarse, el trace base sigue siendo válido; los consumidores deben degradar visualmente sin reinterpretar `steps`.
 
+## Modos de consumo de la traza recursiva
+
+- **Vista automática**: consume `trace`, `callTreeSource` y `derived.structuredTrace` para construir el diagrama, el resumen y la explicación.
+- **Seguimiento manual guiado**: consume exactamente los mismos artefactos, pero añade navegación por pasos o niveles para explicar expansión, llamadas y retornos de forma pedagógica.
+- ambos modos comparten la misma fuente de verdad; la UI no puede inventar nodos, llamadas o retornos que no estén respaldados por la traza contractual.
+- la navegación manual debe apoyarse en el orden real de ejecución y en la estructura derivada, no en heurísticas que contradigan el `trace` base.
+- cuando la traza sea parcial, profunda o inconcluyente, el modo guiado debe degradar limpiamente mostrando solo lo derivable y marcando la ambigüedad.
+
 ## Invariantes
 
 - los pasos se entregan en orden de ejecución;
@@ -104,6 +112,7 @@ Aplica a `/analyze/trace`, `trace_service`, `execution/schemas` y consumidores f
 
 - algoritmo iterativo: `trace.kind = iterative`, sin call tree obligatorio.
 - algoritmo recursivo: `trace.kind = recursive`, con `callTreeSource` y `structuredTrace`.
+- algoritmo recursivo con navegación guiada: mantiene el mismo contrato, pero la UI puede avanzar por expansión, descenso y retorno sin alterar el payload.
 
 ### Ejemplos no soportados
 

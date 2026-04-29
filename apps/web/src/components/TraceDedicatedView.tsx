@@ -10,8 +10,10 @@ import { useTraceRefreshOnAnalysis } from "@/hooks/trace/useTraceRefreshOnAnalys
 import { buildTraceFocusedPanelContext } from "@/lib/assistant/trace-focused-panel";
 import type { AssistantFocusedPanelContext } from "@/lib/assistant/types";
 import type { CaseType } from "@/types/trace";
+import { useRecursionStepper } from "@/hooks/useRecursionStepper";
 
 import ExecutionGraphView from "./ExecutionGraphView";
+import RecursionSteppingControls from "./trace/RecursionSteppingControls";
 import StructuredTraceContent from "./trace/StructuredTraceContent";
 import TraceChatPanel from "./trace/TraceChatPanel";
 import TraceStatusBanner from "./trace/TraceStatusBanner";
@@ -141,6 +143,11 @@ export default function TraceDedicatedView({
 
   const isRecursiveOrHybrid =
     algorithmKind === "recursive" || algorithmKind === "hybrid";
+
+  const [recursionStepState, recursionStepActions] = useRecursionStepper(
+    structuredDiagram?.graph.nodes ?? [],
+    structuredDiagram?.graph.edges ?? [],
+  );
 
   const stepsToUse = trace?.ok && trace?.trace?.steps ? trace.trace.steps : [];
   const currentStepData =
@@ -345,8 +352,25 @@ export default function TraceDedicatedView({
                   ✕
                 </button>
               </div>
-              <div className="flex-1 min-h-0 p-3 bg-slate-900/80">
-                <ExecutionGraphView graph={structuredDiagram.graph} />
+              <div className="flex-1 min-h-0 p-3 bg-slate-900/80 flex flex-col gap-3">
+                <div className="flex-1 min-h-0">
+                  <ExecutionGraphView
+                    graph={structuredDiagram.graph}
+                    visibleNodeIds={recursionStepState.visibleNodeIds}
+                    visibleEdgeIds={recursionStepState.visibleEdgeIds}
+                    currentNodeId={recursionStepState.currentNodeId}
+                  />
+                </div>
+                {isRecursiveOrHybrid && structuredDiagram?.graph?.nodes?.length ? (
+                  <RecursionSteppingControls
+                    state={recursionStepState}
+                    actions={recursionStepActions}
+                    currentNode={structuredDiagram.graph.nodes.find(
+                      (node) => node.id === recursionStepState.currentNodeId,
+                    )}
+                    className="w-full"
+                  />
+                ) : null}
               </div>
             </div>
           </div>,

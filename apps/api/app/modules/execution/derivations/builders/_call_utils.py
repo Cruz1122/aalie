@@ -74,6 +74,58 @@ def _format_bst_node(node: Dict[str, Any]) -> str:
     return f"nodo({value}, izq={left_tag}, der={right_tag})"
 
 
+def call_depth(call: Dict[str, Any], fallback: int = 0) -> int:
+    """Obtiene la profundidad del call o usa un valor de respaldo."""
+    raw_depth = call.get("depth")
+    return raw_depth if isinstance(raw_depth, int) else fallback
+
+
+def build_recursive_node_data(
+    call: Dict[str, Any],
+    *,
+    node_type: str,
+    phase: str,
+    is_base_case: bool = False,
+    cost: Optional[Dict[str, Any]] = None,
+    extra: Optional[Dict[str, Any]] = None,
+    depth: Optional[int] = None,
+    execution_order: Optional[int] = None,
+    return_order: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Construye metadatos compartidos para nodos recursivos."""
+    data: Dict[str, Any] = {
+        "callId": call.get("id"),
+        "depth": call_depth(call, depth or 0),
+        "phase": phase,
+        "nodeType": node_type,
+        "isBaseCase": bool(is_base_case),
+    }
+
+    if execution_order is not None:
+         data["executionOrder"] = execution_order
+
+    if return_order is not None:
+        data["returnOrder"] = return_order
+
+    parent_id = call.get("parent_id") or call.get("parentCallId")
+    if parent_id is not None:
+        data["parentCallId"] = parent_id
+
+    children = call.get("children")
+    if isinstance(children, list):
+        data["branchCount"] = len(children)
+
+    if cost:
+        for key in ("tokens", "aggregateTokens", "microseconds", "aggregateMicroseconds"):
+            if cost.get(key) is not None:
+                data[key] = cost[key]
+
+    if extra:
+        data.update(extra)
+
+    return data
+
+
 def call_to_label(call: Dict[str, Any], locale: str = "en") -> str:
     """Genera label legible: factorial(n=4) → 24."""
     params = call.get("params", {})

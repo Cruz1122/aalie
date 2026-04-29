@@ -55,17 +55,18 @@ export default function ReturnEdge({
           className="nodrag nopan"
           style={{
             position: "absolute",
-            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + 10}px)`,
+            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + 16}px)`,
             pointerEvents: "none",
             color: "#6ee7b7",
             fontSize: 12,
             fontWeight: 600,
             whiteSpace: "nowrap",
-            background: "rgba(2, 6, 23, 0.92)",
-            border: "1px solid rgba(16, 185, 129, 0.35)",
-            borderRadius: 9999,
-            padding: "2px 8px",
+            background: "rgba(2, 6, 23, 0.88)",
+            border: "1px solid rgba(16, 185, 129, 0.28)",
+            borderRadius: 6,
+            padding: "2px 6px",
             boxShadow: "0 1px 2px rgba(0,0,0,0.25)",
+            zIndex: 5,
           }}
         >
           <span style={{ paddingRight: 6 }}>↩</span>

@@ -5,6 +5,31 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased] - 2026-04-28
+
+### Added
+- Experiencia de trazado recursivo con stepping/playback interactivo sobre `structuredTrace`, mostrando llamadas, expansión y retornos como eventos separados.
+- Controles de seguimiento recursivo debajo del diagrama con play/pause, step, velocidad y contexto del nodo actual.
+- Navegación por niveles para diagramas recursivos, permitiendo acotar la profundidad visible sin alterar la traza contractual.
+- Soporte de snapshot para preservar `structuredTrace` junto con la traza recursiva y el detalle metodológico cuando está disponible.
+- Documentación de seguimiento manual guiado, alcance operativo y checklist formal de validación manual con casos canónicos.
+- Nuevas claves de i18n para el seguimiento recursivo y los estados de expansión/retorno.
+
+### Changed
+- `structuredTrace` se consolidó como artefacto derivado único para la visualización del árbol de recursión, sin reinterpretar `steps`.
+- La vista de diagrama recursivo ahora comparte la misma fuente de verdad para construcción automática y seguimiento manual guiado.
+- El render de nodos y aristas recursivas se ajustó para mostrar profundidad, fase, retorno y orden de ejecución de forma pedagógica.
+- El panel de seguimiento recursivo se integró en la experiencia de trazado dedicada y en la vista de diagrama.
+- El diseño de los sliders de paso y velocidad se unificó con barra de progreso, color consistente y mejor alineación del thumb.
+- Se añadieron referencias cruzadas desde la guía de usuario hacia el checklist formal de QA para validación manual.
+
+### Fixed
+- Se corrigió la compilación del panel de seguimiento recursivo al limpiar JSX mal formado en `RecursionSteppingControls.tsx`.
+- Se corrigieron alineación visual del slider de paso, el estilo del slider de velocidad y la presentación del nodo final/retorno en el diagrama.
+- El frontend dejó de inventar aristas de retorno y ahora consume las aristas contractuales del grafo estructurado.
+- El snapshot de export ya conserva `structuredTrace` en los artefactos de trazado recursivo.
+- Se ajustó el manejo de trazas parciales, profundas o no concluyentes para degradar limpiamente sin romper la experiencia.
+
 ## [Unreleased] - 2026-03-28
 
 ### Added
