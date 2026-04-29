@@ -34,7 +34,7 @@ export function ExamplesTypeSelector({
           return (
             <div
               key={category}
-              className="glass-card grid h-full min-h-[64vh] content-center grid-rows-[84px_auto_auto_52px] place-items-center gap-3.5 rounded-2xl p-6 text-center"
+              className="glass-card grid h-full min-h-[60vh] content-center grid-rows-[84px_auto_auto_52px] place-items-center gap-3.5 rounded-2xl p-6 text-center"
             >
               <AALIECategoryIcon
                 category={category}
