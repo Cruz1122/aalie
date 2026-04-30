@@ -1,0 +1,1036 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-comparacion-tecnicas-algoritmicas",
+  "slug": "comparacion-tecnicas-algoritmicas",
+  "title": "Comparación de Técnicas Algorítmicas",
+  "order": 20,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Módulo de síntesis para decidir qué técnica algorítmica usar según la estructura del problema: iteración, recursión, divide y vencerás, resta y vencerás, programación dinámica, voraces, backtracking, Branch and Bound y fuerza bruta. Compara requisitos, garantías, costos, memoria, tipo de problema, señales de uso y errores frecuentes.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 85,
+  "tags": [
+    "comparacion-de-tecnicas",
+    "tecnicas-algoritmicas",
+    "diseno-de-algoritmos",
+    "iterativos",
+    "recursivos",
+    "divide-y-venceras",
+    "resta-y-venceras",
+    "programacion-dinamica",
+    "voraces",
+    "backtracking",
+    "branch-and-bound",
+    "fuerza-bruta",
+    "seleccion-de-tecnica"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "comparación de técnicas",
+      "comparación de algoritmos",
+      "cuándo usar cada técnica",
+      "cómo elegir técnica algorítmica",
+      "PD vs voraz",
+      "backtracking vs branch and bound",
+      "divide y vencerás vs programación dinámica",
+      "fuerza bruta vs poda"
+    ],
+    "keywords": [
+      "subproblemas independientes",
+      "subproblemas superpuestos",
+      "elección local",
+      "propiedad voraz",
+      "poda por factibilidad",
+      "poda por suboptimalidad",
+      "cotas",
+      "recurrencias",
+      "tabla de DP",
+      "árbol de decisiones",
+      "óptimo global",
+      "solución factible",
+      "fuerza bruta",
+      "heurística",
+      "técnica exacta"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-complejidad-temporal-espacial",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-algoritmos-recursivos",
+        "kind": "required"
+      },
+      {
+        "id": "mod-programacion-dinamica",
+        "kind": "required"
+      },
+      {
+        "id": "mod-algoritmos-voraces",
+        "kind": "required"
+      },
+      {
+        "id": "mod-backtracking",
+        "kind": "required"
+      },
+      {
+        "id": "mod-branch-and-bound",
+        "kind": "required"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-complejidad-temporal",
+        "kind": "required"
+      },
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-estructura-algoritmo-recursivo",
+        "kind": "required"
+      },
+      {
+        "id": "sec-requisitos-programacion-dinamica",
+        "kind": "required"
+      },
+      {
+        "id": "sec-introduccion-algoritmos-voraces",
+        "kind": "required"
+      },
+      {
+        "id": "sec-introduccion-backtracking",
+        "kind": "required"
+      },
+      {
+        "id": "sec-introduccion-branch-and-bound",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-complejidad-temporal-espacial",
+    "mod-notaciones-asintoticas",
+    "mod-algoritmos-recursivos",
+    "mod-teorema-maestro",
+    "mod-arbol-recursion",
+    "mod-ecuacion-caracteristica",
+    "mod-suposiciones-inteligentes",
+    "mod-programacion-dinamica",
+    "mod-algoritmos-voraces",
+    "mod-backtracking",
+    "mod-branch-and-bound"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "distinguir-tecnicas-por-estructura",
+      "text": "Distinguir técnicas algorítmicas según la estructura del problema y no solo por apariencia del código."
+    },
+    {
+      "objectiveId": "identificar-subproblemas-independientes",
+      "text": "Identificar cuándo un problema se divide en subproblemas independientes y conviene usar Divide y Vencerás."
+    },
+    {
+      "objectiveId": "identificar-subproblemas-superpuestos",
+      "text": "Identificar cuándo hay subproblemas superpuestos y conviene usar Programación Dinámica."
+    },
+    {
+      "objectiveId": "distinguir-voraz-pd",
+      "text": "Distinguir problemas donde una elección local demostrable basta de problemas que requieren evaluar alternativas."
+    },
+    {
+      "objectiveId": "distinguir-backtracking-bb",
+      "text": "Distinguir backtracking de Branch and Bound por el tipo de poda: factibilidad contra suboptimalidad."
+    },
+    {
+      "objectiveId": "usar-fuerza-bruta-como-linea-base",
+      "text": "Usar fuerza bruta como línea base conceptual antes de justificar una técnica más eficiente."
+    },
+    {
+      "objectiveId": "comparar-garantias",
+      "text": "Comparar qué técnicas garantizan solución óptima, cuáles requieren demostración adicional y cuáles pueden ser solo heurísticas."
+    },
+    {
+      "objectiveId": "comparar-costos",
+      "text": "Comparar tiempo y espacio típicos de cada técnica."
+    },
+    {
+      "objectiveId": "clasificar-problemas",
+      "text": "Clasificar un problema dado según señales estructurales: ciclos, recurrencia, tabla, elección local, árbol de decisiones o cotas."
+    },
+    {
+      "objectiveId": "evitar-confusiones",
+      "text": "Evitar confusiones comunes: llamar voraz a cualquier algoritmo rápido, llamar PD a cualquier tabla o llamar B&B a cualquier backtracking."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-tecnica-algoritmica",
+      "label": "Técnica algorítmica",
+      "definition": "Patrón de diseño o análisis usado para resolver una familia de problemas con una estructura reconocible."
+    },
+    {
+      "termId": "term-senal-estructural",
+      "label": "Señal estructural",
+      "definition": "Rasgo del problema o del algoritmo que sugiere una técnica: subproblemas, decisiones, solapamiento, restricciones, cotas o ciclos."
+    },
+    {
+      "termId": "term-subproblemas-independientes",
+      "label": "Subproblemas independientes",
+      "definition": "Subproblemas que se resuelven sin reutilizar resultados entre sí. Son típicos de Divide y Vencerás."
+    },
+    {
+      "termId": "term-subproblemas-superpuestos-comparacion",
+      "label": "Subproblemas superpuestos",
+      "definition": "Subproblemas que aparecen repetidos y justifican guardar resultados mediante Programación Dinámica."
+    },
+    {
+      "termId": "term-decision-irrevocable",
+      "label": "Decisión irrevocable",
+      "definition": "Decisión que no se reconsidera después de aceptarse. Es típica de los algoritmos voraces."
+    },
+    {
+      "termId": "term-decision-reversible",
+      "label": "Decisión reversible",
+      "definition": "Decisión que puede deshacerse para probar otra alternativa. Es típica del backtracking."
+    },
+    {
+      "termId": "term-poda-factibilidad-comparacion",
+      "label": "Poda por factibilidad",
+      "definition": "Descarte de una rama porque viola restricciones y no puede llevar a una solución válida."
+    },
+    {
+      "termId": "term-poda-suboptimalidad-comparacion",
+      "label": "Poda por suboptimalidad",
+      "definition": "Descarte de una rama porque su mejor valor posible no mejora la mejor solución conocida."
+    },
+    {
+      "termId": "term-garantia-optimalidad",
+      "label": "Garantía de optimalidad",
+      "definition": "Justificación de que la técnica encuentra una solución óptima, no solo una solución válida o razonable."
+    },
+    {
+      "termId": "term-linea-base-fuerza-bruta",
+      "label": "Línea base de fuerza bruta",
+      "definition": "Solución exhaustiva usada como referencia inicial para entender el espacio completo antes de podar, guardar o elegir mejor."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-comparacion-tecnicas-algoritmicas",
+      "slug": "comparacion-tecnicas-algoritmicas",
+      "title": "Comparación de Técnicas Algorítmicas",
+      "order": 1,
+      "summary": "Síntesis para elegir técnica según la estructura del problema, las garantías requeridas y el costo esperado.",
+      "sections": [
+        {
+          "sectionId": "sec-idea-central-comparacion-tecnicas",
+          "slug": "idea-central-comparacion-tecnicas",
+          "title": "Idea central: no se elige la técnica por gusto",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "blocks": [
+            {
+              "id": "blk-comparacion-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La técnica algorítmica no se elige por moda ni por comodidad. Se elige porque el problema tiene una estructura que la justifica: subproblemas independientes, subproblemas repetidos, decisiones locales seguras, restricciones parciales, cotas o búsqueda exhaustiva."
+                }
+              ]
+            },
+            {
+              "id": "blk-comparacion-principio",
+              "type": "note",
+              "variant": "warning",
+              "title": "Principio de selección",
+              "blocks": [
+                {
+                  "id": "blk-comparacion-principio-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Primero se identifica la estructura del problema; después se decide la técnica. Hacerlo al revés suele producir algoritmos que parecen sofisticados pero no están justificados."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-senales-estructurales-table",
+              "type": "table",
+              "title": "Señales estructurales y técnica sugerida",
+              "columns": [
+                {
+                  "key": "senal",
+                  "label": "Señal estructural"
+                },
+                {
+                  "key": "pregunta",
+                  "label": "Pregunta diagnóstica"
+                },
+                {
+                  "key": "tecnica",
+                  "label": "Técnica candidata"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Costo acumulado por instrucciones repetidas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿El algoritmo se explica principalmente por ciclos?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Análisis iterativo"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Problema se divide en partes independientes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Los subproblemas no comparten resultados?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Divide y Vencerás"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Problema se reduce a una versión más pequeña"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Cada paso reduce el tamaño y continúa con un subproblema?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Resta y Vencerás / recursión lineal"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Subproblemas repetidos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿El mismo estado se calcula varias veces?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Programación Dinámica"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Elección local segura"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Se puede demostrar que escoger lo mejor ahora no daña el óptimo?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Voraz"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Soluciones parciales bajo restricciones"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Puedo podar una rama apenas viola una restricción?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Backtracking"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Optimización con cotas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Puedo estimar si una rama ya no puede mejorar la mejor solución?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Branch and Bound"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "No hay estructura explotable"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Solo queda probar todas las posibilidades?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Fuerza bruta"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-modelo-decision-tecnica",
+          "slug": "modelo-decision-tecnica",
+          "title": "Modelo de decisión para elegir técnica",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-modelo-decision-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Una forma disciplinada de elegir técnica es responder preguntas en cascada. Cada pregunta descarta técnicas que no corresponden."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-decision-cases",
+              "type": "equationBlock",
+              "title": "Modelo de selección de técnica",
+              "latex": "Tecnica(P)=\\begin{cases}\\text{Iterativa},& P\\ \\text{se resuelve por acumulación de pasos en ciclos}\\\\\\text{Divide y Vencerás},& P\\to \\text{subproblemas independientes}\\\\\\text{Resta y Vencerás},& P\\to \\text{un subproblema menor dominante}\\\\\\text{Programación Dinámica},& P\\to \\text{subproblemas superpuestos}\\\\\\text{Voraz},& P\\to \\text{elección local segura demostrable}\\\\\\text{Backtracking},& P\\to \\text{decisiones reversibles con poda por factibilidad}\\\\\\text{Branch and Bound},& P\\to \\text{optimización con cotas de poda}\\\\\\text{Fuerza Bruta},& \\text{sin estructura explotable clara}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-decision-cases",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este modelo clasifica el problema "
+                },
+                {
+                  "type": "strong",
+                  "text": "P"
+                },
+                {
+                  "type": "text",
+                  "text": " según su naturaleza estructural. La clave es identificar la relación entre el problema original y sus subproblemas o decisiones. Por ejemplo, si un problema se divide en partes que no comparten información, la técnica lógica es "
+                },
+                {
+                  "type": "emphasis",
+                  "text": "Divide y Vencerás"
+                },
+                {
+                  "type": "text",
+                  "text": "; si las decisiones son irreversibles y locales, es "
+                },
+                {
+                  "type": "emphasis",
+                  "text": "Voraz"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-flujo-decision-tecnica",
+              "type": "mermaid",
+              "title": "Flujo de selección de técnica",
+              "code": "flowchart TD\n A[\"Problema\"] --> B{\"¿Hay algoritmo dado para analizar?\"}\n B -- \"Sí\" --> C{\"¿Predominan ciclos?\"}\n C -- \"Sí\" --> D[\"Análisis iterativo\"]\n C -- \"No\" --> E{\"¿Predomina recursión?\"}\n E -- \"Sí\" --> F[\"Plantear recurrencia\"]\n F --> G{\"¿Subproblemas independientes?\"}\n G -- \"Sí\" --> H[\"Divide y Vencerás / métodos de recurrencia\"]\n G -- \"No\" --> I{\"¿Estados repetidos?\"}\n I -- \"Sí\" --> J[\"Programación Dinámica\"]\n I -- \"No\" --> K[\"Resta y Vencerás / recursión lineal\"]\n B -- \"No\" --> L{\"¿Es problema de optimización?\"}\n L -- \"Sí\" --> M{\"¿Elección local segura?\"}\n M -- \"Sí\" --> N[\"Voraz\"]\n M -- \"No\" --> O{\"¿Hay cotas útiles?\"}\n O -- \"Sí\" --> P[\"Branch and Bound\"]\n O -- \"No\" --> Q{\"¿Hay restricciones parciales?\"}\n Q -- \"Sí\" --> R[\"Backtracking\"]\n Q -- \"No\" --> S[\"Fuerza bruta / búsqueda exhaustiva\"]\n L -- \"No\" --> T{\"¿Se buscan soluciones válidas bajo restricciones?\"}\n T -- \"Sí\" --> R\n T -- \"No\" --> S"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-tabla-comparativa-global",
+          "slug": "tabla-comparativa-global",
+          "title": "Tabla comparativa global",
+          "order": 3,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-tabla-comparativa-global",
+              "type": "table",
+              "title": "Comparación global de técnicas algorítmicas",
+              "columns": [
+                {
+                  "key": "tecnica",
+                  "label": "Técnica"
+                },
+                {
+                  "key": "estructura",
+                  "label": "Estructura que aprovecha"
+                },
+                {
+                  "key": "decision",
+                  "label": "Tipo de decisión"
+                },
+                {
+                  "key": "garantia",
+                  "label": "Garantía"
+                },
+                {
+                  "key": "costo",
+                  "label": "Costo típico"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Análisis iterativo"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Ciclos y conteo de operaciones."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No diseña; analiza ejecución."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Exacta si el conteo es correcto."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de ejecuciones por línea."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Programación Dinámica"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Subproblemas superpuestos y subestructura óptima."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Evaluar alternativas y guardar estados."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Óptima por principio de optimalidad."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "#Estados x costo transición."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Voraz"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Propiedad voraz y subestructura óptima."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Elegir locallocally sin retroceso."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Óptima solo si se demuestra."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "O(n) o O(n log n)."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-comparacion-pd-voraz",
+          "slug": "comparacion-pd-voraz",
+          "title": "Programación Dinámica vs Voraces",
+          "order": 4,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-pd-voraz-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Programación Dinámica y Voraces aparecen en problemas de optimización, pero tienen una diferencia central: PD evalúa alternativas y guarda resultados; el voraz toma una decisión local y no vuelve atrás."
+                }
+              ]
+            },
+            {
+              "id": "blk-pd-voraz-modelo",
+              "type": "equationBlock",
+              "title": "Diferencia formal",
+              "latex": "Decision(P)=\\begin{cases}\\max\\{opcion_1,opcion_2,\\ldots\\},& \\text{Programación Dinámica}\\\\seleccionar\\_local(C),& \\text{Voraz}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-pd-voraz-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La diferencia radica en el momento de la verdad. En "
+                },
+                {
+                  "type": "strong",
+                  "text": "Programación Dinámica"
+                },
+                {
+                  "type": "text",
+                  "text": ", el valor final se elige comparando ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\max"
+                },
+                {
+                  "type": "text",
+                  "text": ") los resultados de varias opciones. En un algoritmo "
+                },
+                {
+                  "type": "strong",
+                  "text": "Voraz"
+                },
+                {
+                  "type": "text",
+                  "text": ", solo se ejecuta una función de selección local sobre el conjunto de candidatos actuales "
+                },
+                {
+                  "type": "strong",
+                  "text": "C"
+                },
+                {
+                  "type": "text",
+                  "text": ", sin mirar qué otras opciones podrían haber sido mejores a largo plazo."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-comparacion-backtracking-bb-fuerza-bruta",
+          "slug": "comparacion-backtracking-bb-fuerza-bruta",
+          "title": "Fuerza Bruta vs Backtracking vs Branch and Bound",
+          "order": 5,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-fb-bt-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Fuerza bruta, backtracking y Branch and Bound trabajan sobre espacios combinatorios. La diferencia es cuándo se descarta una rama y por qué se descarta."
+                }
+              ]
+            },
+            {
+              "id": "blk-fb-bt-bb-modelo",
+              "type": "equationBlock",
+              "title": "Modelo de descarte de ramas",
+              "latex": "descartar(rama)=\\begin{cases}\\text{nunca antes de completar},& \\text{Fuerza Bruta}\\\\\\text{si viola restricciones},& \\text{Backtracking}\\\\\\text{si viola restricciones o no mejora el incumbente},& \\text{Branch and Bound}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-fb-bt-bb-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este modelo define la agresividad de la "
+                },
+                {
+                  "type": "strong",
+                  "text": "poda"
+                },
+                {
+                  "type": "text",
+                  "text": ". Mientras que la Fuerza Bruta explora todo, el "
+                },
+                {
+                  "type": "emphasis",
+                  "text": "Backtracking"
+                },
+                {
+                  "type": "text",
+                  "text": " descarta ramas inviables (poda por factibilidad). El "
+                },
+                {
+                  "type": "emphasis",
+                  "text": "Branch and Bound"
+                },
+                {
+                  "type": "text",
+                  "text": " va más allá y también descarta ramas que, aunque sean viables, su potencial (cota) no es suficiente para superar la mejor solución ya encontrada (incumbente)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-comparacion-recursion-pd",
+          "slug": "comparacion-recursion-pd",
+          "title": "Recursión, Divide y Vencerás y Programación Dinámica",
+          "order": 6,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-recursion-pd-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "No toda recursión es Divide y Vencerás, y no toda recursión necesita Programación Dinámica. La pregunta clave es qué ocurre con los subproblemas."
+                }
+              ]
+            },
+            {
+              "id": "blk-recursion-pd-modelo",
+              "type": "equationBlock",
+              "title": "Clasificación por subproblemas",
+              "latex": "Subproblemas(P)=\\begin{cases}\\text{uno menor dominante},& \\text{Resta y Vencerás}\\\\\\text{varios independientes},& \\text{Divide y Vencerás}\\\\\\text{varios repetidos},& \\text{Programación Dinámica}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-recursion-pd-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La clasificación depende de cómo interactúan los subproblemas generados. Si el problema "
+                },
+                {
+                  "type": "strong",
+                  "text": "P"
+                },
+                {
+                  "type": "text",
+                  "text": " se resuelve simplemente reduciendo su tamaño, es una resta. Si se fragmenta en partes que no se solapan, es una división. Si las partes aparecen repetidas en distintas ramas, estamos ante la señal inequívoca para aplicar "
+                },
+                {
+                  "type": "emphasis",
+                  "text": "Programación Dinámica"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-comparacion-costos-memoria",
+          "slug": "comparacion-costos-memoria",
+          "title": "Comparación de tiempo y memoria",
+          "order": 7,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-costos-memoria-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El costo de una técnica no se resume en una única notación. Depende del número de estados, ramas, niveles, candidatos o instrucciones que realmente se procesan."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelos-costo-tecnicas",
+              "type": "latexSteps",
+              "title": "Modelos de costo por técnica",
+              "steps": [
+                {
+                  "stepId": "step-costo-iterativo",
+                  "title": "Iterativo",
+                  "latex": "T(n)=\\sum_{linea} costo(linea)\\cdot veces(linea)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Costo basado en el conteo de ejecuciones de cada línea de código."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-costo-pd",
+                  "title": "Programación Dinámica",
+                  "latex": "T(n)=\\#estados\\cdot costo\\_transicion",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Cada estado único se calcula una sola vez gracias a la memoria."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-costo-backtracking",
+                  "title": "Backtracking",
+                  "latex": "T(n)=N_{visitados}\\cdot C_{validar}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Depende de cuántos nodos del árbol de decisiones se exploran realmente."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-comparacion-tecnicas",
+          "slug": "resumen-operativo-comparacion-tecnicas",
+          "title": "Resumen operativo",
+          "order": 8,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "blocks": [
+            {
+              "id": "blk-resumen-comparacion",
+              "type": "note",
+              "variant": "success",
+              "title": "Receta mínima",
+              "blocks": [
+                {
+                  "id": "blk-resumen-comparacion-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Analiza la estructura del problema antes de codificar."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay ciclos, cuenta pasos."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay subproblemas independientes, usa Divide y Vencerás."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay subproblemas repetidos, usa Programación Dinámica."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay una elección local segura demostrable, usa Voraz."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay restricciones y búsqueda, usa Backtracking o B&B."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-poda",
+              "type": "equationBlock",
+              "title": "Modelo general de poda",
+              "latex": "Poda=\\text{Infactibilidad}\\cup \\text{Suboptimalidad}"
+            },
+            {
+              "id": "blk-expl-modelo-poda",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La poda es la herramienta para combatir la explosión combinatoria. La "
+                },
+                {
+                  "type": "strong",
+                  "text": "Infactibilidad"
+                },
+                {
+                  "type": "text",
+                  "text": " elimina lo que es imposible (Backtracking); la "
+                },
+                {
+                  "type": "strong",
+                  "text": "Suboptimalidad"
+                },
+                {
+                  "type": "text",
+                  "text": " elimina lo que, aunque sea posible, no vale la pena (Branch and Bound). La unión de ambas maximiza la eficiencia."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

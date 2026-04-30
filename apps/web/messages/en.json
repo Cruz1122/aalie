@@ -14,6 +14,7 @@
     "home": "Home",
     "analyzer": "Analyzer",
     "examples": "Examples",
+    "course": "Course",
     "quiz": "Quizzes",
     "about": "About Us",
     "openMenu": "Open menu",
@@ -1265,902 +1266,502 @@
       "bogo-sort": {
         "title": "Bogo Sort",
         "summary": "An intentionally extreme teaching sample used to contrast an inefficient iterative sorter with the rest of the catalog.",
-        "tags": [
-          "sorting",
-          "random",
-          "toy"
-        ]
+        "tags": ["sorting", "random", "toy"]
       },
       "bubble-sort": {
         "title": "Bubble Sort",
         "summary": "Sorts by comparing adjacent elements and works as a stable reference for quadratic iterative cases.",
-        "tags": [
-          "sorting",
-          "quadratic",
-          "swaps"
-        ]
+        "tags": ["sorting", "quadratic", "swaps"]
       },
       "bucket-sort": {
         "title": "Bucket Sort",
         "summary": "Iterative bucket-distribution skeleton kept hidden until a grammar-friendly version is fully validated.",
-        "tags": [
-          "sorting",
-          "buckets",
-          "distribution"
-        ]
+        "tags": ["sorting", "buckets", "distribution"]
       },
       "counting-sort": {
         "title": "Counting Sort",
         "summary": "Counts frequencies and rebuilds the array in several linear passes over indices and occurrences.",
-        "tags": [
-          "sorting",
-          "frequencies",
-          "linear"
-        ]
+        "tags": ["sorting", "frequencies", "linear"]
       },
       "dutch-national-flag": {
         "title": "Dutch National Flag",
         "summary": "Maintains three regions and is useful to study linear partitions with multiple pointers.",
-        "tags": [
-          "partition",
-          "two pointers",
-          "linear"
-        ]
+        "tags": ["partition", "two pointers", "linear"]
       },
       "euclides-iterativo-mcd": {
         "title": "Iterative Euclid (GCD)",
         "summary": "A short and reliable sample to study a loop with geometric reduction on the state size.",
-        "tags": [
-          "gcd",
-          "mod",
-          "logarithmic"
-        ]
+        "tags": ["gcd", "mod", "logarithmic"]
       },
       "factorial-iterativo": {
         "title": "Iterative factorial",
         "summary": "A basic linear sample that advances a simple control variable while accumulating a product.",
-        "tags": [
-          "factorial",
-          "for",
-          "linear"
-        ]
+        "tags": ["factorial", "for", "linear"]
       },
       "flood-fill-iterativo": {
         "title": "Iterative Flood Fill",
         "summary": "A grid sample with an explicit stack; kept hidden until a robust variant for large traces is validated.",
-        "tags": [
-          "matrix",
-          "stack",
-          "fill"
-        ]
+        "tags": ["matrix", "stack", "fill"]
       },
       "heapsort": {
         "title": "Heapsort",
         "summary": "Compact version built around iterative heapify; disabled until heap support is validated more thoroughly.",
-        "tags": [
-          "heap",
-          "sorting",
-          "implicit tree"
-        ]
+        "tags": ["heap", "sorting", "implicit tree"]
       },
       "insertion-sort": {
         "title": "Insertion Sort",
         "summary": "Builds the sorted array by inserting each key into place and exposes a classic inner while loop.",
-        "tags": [
-          "sorting",
-          "insertion",
-          "while"
-        ]
+        "tags": ["sorting", "insertion", "while"]
       },
       "jump-search": {
         "title": "Jump Search",
         "summary": "Alternates block jumps with a short linear scan and is useful to study two consecutive loops.",
-        "tags": [
-          "search",
-          "jumps",
-          "blocks"
-        ]
+        "tags": ["search", "jumps", "blocks"]
       },
       "kadane": {
         "title": "Kadane",
         "summary": "Tracks a best local prefix and a global optimum in a single linear pass.",
-        "tags": [
-          "subarray",
-          "dp",
-          "linear"
-        ]
+        "tags": ["subarray", "dp", "linear"]
       },
       "linear-search": {
         "title": "Linear Search",
         "summary": "Traverses the array sequentially and serves as a minimal reference for iterative searches.",
-        "tags": [
-          "search",
-          "linear",
-          "for"
-        ]
+        "tags": ["search", "linear", "for"]
       },
       "maximum-subarray-cuadratico": {
         "title": "Quadratic Maximum Subarray",
         "summary": "Iterates over all starting points and expands running sums to contrast with Kadane.",
-        "tags": [
-          "subarray",
-          "quadratic",
-          "nested loops"
-        ]
+        "tags": ["subarray", "quadratic", "nested loops"]
       },
       "merge-dos-arreglos-ordenados": {
         "title": "Merge two sorted arrays",
         "summary": "Uses two pointers and a temporary output to study a classic linear merge.",
-        "tags": [
-          "merge",
-          "two pointers",
-          "linear"
-        ]
+        "tags": ["merge", "two pointers", "linear"]
       },
       "newton-raphson-iterativo": {
         "title": "Iterative Newton-Raphson",
         "summary": "Numerical sample with successive refinements and a tolerance-based stopping rule.",
-        "tags": [
-          "numeric",
-          "approximation",
-          "repeat"
-        ]
+        "tags": ["numeric", "approximation", "repeat"]
       },
       "pascal-triangle-bottom-up": {
         "title": "Bottom-up Pascal Triangle",
         "summary": "Tabular construction of a triangular matrix; it stays in the master catalog for now but not in the public UI.",
-        "tags": [
-          "pascal",
-          "table",
-          "matrix"
-        ]
+        "tags": ["pascal", "table", "matrix"]
       },
       "prefix-sum": {
         "title": "Prefix Sum",
         "summary": "Builds a reusable cumulative sum and is ideal to study simple linear dependencies.",
-        "tags": [
-          "prefix",
-          "cumulative",
-          "linear"
-        ]
+        "tags": ["prefix", "cumulative", "linear"]
       },
       "selection-sort": {
         "title": "Selection Sort",
         "summary": "Finds the remaining minimum and places it at the front on each iteration.",
-        "tags": [
-          "sorting",
-          "selection",
-          "quadratic"
-        ]
+        "tags": ["sorting", "selection", "quadratic"]
       },
       "shell-sort": {
         "title": "Shell Sort",
         "summary": "Refines the array through decreasing gaps and shows multiple levels of iterative nesting.",
-        "tags": [
-          "sorting",
-          "gaps",
-          "increments"
-        ]
+        "tags": ["sorting", "gaps", "increments"]
       },
       "sieve-of-eratosthenes": {
         "title": "Sieve of Eratosthenes",
         "summary": "Marks multiples in a boolean table and works well to study nested loops with jumps.",
-        "tags": [
-          "primes",
-          "sieve",
-          "boolean table"
-        ]
+        "tags": ["primes", "sieve", "boolean table"]
       },
       "suma-de-arreglo": {
         "title": "Array sum",
         "summary": "Accumulates every element in the array in a single linear scan.",
-        "tags": [
-          "sum",
-          "linear",
-          "for"
-        ]
+        "tags": ["sum", "linear", "for"]
       },
       "ternary-search-iterativo": {
         "title": "Iterative Ternary Search",
         "summary": "Splits the range into three sections per iteration over a sorted array.",
-        "tags": [
-          "search",
-          "ternary",
-          "logarithmic"
-        ]
+        "tags": ["search", "ternary", "logarithmic"]
       },
       "two-sum-con-hash": {
         "title": "Two Sum with hash",
         "summary": "Lives in the master catalog as a reminder for richer auxiliary-object support in the future.",
-        "tags": [
-          "hash",
-          "pairs",
-          "auxiliary structure"
-        ]
+        "tags": ["hash", "pairs", "auxiliary structure"]
       },
       "warshall-transitive-closure": {
         "title": "Warshall Transitive Closure",
         "summary": "Triple loop over a matrix; remains disabled until two-dimensional matrix support is validated more carefully.",
-        "tags": [
-          "matrix",
-          "graph",
-          "transitive closure"
-        ]
+        "tags": ["matrix", "graph", "transitive closure"]
       },
       "closest-pair-of-points": {
         "title": "Closest Pair of Points",
         "summary": "A geometrically faithful skeleton that stays hidden until the strip and point handling is modeled more tightly.",
-        "tags": [
-          "geometry",
-          "points",
-          "strip"
-        ]
+        "tags": ["geometry", "points", "strip"]
       },
       "convex-hull-divide-and-conquer": {
         "title": "Divide-and-Conquer Convex Hull",
         "summary": "Kept as a reference sketch for a future validated divide-and-conquer convex hull sample.",
-        "tags": [
-          "geometry",
-          "convex hull",
-          "merge"
-        ]
+        "tags": ["geometry", "convex hull", "merge"]
       },
       "cooley-tukey-fft": {
         "title": "Cooley-Tukey FFT",
         "summary": "Recursive FFT over even and odd terms; stays disabled until a more parser-friendly version is fixed.",
-        "tags": [
-          "fft",
-          "even",
-          "odd"
-        ]
+        "tags": ["fft", "even", "odd"]
       },
       "counting-inversions": {
         "title": "Counting Inversions",
         "summary": "Splits the array, counts on each half, and accumulates cross inversions while merging.",
-        "tags": [
-          "merge",
-          "inversions",
-          "divide and conquer"
-        ]
+        "tags": ["merge", "inversions", "divide and conquer"]
       },
       "fast-multipole-skeleton-simplificado": {
         "title": "Simplified Fast Multipole Skeleton",
         "summary": "Kept as an honest placeholder for a hierarchical pattern that is not ready for end-user exposure yet.",
-        "tags": [
-          "hierarchical",
-          "geometry",
-          "toy"
-        ]
+        "tags": ["hierarchical", "geometry", "toy"]
       },
       "karatsuba-multiplication": {
         "title": "Karatsuba Multiplication",
         "summary": "Shows a ternary split of the multiplication work with an algebraic combine phase at the end.",
-        "tags": [
-          "karatsuba",
-          "multiplication",
-          "subproblems"
-        ]
+        "tags": ["karatsuba", "multiplication", "subproblems"]
       },
       "kth-smallest-mediana-de-medianas": {
         "title": "K-th Smallest by Median of Medians",
         "summary": "Kept as an advanced reference until a tighter deterministic-pivot variant is ready to publish.",
-        "tags": [
-          "selection",
-          "medians",
-          "pivot"
-        ]
+        "tags": ["selection", "medians", "pivot"]
       },
       "majority-element-divide-and-conquer": {
         "title": "Divide-and-Conquer Majority Element",
         "summary": "Obtains candidates per half and validates them in the combine phase.",
-        "tags": [
-          "majority",
-          "combine",
-          "recursive"
-        ]
+        "tags": ["majority", "combine", "recursive"]
       },
       "matrix-chain-parenthesization-divide-and-conquer-naive": {
         "title": "Naive Divide-and-Conquer Matrix Chain Parenthesization",
         "summary": "Naive recursive matrix partition model kept out of the UI while we validate a more stable form.",
-        "tags": [
-          "matrices",
-          "partitions",
-          "naive"
-        ]
+        "tags": ["matrices", "partitions", "naive"]
       },
       "max-min-tournament": {
         "title": "Max-Min Tournament",
         "summary": "Splits the array into two halves and combines the maximum and minimum from each branch.",
-        "tags": [
-          "maximum",
-          "minimum",
-          "tournament"
-        ]
+        "tags": ["maximum", "minimum", "tournament"]
       },
       "merge-sort": {
         "title": "Merge Sort",
         "summary": "Splits the array in half, sorts each half, and merges them in linear time.",
-        "tags": [
-          "sorting",
-          "merge",
-          "divide and conquer"
-        ]
+        "tags": ["sorting", "merge", "divide and conquer"]
       },
       "minimax-de-arbol-binario": {
         "title": "Binary Tree Minimax",
         "summary": "Recursive game-tree sketch kept out of the UI until auxiliary node handling is tightened.",
-        "tags": [
-          "minimax",
-          "tree",
-          "games"
-        ]
+        "tags": ["minimax", "tree", "games"]
       },
       "nearest-points-by-strip-merge-variant": {
         "title": "Nearest Points by Strip Merge Variant",
         "summary": "A strip-based nearest-points variant kept as an advanced draft in the master catalog.",
-        "tags": [
-          "geometry",
-          "strip",
-          "closeness"
-        ]
+        "tags": ["geometry", "strip", "closeness"]
       },
       "polynomial-multiplication-divide-and-conquer": {
         "title": "Divide-and-Conquer Polynomial Multiplication",
         "summary": "Splits the polynomials in halves and combines partial products at the end.",
-        "tags": [
-          "polynomials",
-          "multiplication",
-          "conquer"
-        ]
+        "tags": ["polynomials", "multiplication", "conquer"]
       },
       "post-office-recursive-partition": {
         "title": "Post Office Recursive Partition",
         "summary": "Recursive interval-partition placeholder that is not public yet because it needs a more concrete form.",
-        "tags": [
-          "intervals",
-          "partition",
-          "classic"
-        ]
+        "tags": ["intervals", "partition", "classic"]
       },
       "quadtree-construction": {
         "title": "QuadTree Construction",
         "summary": "Four-way matrix partition kept for now as a master-catalog reference only.",
-        "tags": [
-          "quadtree",
-          "matrix",
-          "quadrants"
-        ]
+        "tags": ["quadtree", "matrix", "quadrants"]
       },
       "quick-sort": {
         "title": "Quick Sort",
         "summary": "Partitions around a pivot and solves the two remaining regions recursively.",
-        "tags": [
-          "sorting",
-          "pivot",
-          "partition"
-        ]
+        "tags": ["sorting", "pivot", "partition"]
       },
       "range-sum-query-divide-and-conquer": {
         "title": "Divide-and-Conquer Range Sum Query",
         "summary": "Shows range partition into two halves, but stays out of the UI until a tighter version is ready.",
-        "tags": [
-          "ranges",
-          "sums",
-          "segments"
-        ]
+        "tags": ["ranges", "sums", "segments"]
       },
       "segment-tree-construction": {
         "title": "Segment Tree Construction",
         "summary": "Recursive interval construction reserved for a fuller future version.",
-        "tags": [
-          "segment tree",
-          "intervals",
-          "structure"
-        ]
+        "tags": ["segment tree", "intervals", "structure"]
       },
       "skyline-problem-divide-and-conquer": {
         "title": "Divide-and-Conquer Skyline Problem",
         "summary": "Classic skyline merge problem that remains an advanced record for now.",
-        "tags": [
-          "skyline",
-          "profile",
-          "geometry"
-        ]
+        "tags": ["skyline", "profile", "geometry"]
       },
       "strassen-matrix-multiplication": {
         "title": "Strassen Matrix Multiplication",
         "summary": "Included in the master catalog but still disabled until the matrix representation is refined.",
-        "tags": [
-          "strassen",
-          "matrices",
-          "7 products"
-        ]
+        "tags": ["strassen", "matrices", "7 products"]
       },
       "tournament-tree-construction": {
         "title": "Tournament Tree Construction",
         "summary": "Splits the array into two branches and combines local winners at the root.",
-        "tags": [
-          "tournament",
-          "tree",
-          "structure"
-        ]
+        "tags": ["tournament", "tree", "structure"]
       },
       "vlsi-closest-pair-style-partition": {
         "title": "VLSI Closest-Pair Style Partition",
         "summary": "Advanced geometric partition variant stored only in the master catalog for now.",
-        "tags": [
-          "vlsi",
-          "geometry",
-          "partition"
-        ]
+        "tags": ["vlsi", "geometry", "partition"]
       },
       "weighted-median-divide-and-conquer": {
         "title": "Divide-and-Conquer Weighted Median",
         "summary": "Kept as an advanced weighted selection sample, still out of the public UI.",
-        "tags": [
-          "median",
-          "weights",
-          "selection"
-        ]
+        "tags": ["median", "weights", "selection"]
       },
       "z-order-recursive-matrix-traversal": {
         "title": "Recursive Z-order Matrix Traversal",
         "summary": "Traverses a matrix by quadrants and makes a clear four-way divide-and-conquer pattern visible.",
-        "tags": [
-          "matrix",
-          "z-order",
-          "quadrants"
-        ]
+        "tags": ["matrix", "z-order", "quadrants"]
       },
       "binary-search-recursiva": {
         "title": "Recursive Binary Search",
         "summary": "Reduces the range to a single half and is one of the most reliable cases in the recursive catalog.",
-        "tags": [
-          "search",
-          "half",
-          "logarithmic"
-        ]
+        "tags": ["search", "half", "logarithmic"]
       },
       "binary-tree-height": {
         "title": "Binary Tree Height",
         "summary": "Kept in the master catalog, but its two-branch shape stays out of the initial release.",
-        "tags": [
-          "tree",
-          "height",
-          "two branches"
-        ]
+        "tags": ["tree", "height", "two branches"]
       },
       "euclides-recursivo": {
         "title": "Recursive Euclid",
         "summary": "A short, stable case for reduction by modulo until the final divisor is reached.",
-        "tags": [
-          "gcd",
-          "mod",
-          "recursive"
-        ]
+        "tags": ["gcd", "mod", "recursive"]
       },
       "exponenciacion-rapida": {
         "title": "Fast Exponentiation",
         "summary": "Reduces the exponent by half on each call and reuses the central subresult.",
-        "tags": [
-          "powers",
-          "halving",
-          "logarithmic"
-        ]
+        "tags": ["powers", "halving", "logarithmic"]
       },
       "fibonacci-search-recursiva": {
         "title": "Recursive Fibonacci Search",
         "summary": "Advanced ordered-search case that stays hidden until its offsets are validated more carefully.",
-        "tags": [
-          "search",
-          "fibonacci",
-          "offsets"
-        ]
+        "tags": ["search", "fibonacci", "offsets"]
       },
       "find-maximum-recursivo": {
         "title": "Recursive Find Maximum",
         "summary": "Processes one element per call and compares it against the maximum of the remaining prefix.",
-        "tags": [
-          "maximum",
-          "decrement",
-          "linear"
-        ]
+        "tags": ["maximum", "decrement", "linear"]
       },
       "heapify-recursivo": {
         "title": "Recursive Heapify",
         "summary": "Implicit-heap model kept in the master catalog while we refine its valid public-facing form.",
-        "tags": [
-          "heap",
-          "implicit tree",
-          "descent"
-        ]
+        "tags": ["heap", "implicit tree", "descent"]
       },
       "insertion-sort-recursivo": {
         "title": "Recursive Insertion Sort",
         "summary": "Sorts the prefix of length n-1 and then inserts the last key.",
-        "tags": [
-          "sorting",
-          "insertion",
-          "decrement"
-        ]
+        "tags": ["sorting", "insertion", "decrement"]
       },
       "interpolation-search-recursiva": {
         "title": "Recursive Interpolation Search",
         "summary": "Its estimated position makes current support more delicate, so it remains hidden.",
-        "tags": [
-          "search",
-          "interpolation",
-          "estimation"
-        ]
+        "tags": ["search", "interpolation", "estimation"]
       },
       "josephus-recursivo": {
         "title": "Recursive Josephus",
         "summary": "Reduces the problem by one person per call and then rebuilds the survivor position.",
-        "tags": [
-          "josephus",
-          "classic",
-          "decrement"
-        ]
+        "tags": ["josephus", "classic", "decrement"]
       },
       "kth-symbol-in-grammar": {
         "title": "K-th Symbol in Grammar",
         "summary": "Reduces the position and row until a short base case is reached.",
-        "tags": [
-          "grammar",
-          "symbol",
-          "halving"
-        ]
+        "tags": ["grammar", "symbol", "halving"]
       },
       "linear-search-recursiva": {
         "title": "Recursive Linear Search",
         "summary": "Processes one position per call and stops when it finds the element or exhausts the array.",
-        "tags": [
-          "search",
-          "linear",
-          "recursive"
-        ]
+        "tags": ["search", "linear", "recursive"]
       },
       "linked-list-length": {
         "title": "Linked List Length",
         "summary": "Advances one node per call until the end of the linked list is reached.",
-        "tags": [
-          "list",
-          "length",
-          "nodes"
-        ]
+        "tags": ["list", "length", "nodes"]
       },
       "lista-invertida-recursiva": {
         "title": "Recursive Reversed List",
         "summary": "Processes one node per call and rebuilds the order on the way back.",
-        "tags": [
-          "list",
-          "reverse",
-          "nodes"
-        ]
+        "tags": ["list", "reverse", "nodes"]
       },
       "max-en-arreglo-divide-by-one": {
         "title": "Array Max Divide-by-One",
         "summary": "Reduces the problem by one element and compares against the maximum of the rest.",
-        "tags": [
-          "maximum",
-          "decrement",
-          "array"
-        ]
+        "tags": ["maximum", "decrement", "array"]
       },
       "numeros-binarios-por-division-entre-2": {
         "title": "Binary Digits by Division by 2",
         "summary": "Reduces the number by half and rebuilds its digits on the way back.",
-        "tags": [
-          "binary",
-          "division",
-          "half"
-        ]
+        "tags": ["binary", "division", "half"]
       },
       "potencia-modular-rapida": {
         "title": "Fast Modular Power",
         "summary": "Reduces the exponent and preserves the modulus in each combine step.",
-        "tags": [
-          "modular",
-          "power",
-          "halving"
-        ]
+        "tags": ["modular", "power", "halving"]
       },
       "recursive-selection-sort": {
         "title": "Recursive Selection Sort",
         "summary": "Fixes the first position, finds the remaining minimum, and continues over the suffix.",
-        "tags": [
-          "sorting",
-          "selection",
-          "suffix"
-        ]
+        "tags": ["sorting", "selection", "suffix"]
       },
       "recursive-sum-of-digits": {
         "title": "Recursive Sum of Digits",
         "summary": "Removes one digit per call until the number reaches zero.",
-        "tags": [
-          "digits",
-          "sum",
-          "division"
-        ]
+        "tags": ["digits", "sum", "division"]
       },
       "reverse-string-recursiva": {
         "title": "Recursive Reverse String",
         "summary": "Swaps extremes and shrinks the interval toward the center.",
-        "tags": [
-          "strings",
-          "reverse",
-          "two indices"
-        ]
+        "tags": ["strings", "reverse", "two indices"]
       },
       "ternary-search-recursiva": {
         "title": "Recursive Ternary Search",
         "summary": "Reduces the interval to one of three possible blocks on each call.",
-        "tags": [
-          "search",
-          "ternary",
-          "blocks"
-        ]
+        "tags": ["search", "ternary", "blocks"]
       },
       "tower-of-logarithmic-halving-toy-example": {
         "title": "Toy Example of Logarithmic Halving Tower",
         "summary": "Artificial pedagogical example kept out of the initial UI.",
-        "tags": [
-          "toy",
-          "halving",
-          "pedagogical"
-        ]
+        "tags": ["toy", "halving", "pedagogical"]
       },
       "traversal-inorder": {
         "title": "Inorder Traversal",
         "summary": "Stays in the master catalog, but not in the initial UI because of its two-branch shape.",
-        "tags": [
-          "tree",
-          "inorder",
-          "two branches"
-        ]
+        "tags": ["tree", "inorder", "two branches"]
       },
       "traversal-postorder": {
         "title": "Postorder Traversal",
         "summary": "Kept as an internal reference until binary traversal publication is tightened.",
-        "tags": [
-          "tree",
-          "postorder",
-          "two branches"
-        ]
+        "tags": ["tree", "postorder", "two branches"]
       },
       "traversal-preorder": {
         "title": "Preorder Traversal",
         "summary": "Left out of the initial UI to keep the recursive-tree batch conservative.",
-        "tags": [
-          "tree",
-          "preorder",
-          "two branches"
-        ]
+        "tags": ["tree", "preorder", "two branches"]
       },
       "ackermann-truncado-pedagogico": {
         "title": "Pedagogical Truncated Ackermann",
         "summary": "Kept only as a reminder of a pattern outside the prudent production coverage.",
-        "tags": [
-          "ackermann",
-          "toy",
-          "non standard"
-        ]
+        "tags": ["ackermann", "toy", "non standard"]
       },
       "catalan-recursivo-naive": {
         "title": "Naive Recursive Catalan",
         "summary": "A famous example, but more delicate for the current engine, so it stays hidden.",
-        "tags": [
-          "catalan",
-          "naive",
-          "branching"
-        ]
+        "tags": ["catalan", "naive", "branching"]
       },
       "climbing-stairs": {
         "title": "Climbing Stairs",
         "summary": "Counts paths with steps of 1 and 2, yielding a classic linear recurrence.",
-        "tags": [
-          "stairs",
-          "fibonacci",
-          "recurrence"
-        ]
+        "tags": ["stairs", "fibonacci", "recurrence"]
       },
       "coin-change-recursivo-naive": {
         "title": "Naive Recursive Coin Change",
         "summary": "Highly branching recursive model still kept as an unpublished master example.",
-        "tags": [
-          "coins",
-          "naive",
-          "branches"
-        ]
+        "tags": ["coins", "naive", "branches"]
       },
       "count-binary-strings-without-consecutive-ones": {
         "title": "Count Binary Strings Without Consecutive Ones",
         "summary": "Classic linear recurrence that connects naturally with the characteristic equation.",
-        "tags": [
-          "strings",
-          "binary",
-          "no consecutive ones"
-        ]
+        "tags": ["strings", "binary", "no consecutive ones"]
       },
       "count-ways-to-reach-n": {
         "title": "Count Ways to Reach N",
         "summary": "Another short linear recurrence for counting paths with small jumps.",
-        "tags": [
-          "paths",
-          "steps",
-          "linear"
-        ]
+        "tags": ["paths", "steps", "linear"]
       },
       "derangements-recursivo": {
         "title": "Recursive Derangements",
         "summary": "Linear sequence with variable coefficients that helps broaden the sequence batch.",
-        "tags": [
-          "derangements",
-          "sequence",
-          "linear"
-        ]
+        "tags": ["derangements", "sequence", "linear"]
       },
       "edit-distance-recursivo-naive": {
         "title": "Naive Recursive Edit Distance",
         "summary": "Classic multi-branch example kept out of the initial release.",
-        "tags": [
-          "distance",
-          "edit",
-          "naive"
-        ]
+        "tags": ["distance", "edit", "naive"]
       },
       "factorial-recursivo": {
         "title": "Recursive factorial",
         "summary": "Simple linear case that remains useful to contrast against its iterative counterpart.",
-        "tags": [
-          "factorial",
-          "linear",
-          "decrement"
-        ]
+        "tags": ["factorial", "linear", "decrement"]
       },
       "fibonacci-recursivo": {
         "title": "Recursive Fibonacci",
         "summary": "Core catalog reference for the characteristic equation and exponential growth.",
-        "tags": [
-          "fibonacci",
-          "sequence",
-          "classic"
-        ]
+        "tags": ["fibonacci", "sequence", "classic"]
       },
       "friend-pairing-recursivo": {
         "title": "Recursive Friend Pairing",
         "summary": "Combinatorial sequence with one single branch and one paired branch.",
-        "tags": [
-          "pairing",
-          "combinatorics",
-          "recurrence"
-        ]
+        "tags": ["pairing", "combinatorics", "recurrence"]
       },
       "hanoi": {
         "title": "Tower of Hanoi",
         "summary": "Classic problem with two calls on n-1 and constant local work.",
-        "tags": [
-          "hanoi",
-          "classic",
-          "two branches"
-        ]
+        "tags": ["hanoi", "classic", "two branches"]
       },
       "house-robber-recursivo-naive": {
         "title": "Naive Recursive House Robber",
         "summary": "Kept as a non-visible advanced example because of branching and max-over-state behavior.",
-        "tags": [
-          "house robber",
-          "naive",
-          "decision"
-        ]
+        "tags": ["house robber", "naive", "decision"]
       },
       "integer-partition-recursiva": {
         "title": "Recursive Integer Partition",
         "summary": "Remains an advanced master-catalog sample because support is still partial.",
-        "tags": [
-          "partitions",
-          "integers",
-          "branching"
-        ]
+        "tags": ["partitions", "integers", "branching"]
       },
       "k-step-stairs": {
         "title": "K-step Stairs",
         "summary": "Pedagogical stairs variant with several branches controlled by a fixed constant.",
-        "tags": [
-          "stairs",
-          "k steps",
-          "recurrence"
-        ]
+        "tags": ["stairs", "k steps", "recurrence"]
       },
       "lucas-numbers": {
         "title": "Lucas Numbers",
         "summary": "Fibonacci-like sequence with different initial conditions.",
-        "tags": [
-          "lucas",
-          "sequence",
-          "linear"
-        ]
+        "tags": ["lucas", "sequence", "linear"]
       },
       "pell-numbers": {
         "title": "Pell Numbers",
         "summary": "Second-order linear recurrence that broadens the characteristic-equation batch.",
-        "tags": [
-          "pell",
-          "sequence",
-          "characteristic equation"
-        ]
+        "tags": ["pell", "sequence", "characteristic equation"]
       },
       "perrin-sequence": {
         "title": "Perrin Sequence",
         "summary": "Third-order linear sequence useful to expand the verified-example set.",
-        "tags": [
-          "perrin",
-          "order 3",
-          "sequence"
-        ]
+        "tags": ["perrin", "order 3", "sequence"]
       },
       "recaman-truncado-pedagogico": {
         "title": "Pedagogical Truncated Recaman",
         "summary": "Kept as a non-visible example because self-referential sequences need finer rules.",
-        "tags": [
-          "recaman",
-          "toy",
-          "self reference"
-        ]
+        "tags": ["recaman", "toy", "self reference"]
       },
       "rod-cutting-recursivo-naive": {
         "title": "Naive Recursive Rod Cutting",
         "summary": "Classic branching example reserved for the master catalog.",
-        "tags": [
-          "rod cutting",
-          "naive",
-          "partitions"
-        ]
+        "tags": ["rod cutting", "naive", "partitions"]
       },
       "subset-sum-recursivo-naive": {
         "title": "Naive Recursive Subset Sum",
         "summary": "Left out of the initial UI to keep public badges conservative.",
-        "tags": [
-          "subset sum",
-          "naive",
-          "decision"
-        ]
+        "tags": ["subset sum", "naive", "decision"]
       },
       "suma-de-1-a-n-recursiva": {
         "title": "Recursive Sum 1..n",
         "summary": "Reduces by one and accumulates the current term.",
-        "tags": [
-          "sum",
-          "linear",
-          "decrement"
-        ]
+        "tags": ["sum", "linear", "decrement"]
       },
       "suma-de-arreglo-recursiva": {
         "title": "Recursive Array Sum",
         "summary": "Consumes one element per call and delegates the rest of the work to the suffix.",
-        "tags": [
-          "array",
-          "sum",
-          "linear"
-        ]
+        "tags": ["array", "sum", "linear"]
       },
       "tribonacci-recursivo": {
         "title": "Recursive Tribonacci",
         "summary": "Extends the Fibonacci pattern to three branches over constant shifts.",
-        "tags": [
-          "tribonacci",
-          "order 3",
-          "sequence"
-        ]
+        "tags": ["tribonacci", "order 3", "sequence"]
       },
       "ways-to-tile-2xn": {
         "title": "Ways to Tile 2xn",
         "summary": "Counts 2xn tilings with a short and highly didactic linear recurrence.",
-        "tags": [
-          "tiling",
-          "domino",
-          "sequence"
-        ]
+        "tags": ["tiling", "domino", "sequence"]
       }
     },
     "categories": {

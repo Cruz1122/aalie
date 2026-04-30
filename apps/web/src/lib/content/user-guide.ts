@@ -3,8 +3,8 @@ import "server-only";
 import {
   getSpaceBundle,
   validateCatalog,
-  type LoadedSpaceBundle,
-} from "@aa/content-catalog";
+} from "@aa/content-catalog/server";
+import type { LoadedSpaceBundle } from "@aa/content-catalog/types";
 import { cache } from "react";
 
 import {

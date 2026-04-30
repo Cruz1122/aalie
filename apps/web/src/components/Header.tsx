@@ -47,6 +47,7 @@ const navItems: NavItem[] = [
     icon: "code_blocks",
     color: "emerald",
   },
+  { href: "/course", labelKey: "course", icon: "school", color: "amber" },
   { href: "/course/quiz", labelKey: "quiz", icon: "quiz", color: "teal" },
   { href: "/about-us", labelKey: "about", icon: "info", color: "cyan" },
 ];

@@ -156,7 +156,14 @@
               "$ref": "#/$defs/blockId"
             },
             "type": {
-              "enum": ["callout", "definition", "theorem", "proof", "example", "exerciseSolution"]
+              "enum": [
+                "callout",
+                "definition",
+                "theorem",
+                "proof",
+                "example",
+                "exerciseSolution"
+              ]
             },
             "title": {
               "type": "string",
@@ -355,7 +362,7 @@
               "$ref": "#/$defs/blockId"
             },
             "type": {
-              "const": "equationBlock"
+              "enum": ["latex", "equationBlock"]
             },
             "latex": {
               "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
@@ -363,6 +370,400 @@
             "align": {
               "type": "string",
               "enum": ["left", "center", "right"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "caption": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "steps"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "const": "latexSteps"
+            },
+            "title": {
+              "type": "string"
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["stepId", "latex"],
+                "properties": {
+                  "stepId": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "explanation": {
+                    "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+                  },
+                  "latex": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "code"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "const": "mermaid"
+            },
+            "title": {
+              "type": "string"
+            },
+            "code": {
+              "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+            },
+            "caption": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "nodes"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "const": "recursionTree"
+            },
+            "title": {
+              "type": "string"
+            },
+            "nodes": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["nodeId", "label"],
+                "properties": {
+                  "nodeId": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "label": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+                  },
+                  "parentId": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "edgeLabel": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "caption": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "nodes", "edges"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "const": "graph"
+            },
+            "title": {
+              "type": "string"
+            },
+            "nodes": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["nodeId", "label"],
+                "properties": {
+                  "nodeId": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "label": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+                  }
+                }
+              }
+            },
+            "edges": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["edgeId", "source", "target"],
+                "properties": {
+                  "edgeId": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "source": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "target": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "caption": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "columns", "rows"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "enum": ["complexityTable", "formulaComparisonTable"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "columns": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["key", "label"],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "align": {
+                    "type": "string",
+                    "enum": ["left", "center", "right"]
+                  }
+                }
+              }
+            },
+            "rows": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["cells"],
+                "properties": {
+                  "cells": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "title"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "const": "methodCard"
+            },
+            "title": {
+              "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+            },
+            "summary": {
+              "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+            },
+            "whenToUse": {
+              "type": "array",
+              "items": {
+                "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+              }
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+              }
+            },
+            "pitfalls": {
+              "type": "array",
+              "items": {
+                "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "title", "steps"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "enum": ["stepByStepMethod", "proofSteps"]
+            },
+            "title": {
+              "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["stepId", "title", "blocks"],
+                "properties": {
+                  "stepId": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "title": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+                  },
+                  "blocks": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "$ref": "#/$defs/block"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "title"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "const": "warningTrap"
+            },
+            "title": {
+              "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+            },
+            "misconception": {
+              "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+            },
+            "whyItFails": {
+              "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+            },
+            "fix": {
+              "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "title", "steps"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "const": "exampleSolved"
+            },
+            "title": {
+              "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+            },
+            "problem": {
+              "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["stepId", "title", "explanation"],
+                "properties": {
+                  "stepId": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/idSlug"
+                  },
+                  "title": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+                  },
+                  "explanation": {
+                    "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+                  },
+                  "latex": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+                  }
+                }
+              }
+            },
+            "answer": {
+              "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "quizId"],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/blockId"
+            },
+            "type": {
+              "const": "quizCheckpoint"
+            },
+            "quizId": {
+              "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/nonEmptyString"
+            },
+            "title": {
+              "type": "string"
+            },
+            "prompt": {
+              "$ref": "https://aalie.dev/schemas/content/inline.schema.json#/$defs/richText"
             }
           }
         },

@@ -1,0 +1,1017 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-branch-and-bound",
+  "slug": "branch-and-bound",
+  "title": "Branch and Bound",
+  "order": 19,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Técnica de optimización que extiende backtracking usando cotas para decidir qué ramas del árbol de búsqueda no pueden mejorar la mejor solución conocida. Incluye conceptos clave, estrategias de recorrido, poda por suboptimalidad, mochila entera 0/1, cotas fraccionarias y comparación con backtracking y fuerza bruta.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 95,
+  "tags": [
+    "branch-and-bound",
+    "ramificacion-y-poda",
+    "branch-bound",
+    "optimizacion",
+    "cotas",
+    "cota-superior",
+    "cota-inferior",
+    "incumbente",
+    "lista-nodos-vivos",
+    "cola-de-prioridad",
+    "least-cost",
+    "max-benefit",
+    "mochila-entera",
+    "mochila-01",
+    "poda-por-suboptimalidad",
+    "backtracking"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "Branch and Bound",
+      "B&B",
+      "ramificación y poda",
+      "branch bound",
+      "branch-and-bound",
+      "poda por cota",
+      "poda por suboptimalidad",
+      "nodos vivos",
+      "incumbente",
+      "best bound"
+    ],
+    "keywords": [
+      "cota superior",
+      "cota inferior",
+      "cota global",
+      "mejor solución conocida",
+      "nodo vivo",
+      "nodo muerto",
+      "cola de prioridades",
+      "DFS",
+      "BFS",
+      "Least Cost",
+      "Max Benefit",
+      "mochila 0/1",
+      "mochila fraccionaria",
+      "valor/peso",
+      "capacidad restante",
+      "poda por infactibilidad",
+      "poda por suboptimalidad"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-backtracking",
+        "kind": "required"
+      },
+      {
+        "id": "mod-algoritmos-voraces",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-programacion-dinamica",
+        "kind": "recommended"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-introduccion-backtracking",
+        "kind": "required"
+      },
+      {
+        "id": "sec-modelo-general-backtracking",
+        "kind": "required"
+      },
+      {
+        "id": "sec-componentes-algoritmo-voraz",
+        "kind": "required"
+      },
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-voraces-vs-programacion-dinamica",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-backtracking",
+    "mod-algoritmos-voraces",
+    "mod-programacion-dinamica",
+    "mod-notaciones-asintoticas"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "definir-branch-and-bound",
+      "text": "Definir Branch and Bound como técnica de optimización basada en ramificación, cotas y poda."
+    },
+    {
+      "objectiveId": "distinguir-bb-backtracking",
+      "text": "Distinguir Branch and Bound de backtracking: poda por suboptimalidad frente a poda por infactibilidad."
+    },
+    {
+      "objectiveId": "identificar-cotas",
+      "text": "Identificar cota inferior, cota superior y cota global en un nodo del árbol de búsqueda."
+    },
+    {
+      "objectiveId": "modelar-nodos-vivos",
+      "text": "Modelar la lista de nodos vivos y entender cómo su estructura define la estrategia de recorrido."
+    },
+    {
+      "objectiveId": "aplicar-poda-max-min",
+      "text": "Aplicar la regla de poda según el objetivo (maximización o minimización)."
+    },
+    {
+      "objectiveId": "resolver-mochila-bb",
+      "text": "Resolver la mochila entera 0/1 mediante Branch and Bound usando cota superior fraccionaria."
+    },
+    {
+      "objectiveId": "analizar-complejidad-bb",
+      "text": "Analizar complejidad de Branch and Bound considerando el tamaño del árbol y el costo de mantenimiento de la lista de nodos vivos."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-branch-and-bound",
+      "label": "Branch and Bound",
+      "definition": "Técnica de optimización que explora un árbol de decisiones y usa cotas para podar ramas que no pueden mejorar la mejor solución conocida."
+    },
+    {
+      "termId": "term-ramificacion",
+      "label": "Ramificación",
+      "definition": "Proceso de generar hijos de un nodo, normalmente fijando una decisión adicional."
+    },
+    {
+      "termId": "term-bound",
+      "label": "Cota",
+      "definition": "Estimación matemática que limita el mejor valor posible alcanzable desde un nodo."
+    },
+    {
+      "termId": "term-cota-superior",
+      "label": "Cota superior",
+      "definition": "En maximización, estimación optimista del máximo valor que podría alcanzarse desde un nodo."
+    },
+    {
+      "termId": "term-cota-inferior",
+      "label": "Cota inferior",
+      "definition": "Valor garantizado por una solución parcial o por una solución factible conocida."
+    },
+    {
+      "termId": "term-incumbente",
+      "label": "Incumbente",
+      "definition": "Mejor solución factible completa conocida durante la ejecución del algoritmo."
+    },
+    {
+      "termId": "term-lista-nodos-vivos",
+      "label": "Lista de Nodos Vivos",
+      "definition": "Conjunto de nodos generados pero todavía no explorados. Su estructura determina el orden de recorrido."
+    },
+    {
+      "termId": "term-poda-suboptimalidad",
+      "label": "Poda por suboptimalidad",
+      "definition": "Poda que descarta una rama aunque sea factible porque su cota demuestra que no puede mejorar la solución incumbente."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-branch-and-bound",
+      "slug": "branch-and-bound",
+      "title": "Branch and Bound",
+      "order": 1,
+      "summary": "Ramificación, cotas, poda por suboptimalidad y ejemplo completo de mochila entera.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-branch-and-bound",
+          "slug": "introduccion-branch-and-bound",
+          "title": "Branch and Bound: idea central",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "blocks": [
+            {
+              "id": "blk-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Branch and Bound es una técnica para resolver problemas de optimización explorando un árbol de decisiones. En cada nodo se calcula una cota que estima qué tan buena podría llegar a ser la mejor solución dentro de esa rama."
+                }
+              ]
+            },
+            {
+              "id": "blk-bb-intro-ramificar-acotar",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La técnica combina dos acciones: ramificar y acotar. Ramificar significa dividir el problema en decisiones más específicas. Acotar significa estimar si una rama todavía tiene posibilidad de mejorar la mejor solución encontrada."
+                }
+              ]
+            },
+            {
+              "id": "blk-bb-idea-central",
+              "type": "note",
+              "variant": "info",
+              "title": "Idea esencial",
+              "blocks": [
+                {
+                  "id": "blk-bb-idea-central-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Branch and Bound no explora una rama solo porque sea válida. La explora únicamente si todavía puede mejorar la mejor solución conocida."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-bb-vs-backtracking-basico",
+              "type": "table",
+              "title": "Diferencia básica con backtracking",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterio"
+                },
+                {
+                  "key": "backtracking",
+                  "label": "Backtracking"
+                },
+                {
+                  "key": "branchBound",
+                  "label": "Branch and Bound"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Tipo de problema"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Búsqueda de soluciones válidas."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Búsqueda de la mejor solución."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Poda principal"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Por infactibilidad."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Por infactibilidad y por suboptimalidad."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Orden de exploración"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Normalmente profundidad."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Profundidad, anchura o cola de prioridades."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-conceptos-clave-branch-and-bound",
+          "slug": "conceptos-clave-branch-and-bound",
+          "title": "Conceptos clave",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-conceptos-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El algoritmo mantiene una mejor solución conocida y una lista de nodos pendientes. Cada nodo se conserva o se descarta según sus cotas."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-cota-maximizacion",
+              "type": "equationBlock",
+              "title": "Modelo de poda en maximización",
+              "latex": "podar(N)=\\begin{cases}\\text{verdadero},& CS(N)\\le mejor\\\\\\text{falso},& CS(N)>mejor\\end{cases}"
+            },
+            {
+              "id": "blk-expl-cota-maximizacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En un problema de maximización, "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "CS(N)"
+                },
+                {
+                  "type": "text",
+                  "text": " es la cota superior (estimación optimista) del nodo "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "N"
+                },
+                {
+                  "type": "text",
+                  "text": ". Si este valor máximo posible ni siquiera alcanza a la mejor solución ya encontrada ("
+                },
+                {
+                  "type": "strong",
+                  "text": "mejor"
+                },
+                {
+                  "type": "text",
+                  "text": "), la rama se corta porque no tiene sentido seguir explorando algo que no puede superar lo que ya tenemos."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-cota-minimizacion",
+              "type": "equationBlock",
+              "title": "Modelo de poda en minimización",
+              "latex": "podar(N)=\\begin{cases}\\text{verdadero},& CI(N)\\ge mejor\\\\\\text{falso},& CI(N)<mejor\\end{cases}"
+            },
+            {
+              "id": "blk-expl-cota-minimizacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En minimización, "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "CI(N)"
+                },
+                {
+                  "type": "text",
+                  "text": " representa la cota inferior (el costo mínimo estimado). Si el costo más bajo que podríamos conseguir en esta rama es mayor o igual que el mejor costo ya conocido, descartamos el nodo."
+                }
+              ]
+            },
+            {
+              "id": "blk-conceptos-bb-table",
+              "type": "table",
+              "title": "Glosario técnico de Branch and Bound",
+              "columns": [
+                {
+                  "key": "concepto",
+                  "label": "Concepto"
+                },
+                {
+                  "key": "rol",
+                  "label": "Rol en el algoritmo"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Cota global / Incumbente"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Referencia del mejor valor factible encontrado hasta ahora."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Lista de Nodos Vivos (LNV)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Estructura que guarda los nodos generados pero no expandidos."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-modelo-general-branch-and-bound",
+          "slug": "modelo-general-branch-and-bound",
+          "title": "Modelo general de Branch and Bound",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-modelo-general-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cada nodo representa una solución parcial. Además de las decisiones tomadas, el nodo guarda el valor acumulado, los recursos usados, una cota optimista y el siguiente nivel de decisión."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-nodo-bb",
+              "type": "equationBlock",
+              "title": "Modelo de nodo",
+              "latex": "N=(X_k,valor(N),recurso(N),CI(N),CS(N),k)"
+            },
+            {
+              "id": "blk-expl-nodo-bb",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Un nodo "
+                },
+                {
+                  "type": "strong",
+                  "text": "N"
+                },
+                {
+                  "type": "text",
+                  "text": " se define por el vector de decisiones parciales "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X_k"
+                },
+                {
+                  "type": "text",
+                  "text": ", el valor y recurso consumido hasta el momento, las cotas inferior ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "CI"
+                },
+                {
+                  "type": "text",
+                  "text": ") y superior ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "CS"
+                },
+                {
+                  "type": "text",
+                  "text": "), y el nivel "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "k"
+                },
+                {
+                  "type": "text",
+                  "text": " en el árbol de decisiones."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-ramificacion-bb",
+              "type": "equationBlock",
+              "title": "Modelo de ramificación binaria",
+              "latex": "hijos(N)=\\begin{cases}N_{incluir}:x_{k+1}=1\\\\N_{excluir}:x_{k+1}=0\\end{cases}"
+            },
+            {
+              "id": "blk-expl-ramificacion-bb",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ramificar consiste en dividir el problema actual en dos o más subproblemas. En el caso binario, esto suele significar tomar una decisión (valor 1) o ignorarla (valor 0) para el siguiente elemento del problema."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-actualizacion-mejor",
+              "type": "equationBlock",
+              "title": "Actualización de la mejor solución",
+              "latex": "mejor_{t+1}=\\begin{cases}valor(N),& esFactible(N)\\ \\land\\ esCompleto(N)\\ \\land\\ valor(N)>mejor_t\\\\mejor_t,& \\text{en otro caso}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-actualizacion-mejor",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La variable "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "mejor"
+                },
+                {
+                  "type": "text",
+                  "text": " se actualiza únicamente cuando encontramos una solución que es factible (cumple restricciones), completa (todas las decisiones tomadas) y que además supera el valor previo."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-poda-completa-bb",
+              "type": "equationBlock",
+              "title": "Modelo completo de decisión sobre un nodo",
+              "latex": "estado(N)=\\begin{cases}\\text{podado por infactibilidad},& recurso(N)>limite\\\\\\text{solucion completa},& esCompleto(N)\\ \\land\\ esFactible(N)\\\\\\text{podado por suboptimalidad},& CS(N)\\le mejor\\\\\\text{vivo},& \\text{en otro caso}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-poda-completa-bb",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este modelo resume el destino de un nodo. Puede morir por exceder recursos, por ser una hoja del árbol, o por ser suboptimal (su cota superior no supera al mejor). Si no cumple nada de esto, el nodo permanece "
+                },
+                {
+                  "type": "strong",
+                  "text": "vivo"
+                },
+                {
+                  "type": "text",
+                  "text": " para ser explorado más tarde."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-bb-flujo",
+              "type": "mermaid",
+              "title": "Flujo general de Branch and Bound",
+              "code": "flowchart TD\n  A[\"Crear nodo raíz\"] --> B[\"Calcular cotas\"]\n  B --> C[\"Insertar en Lista de Nodos Vivos\"]\n  C --> D{\"¿LNV vacía?\"}\n  D -- \"Sí\" --> E[\"Retornar mejor solución\"]\n  D -- \"No\" --> F[\"Extraer nodo según estrategia\"]\n  F --> G{\"¿Podar?\"}\n  G -- \"Sí\" --> D\n  G -- \"No\" --> H{\"¿Solución completa?\"}\n  H -- \"Sí\" --> I[\"Actualizar mejor si mejora\"]\n  I --> D\n  H -- \"No\" --> J[\"Ramificar\"]\n  J --> K[\"Calcular cotas de hijos\"]\n  K --> L[\"Insertar hijos vivos\"]\n  L --> D"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-mochila-entera-planteamiento-bb",
+          "slug": "mochila-entera-planteamiento-bb",
+          "title": "Ejemplo completo: Mochila entera 0/1",
+          "order": 4,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-mochila-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En la mochila entera 0/1 se tienen objetos con valor y peso. El objetivo es maximizar el valor total sin superar la capacidad."
+                }
+              ]
+            },
+            {
+              "id": "blk-mochila-bb-modelo-decision",
+              "type": "equationBlock",
+              "title": "Modelo de decisión",
+              "latex": "x_i=\\begin{cases}1,& \\text{si el objeto }i\\text{ se incluye}\\\\0,& \\text{si el objeto }i\\text{ se excluye}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-mochila-decision",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La variable de decisión "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "x_i"
+                },
+                {
+                  "type": "text",
+                  "text": " es binaria. Un valor de 1 indica que el objeto forma parte de la mochila, y un 0 indica que se queda fuera."
+                }
+              ]
+            },
+            {
+              "id": "blk-mochila-bb-modelo-objetivo",
+              "type": "equationBlock",
+              "title": "Modelo de optimización",
+              "latex": "\\max\\sum_{i=1}^{n}v_ix_i\\quad \\text{sujeto a}\\quad \\sum_{i=1}^{n}w_ix_i\\le W,\\quad x_i\\in\\{0,1\\}"
+            },
+            {
+              "id": "blk-expl-mochila-objetivo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Buscamos maximizar la suma de los valores ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "v_i"
+                },
+                {
+                  "type": "text",
+                  "text": ") de los objetos elegidos, con la restricción de que la suma de sus pesos ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "w_i"
+                },
+                {
+                  "type": "text",
+                  "text": ") no exceda la capacidad total "
+                },
+                {
+                  "type": "strong",
+                  "text": "W"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-cota-superior-mochila-fraccionaria",
+          "slug": "cota-superior-mochila-fraccionaria",
+          "title": "Cota superior por mochila fraccionaria",
+          "order": 5,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-cota-fraccionaria-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Para estimar una cota superior en mochila 0/1, permitimos tomar fracciones de objetos. Esa solución fraccionaria es siempre mayor o igual a cualquier solución entera."
+                }
+              ]
+            },
+            {
+              "id": "blk-cota-fraccionaria-modelo",
+              "type": "equationBlock",
+              "title": "Modelo de cota superior",
+              "latex": "CS(N)=valor(N)+valor\\_fraccionario(objetos\\_restantes,capacidad\\_restante)"
+            },
+            {
+              "id": "blk-expl-cota-fraccionaria-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La cota superior del nodo "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "N"
+                },
+                {
+                  "type": "text",
+                  "text": " es la suma del valor ya acumulado más el valor que obtendríamos si pudiéramos llenar el resto de la capacidad de forma óptima usando fracciones de los objetos que sobran."
+                }
+              ]
+            },
+            {
+              "id": "blk-cota-fraccionaria-pieza",
+              "type": "equationBlock",
+              "title": "Valor de una fracción",
+              "latex": "valor\\_fraccion=valor_i\\cdot\\frac{capacidad\\_restante}{peso_i}"
+            },
+            {
+              "id": "blk-expl-cota-fraccionaria-pieza",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cuando un objeto ya no cabe completo, tomamos solo la parte proporcional que complete la capacidad "
+                },
+                {
+                  "type": "strong",
+                  "text": "W"
+                },
+                {
+                  "type": "text",
+                  "text": ". Su valor se calcula multiplicando el valor total del objeto por la fracción de peso que estamos aprovechando."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-complejidad-branch-and-bound",
+          "slug": "complejidad-branch-and-bound",
+          "title": "Complejidad de Branch and Bound",
+          "order": 6,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-complejidad-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Branch and Bound puede ser rápido en la práctica, pero su peor caso sigue siendo exponencial."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bb-general",
+              "type": "equationBlock",
+              "title": "Modelo general de costo",
+              "latex": "T(n)=\\Theta(N_{visitados}\\cdot(C_{ramificar}+C_{cota}+C_{LNV}))"
+            },
+            {
+              "id": "blk-expl-complejidad-bb-general",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El tiempo total "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)"
+                },
+                {
+                  "type": "text",
+                  "text": " depende del número de nodos visitados multiplicado por el costo de las operaciones por nodo: generar hijos ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "C_{ramificar}"
+                },
+                {
+                  "type": "text",
+                  "text": "), calcular la cota ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "C_{cota}"
+                },
+                {
+                  "type": "text",
+                  "text": ") y gestionar la lista de nodos vivos ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "C_{LNV}"
+                },
+                {
+                  "type": "text",
+                  "text": ")."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bb-peor-caso",
+              "type": "equationBlock",
+              "title": "Peor caso binario",
+              "latex": "N_{visitados}=\\begin{cases}O(2^n),& \\text{si casi no hay poda}\\\\\\ll 2^n,& \\text{si las cotas podan muchas ramas}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-complejidad-bb-peor-caso",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En el peor de los casos, la cota no descarta ninguna rama y visitamos todo el árbol binario de tamaño "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "2^n"
+                },
+                {
+                  "type": "text",
+                  "text": ". Sin embargo, una buena cota puede hacer que el número real de nodos sea órdenes de magnitud menor."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bb-mochila",
+              "type": "equationBlock",
+              "title": "Mochila 0/1 con cota fraccionaria",
+              "latex": "T(n)=O(2^n\\cdot n)\\quad \\text{si calcular cada cota cuesta }O(n)"
+            },
+            {
+              "id": "blk-expl-complejidad-bb-mochila",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Como el cálculo de la cota fraccionaria requiere un recorrido lineal por los objetos restantes, el costo por nodo es "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "O(n)"
+                },
+                {
+                  "type": "text",
+                  "text": ", lo que multiplica el costo total del árbol."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bb-prioridad",
+              "type": "equationBlock",
+              "title": "Costo adicional de cola de prioridad",
+              "latex": "C_{LNV}=O(\\log |LNV|)"
+            },
+            {
+              "id": "blk-expl-complejidad-bb-prioridad",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Si usamos una cola de prioridad para Max Benefit o Least Cost, insertar y extraer nodos tiene un costo logarítmico respecto al número de nodos vivos en ese momento."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-branch-and-bound",
+          "slug": "resumen-operativo-branch-and-bound",
+          "title": "Resumen operativo",
+          "order": 10,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "blocks": [
+            {
+              "id": "blk-resumen-bb",
+              "type": "note",
+              "variant": "success",
+              "title": "Receta mínima",
+              "blocks": [
+                {
+                  "id": "blk-resumen-bb-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define la función objetivo."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Representa cada solución como secuencia de decisiones."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define ramificación y cotas seguras."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Mantén la mejor solución factible (incumbente)."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Elige estrategia de recorrido (Max Benefit recomendado)."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Expande y poda hasta vaciar la LNV."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-formulas-clave-bb",
+              "type": "latexSteps",
+              "title": "Modelos clave",
+              "steps": [
+                {
+                  "stepId": "step-formula-nodo-bb",
+                  "title": "Nodo",
+                  "latex": "N=(X_k,valor(N),recurso(N),CI(N),CS(N),k)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Un nodo guarda el estado de la búsqueda en un punto dado."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-poda-max",
+                  "title": "Poda en maximización",
+                  "latex": "CS(N)\\le mejor\\Rightarrow podar(N)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Se descarta la rama si su máximo potencial no supera lo ya conseguido."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-costo-bb",
+                  "title": "Costo general",
+                  "latex": "T(n)=\\Theta(N_{visitados}\\cdot(C_{ramificar}+C_{cota}+C_{LNV}))",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El costo se mide en nodos multiplicados por el trabajo en cada uno."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

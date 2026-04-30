@@ -1,7 +1,7 @@
 {
   "schema": "aalie.content.space",
   "schemaVersion": "1.0.0",
-  "spaceId": "theory",
+  "spaceId": "course",
   "slug": "course",
   "kind": "theory",
   "title": "Curso teorico",

@@ -1,0 +1,5666 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-programacion-dinamica",
+  "slug": "programacion-dinamica",
+  "title": "Programación Dinámica",
+  "order": 16,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Módulo integral de Programación Dinámica que cubre desde los fundamentos teóricos (requisitos, estructuras y modelado recursivo) hasta la implementación avanzada de problemas clásicos como Fibonacci y LCS. Incluye comparación detallada de enfoques Top-Down vs Bottom-Up, reconstrucción de soluciones mediante tablas de caminos y patrones comunes de modelado 1D/2D.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 175,
+  "tags": [
+    "programacion-dinamica",
+    "pd",
+    "dynamic-programming",
+    "subestructura-optima",
+    "principio-de-optimalidad",
+    "subproblemas-superpuestos",
+    "memoizacion",
+    "top-down",
+    "bottom-up",
+    "tabulacion",
+    "modelo-recursivo",
+    "modelo-de-pd",
+    "fibonacci",
+    "factorial",
+    "tablas",
+    "lcs",
+    "subsecuencia-comun-mas-larga",
+    "tabla-de-optimos",
+    "tabla-de-caminos",
+    "reconstruccion",
+    "patrones-1d",
+    "patrones-2d",
+    "optimizacion-espacial"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "programación dinámica",
+      "PD",
+      "dynamic programming",
+      "memoización",
+      "tabulación",
+      "top-down",
+      "bottom-up",
+      "modelo recursivo",
+      "modelo de programación dinámica",
+      "subproblemas solapados",
+      "subproblemas superpuestos",
+      "programación dinámica parte 2",
+      "comparación top-down bottom-up",
+      "LCS",
+      "subsecuencia común más larga",
+      "tabla de óptimos",
+      "tabla de caminos",
+      "recorrido hacia atrás",
+      "reconstrucción de solución"
+    ],
+    "keywords": [
+      "subestructura óptima",
+      "principio de optimalidad",
+      "subproblemas dependientes",
+      "subproblemas superpuestos",
+      "modelo recursivo",
+      "caso base",
+      "caso general",
+      "tabla de óptimos",
+      "tabla de caminos",
+      "vector SOA",
+      "memoización",
+      "tabulación",
+      "Fibonacci",
+      "Factorial",
+      "Top-Down",
+      "Bottom-Up",
+      "LCS(i,j)",
+      "dp[i][j]",
+      "X[i] = Y[j]",
+      "max(dp[i-1][j], dp[i][j-1])",
+      "diagonal",
+      "arriba",
+      "izquierda",
+      "subsecuencia",
+      "AACCCGGTAGTA",
+      "GCAATTTGGGGCTA",
+      "LCS = 7"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-algoritmos-recursivos",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-sumatorias-comunes",
+        "kind": "recommended"
+      },
+      {
+        "id": "mod-teorema-maestro",
+        "kind": "recommended"
+      },
+      {
+        "id": "mod-arbol-recursion",
+        "kind": "recommended"
+      },
+      {
+        "id": "mod-ecuacion-caracteristica",
+        "kind": "recommended"
+      },
+      {
+        "id": "mod-suposiciones-inteligentes",
+        "kind": "recommended"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-introduccion-algoritmos-recursivos",
+        "kind": "required"
+      },
+      {
+        "id": "sec-estructura-algoritmo-recursivo",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-fibonacci",
+        "kind": "required"
+      },
+      {
+        "id": "sec-clasificacion-ecuaciones-recurrencia",
+        "kind": "recommended"
+      },
+      {
+        "id": "sec-tabla-maestra-notaciones-convenciones",
+        "kind": "recommended"
+      },
+      {
+        "id": "sec-introduccion-programacion-dinamica",
+        "kind": "required"
+      },
+      {
+        "id": "sec-requisitos-programacion-dinamica",
+        "kind": "required"
+      },
+      {
+        "id": "sec-estructuras-datos-programacion-dinamica",
+        "kind": "required"
+      },
+      {
+        "id": "sec-modelado-recursivo-antes-de-pd",
+        "kind": "required"
+      },
+      {
+        "id": "sec-de-modelo-recursivo-a-modelo-pd",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-fibonacci-pd",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-algoritmos-recursivos",
+    "mod-notaciones-asintoticas",
+    "mod-tabla-sumatorias-comunes",
+    "mod-teorema-maestro",
+    "mod-arbol-recursion",
+    "mod-ecuacion-caracteristica",
+    "mod-suposiciones-inteligentes"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "entender-idea-central-pd",
+      "text": "Entender que Programación Dinámica evita recalcular subproblemas guardando resultados parciales."
+    },
+    {
+      "objectiveId": "diferenciar-pd-de-recursion-ingenua",
+      "text": "Diferenciar recursión ingenua, recursión con memoización y tabulación bottom-up."
+    },
+    {
+      "objectiveId": "validar-requisitos-pd",
+      "text": "Validar si un problema cumple subestructura óptima, principio de optimalidad, subproblemas superpuestos y modelo recursivo formulable."
+    },
+    {
+      "objectiveId": "modelar-recursivamente",
+      "text": "Construir primero el modelo recursivo de un problema antes de diseñar el modelo de Programación Dinámica."
+    },
+    {
+      "objectiveId": "traducir-modelo-recursivo-a-pd",
+      "text": "Traducir caso base, caso general, parámetros de estado y decisiones del modelo recursivo a tablas de Programación Dinámica."
+    },
+    {
+      "objectiveId": "reconocer-tabla-optimos-caminos-soa",
+      "text": "Distinguir tabla de óptimos, tabla de caminos y vector SOA en problemas de optimización."
+    },
+    {
+      "objectiveId": "aplicar-top-down",
+      "text": "Aplicar memoización top-down para resolver subproblemas bajo demanda."
+    },
+    {
+      "objectiveId": "aplicar-bottom-up",
+      "text": "Aplicar tabulación bottom-up llenando subproblemas desde los casos base."
+    },
+    {
+      "objectiveId": "analizar-factorial-pd",
+      "text": "Usar Factorial como ejemplo didáctico de traducción recursivo a PD, aunque no sea un caso donde PD aporte valor real."
+    },
+    {
+      "objectiveId": "analizar-fibonacci-pd",
+      "text": "Usar Fibonacci como ejemplo canónico de subproblemas repetidos y mejora de exponencial a lineal."
+    },
+    {
+      "objectiveId": "comparar-top-down-bottom-up",
+      "text": "Comparar Top-Down y Bottom-Up según implementación, orden de resolución, espacio, constantes y regularidad del patrón."
+    },
+    {
+      "objectiveId": "decidir-enfoque-pd",
+      "text": "Elegir Top-Down o Bottom-Up según si existe un orden claro de llenado."
+    },
+    {
+      "objectiveId": "modelar-lcs-recursivamente",
+      "text": "Construir el modelo recursivo de LCS a partir de los últimos caracteres de dos cadenas."
+    },
+    {
+      "objectiveId": "traducir-lcs-a-pd",
+      "text": "Traducir el modelo recursivo de LCS a una tabla de óptimos dp[i][j]."
+    },
+    {
+      "objectiveId": "llenar-tabla-lcs",
+      "text": "Llenar la tabla Bottom-Up de LCS por filas respetando dependencias."
+    },
+    {
+      "objectiveId": "reconstruir-lcs",
+      "text": "Reconstruir una subsecuencia común más larga usando recorrido hacia atrás."
+    },
+    {
+      "objectiveId": "distinguir-valor-y-solucion",
+      "text": "Distinguir entre calcular solo el valor óptimo y reconstruir la solución explícita."
+    },
+    {
+      "objectiveId": "reconocer-patrones-pd",
+      "text": "Reconocer patrones 1D, 2D y de decisión en Programación Dinámica."
+    },
+    {
+      "objectiveId": "detectar-errores-pd",
+      "text": "Detectar errores frecuentes: empezar por la tabla, llenar en orden incorrecto, no inicializar casos base o no guardar caminos."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-programacion-dinamica",
+      "label": "Programación Dinámica",
+      "definition": "Técnica de diseño que resuelve subproblemas una sola vez, guarda sus resultados y los reutiliza para construir la solución del problema original."
+    },
+    {
+      "termId": "term-subestructura-optima",
+      "label": "Subestructura óptima",
+      "definition": "Propiedad por la cual una solución óptima del problema grande puede construirse a partir de soluciones óptimas de subproblemas."
+    },
+    {
+      "termId": "term-principio-optimalidad",
+      "label": "Principio de optimalidad",
+      "definition": "Condición que exige que las decisiones óptimas globales sean compatibles con decisiones óptimas en los subproblemas."
+    },
+    {
+      "termId": "term-subproblemas-superpuestos",
+      "label": "Subproblemas superpuestos",
+      "definition": "Situación donde la recursión vuelve a pedir los mismos subproblemas varias veces."
+    },
+    {
+      "termId": "term-modelo-recursivo",
+      "label": "Modelo recursivo",
+      "definition": "Definición matemática del problema mediante casos base y casos generales. Es el punto de partida antes de diseñar la solución con PD."
+    },
+    {
+      "termId": "term-modelo-pd",
+      "label": "Modelo de PD",
+      "definition": "Versión tabulada o memoizada del modelo recursivo, donde cada estado se guarda en una estructura de datos."
+    },
+    {
+      "termId": "term-estado-pd",
+      "label": "Estado",
+      "definition": "Conjunto mínimo de parámetros que identifica un subproblema dentro de Programación Dinámica."
+    },
+    {
+      "termId": "term-tabla-optimos",
+      "label": "Tabla de óptimos",
+      "definition": "Tabla que almacena el mejor valor calculado para cada subproblema."
+    },
+    {
+      "termId": "term-tabla-caminos",
+      "label": "Tabla de caminos",
+      "definition": "Tabla que almacena la decisión o procedencia que produjo el óptimo de cada subproblema."
+    },
+    {
+      "termId": "term-vector-soa",
+      "label": "Vector SOA",
+      "definition": "Secuencia final de decisiones reconstruida al recorrer hacia atrás la tabla de caminos."
+    },
+    {
+      "termId": "term-memoizacion",
+      "label": "Memoización",
+      "definition": "Enfoque Top-Down que conserva la estructura recursiva, pero guarda cada subproblema resuelto para no recalcularlo."
+    },
+    {
+      "termId": "term-tabulacion",
+      "label": "Tabulación",
+      "definition": "Enfoque Bottom-Up que llena una tabla desde los casos base hasta el problema final."
+    },
+    {
+      "termId": "term-top-down",
+      "label": "Top-Down",
+      "definition": "Implementación con recursión y memoización. Los subproblemas se calculan bajo demanda."
+    },
+    {
+      "termId": "term-bottom-up",
+      "label": "Bottom-Up",
+      "definition": "Implementación iterativa que calcula primero los subproblemas pequeños y luego los más grandes."
+    },
+    {
+      "termId": "term-lcs",
+      "label": "LCS",
+      "definition": "Longest Common Subsequence o Subsecuencia Común Más Larga. Problema que busca la subsecuencia de mayor longitud común a dos cadenas, conservando el orden pero sin exigir consecutividad."
+    },
+    {
+      "termId": "term-subsecuencia",
+      "label": "Subsecuencia",
+      "definition": "Secuencia que se obtiene eliminando cero o más elementos de otra secuencia, sin cambiar el orden relativo de los elementos restantes."
+    },
+    {
+      "termId": "term-dp-ij",
+      "label": "dp[i][j]",
+      "definition": "Celda que almacena el valor óptimo de un subproblema identificado por los prefijos X[1..i] y Y[1..j]."
+    },
+    {
+      "termId": "term-recorrido-hacia-atras",
+      "label": "Recorrido hacia atrás",
+      "definition": "Proceso de reconstrucción que parte de la celda final de la tabla y sigue las decisiones guardadas hasta llegar a un caso base."
+    },
+    {
+      "termId": "term-diagonal-lcs",
+      "label": "Diagonal en LCS",
+      "definition": "Movimiento de reconstrucción usado cuando los caracteres coinciden. Indica que ese carácter pertenece a una LCS."
+    },
+    {
+      "termId": "term-arriba-lcs",
+      "label": "Arriba en LCS",
+      "definition": "Movimiento que descarta un carácter de X y pasa de dp[i][j] a dp[i-1][j]."
+    },
+    {
+      "termId": "term-izquierda-lcs",
+      "label": "Izquierda en LCS",
+      "definition": "Movimiento que descarta un carácter de Y y pasa de dp[i][j] a dp[i][j-1]."
+    },
+    {
+      "termId": "term-optimizacion-espacial-pd",
+      "label": "Optimización espacial",
+      "definition": "Reducción del espacio usado por una tabla de PD cuando el cálculo de una fila o celda solo depende de un número limitado de filas o estados anteriores."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-programacion-dinamica-parte-1",
+      "slug": "programacion-dinamica-parte-1",
+      "title": "Programación Dinámica — Parte 1",
+      "order": 1,
+      "summary": "Fundamentos de Programación Dinámica: requisitos, estructuras, modelado recursivo, traducción a PD, Factorial y Fibonacci.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-programacion-dinamica",
+          "slug": "introduccion-programacion-dinamica",
+          "title": "Programación Dinámica: idea central",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-pd-como-memoria",
+              "text": "Entender Programación Dinámica como una técnica para eliminar recálculo mediante memoria."
+            },
+            {
+              "objectiveId": "diferenciar-pd-de-divide-y-venceras",
+              "text": "Diferenciar Programación Dinámica de Divide y Vencerás."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-estructura-algoritmo-recursivo",
+                "kind": "required"
+              },
+              {
+                "id": "sec-ejemplo-fibonacci",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-pd-intro-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Programación Dinámica es una técnica de diseño algorítmico que toma un problema definido recursivamente, detecta que algunos subproblemas se repiten y evita resolverlos más de una vez guardando sus respuestas."
+                }
+              ]
+            },
+            {
+              "id": "blk-pd-intro-idea",
+              "type": "note",
+              "variant": "info",
+              "title": "Idea central",
+              "blocks": [
+                {
+                  "id": "blk-pd-intro-idea-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La recursión ingenua pregunta lo mismo muchas veces. Programación Dinámica responde una vez, guarda la respuesta y reutiliza ese resultado cuando vuelva a necesitarlo."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-pd-intro-costo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El intercambio principal es claro: PD suele reducir tiempo, pero aumenta espacio. Ese espacio aparece en tablas, diccionarios, matrices o vectores que almacenan resultados parciales."
+                }
+              ]
+            },
+            {
+              "id": "blk-pd-vs-divide-table",
+              "type": "table",
+              "title": "Programación Dinámica vs Divide y Vencerás",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterio"
+                },
+                {
+                  "key": "divideVenceras",
+                  "label": "Divide y Vencerás"
+                },
+                {
+                  "key": "programacionDinamica",
+                  "label": "Programación Dinámica"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Subproblemas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Normalmente independientes."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Se repiten o se solapan."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recálculo"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No suele ser el problema principal."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Es exactamente lo que se quiere eliminar."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Estructura"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Árbol de llamadas sin reutilización necesaria."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "DAG de estados reutilizables."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Implementación típica"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recursión directa o división explícita."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Memoización o tabulación."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Ejemplo"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Merge Sort."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Fibonacci con memoización, LCS, mochila 0/1."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-pd-advertencia-no-es-magia",
+              "type": "note",
+              "variant": "warning",
+              "title": "No todo algoritmo recursivo necesita PD",
+              "blocks": [
+                {
+                  "id": "blk-pd-advertencia-no-es-magia-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si los subproblemas no se repiten, guardar resultados no aporta mucho. PD no es sinónimo de recursión optimizada; es recursión o tabulación con reutilización real de subproblemas."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-requisitos-programacion-dinamica",
+          "slug": "requisitos-programacion-dinamica",
+          "title": "Los cuatro requisitos de la Programación Dinámica",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "validar-cuatro-requisitos",
+              "text": "Validar los cuatro requisitos antes de decidir si un problema se resuelve con PD."
+            },
+            {
+              "objectiveId": "evitar-falsa-pd",
+              "text": "Evitar llamar Programación Dinámica a un algoritmo que solo usa una tabla sin subproblemas superpuestos."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-estructura-algoritmo-recursivo",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-requisitos-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Antes de diseñar una solución con Programación Dinámica, hay que comprobar que el problema realmente tiene estructura compatible. Si no cumple estos requisitos, usar PD será una decoración costosa, no una técnica correcta."
+                }
+              ]
+            },
+            {
+              "id": "blk-requisitos-table",
+              "type": "table",
+              "title": "Los cuatro requisitos de Programación Dinámica",
+              "columns": [
+                {
+                  "key": "requisito",
+                  "label": "Requisito"
+                },
+                {
+                  "key": "significado",
+                  "label": "Significado"
+                },
+                {
+                  "key": "preguntaDiagnostica",
+                  "label": "Pregunta diagnóstica"
+                },
+                {
+                  "key": "siFalla",
+                  "label": "Si falla"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Subestructura óptima"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El problema grande puede construirse desde subproblemas del mismo tipo."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿La solución de tamaño n depende de soluciones de tamaños menores o estados más pequeños?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No hay una descomposición natural para PD."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Principio de optimalidad"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La solución óptima global contiene soluciones óptimas de subproblemas."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Puedo tomar decisiones óptimas locales de subproblemas y combinarlas sin romper el óptimo global?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El problema puede requerir búsqueda, backtracking o branch and bound."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Subproblemas superpuestos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Los mismos subproblemas aparecen varias veces."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿La recursión vuelve a calcular estados idénticos?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La memoización no aporta valor sustancial."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Modelo recursivo formulable"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La solución puede escribirse con caso base y caso general."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Puedo expresar el valor de un estado en términos de estados más pequeños?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No hay base formal para construir la tabla."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-requisitos-semaforo",
+              "type": "note",
+              "variant": "success",
+              "title": "Diagnóstico rápido",
+              "blocks": [
+                {
+                  "id": "blk-requisitos-semaforo-list",
+                  "type": "list",
+                  "style": "unordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay subestructura óptima y subproblemas superpuestos, probablemente hay PD."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay subestructura óptima pero no hay solapamiento, probablemente es Divide y Vencerás."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay decisiones, restricciones y poda, probablemente estás más cerca de Backtracking o Branch and Bound."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si hay selección local sin reconsideración, probablemente estás más cerca de un algoritmo voraz."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-estructuras-datos-programacion-dinamica",
+          "slug": "estructuras-datos-programacion-dinamica",
+          "title": "Las tres estructuras de datos de PD",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "distinguir-tablas-pd",
+              "text": "Distinguir tabla de óptimos, tabla de caminos y vector SOA."
+            },
+            {
+              "objectiveId": "entender-reconstruccion-hacia-atras",
+              "text": "Entender por qué la solución final se reconstruye hacia atrás desde el estado final."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-estructura-algoritmo-recursivo",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-estructuras-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Una solución de Programación Dinámica no es solo una fórmula. En problemas de optimización, normalmente se necesitan estructuras para guardar valores, decisiones y reconstruir la solución final."
+                }
+              ]
+            },
+            {
+              "id": "blk-estructuras-table",
+              "type": "table",
+              "title": "Estructuras de datos de Programación Dinámica",
+              "columns": [
+                {
+                  "key": "estructura",
+                  "label": "Estructura"
+                },
+                {
+                  "key": "almacena",
+                  "label": "Qué almacena"
+                },
+                {
+                  "key": "cuandoSeLlena",
+                  "label": "Cuándo se llena"
+                },
+                {
+                  "key": "ejemplo",
+                  "label": "Ejemplo"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Tabla de óptimos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El mejor valor de cada subproblema."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "A medida que se resuelven los estados."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][j]"
+                      },
+                      {
+                        "type": "text",
+                        "text": " guarda la longitud de la LCS."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Tabla de caminos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La decisión que llevó al óptimo."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Junto con la tabla de óptimos."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Guardar si se vino de arriba, izquierda o diagonal."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Vector SOA"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La secuencia final de decisiones."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Al final, recorriendo hacia atrás."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La subsecuencia reconstruida en LCS o los objetos elegidos en mochila."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-por-que-hacia-atras",
+              "type": "note",
+              "variant": "info",
+              "title": "Por qué se reconstruye hacia atrás",
+              "blocks": [
+                {
+                  "id": "blk-por-que-hacia-atras-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La respuesta final suele estar en la última celda, pero esa celda solo dice el valor óptimo. Para saber qué decisiones produjeron ese valor, se sigue la tabla de caminos desde el final hasta los casos base."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-estructuras-no-siempre-todas",
+              "type": "note",
+              "variant": "warning",
+              "title": "No siempre necesitas las tres",
+              "blocks": [
+                {
+                  "id": "blk-estructuras-no-siempre-todas-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si solo necesitas el valor final, puede bastar la tabla de óptimos. Si necesitas reconstruir la solución, necesitas tabla de caminos o alguna forma equivalente de rastrear decisiones."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-modelado-recursivo-antes-de-pd",
+          "slug": "modelado-recursivo-antes-de-pd",
+          "title": "Primero se modela recursivamente",
+          "order": 4,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "construir-modelo-recursivo-pd",
+              "text": "Construir el modelo recursivo antes de escribir tablas o código."
+            },
+            {
+              "objectiveId": "identificar-estado-base-transicion",
+              "text": "Identificar estado, caso base, caso general, decisión y respuesta final."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-estructura-algoritmo-recursivo",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-modelado-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El error típico es empezar por la tabla. Eso está al revés. En Programación Dinámica primero se modela el problema recursivamente; después, con base en ese modelo, se diseña la tabla o la memoización."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelado-regla",
+              "type": "note",
+              "variant": "danger",
+              "title": "Regla dura",
+              "blocks": [
+                {
+                  "id": "blk-modelado-regla-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Sin modelo recursivo no hay PD defendible. Una tabla sin estado, transición y caso base es solo almacenamiento accidental."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-recursivo-componentes-table",
+              "type": "table",
+              "title": "Componentes del modelo recursivo",
+              "columns": [
+                {
+                  "key": "componente",
+                  "label": "Componente"
+                },
+                {
+                  "key": "pregunta",
+                  "label": "Pregunta"
+                },
+                {
+                  "key": "resultado",
+                  "label": "Resultado esperado"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Estado"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Qué información mínima identifica un subproblema?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "F(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "LCS(i,j)"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "Mochila(i,w)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Caso base"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Qué estado se resuelve sin subproblemas?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "F(0)=0"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "F(1)=1"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "LCS(0,j)=0"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Caso general"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Cómo se expresa el estado usando estados más pequeños?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Una recurrencia o transición."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Decisión"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Hay que escoger entre alternativas?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\max"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\min"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", tomar/no tomar, avanzar/ignorar."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Respuesta final"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Qué estado contiene la solución del problema original?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "F(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "LCS(m,n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[n][W]"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-formato-modelo-recursivo",
+              "type": "latexSteps",
+              "title": "Formato mínimo del modelo recursivo",
+              "steps": [
+                {
+                  "stepId": "step-definir-state",
+                  "title": "Definir estado",
+                  "latex": "S(\\text{parámetros}) = \\text{valor del subproblema}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El estado debe guardar solo la información necesaria. Si faltan parámetros, la transición queda ambigua; si sobran, la tabla se infla."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-definir-bases",
+                  "title": "Definir casos base",
+                  "latex": "S(\\text{estado trivial}) = \\text{valor conocido}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Los casos base son las celdas iniciales de la tabla o los retornos directos de la memoización."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-definir-trans",
+                  "title": "Definir transición",
+                  "latex": "S(\\text{estado}) = F(S(\\text{subestado}_1),S(\\text{subestado}_2),\\ldots)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "La transición debe usar estados más pequeños o previamente calculables."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-definir-resp",
+                  "title": "Definir respuesta final",
+                  "latex": "\\text{Respuesta} = S(\\text{estado original})",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Este paso evita llenar tablas sin saber cuál celda se debe leer al final."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-de-modelo-recursivo-a-modelo-pd",
+          "slug": "de-modelo-recursivo-a-modelo-pd",
+          "title": "Del modelo recursivo al modelo de PD",
+          "order": 5,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "traducir-recursivo-a-tabla",
+              "text": "Traducir estados, casos base y transiciones a una tabla de Programación Dinámica."
+            },
+            {
+              "objectiveId": "decidir-top-down-bottom-up",
+              "text": "Decidir si implementar con Top-Down o Bottom-Up según dependencias y necesidad pedagógica."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelado-recursivo-antes-de-pd",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-traduccion-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Una vez existe el modelo recursivo, la Programación Dinámica consiste en convertir ese modelo en una estructura de almacenamiento y un orden de cálculo."
+                }
+              ]
+            },
+            {
+              "id": "blk-traduccion-table",
+              "type": "table",
+              "title": "Traducción de modelo recursivo a modelo de PD",
+              "columns": [
+                {
+                  "key": "modeloRecursivo",
+                  "label": "En el modelo recursivo"
+                },
+                {
+                  "key": "modeloPd",
+                  "label": "En el modelo de PD"
+                },
+                {
+                  "key": "pregunta",
+                  "label": "Pregunta de control"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Estado "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "S(i,j)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Celda "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "Tabla[i][j]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Qué dimensiones necesita la tabla?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Caso base"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Inicialización de filas, columnas o posiciones base."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Qué celdas ya se conocen antes del ciclo?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Caso general"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Fórmula de llenado."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Qué celdas anteriores necesito para calcular esta?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Decisión óptima"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Comparación "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\max"
+                      },
+                      {
+                        "type": "text",
+                        "text": " o "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\min"
+                      },
+                      {
+                        "type": "text",
+                        "text": " y registro en tabla de caminos."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Debo reconstruir la solución o solo devolver el valor?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Respuesta final"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Última celda, celda objetivo o mejor valor global."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Dónde queda la respuesta después de llenar la tabla?"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-flujo-modelado-pd",
+              "type": "mermaid",
+              "title": "Flujo correcto: de recursión a PD",
+              "code": "flowchart TD\n  A[\"Problema original\"] --> B[\"Definir estado\"]\n  B --> C[\"Escribir modelo recursivo\"]\n  C --> D[\"Identificar casos base\"]\n  D --> E[\"Identificar transición\"]\n  E --> F{\"¿Hay subproblemas repetidos?\"}\n  F -- \"No\" --> G[\"No vale la pena usar PD\"]\n  F -- \"Sí\" --> H[\"Elegir Top-Down o Bottom-Up\"]\n  H --> I[\"Diseñar tabla o memo\"]\n  I --> J[\"Definir orden de llenado\"]\n  J --> K[\"Calcular respuesta final\"]\n  K --> L{\"¿Se necesita solución explícita?\"}\n  L -- \"Sí\" --> M[\"Reconstruir con tabla de caminos\"]\n  L -- \"No\" --> N[\"Devolver valor óptimo\"]"
+            },
+            {
+              "id": "blk-topdown-bottomup-criterios-table",
+              "type": "table",
+              "title": "Cuándo elegir Top-Down o Bottom-Up",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterio"
+                },
+                {
+                  "key": "topDown",
+                  "label": "Top-Down"
+                },
+                {
+                  "key": "bottomUp",
+                  "label": "Bottom-Up"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cercanía al modelo matemático"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Muy alta: casi copia la recursión."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Media: exige definir orden iterativo."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Subproblemas realmente visitados"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solo calcula los que necesita."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Puede llenar estados que quizá no se usen."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Control de memoria"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usa memo más pila recursiva."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Permite optimización espacial más clara."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Riesgo"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Stack overflow si la profundidad es grande."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Orden incorrecto de llenado si no se respetan dependencias."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-factorial-recursivo-a-pd",
+          "slug": "ejemplo-factorial-recursivo-a-pd",
+          "title": "Ejemplo guía: Factorial — del recursivo al PD",
+          "order": 6,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 16,
+          "learningObjectives": [
+            {
+              "objectiveId": "modelar-factorial-recursivamente",
+              "text": "Modelar Factorial recursivamente antes de traducirlo a PD."
+            },
+            {
+              "objectiveId": "traducir-factorial-a-topdown-bottomup",
+              "text": "Traducir Factorial a versiones Top-Down y Bottom-Up."
+            },
+            {
+              "objectiveId": "reconocer-factorial-como-ejemplo-didactico",
+              "text": "Reconocer que Factorial sirve para aprender el mecanismo, pero no muestra una ganancia real de PD."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelado-recursivo-antes-de-pd",
+                "kind": "required"
+              },
+              {
+                "id": "sec-de-modelo-recursivo-a-modelo-pd",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-factorial-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Factorial es un ejemplo guía útil porque su modelo recursivo es simple. Pero hay que decir la verdad: no es un gran caso de PD, porque no tiene subproblemas repetidos. Sirve para entender la mecánica de pasar de recursión a tabla, no para presumir una mejora algorítmica."
+                }
+              ]
+            },
+            {
+              "id": "blk-factorial-modelo-recursivo",
+              "type": "latexSteps",
+              "title": "Paso 1 — Modelo recursivo del factorial",
+              "steps": [
+                {
+                  "stepId": "step-factorial-state",
+                  "title": "Estado",
+                  "latex": "Fact(n)=n!",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El estado solo necesita un parámetro: "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-factorial-base0",
+                  "title": "Caso base 0",
+                  "latex": "Fact(0)=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Por definición, "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "0!=1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-factorial-base1",
+                  "title": "Caso base 1",
+                  "latex": "Fact(1)=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "También puede declararse como base para simplificar el código."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-factorial-gen",
+                  "title": "Caso general",
+                  "latex": "Fact(n)=n\\cdot Fact(n-1)\\quad \\text{si }n\\ge2",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El problema de tamaño "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n"
+                    },
+                    {
+                      "type": "text",
+                      "text": " depende de un único subproblema de tamaño "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n-1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-factorial-resp",
+                  "title": "Respuesta final",
+                  "latex": "\\text{Respuesta}=Fact(n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El estado original ya contiene la respuesta."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-factorial-pseudocodigo-recursivo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Factorial recursivo",
+              "code": "factorial(n) BEGIN\n  IF (n = 0 OR n = 1) THEN BEGIN\n    RETURN 1;\n  END\n  RETURN n * factorial(n - 1);\nEND"
+            },
+            {
+              "id": "blk-factorial-traduccion-pd",
+              "type": "latexSteps",
+              "title": "Paso 2 — Traducción al modelo de PD",
+              "steps": [
+                {
+                  "stepId": "step-factorial-tab",
+                  "title": "Tabla",
+                  "latex": "Tabla[i]=Fact(i)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Cada posición almacena el factorial de un valor intermedio."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-factorial-init",
+                  "title": "Inicialización",
+                  "latex": "Tabla[0]=1,\\quad Tabla[1]=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Los casos base del modelo recursivo se convierten en celdas iniciales."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-factorial-trans",
+                  "title": "Transición",
+                  "latex": "Tabla[i]=i\\cdot Tabla[i-1]",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El caso general se convierte en una fórmula iterativa."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-factorial-ord",
+                  "title": "Orden de llenado",
+                  "latex": "i=2,3,\\ldots,n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Se llena de menor a mayor porque "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Tabla[i]"
+                    },
+                    {
+                      "type": "text",
+                      "text": " depende de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Tabla[i-1]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-factorial-ans",
+                  "title": "Respuesta",
+                  "latex": "\\text{Respuesta}=Tabla[n]",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "La última posición contiene el factorial pedido."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-factorial-topdown",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Factorial Top-Down con memoización",
+              "code": "factorialTD(n, Tabla[n]) BEGIN\n  IF (n = 0 OR n = 1) THEN BEGIN\n    RETURN 1;\n  END\n  IF (Tabla[n] != -1) THEN BEGIN\n    RETURN Tabla[n];\n  END\n  Tabla[n] <- n * factorialTD(n - 1, Tabla);\n  RETURN Tabla[n];\nEND"
+            },
+            {
+              "id": "blk-factorial-bottomup",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Factorial Bottom-Up",
+              "code": "factorialBU(n) BEGIN\n  Tabla[0] <- 1;\n  Tabla[1] <- 1;\n  FOR i <- 2 TO n DO BEGIN\n    Tabla[i] <- Tabla[i - 1] * i;\n  END\n  RETURN Tabla[n];\nEND"
+            },
+            {
+              "id": "blk-factorial-seguimiento-table",
+              "type": "table",
+              "title": "Seguimiento Bottom-Up para n = 5",
+              "columns": [
+                {
+                  "key": "i",
+                  "label": "i"
+                },
+                {
+                  "key": "formula",
+                  "label": "Fórmula"
+                },
+                {
+                  "key": "valor",
+                  "label": "Valor"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Caso base"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Caso base"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "Tabla[2]=Tabla[1]\\cdot2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "Tabla[3]=Tabla[2]\\cdot3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "6"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "Tabla[4]=Tabla[3]\\cdot4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "24"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "Tabla[5]=Tabla[4]\\cdot5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "120"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-factorial-diagnostico",
+              "type": "note",
+              "variant": "warning",
+              "title": "Diagnóstico honesto",
+              "blocks": [
+                {
+                  "id": "blk-factorial-diagnostico-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Factorial no es un buen caso para vender PD como optimización. La recursión no recalcula subproblemas; cada "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Fact(k)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " aparece una sola vez. La versión Bottom-Up elimina pila, pero no cambia el orden temporal: sigue siendo "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-fibonacci-pd",
+          "slug": "ejemplo-fibonacci-pd",
+          "title": "Fibonacci: recursión ingenua vs Programación Dinámica",
+          "order": 7,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "learningObjectives": [
+            {
+              "objectiveId": "detectar-recalculo-fibonacci",
+              "text": "Detectar los subproblemas repetidos en Fibonacci recursivo."
+            },
+            {
+              "objectiveId": "modelar-fibonacci-pd",
+              "text": "Modelar Fibonacci recursivamente y traducirlo a Top-Down y Bottom-Up."
+            },
+            {
+              "objectiveId": "comparar-costos-fibonacci",
+              "text": "Comparar la complejidad de Fibonacci ingenuo contra Fibonacci con PD."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-fibonacci",
+                "kind": "required"
+              },
+              {
+                "id": "sec-modelado-recursivo-antes-de-pd",
+                "kind": "required"
+              },
+              {
+                "id": "sec-de-modelo-recursivo-a-modelo-pd",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-fibonacci-pd-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Fibonacci es el ejemplo canónico de Programación Dinámica porque la recursión ingenua recalcula los mismos subproblemas muchas veces. Aquí sí hay una mejora real: se pasa de crecimiento exponencial a crecimiento lineal."
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-modelo-recursivo",
+              "type": "latexSteps",
+              "title": "Paso 1 — Modelo recursivo de Fibonacci",
+              "steps": [
+                {
+                  "stepId": "step-fib-state",
+                  "title": "Estado",
+                  "latex": "Fib(n)=\\text{n-ésimo número de Fibonacci}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El estado se identifica con un solo parámetro: "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-bases",
+                  "title": "Casos base",
+                  "latex": "Fib(0)=0,\\quad Fib(1)=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Son valores conocidos directamente."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-gen",
+                  "title": "Caso general",
+                  "latex": "Fib(n)=Fib(n-1)+Fib(n-2)\\quad \\text{si }n\\ge2",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Cada estado depende de dos estados anteriores."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-ans",
+                  "title": "Respuesta",
+                  "latex": "\\text{Respuesta}=Fib(n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El estado pedido es la respuesta final."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-modelo-completo",
+              "type": "equationBlock",
+              "title": "Recurrencia completa",
+              "latex": "Fib(n)=\\begin{cases}0,& n=0\\\\1,& n=1\\\\Fib(n-1)+Fib(n-2),& n\\ge 2\\end{cases}"
+            },
+            {
+              "id": "blk-fibonacci-modelo-completo-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En este modelo, "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": " es el parámetro de estado que representa el índice del número de Fibonacci que queremos calcular. Los casos base "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n=0"
+                },
+                {
+                  "type": "text",
+                  "text": " y "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n=1"
+                },
+                {
+                  "type": "text",
+                  "text": " detienen la recursión, mientras que la transición suma los dos subproblemas inmediatamente anteriores."
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-recalculo-mermaid",
+              "type": "mermaid",
+              "title": "Subproblemas repetidos en Fib(5)",
+              "code": "flowchart TD\n  A[\"Fib(5)\"] --> B[\"Fib(4)\"]\n  A --> C[\"Fib(3)\"]\n  B --> D[\"Fib(3)\"]\n  B --> E[\"Fib(2)\"]\n  C --> F[\"Fib(2)\"]\n  C --> G[\"Fib(1)\"]\n  D --> H[\"Fib(2)\"]\n  D --> I[\"Fib(1)\"]\n  E --> J[\"Fib(1)\"]\n  E --> K[\"Fib(0)\"]\n  F --> L[\"Fib(1)\"]\n  F --> M[\"Fib(0)\"]\n  H --> N[\"Fib(1)\"]\n  H --> O[\"Fib(0)\"]\n  D -. \"repetido\" .-> C\n  F -. \"repetido\" .-> E\n  H -. \"repetido\" .-> E"
+            },
+            {
+              "id": "blk-fibonacci-traduccion-pd",
+              "type": "latexSteps",
+              "title": "Paso 2 — Traducción al modelo de PD",
+              "steps": [
+                {
+                  "stepId": "step-fib-tab",
+                  "title": "Tabla",
+                  "latex": "Tabla[i]=Fib(i)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Cada posición guarda un Fibonacci ya calculado."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-init",
+                  "title": "Inicialización",
+                  "latex": "Tabla[0]=0,\\quad Tabla[1]=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Los casos base del modelo recursivo se convierten en celdas iniciales."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-trans",
+                  "title": "Transición",
+                  "latex": "Tabla[i]=Tabla[i-1]+Tabla[i-2]",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El caso general se convierte en una fórmula de llenado."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-ord",
+                  "title": "Orden de llenado",
+                  "latex": "i=2,3,\\ldots,n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Para calcular "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Tabla[i]"
+                    },
+                    {
+                      "type": "text",
+                      "text": " ya deben existir "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Tabla[i-1]"
+                    },
+                    {
+                      "type": "text",
+                      "text": " y "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Tabla[i-2]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-ans-tab",
+                  "title": "Respuesta",
+                  "latex": "\\text{Respuesta}=Tabla[n]",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "La última celda contiene el Fibonacci pedido."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-modelo-pd-completo",
+              "type": "equationBlock",
+              "title": "Modelo de PD completo",
+              "latex": "dp[i]=\\begin{cases}0,& i=0\\\\1,& i=1\\\\dp[i-1]+dp[i-2],& i\\ge 2\\end{cases}"
+            },
+            {
+              "id": "blk-fibonacci-modelo-pd-completo-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cada celda "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "dp[i]"
+                },
+                {
+                  "type": "text",
+                  "text": " de la tabla almacena el valor óptimo ya calculado para el subproblema "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i"
+                },
+                {
+                  "type": "text",
+                  "text": ". El uso de la tabla elimina la necesidad de volver a calcular el mismo valor múltiples veces."
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-modelo-topdown-completo",
+              "type": "equationBlock",
+              "title": "Modelo Top-Down (mismo modelo, con memoización)",
+              "latex": "Fib(n)=\\begin{cases}0,& n=0\\\\1,& n=1\\\\Fib(n-1)+Fib(n-2),& n\\ge 2\\end{cases}"
+            },
+            {
+              "id": "blk-fibonacci-modelo-topdown-completo-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En el enfoque Top-Down, la estructura sigue siendo recursiva, pero se intercala un paso de consulta a la memoria (memoización) antes de realizar cualquier llamado recursivo."
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-topdown",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Fibonacci Top-Down con memoización",
+              "code": "fibTD(n, Tabla[n]) BEGIN\n  IF (n = 0 OR n = 1) THEN BEGIN\n    RETURN n;\n  END\n  IF (Tabla[n] != -1) THEN BEGIN\n    RETURN Tabla[n];\n  END\n  Tabla[n] <- fibTD(n - 1, Tabla) + fibTD(n - 2, Tabla);\n  RETURN Tabla[n];\nEND"
+            },
+            {
+              "id": "blk-fibonacci-bottomup",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Fibonacci Bottom-Up",
+              "code": "fibBU(n) BEGIN\n  Tabla[0] <- 0;\n  Tabla[1] <- 1;\n  FOR i <- 2 TO n DO BEGIN\n    Tabla[i] <- Tabla[i - 1] + Tabla[i - 2];\n  END\n  RETURN Tabla[n];\nEND"
+            },
+            {
+              "id": "blk-fibonacci-comparacion-table",
+              "type": "table",
+              "title": "Comparación de Fibonacci ingenuo vs PD",
+              "columns": [
+                {
+                  "key": "version",
+                  "label": "Versión"
+                },
+                {
+                  "key": "idea",
+                  "label": "Idea"
+                },
+                {
+                  "key": "tiempo",
+                  "label": "Tiempo"
+                },
+                {
+                  "key": "espacio",
+                  "label": "Espacio"
+                },
+                {
+                  "key": "comentario",
+                  "label": "Comentario"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recursiva ingenua"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Llama Fib(n−1) y Fib(n−2) sin memoria."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(2^n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recalcula muchos subproblemas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Top-Down con memoización"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Conserva recursión, pero guarda estados."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Calcula cada Fib(k) una sola vez, pero mantiene pila."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Bottom-Up"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Llena desde Fib(0) hasta Fib(n)."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Evita recursión y facilita optimización espacial."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Bottom-Up optimizado"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solo guarda los dos últimos valores."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No permite reconstruir tabla completa, pero basta para el valor."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-optimizado",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Fibonacci Bottom-Up con espacio O(1)",
+              "code": "fibBUOptimizado(n) BEGIN\n  IF (n = 0 OR n = 1) THEN BEGIN\n    RETURN n;\n  END\n  anterior2 <- 0;\n  anterior1 <- 1;\n  FOR i <- 2 TO n DO BEGIN\n    actual <- anterior1 + anterior2;\n    anterior2 <- anterior1;\n    anterior1 <- actual;\n  END\n  RETURN actual;\nEND"
+            },
+            {
+              "id": "blk-fibonacci-conclusion",
+              "type": "note",
+              "variant": "success",
+              "title": "Conclusión",
+              "blocks": [
+                {
+                  "id": "blk-fibonacci-conclusion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Fibonacci sí justifica Programación Dinámica: hay subproblemas superpuestos, cada estado "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Fib(k)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " se calcula una sola vez y el tiempo baja de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(2^n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " a "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Esta es la diferencia real entre recursión ingenua y PD."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-cierre-parte-uno-pd",
+          "slug": "cierre-parte-uno-pd",
+          "title": "Cierre de la parte 1",
+          "order": 8,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "learningObjectives": [
+            {
+              "objectiveId": "consolidar-parte-uno-pd",
+              "text": "Consolidar el flujo correcto para diseñar una solución de Programación Dinámica."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelado-recursivo-antes-de-pd",
+                "kind": "required"
+              },
+              {
+                "id": "sec-de-modelo-recursivo-a-modelo-pd",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-cierre-parte-uno-resumen",
+              "type": "note",
+              "variant": "success",
+              "title": "Resumen operativo",
+              "blocks": [
+                {
+                  "id": "blk-cierre-parte-uno-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Verifica que el problema tenga subestructura óptima y subproblemas superpuestos."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define el modelo recursivo: estado, casos base, transición y respuesta final."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Convierte el estado en tabla o memoria."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Convierte los casos base en inicialización."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Convierte el caso general en fórmula de llenado."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Escoge Top-Down si quieres conservar la recursión; escoge Bottom-Up si quieres controlar el orden de cálculo."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si necesitas la solución explícita, guarda decisiones en una tabla de caminos y reconstruye hacia atrás."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-cierre-parte-uno-siguiente",
+              "type": "note",
+              "variant": "info",
+              "title": "Alcance de la parte 2",
+              "blocks": [
+                {
+                  "id": "blk-cierre-parte-uno-siguiente-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La segunda parte debe continuar con comparación formal Top-Down vs Bottom-Up, LCS completo, patrones de modelado en 1D/2D, reconstrucción de solución, errores típicos y resumen operativo final."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chapterId": "cap-programacion-dinamica-parte-2",
+      "slug": "programacion-dinamica-parte-2",
+      "title": "Programación Dinámica — Parte 2",
+      "order": 2,
+      "summary": "Comparación de enfoques, LCS completo, reconstrucción de soluciones, patrones y errores típicos.",
+      "sections": [
+        {
+          "sectionId": "sec-comparacion-top-down-bottom-up",
+          "slug": "comparacion-top-down-bottom-up",
+          "title": "Comparación Top-Down vs Bottom-Up",
+          "order": 9,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "comparar-implementacion",
+              "text": "Comparar las diferencias de implementación entre Top-Down y Bottom-Up."
+            },
+            {
+              "objectiveId": "comparar-costos",
+              "text": "Comparar tiempo, espacio y constantes de ambos enfoques."
+            },
+            {
+              "objectiveId": "decidir-enfoque",
+              "text": "Decidir qué enfoque usar según el patrón de llenado."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-de-modelo-recursivo-a-modelo-pd",
+                "kind": "required"
+              },
+              {
+                "id": "sec-ejemplo-fibonacci-pd",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-comparacion-td-bu-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Top-Down y Bottom-Up resuelven el mismo modelo de Programación Dinámica, pero recorren los estados de forma distinta. Top-Down conserva la recursión y calcula bajo demanda. Bottom-Up elimina la recursión y llena la tabla en un orden explícito."
+                }
+              ]
+            },
+            {
+              "id": "blk-comparacion-td-bu-table",
+              "type": "table",
+              "title": "Comparación Top-Down vs Bottom-Up",
+              "columns": [
+                {
+                  "key": "aspecto",
+                  "label": "Aspecto"
+                },
+                {
+                  "key": "topDown",
+                  "label": "Top-Down (Memoización)"
+                },
+                {
+                  "key": "bottomUp",
+                  "label": "Bottom-Up (Iterativo)"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Implementación"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recursiva. Modifica el recursivo original agregando memoria."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Iterativa. Usa ciclos para llenar tablas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Orden de resolución"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Resuelve solo los subproblemas necesarios."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Resuelve todos los subproblemas definidos por la tabla."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Patrón de llenado"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Puede ser irregular y dependiente de la entrada."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suele ser regular: filas, columnas, diagonales o longitudes crecientes."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Tiempo"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Mismo orden asintótico sobre los estados efectivamente resueltos."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Mismo orden asintótico si se llenan los mismos estados."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Espacio"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Tabla o diccionario de memoización más pila recursiva."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solo tablas, sin pila recursiva."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Constantes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Peores: entrar y salir de cada ambiente recursivo cuesta."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Mejores: no hay overhead de pila."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Veredicto de uso"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Útil cuando el patrón de estados es irregular."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Preferible cuando el patrón de llenado es regular."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-veredicto-td-bu",
+              "type": "note",
+              "variant": "warning",
+              "title": "Veredicto práctico",
+              "blocks": [
+                {
+                  "id": "blk-veredicto-td-bu-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si puedes identificar un orden claro de llenado de la tabla, usa Bottom-Up. Si no puedes porque los estados dependen de la entrada o aparecen de forma irregular, usa Top-Down. No es una decisión estética: es una decisión de dependencias."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-decision-td-bu-mermaid",
+              "type": "mermaid",
+              "title": "Decisión entre Top-Down y Bottom-Up",
+              "code": "flowchart TD\n A[\"Modelo recursivo de PD\"] --> B{\"¿Existe orden claro de llenado?\"}\n B -- \"Sí\" --> C[\"Bottom-Up\"]\n B -- \"No\" --> D[\"Top-Down con memoización\"]\n C --> E{\"¿Solo necesito el valor?\"}\n E -- \"Sí\" --> F[\"Optimizar espacio si depende de pocas filas/estados\"]\n E -- \"No\" --> G[\"Guardar tabla de caminos\"]\n D --> H{\"¿La profundidad puede ser grande?\"}\n H -- \"Sí\" --> I[\"Cuidado con pila / considerar Bottom-Up si es posible\"]\n H -- \"No\" --> J[\"Memoización aceptable\"]"
+            },
+            {
+              "id": "blk-constantes-td-bu",
+              "type": "note",
+              "variant": "info",
+              "title": "Mismo orden no significa mismo tiempo real",
+              "blocks": [
+                {
+                  "id": "blk-constantes-td-bu-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Dos versiones pueden tener el mismo orden asintótico y aun así tener tiempos reales distintos. Bottom-Up suele tener mejores constantes porque evita el costo fijo de crear y destruir ambientes recursivos."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-lcs-planteamiento",
+          "slug": "lcs-planteamiento",
+          "title": "LCS — Planteamiento del problema",
+          "order": 10,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "definir-lcs",
+              "text": "Definir el problema de la subsecuencia común más larga."
+            },
+            {
+              "objectiveId": "diferenciar-subsecuencia-subcadena",
+              "text": "Diferenciar subsecuencia de subcadena."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-requisitos-programacion-dinamica",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-lcs-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Dadas dos cadenas "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X"
+                },
+                {
+                  "type": "text",
+                  "text": " de longitud "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "m"
+                },
+                {
+                  "type": "text",
+                  "text": " y "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "Y"
+                },
+                {
+                  "type": "text",
+                  "text": " de longitud "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": ", el problema LCS busca la longitud de la subsecuencia más larga que aparece en ambas cadenas."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-subsecuencia",
+              "type": "definition",
+              "title": "Subsecuencia",
+              "blocks": [
+                {
+                  "id": "blk-lcs-subsecuencia-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Una subsecuencia conserva el orden relativo de los caracteres, pero no exige que estén consecutivos. Por eso "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "B,C,D,B"
+                    },
+                    {
+                      "type": "text",
+                      "text": " puede ser subsecuencia de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "A,B,C,B,D,A,B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-datos-curso",
+              "type": "table",
+              "title": "Ejemplo del curso",
+              "columns": [
+                {
+                  "key": "elemento",
+                  "label": "Elemento"
+                },
+                {
+                  "key": "valor",
+                  "label": "Valor"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cadena X"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "AACCCGGTAGTA"
+                      },
+                      {
+                        "type": "text",
+                        "text": " con "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "m=12"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cadena Y"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "GCAATTTGGGGCTA"
+                      },
+                      {
+                        "type": "text",
+                        "text": " con "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n=14"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Resultado esperado"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "LCS=7"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-cuidado-subcadena",
+              "type": "note",
+              "variant": "warning",
+              "title": "No confundir subsecuencia con subcadena",
+              "blocks": [
+                {
+                  "id": "blk-lcs-cuidado-subcadena-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Una subcadena debe ser consecutiva. Una subsecuencia no. LCS trabaja con subsecuencias, por eso puede saltar caracteres mientras conserve el orden."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-lcs-modelo-recursivo",
+          "slug": "lcs-modelo-recursivo",
+          "title": "LCS — Paso 1: construir el modelo recursivo",
+          "order": 11,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "construir-estado-lcs",
+              "text": "Definir el estado LCS(i,j)."
+            },
+            {
+              "objectiveId": "identificar-casos-lcs",
+              "text": "Identificar los casos de coincidencia y no coincidencia de caracteres."
+            },
+            {
+              "objectiveId": "verificar-optimalidad-lcs",
+              "text": "Verificar el principio de optimalidad para LCS."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelado-recursivo-antes-de-pd",
+                "kind": "required"
+              },
+              {
+                "id": "sec-lcs-planteamiento",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-lcs-modelo-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Como en cualquier problema de PD, primero se modela recursivamente. En LCS se comparan los últimos caracteres de los prefijos "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X[1..i]"
+                },
+                {
+                  "type": "text",
+                  "text": " y "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "Y[1..j]"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-estado",
+              "type": "definition",
+              "title": "Estado",
+              "blocks": [
+                {
+                  "id": "blk-lcs-estado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "LCS(i,j)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " representa la longitud de la subsecuencia común más larga entre los prefijos "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "X[1..i]"
+                    },
+                    {
+                      "type": "text",
+                      "text": " y "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Y[1..j]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-modelo-steps",
+              "type": "latexSteps",
+              "title": "Modelo recursivo de LCS",
+              "steps": [
+                {
+                  "stepId": "step-lcs-cb",
+                  "title": "Caso base",
+                  "latex": "LCS(i,0)=0,\\quad LCS(0,j)=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Si alguna cadena está vacía, no hay caracteres comunes."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-lcs-eq",
+                  "title": "Caracteres iguales",
+                  "latex": "X[i]=Y[j]\\Rightarrow LCS(i,j)=1+LCS(i-1,j-1)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Si los últimos caracteres coinciden, ese carácter puede formar parte de una LCS."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-lcs-neq",
+                  "title": "Caracteres distintos",
+                  "latex": "X[i]\\ne Y[j]\\Rightarrow LCS(i,j)=\\max\\{LCS(i-1,j),LCS(i,j-1)\\}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Si no coinciden, se prueba descartar el último carácter de una cadena o de la otra."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-lcs-ans",
+                  "title": "Respuesta final",
+                  "latex": "\\text{Respuesta}=LCS(m,n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El problema original usa las dos cadenas completas."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-modelo-completo",
+              "type": "equationBlock",
+              "title": "Recurrencia completa",
+              "latex": "LCS(i,j)=\\begin{cases}0,& i=0\\ \\text{o}\\ j=0\\\\1+LCS(i-1,j-1),& X[i]=Y[j]\\\\\\max\\{LCS(i-1,j),LCS(i,j-1)\\},& X[i]\\ne Y[j]\\end{cases}"
+            },
+            {
+              "id": "blk-lcs-modelo-completo-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Aquí, los parámetros "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i"
+                },
+                {
+                  "type": "text",
+                  "text": " y "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "j"
+                },
+                {
+                  "type": "text",
+                  "text": " indican los prefijos de las cadenas "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X"
+                },
+                {
+                  "type": "text",
+                  "text": " e "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "Y"
+                },
+                {
+                  "type": "text",
+                  "text": ". La condición "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X[i]=Y[j]"
+                },
+                {
+                  "type": "text",
+                  "text": " suma 1 al óptimo anterior porque hemos encontrado un carácter común. Si no coinciden, usamos "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\max"
+                },
+                {
+                  "type": "text",
+                  "text": " para elegir la mejor decisión entre avanzar en una cadena u otra."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-principio-optimalidad",
+              "type": "note",
+              "variant": "success",
+              "title": "Verificación del principio de optimalidad",
+              "blocks": [
+                {
+                  "id": "blk-lcs-principio-optimalidad-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si la LCS óptima de dos prefijos incluye el carácter final común, la parte anterior también debe ser una LCS óptima de los prefijos anteriores. Si no lo fuera, podría reemplazarse por una mejor y se obtendría una LCS total más larga, contradicción."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-subproblemas-superpuestos",
+              "type": "note",
+              "variant": "info",
+              "title": "Dónde aparece el solapamiento",
+              "blocks": [
+                {
+                  "id": "blk-lcs-subproblemas-superpuestos-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "El mismo par "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "(i,j)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " puede alcanzarse desde varias ramas de la recursión. Esa repetición es exactamente lo que justifica Programación Dinámica."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-lcs-traduccion-pd",
+          "slug": "lcs-traduccion-pd",
+          "title": "LCS — Paso 2: traducir el modelo a PD",
+          "order": 12,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "traducir-estado-lcs",
+              "text": "Traducir LCS(i,j) a dp[i][j]."
+            },
+            {
+              "objectiveId": "definir-tablas-lcs",
+              "text": "Definir tabla de óptimos y tabla de caminos para LCS."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-lcs-modelo-recursivo",
+                "kind": "required"
+              },
+              {
+                "id": "sec-estructuras-datos-programacion-dinamica",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-lcs-traduccion-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Después de escribir el modelo recursivo, cada estado "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "LCS(i,j)"
+                },
+                {
+                  "type": "text",
+                  "text": " se convierte en una celda "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "dp[i][j]"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-traduccion-table",
+              "type": "table",
+              "title": "Traducción del modelo recursivo a PD",
+              "columns": [
+                {
+                  "key": "modeloRecursivo",
+                  "label": "Modelo recursivo"
+                },
+                {
+                  "key": "modeloPd",
+                  "label": "Modelo de PD"
+                },
+                {
+                  "key": "comentario",
+                  "label": "Comentario"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "LCS(i,j)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][j]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Valor óptimo del subproblema de prefijos."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "LCS(i,0)=0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][0]=0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Primera columna inicializada en cero."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "LCS(0,j)=0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[0][j]=0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Primera fila inicializada en cero."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]=Y[j]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][j]=1+dp[i-1][j-1]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Movimiento diagonal; se guarda coincidencia."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]\\ne Y[j]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][j]=\\max(dp[i-1][j],dp[i][j-1])"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Se toma la mejor alternativa entre descartar de X o descartar de Y."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-modelo-pd-completo",
+              "type": "equationBlock",
+              "title": "Modelo de PD completo",
+              "latex": "dp[i][j]=\\begin{cases}0,& i=0\\ \\text{o}\\ j=0\\\\1+dp[i-1][j-1],& X[i]=Y[j]\\\\\\max\\{dp[i-1][j],dp[i][j-1]\\},& X[i]\\ne Y[j]\\end{cases}"
+            },
+            {
+              "id": "blk-lcs-modelo-pd-completo-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La celda "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "dp[i][j]"
+                },
+                {
+                  "type": "text",
+                  "text": " de la tabla almacena la longitud de la LCS calculada hasta los prefijos actuales. Al igual que en el modelo recursivo, si hay un fallo de coincidencia, la función "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\max"
+                },
+                {
+                  "type": "text",
+                  "text": " nos permite conservar el mejor valor alcanzado en los estados vecinos."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-tablas-necesarias",
+              "type": "table",
+              "title": "Tablas usadas en LCS",
+              "columns": [
+                {
+                  "key": "tabla",
+                  "label": "Tabla"
+                },
+                {
+                  "key": "contenido",
+                  "label": "Contenido"
+                },
+                {
+                  "key": "necesariaPara",
+                  "label": "Necesaria para"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Longitud óptima de cada subproblema."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Conocer la longitud final de la LCS."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "path"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Decisión que produjo cada celda: diagonal, arriba o izquierda."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Reconstruir una LCS concreta."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-solo-valor-vs-solucion",
+              "type": "note",
+              "variant": "warning",
+              "title": "Valor no es solución",
+              "blocks": [
+                {
+                  "id": "blk-lcs-solo-valor-vs-solucion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La celda "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "dp[m][n]"
+                    },
+                    {
+                      "type": "text",
+                      "text": " devuelve la longitud de la LCS. Si quieres la subsecuencia, necesitas reconstruir el camino. No confundas el valor óptimo con la solución explícita."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-lcs-inicializacion-y-llenado",
+          "slug": "lcs-inicializacion-y-llenado",
+          "title": "LCS — Pasos 3 y 4: inicializar y llenar la tabla",
+          "order": 13,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 16,
+          "learningObjectives": [
+            {
+              "objectiveId": "inicializar-lcs",
+              "text": "Inicializar la primera fila y columna de la tabla de LCS."
+            },
+            {
+              "objectiveId": "llenar-lcs-bottom-up",
+              "text": "Llenar la tabla Bottom-Up de LCS por filas."
+            },
+            {
+              "objectiveId": "respetar-dependencias-lcs",
+              "text": "Respetar las dependencias arriba, izquierda y diagonal."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-lcs-traduccion-pd",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-lcs-inicializacion-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La inicialización viene directamente del caso base: si un prefijo tiene longitud cero, la LCS mide cero."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-inicializacion-steps",
+              "type": "latexSteps",
+              "title": "Inicialización",
+              "steps": [
+                {
+                  "stepId": "step-lcs-init-row",
+                  "title": "Primera fila",
+                  "latex": "dp[0][j]=0\\quad \\text{para }0\\le j\\le n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Una cadena vacía no tiene caracteres comunes con ningún prefijo de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Y"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-lcs-init-col",
+                  "title": "Primera columna",
+                  "latex": "dp[i][0]=0\\quad \\text{para }0\\le i\\le m",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Ningún prefijo de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "X"
+                    },
+                    {
+                      "type": "text",
+                      "text": " tiene subsecuencia común no vacía con una cadena vacía."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-llenado-formula",
+              "type": "latexSteps",
+              "title": "Llenado Bottom-Up por filas",
+              "steps": [
+                {
+                  "stepId": "step-lcs-loop-i",
+                  "title": "Recorrer filas",
+                  "latex": "i=1,2,\\ldots,m",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Cada fila representa un prefijo de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "X"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-lcs-loop-j",
+                  "title": "Recorrer columnas",
+                  "latex": "j=1,2,\\ldots,n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Cada columna representa un prefijo de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Y"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-lcs-match",
+                  "title": "Si coinciden",
+                  "latex": "X[i]=Y[j]\\Rightarrow dp[i][j]=dp[i-1][j-1]+1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Se usa la diagonal porque ambos caracteres se incorporan a la subsecuencia."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-lcs-no-match",
+                  "title": "Si no coinciden",
+                  "latex": "X[i]\\ne Y[j]\\Rightarrow dp[i][j]=\\max(dp[i-1][j],dp[i][j-1])",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Se toma la mejor alternativa entre ignorar el carácter actual de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "X"
+                    },
+                    {
+                      "type": "text",
+                      "text": " o ignorar el carácter actual de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "Y"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-dependencias-mermaid",
+              "type": "mermaid",
+              "title": "Dependencias de una celda dp[i][j]",
+              "code": "flowchart TD\n A[\"dp[i-1][j-1]\\nDiagonal\"] --> D[\"dp[i][j]\"]\n B[\"dp[i-1][j]\\nArriba\"] --> D\n C[\"dp[i][j-1]\\nIzquierda\"] --> D\n D --> E[\"Valor óptimo del prefijo X[1..i], Y[1..j]\"]"
+            },
+            {
+              "id": "blk-lcs-pseudocodigo-bottomup",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "LCS Bottom-Up",
+              "code": "LCS(X[m], Y[n]) BEGIN\n FOR i <- 0 TO m DO BEGIN\n dp[i][0] <- 0;\n END\n FOR j <- 0 TO n DO BEGIN\n dp[0][j] <- 0;\n END\n\n FOR i <- 1 TO m DO BEGIN\n FOR j <- 1 TO n DO BEGIN\n IF (X[i] = Y[j]) THEN BEGIN\n dp[i][j] <- dp[i - 1][j - 1] + 1;\n path[i][j] <- \"diagonal\";\n END\n ELSE BEGIN\n IF (dp[i - 1][j] >= dp[i][j - 1]) THEN BEGIN\n dp[i][j] <- dp[i - 1][j];\n path[i][j] <- \"arriba\";\n END\n ELSE BEGIN\n dp[i][j] <- dp[i][j - 1];\n path[i][j] <- \"izquierda\";\n END\n END\n END\n END\n\n RETURN dp[m][n];\nEND"
+            },
+            {
+              "id": "blk-lcs-complejidad-bottomup",
+              "type": "note",
+              "variant": "success",
+              "title": "Complejidad",
+              "blocks": [
+                {
+                  "id": "blk-lcs-complejidad-bottomup-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La tabla tiene "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "(m+1)(n+1)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " celdas y cada celda se llena en tiempo constante. Por tanto, el tiempo es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(mn)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " y el espacio es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(mn)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " si se guarda toda la tabla."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-lcs-tabla-optimos",
+          "slug": "lcs-tabla-optimos",
+          "title": "LCS — Paso 5: tabla de óptimos",
+          "order": 14,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-tabla-lcs",
+              "text": "Leer una tabla de óptimos de LCS."
+            },
+            {
+              "objectiveId": "interpretar-celdas-lcs",
+              "text": "Interpretar cada celda como la respuesta de un subproblema."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-lcs-inicializacion-y-llenado",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-lcs-tabla-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La tabla de óptimos no es una tabla decorativa: cada celda tiene significado. "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "dp[i][j]"
+                },
+                {
+                  "type": "text",
+                  "text": " responde cuál es la longitud de la LCS entre los primeros "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i"
+                },
+                {
+                  "type": "text",
+                  "text": " caracteres de "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X"
+                },
+                {
+                  "type": "text",
+                  "text": " y los primeros "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "j"
+                },
+                {
+                  "type": "text",
+                  "text": " caracteres de "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "Y"
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-tabla-mini",
+              "type": "table",
+              "title": "Mini ejemplo de tabla LCS para X = ABC y Y = AC",
+              "columns": [
+                {
+                  "key": "fila",
+                  "label": "X/Y"
+                },
+                {
+                  "key": "empty",
+                  "label": "∅"
+                },
+                {
+                  "key": "a",
+                  "label": "A"
+                },
+                {
+                  "key": "c",
+                  "label": "C"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "∅"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "B"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "C"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-mini-lectura",
+              "type": "latexSteps",
+              "title": "Lectura del mini ejemplo",
+              "steps": [
+                {
+                  "stepId": "step-mini-lcs-match",
+                  "title": "Primera coincidencia",
+                  "latex": "X[1]=A,\\quad Y[1]=A\\Rightarrow dp[1][1]=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "La diagonal suma 1 porque los caracteres coinciden."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-mini-lcs-no-match",
+                  "title": "Carácter B no mejora",
+                  "latex": "X[2]=B,\\quad Y[2]=C\\Rightarrow dp[2][2]=\\max(1,1)=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "No hay coincidencia, así que se conserva el mejor valor anterior."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-mini-lcs-final",
+                  "title": "Coincidencia final",
+                  "latex": "X[3]=C,\\quad Y[2]=C\\Rightarrow dp[3][2]=dp[2][1]+1=2",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "La LCS final tiene longitud 2: "
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "AC"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-tabla-curso-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Resultado del ejemplo del curso",
+              "blocks": [
+                {
+                  "id": "blk-lcs-tabla-curso-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Para "
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "AACCCGGTAGTA"
+                    },
+                    {
+                      "type": "text",
+                      "text": " y "
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "GCAATTTGGGGCTA"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", la longitud de la subsecuencia común más larga es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "LCS=7"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-lcs-reconstruccion",
+          "slug": "lcs-reconstruccion",
+          "title": "LCS — Paso 6: reconstruir la solución",
+          "order": 15,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "reconstruir-desde-final",
+              "text": "Reconstruir una LCS empezando desde dp[m][n]."
+            },
+            {
+              "objectiveId": "interpretar-movimientos",
+              "text": "Interpretar movimientos diagonal, arriba e izquierda."
+            },
+            {
+              "objectiveId": "entender-empates",
+              "text": "Entender que puede haber más de una LCS válida por empates."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-lcs-tabla-optimos",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-lcs-reconstruccion-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El recorrido hacia atrás empieza en "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "dp[m][n]"
+                },
+                {
+                  "type": "text",
+                  "text": ". Desde ahí se siguen las decisiones hasta llegar a la primera fila o primera columna."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-reconstruccion-movimientos-table",
+              "type": "table",
+              "title": "Movimientos de reconstrucción",
+              "columns": [
+                {
+                  "key": "movimiento",
+                  "label": "Movimiento"
+                },
+                {
+                  "key": "condicion",
+                  "label": "Condición"
+                },
+                {
+                  "key": "accion",
+                  "label": "Acción"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Diagonal"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]=Y[j]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Agregar ese carácter a la solución y mover a "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(i-1,j-1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Arriba"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i-1][j]\\ge dp[i][j-1]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Mover a "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(i-1,j)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " descartando "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Izquierda"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][j-1]>dp[i-1][j]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Mover a "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(i,j-1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " descartando "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "Y[j]"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-reconstruccion-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Reconstrucción de una LCS",
+              "code": "reconstruirLCS(X[m], Y[n], dp[m][n]) BEGIN\n i <- m;\n j <- n;\n solucion <- \"\";\n\n WHILE (i > 0 AND j > 0) DO BEGIN\n IF (X[i] = Y[j]) THEN BEGIN\n solucion <- X[i] + solucion;\n i <- i - 1;\n j <- j - 1;\n END\n ELSE BEGIN\n IF (dp[i - 1][j] >= dp[i][j - 1]) THEN BEGIN\n i <- i - 1;\n END\n ELSE BEGIN\n j <- j - 1;\n END\n END\n END\n\n RETURN solucion;\nEND"
+            },
+            {
+              "id": "blk-lcs-reconstruccion-steps",
+              "type": "latexSteps",
+              "title": "Esquema matemático del recorrido",
+              "steps": [
+                {
+                  "stepId": "step-reconstruction-init",
+                  "title": "Inicio",
+                  "latex": "(i,j)=(m,n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Se empieza desde el problema completo."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-reconstruction-match",
+                  "title": "Si hay coincidencia",
+                  "latex": "X[i]=Y[j]\\Rightarrow agregar\\ X[i],\\ i\\leftarrow i-1,\\ j\\leftarrow j-1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El carácter agregado debe ponerse al inicio de la solución acumulada porque el recorrido va hacia atrás."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-reconstruction-no-match",
+                  "title": "Si no hay coincidencia",
+                  "latex": "mover\\ al\\ vecino\\ con\\ mayor\\ valor",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Ese vecino representa el subproblema que conservó el óptimo."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-reconstruction-end",
+                  "title": "Fin",
+                  "latex": "i=0\\ \\text{o}\\ j=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Al llegar a una cadena vacía, ya no se pueden agregar más caracteres."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-empates",
+              "type": "note",
+              "variant": "warning",
+              "title": "Puede haber varias LCS",
+              "blocks": [
+                {
+                  "id": "blk-lcs-empates-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Cuando "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "dp[i-1][j]=dp[i][j-1]"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", hay empate. Elegir arriba o izquierda puede reconstruir una LCS distinta, pero con la misma longitud óptima. Eso no es error."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-reconstruccion-complejidad",
+              "type": "note",
+              "variant": "info",
+              "title": "Costo de reconstrucción",
+              "blocks": [
+                {
+                  "id": "blk-lcs-reconstruccion-complejidad-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "El recorrido hacia atrás da como máximo "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "m+n"
+                    },
+                    {
+                      "type": "text",
+                      "text": " pasos, porque en cada movimiento disminuye "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "i"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "j"
+                    },
+                    {
+                      "type": "text",
+                      "text": " o ambos."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-lcs-top-down",
+          "slug": "lcs-top-down",
+          "title": "LCS Top-Down con memoización",
+          "order": 16,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "implementar-lcs-topdown",
+              "text": "Implementar LCS con recursión y memoización."
+            },
+            {
+              "objectiveId": "comparar-lcs-topdown-bottomup",
+              "text": "Comparar LCS Top-Down contra Bottom-Up."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-lcs-modelo-recursivo",
+                "kind": "required"
+              },
+              {
+                "id": "sec-comparacion-top-down-bottom-up",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-lcs-topdown-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La versión Top-Down copia casi literalmente el modelo recursivo. La única diferencia es que antes de resolver un estado revisa si ya está guardado."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-modelo-topdown-completo",
+              "type": "equationBlock",
+              "title": "Modelo Top-Down (mismo modelo, con memoización)",
+              "latex": "LCS(i,j)=\\begin{cases}0,& i=0\\ \\text{o}\\ j=0\\\\1+LCS(i-1,j-1),& X[i]=Y[j]\\\\\\max\\{LCS(i-1,j),LCS(i,j-1)\\},& X[i]\\ne Y[j]\\end{cases}"
+            },
+            {
+              "id": "blk-lcs-modelo-topdown-completo-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El modelo Top-Down mantiene la estructura recursiva original, pero utiliza una tabla de memoización para almacenar y reutilizar los resultados de los subproblemas "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "(i, j)"
+                },
+                {
+                  "type": "text",
+                  "text": " ya resueltos, evitando así el costo exponencial de los cálculos repetidos."
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-topdown-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "LCS Top-Down",
+              "code": "LCSTD(X[m], Y[n], i, j, memo[m][n]) BEGIN\n IF (i = 0 OR j = 0) THEN BEGIN\n RETURN 0;\n END\n\n IF (memo[i][j] != -1) THEN BEGIN\n RETURN memo[i][j];\n END\n\n IF (X[i] = Y[j]) THEN BEGIN\n memo[i][j] <- 1 + LCSTD(X, Y, i - 1, j - 1, memo);\n END\n ELSE BEGIN\n a <- LCSTD(X, Y, i - 1, j, memo);\n b <- LCSTD(X, Y, i, j - 1, memo);\n memo[i][j] <- max(a, b);\n END\n\n RETURN memo[i][j];\nEND"
+            },
+            {
+              "id": "blk-lcs-topdown-complejidad",
+              "type": "note",
+              "variant": "success",
+              "title": "Complejidad Top-Down",
+              "blocks": [
+                {
+                  "id": "blk-lcs-topdown-complejidad-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Hay como máximo "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "mn"
+                    },
+                    {
+                      "type": "text",
+                      "text": " estados distintos. Cada estado se calcula una sola vez. Por tanto, el tiempo es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(mn)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". El espacio es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(mn)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " por memoización más pila recursiva de profundidad "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(m+n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-lcs-topdown-cuando",
+              "type": "note",
+              "variant": "info",
+              "title": "Cuándo preferir esta versión",
+              "blocks": [
+                {
+                  "id": "blk-lcs-topdown-cuando-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Para LCS clásico, Bottom-Up es más natural porque el patrón de llenado es rectangular y regular. Top-Down sirve mejor para enseñar el vínculo con el modelo recursivo o para variantes donde no todos los estados se visitan."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-patrones-modelado-pd",
+          "slug": "patrones-modelado-pd",
+          "title": "Patrones de modelado en Programación Dinámica",
+          "order": 17,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "reconocer-patrones-estado",
+              "text": "Reconocer patrones frecuentes de estado en PD."
+            },
+            {
+              "objectiveId": "elegir-dimension-tabla",
+              "text": "Elegir la dimensión de la tabla según los parámetros del estado."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelado-recursivo-antes-de-pd",
+                "kind": "required"
+              },
+              {
+                "id": "sec-lcs-modelo-recursivo",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-patrones-modelado-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La dimensión de la tabla no se decide al azar. Sale directamente del estado. Un estado con un parámetro suele producir una tabla 1D; un estado con dos parámetros suele producir una tabla 2D."
+                }
+              ]
+            },
+            {
+              "id": "blk-patrones-modelado-table",
+              "type": "table",
+              "title": "Patrones frecuentes de modelado",
+              "columns": [
+                {
+                  "key": "patron",
+                  "label": "Patrón"
+                },
+                {
+                  "key": "estado",
+                  "label": "Estado típico"
+                },
+                {
+                  "key": "tabla",
+                  "label": "Tabla"
+                },
+                {
+                  "key": "ejemplos",
+                  "label": "Ejemplos"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Secuencia 1D"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "S(i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Fibonacci, escalones, suma máxima lineal."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Dos prefijos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "S(i,j)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][j]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "LCS, distancia de edición, alineamiento de cadenas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Índice y capacidad"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "S(i,w)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][w]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Mochila 0/1, cambio de monedas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Intervalos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "S(i,j)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][j]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Multiplicación de matrices, palíndromos, árboles óptimos."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Estado con decisión anterior"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "S(i,estado)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i][estado]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Problemas con restricciones de tomar/no tomar consecutivamente."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-reglas-modelado-pd",
+              "type": "note",
+              "variant": "success",
+              "title": "Reglas para elegir estado",
+              "blocks": [
+                {
+                  "id": "blk-reglas-modelado-pd-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "El estado debe contener toda la información necesaria para decidir el subproblema."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "El estado no debe contener información que pueda derivarse de otros parámetros."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "La transición debe apuntar a estados más pequeños o ya calculados."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "La respuesta final debe estar identificada antes de escribir código."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-optimizacion-espacial-pd",
+          "slug": "optimizacion-espacial-pd",
+          "title": "Optimización espacial en PD",
+          "order": 18,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "identificar-dependencias-locales",
+              "text": "Identificar cuándo una tabla puede reducirse a una o dos filas."
+            },
+            {
+              "objectiveId": "distinguir-valor-vs-reconstruccion",
+              "text": "Distinguir cuándo la optimización espacial impide reconstruir la solución."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-lcs-inicializacion-y-llenado",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-optimizacion-espacial-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Muchas tablas de PD parecen necesitar toda la matriz, pero para calcular el valor final a veces basta conservar una parte pequeña. La regla es mirar las dependencias de cada celda."
+                }
+              ]
+            },
+            {
+              "id": "blk-optimizacion-espacial-table",
+              "type": "table",
+              "title": "Cuándo se puede reducir espacio",
+              "columns": [
+                {
+                  "key": "caso",
+                  "label": "Caso"
+                },
+                {
+                  "key": "dependencia",
+                  "label": "Dependencia"
+                },
+                {
+                  "key": "espacioReducido",
+                  "label": "Espacio reducido"
+                },
+                {
+                  "key": "cuidado",
+                  "label": "Cuidado"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Fibonacci"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "dp[i-1],dp[i-2]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solo sirve si se necesita el valor final."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "LCS valor"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Fila anterior y fila actual."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Se pierde el camino completo si no se guarda información extra."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Mochila 0/1 valor"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Fila anterior o vector recorrido en orden correcto."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(W)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El orden del ciclo interno puede cambiar el significado del algoritmo."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-optimizacion-espacial-warning",
+              "type": "note",
+              "variant": "warning",
+              "title": "No optimices antes de entender",
+              "blocks": [
+                {
+                  "id": "blk-optimizacion-espacial-warning-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Primero diseña la tabla completa. Luego, si las dependencias lo permiten, reduces espacio. Optimizar antes de tener claro el modelo es una receta para dañar la transición."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-errores-tipicos-programacion-dinamica",
+          "slug": "errores-tipicos-programacion-dinamica",
+          "title": "Errores típicos en Programación Dinámica",
+          "order": 19,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "detectar-errores-pd-comunes",
+              "text": "Detectar errores frecuentes en diseño e implementación de PD."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelado-recursivo-antes-de-pd",
+                "kind": "required"
+              },
+              {
+                "id": "sec-lcs-modelo-recursivo",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-errores-pd-table",
+              "type": "table",
+              "title": "Errores frecuentes en Programación Dinámica",
+              "columns": [
+                {
+                  "key": "error",
+                  "label": "Error"
+                },
+                {
+                  "key": "porQueEstaMal",
+                  "label": "Por qué está mal"
+                },
+                {
+                  "key": "correccion",
+                  "label": "Corrección"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Empezar por la tabla sin modelo recursivo"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La tabla no tiene significado si no se sabe qué representa cada celda."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Definir primero estado, caso base, transición y respuesta final."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usar PD sin subproblemas superpuestos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Si no hay recálculo, la memoria no aporta valor real."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usar recursión, iteración o Divide y Vencerás según corresponda."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Inicializar mal los casos base"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Toda la tabla hereda el error desde la primera fila, columna o celda."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Copiar los casos base exactos del modelo recursivo."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Llenar la tabla en orden incorrecto"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Una celda puede depender de otra que todavía no existe."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Elegir orden por filas, columnas, diagonales o longitudes según dependencias."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "No guardar caminos cuando se necesita la solución"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El valor óptimo no dice qué decisiones lo produjeron."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Guardar tabla de caminos o reconstruir con reglas equivalentes."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Optimizar espacio y luego querer reconstruir"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Si borraste las filas anteriores, perdiste parte del camino."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Decidir desde el inicio si necesitas valor o solución explícita."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Confundir subsecuencia con subcadena en LCS"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cambia completamente la transición."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recordar: subsecuencia conserva orden, pero permite saltos."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-programacion-dinamica",
+          "slug": "resumen-operativo-programacion-dinamica",
+          "title": "Resumen operativo final",
+          "order": 20,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-receta-final-pd",
+              "text": "Consultar la receta final para diseñar soluciones de Programación Dinámica."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelado-recursivo-antes-de-pd",
+                "kind": "required"
+              },
+              {
+                "id": "sec-lcs-reconstruccion",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-resumen-final-pd",
+              "type": "note",
+              "variant": "success",
+              "title": "Receta completa",
+              "blocks": [
+                {
+                  "id": "blk-resumen-final-pd-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Verifica que el problema tenga subestructura óptima."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Verifica que existan subproblemas superpuestos."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define el estado con los parámetros mínimos necesarios."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Escribe casos base."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Escribe la transición recursiva."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Identifica la respuesta final."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Convierte el estado en tabla o memoria."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Inicializa la tabla usando los casos base."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define el orden de llenado respetando dependencias."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Llena la tabla."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Si se necesita la solución explícita, guarda caminos y reconstruye hacia atrás."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Analiza tiempo como número de estados por costo de transición."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Analiza espacio como tamaño de tabla, memoización, caminos y pila si aplica."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-formulas-clave-pd",
+              "type": "latexSteps",
+              "title": "Fórmulas clave",
+              "steps": [
+                {
+                  "stepId": "step-formula-time",
+                  "title": "Tiempo general",
+                  "latex": "T(n)=\\#estados\\cdot costo\\_transicion",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "En PD no se analiza solo la profundidad recursiva; se cuentan estados únicos."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-fib",
+                  "title": "Fibonacci",
+                  "latex": "Fib(i)=Fib(i-1)+Fib(i-2)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Estado 1D con transición constante; tiempo "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-lcs-eq",
+                  "title": "LCS",
+                  "latex": "dp[i][j]=\\begin{cases}dp[i-1][j-1]+1,& X[i]=Y[j]\\\\\\max(dp[i-1][j],dp[i][j-1]),& X[i]\\ne Y[j]\\end{cases}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Estado 2D con transición constante; tiempo "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(mn)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-lcs-space",
+                  "title": "Espacio LCS",
+                  "latex": "S(m,n)=\\Theta(mn)\\quad \\text{con reconstrucción completa}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Si solo se necesita la longitud, puede reducirse espacio; si se necesita reconstrucción, normalmente se conserva la tabla o caminos."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

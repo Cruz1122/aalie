@@ -1,0 +1,1834 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-tabla-sumatorias-comunes",
+  "slug": "tabla-sumatorias-comunes",
+  "title": "Tabla de Sumatorias Comunes",
+  "order": 9,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Sumatorias simples, dobles y patrones frecuentes usados en análisis de algoritmos. Incluye fórmulas cerradas, orden asintótico, contexto de aparición en código y propiedades útiles para transformar sumatorias.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 35,
+  "tags": [
+    "sumatorias",
+    "sumatorias-simples",
+    "sumatorias-dobles",
+    "sumatorias-triples",
+    "linealidad",
+    "telescopica",
+    "cambio-de-indice",
+    "ciclos-anidados",
+    "ciclos-logaritmicos",
+    "series-geometricas",
+    "serie-armonica",
+    "analisis-iterativo",
+    "recurrencias"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "tabla de sumatorias",
+      "sumatorias comunes",
+      "fórmulas de sumatorias",
+      "sumatorias para análisis de algoritmos",
+      "sumatorias simples y dobles",
+      "serie armónica",
+      "sumatoria geométrica",
+      "sumatoria telescópica"
+    ],
+    "keywords": [
+      "SUM(i=1..n) 1",
+      "SUM(i=1..n) i",
+      "SUM(i=1..n) i^2",
+      "SUM(i=1..n) i^3",
+      "SUM(i=0..n) r^i",
+      "SUM(i=1..n) 1/i",
+      "SUM(i=1..n) log i",
+      "SUM(i=1..n) SUM(j=1..i) 1",
+      "SUM(i=1..n) SUM(j=1..n) 1",
+      "linealidad",
+      "telescópica",
+      "reindexar",
+      "inversión de orden"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      { "id": "mod-complejidad-temporal-espacial", "kind": "required" },
+      { "id": "mod-algoritmos-iterativos-patrones-costos", "kind": "required" }
+    ],
+    "sections": [
+      { "id": "sec-ejemplo-for-simple", "kind": "required" },
+      { "id": "sec-ejemplo-ciclos-anidados-fijos", "kind": "required" },
+      { "id": "sec-ejemplo-for-limite-variable", "kind": "required" },
+      { "id": "sec-ejemplo-for-while-logaritmico", "kind": "required" },
+      { "id": "sec-patrones-tipicos-ciclos", "kind": "required" }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-complejidad-temporal-espacial",
+    "mod-algoritmos-iterativos-patrones-costos",
+    "mod-demostraciones-completas-teorema-limites"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "reconocer-sumatorias-en-algoritmos",
+      "text": "Reconocer cuándo un ciclo simple, anidado o logarítmico genera una sumatoria."
+    },
+    {
+      "objectiveId": "usar-sumatorias-simples",
+      "text": "Usar fórmulas cerradas de sumatorias simples de constantes, potencias, geométricas, logarítmicas y armónicas."
+    },
+    {
+      "objectiveId": "resolver-sumatorias-dobles",
+      "text": "Resolver sumatorias dobles de adentro hacia afuera, convirtiendo primero la sumatoria interna en una forma cerrada."
+    },
+    {
+      "objectiveId": "distinguir-limites-fijos-variables",
+      "text": "Distinguir dobles sumatorias con límites fijos, límites variables y ciclos internos logarítmicos."
+    },
+    {
+      "objectiveId": "aplicar-propiedades-sumatorias",
+      "text": "Aplicar linealidad, cambio de índice, telescópica, separación de términos e inversión de orden para simplificar sumatorias."
+    },
+    {
+      "objectiveId": "conectar-sumatorias-con-codigo",
+      "text": "Relacionar cada fórmula con el tipo de estructura de código donde aparece."
+    },
+    {
+      "objectiveId": "preparar-recurrencias",
+      "text": "Usar sumatorias como herramienta matemática base para el método de iteración y el árbol de recursión."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-sumatoria",
+      "label": "Sumatoria",
+      "definition": "Notación matemática usada para representar la suma acumulada de términos indexados."
+    },
+    {
+      "termId": "term-sumatoria-simple",
+      "label": "Sumatoria simple",
+      "definition": "Sumatoria con un solo índice. Aparece típicamente en ciclos simples."
+    },
+    {
+      "termId": "term-sumatoria-doble",
+      "label": "Sumatoria doble",
+      "definition": "Sumatoria con dos índices anidados. Aparece en ciclos anidados."
+    },
+    {
+      "termId": "term-sumatoria-triple",
+      "label": "Sumatoria triple",
+      "definition": "Sumatoria con tres índices anidados. Aparece en estructuras de tres ciclos, como multiplicación de matrices o recorridos de tensores."
+    },
+    {
+      "termId": "term-forma-cerrada",
+      "label": "Forma cerrada",
+      "definition": "Expresión equivalente a una sumatoria, pero sin el símbolo de suma."
+    },
+    {
+      "termId": "term-serie-armonica",
+      "label": "Serie armónica",
+      "definition": "Sumatoria H(n) = 1 + 1/2 + 1/3 + ... + 1/n, de orden logarítmico."
+    },
+    {
+      "termId": "term-serie-geometrica",
+      "label": "Serie geométrica",
+      "definition": "Sumatoria cuyos términos tienen la forma r^i."
+    },
+    {
+      "termId": "term-telescopica",
+      "label": "Telescópica",
+      "definition": "Sumatoria donde términos consecutivos se cancelan, dejando solo los extremos."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-tabla-sumatorias-comunes",
+      "slug": "tabla-sumatorias-comunes",
+      "title": "Tabla de Sumatorias Comunes",
+      "order": 1,
+      "summary": "Fórmulas de sumatorias y propiedades de transformación usadas para cerrar costos iterativos y recurrencias.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-sumatorias",
+          "slug": "introduccion-sumatorias",
+          "title": "9. Tabla de Sumatorias Comunes",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-importancia-sumatorias",
+              "text": "Entender por qué las sumatorias aparecen constantemente al contar ejecuciones de bloques de código."
+            },
+            {
+              "objectiveId": "distinguir-niveles-sumatorias",
+              "text": "Distinguir sumatorias simples, dobles y triples."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              { "id": "mod-complejidad-temporal-espacial", "kind": "required" },
+              { "id": "mod-algoritmos-iterativos-patrones-costos", "kind": "required" }
+            ],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-sumatorias-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En el análisis de algoritmos, las sumatorias aparecen constantemente al contar cuántas veces se ejecuta un bloque de código. Saber resolverlas —o al menos reconocerlas— es tan importante como saber calcular límites."
+                }
+              ]
+            },
+            {
+              "id": "blk-sumatorias-organizacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Esta sección reúne las sumatorias más comunes organizadas en tres niveles de complejidad: simples (un solo índice), dobles (dos índices anidados) y triples (tres índices anidados). Para cada una se muestra la notación de suma, su forma cerrada y un ejemplo de en qué tipo de código aparece."
+                }
+              ]
+            },
+            {
+              "id": "blk-sumatorias-convencion",
+              "type": "note",
+              "variant": "info",
+              "title": "Convención",
+              "blocks": [
+                {
+                  "id": "blk-sumatorias-convencion-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "En este documento se usan las siguientes notaciones: "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n"
+                    },
+                    {
+                      "type": "text",
+                      "text": " es el tamaño de la entrada, "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "i,j,k"
+                    },
+                    {
+                      "type": "text",
+                      "text": " son los índices de suma, y las fórmulas cerradas son exactas salvo que se indique lo contrario."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-por-que-importan-sumatorias-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Por qué importan las sumatorias en algoritmos?"
+                }
+              ]
+            },
+            {
+              "id": "blk-por-que-importan-sumatorias-lista",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "For simple "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "(i=1 \\text{ to } n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ": genera una sumatoria simple de la forma "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum_{i=1}^{n} f(i)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "For anidado con límite variable "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "(j=1 \\text{ to } i)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ": genera una sumatoria doble. El cuerpo se ejecuta "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i}1"
+                    },
+                    {
+                      "type": "text",
+                      "text": " veces."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Triple anidado: genera una sumatoria triple. Aparecen en algoritmos de multiplicación de matrices o recorridos de tensores."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-regla-oro-sumatorias",
+              "type": "note",
+              "variant": "warning",
+              "title": "Regla de oro",
+              "blocks": [
+                {
+                  "id": "blk-regla-oro-sumatorias-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Para resolver una sumatoria doble o triple, se resuelve de adentro hacia afuera, convirtiendo cada sumatoria interna en su forma cerrada antes de continuar con la externa."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-sumatorias-simples",
+          "slug": "sumatorias-simples",
+          "title": "9.1 Sumatorias Simples",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "reconocer-sumatoria-simple",
+              "text": "Reconocer una sumatoria simple generada por un único ciclo."
+            },
+            {
+              "objectiveId": "usar-potencias-geometricas-armonicas",
+              "text": "Usar fórmulas cerradas para constantes, potencias, geométricas, exponenciales, logarítmicas y armónicas."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              { "id": "mod-complejidad-temporal-espacial", "kind": "required" }
+            ],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-sumatorias-simples-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Una sumatoria simple tiene un solo índice que recorre un rango. Aparecen cuando hay un único ciclo cuyo cuerpo ejecuta una función de ese índice."
+                }
+              ]
+            },
+            {
+              "id": "blk-sumatorias-basicas-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "9.1.1 Sumatorias básicas de constantes y potencias"
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-sumatorias-basicas-potencias",
+              "type": "table",
+              "title": "Sumatorias básicas de constantes y potencias",
+              "columns": [
+                {
+                  "key": "sumatoria",
+                  "label": "Sumatoria"
+                },
+                {
+                  "key": "formaCerrada",
+                  "label": "Forma cerrada"
+                },
+                {
+                  "key": "orden",
+                  "label": "Orden"
+                },
+                {
+                  "key": "codigo",
+                  "label": "Dónde aparece en código"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de 1's (constante)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}1 = n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to n do op_constante endfor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de i (aritmética)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}i = \\frac{n(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to n do for j <- 1 to i do op endfor endfor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de i² (cuadrática)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}i^2 = \\frac{n(n+1)(2n+1)}{6}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for j <- 1 to i do for k <- 1 to j do op endfor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de i³ (cúbica)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}i^3 = \\left[\\frac{n(n+1)}{2}\\right]^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^4)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Anidamiento de tres ciclos con límites variables"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de i^k (potencia k)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}i^k \\sim \\frac{n^{k+1}}{k+1}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^{k+1})"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Ciclo con cuerpo de costo polinomial"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-sumatorias-geometricas-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "9.1.2 Sumatorias geométricas y exponenciales"
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-sumatorias-geometricas",
+              "type": "table",
+              "title": "Sumatorias geométricas y exponenciales",
+              "columns": [
+                {
+                  "key": "sumatoria",
+                  "label": "Sumatoria"
+                },
+                {
+                  "key": "formaCerrada",
+                  "label": "Forma cerrada"
+                },
+                {
+                  "key": "orden",
+                  "label": "Orden"
+                },
+                {
+                  "key": "codigo",
+                  "label": "Dónde aparece en código"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Geométrica (r != 1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=0}^{n}r^i = \\frac{r^{n+1}-1}{r-1}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(r^n) \\text{ si } r>1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Árbol binario completo: número total de nodos"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Geométrica decreciente (0 < r < 1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=0}^{\\infty}r^i = \\frac{1}{1-r}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " (constante)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convergencia de serie infinita"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Potencias de 2 (suma)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=0}^{n}2^i = 2^{n+1}-1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(2^n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Torres de Hanoi, Fibonacci recursivo"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Potencias de 2 (suma parcial)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=0}^{\\lg n}2^i = 2n-1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Árbol binario de altura log(n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de a^i (a entero > 1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=0}^{n}a^i = \\frac{a^{n+1}-1}{a-1}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(a^n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recursión de tipo aT(n-1) + c"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-sumatorias-log-armonicas-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "9.1.3 Sumatorias logarítmicas y armónicas"
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-sumatorias-log-armonicas",
+              "type": "table",
+              "title": "Sumatorias logarítmicas y armónicas",
+              "columns": [
+                {
+                  "key": "sumatoria",
+                  "label": "Sumatoria"
+                },
+                {
+                  "key": "formaCerrada",
+                  "label": "Forma cerrada / Aproximación"
+                },
+                {
+                  "key": "orden",
+                  "label": "Orden"
+                },
+                {
+                  "key": "codigo",
+                  "label": "Dónde aparece"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Armónica H(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\frac{1}{i}=H(n)\\sim \\ln(n)+0.5772"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Quicksort caso promedio, búsqueda en hashing"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de log(i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\log(i)=\\log(n!)\\sim n\\log(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Merge Sort, Heap Sort: costo total de comparaciones"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de i*log(i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}i\\log(i)\\sim \\frac{n^2\\log n}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Algoritmos de ordenamiento anidados"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de 1/i² (convergente)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{\\infty}\\frac{1}{i^2}=\\frac{\\pi^2}{6}\\sim 1.6449"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " (constante)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Análisis de probabilidades en hashing"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de log(i)^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}(\\log i)^2\\sim n(\\log n)^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log^2 n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Algoritmos con subproblemas logarítmicos"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-nota-serie-armonica",
+              "type": "note",
+              "variant": "info",
+              "title": "Nota",
+              "blocks": [
+                {
+                  "id": "blk-nota-serie-armonica-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La serie armónica "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "H(n)=1+\\frac{1}{2}+\\frac{1}{3}+\\cdots+\\frac{1}{n}"
+                    },
+                    {
+                      "type": "text",
+                      "text": " es fundamental en el análisis del caso promedio de Quicksort y aparece frecuentemente cuando hay ciclos cuyo número de iteraciones depende de un valor que decrece de forma no uniforme."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-sumatorias-dobles",
+          "slug": "sumatorias-dobles",
+          "title": "9.2 Sumatorias Dobles",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "resolver-dobles-adentro-afuera",
+              "text": "Resolver sumatorias dobles evaluando primero la sumatoria interna."
+            },
+            {
+              "objectiveId": "clasificar-dobles",
+              "text": "Clasificar sumatorias dobles por límites fijos, límite variable y ciclos logarítmicos."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              { "id": "mod-complejidad-temporal-espacial", "kind": "required" },
+              { "id": "mod-algoritmos-iterativos-patrones-costos", "kind": "required" }
+            ],
+            "sections": [
+              { "id": "sec-ejemplo-ciclos-anidados-fijos", "kind": "required" },
+              { "id": "sec-ejemplo-for-limite-variable", "kind": "required" },
+              { "id": "sec-ejemplo-for-while-logaritmico", "kind": "required" }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-sumatorias-dobles-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Una sumatoria doble tiene dos índices anidados. Aparece cuando hay dos ciclos anidados, donde el límite del ciclo interno puede depender del externo."
+                }
+              ]
+            },
+            {
+              "id": "blk-sumatorias-dobles-resolucion",
+              "type": "note",
+              "variant": "info",
+              "title": "Cómo resolverlas",
+              "blocks": [
+                {
+                  "id": "blk-sumatorias-dobles-resolucion-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Primero se resuelve la sumatoria interna, obteniendo una función de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "i"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", y luego esa función se usa como término de la sumatoria externa."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-dobles-limites-fijos-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "9.2.1 Dobles con límites fijos"
+                }
+              ]
+            },
+            {
+              "id": "blk-dobles-limites-fijos-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ambos índices van de 1 a n (límites independientes entre sí)."
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-dobles-limites-fijos",
+              "type": "table",
+              "title": "Sumatorias dobles con límites fijos",
+              "columns": [
+                {
+                  "key": "sumatoria",
+                  "label": "Sumatoria doble"
+                },
+                {
+                  "key": "formaCerrada",
+                  "label": "Forma cerrada"
+                },
+                {
+                  "key": "orden",
+                  "label": "Orden"
+                },
+                {
+                  "key": "codigo",
+                  "label": "Tipo de código"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n\\cdot n=n^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to n do for j <- 1 to n do op_constante"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n}i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n\\cdot\\frac{n(n+1)}{2}=\\frac{n^2(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to n do for j <- 1 to n do op que cuesta i"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n}j"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n\\cdot\\frac{n(n+1)}{2}=\\frac{n^2(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to n do for j <- 1 to n do op que cuesta j"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n}i\\cdot j"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\left[\\frac{n(n+1)}{2}\\right]^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^4)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cuerpo con costo proporcional a i*j"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n}c"
+                      },
+                      {
+                        "type": "text",
+                        "text": " (c constante)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "c\\cdot n^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Dos ciclos anidados con cuerpo de costo c"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-dobles-limite-variable-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "9.2.2 Dobles con límite variable (el más común en clase)"
+                }
+              ]
+            },
+            {
+              "id": "blk-dobles-limite-variable-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El límite del ciclo interno depende del índice externo. Son las más frecuentes al analizar algoritmos de ordenamiento."
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-dobles-limite-variable",
+              "type": "table",
+              "title": "Sumatorias dobles con límite variable",
+              "columns": [
+                {
+                  "key": "sumatoria",
+                  "label": "Sumatoria doble"
+                },
+                {
+                  "key": "desarrollo",
+                  "label": "Desarrollo"
+                },
+                {
+                  "key": "formaCerrada",
+                  "label": "Forma cerrada"
+                },
+                {
+                  "key": "orden",
+                  "label": "Orden"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "=\\sum_{i=1}^{n}i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i}j"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "=\\sum_{i=1}^{n}\\frac{i(i+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)(n+2)}{6}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=i}^{n}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "=\\sum_{i=1}^{n}(n-i+1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n-i}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "=\\sum_{i=1}^{n}(n-i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n-1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i}i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "=\\sum_{i=1}^{n}i^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)(2n+1)}{6}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=i}^{n}(j-i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "=\\sum_{i=1}^{n}\\frac{(n-i)(n-i+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sim \\frac{n^3}{6}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-clase-suma-i-mas-uno",
+              "type": "example",
+              "title": "Ejemplo de clase",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo-clase-suma-i-mas-uno-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La sumatoria "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum_{i=1}^{n}(i+1)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " aparece al contar el encabezado del for interno en el ejemplo de AlgoritmoSM2 con límite variable."
+                    }
+                  ]
+                },
+                {
+                  "id": "blk-ejemplo-clase-suma-i-mas-uno-formula",
+                  "type": "equationBlock",
+                  "latex": "\\sum_{i=1}^{n}(i+1)=\\sum_{i=1}^{n}i+\\sum_{i=1}^{n}1=\\frac{n(n+1)}{2}+n=\\frac{n^2+3n}{2}"
+                }
+              ]
+            },
+            {
+              "id": "blk-dobles-logaritmicos-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "9.2.3 Dobles con ciclos de tipo logarítmico"
+                }
+              ]
+            },
+            {
+              "id": "blk-dobles-logaritmicos-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cuando uno de los ciclos usa multiplicación en vez de incremento, por ejemplo "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "j <- j*2"
+                },
+                {
+                  "type": "text",
+                  "text": ", el límite de iteraciones es logarítmico."
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-dobles-logaritmicos",
+              "type": "table",
+              "title": "Sumatorias dobles con ciclos de tipo logarítmico",
+              "columns": [
+                {
+                  "key": "sumatoria",
+                  "label": "Sumatoria doble"
+                },
+                {
+                  "key": "formaCerrada",
+                  "label": "Forma cerrada"
+                },
+                {
+                  "key": "orden",
+                  "label": "Orden"
+                },
+                {
+                  "key": "codigo",
+                  "label": "Tipo de código"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{\\log n}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n\\log(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to n do j <- 1 while j <= n: j <- j*2"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=i}^{n,\\ j*=2}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\log(n/i)\\sim n\\log(n)-n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Ciclo externo lineal, interno geométrico"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{\\log n}\\sum_{j=1}^{n}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n\\log(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to log n do for j <- 1 to n do op"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{\\log n}\\sum_{j=1}^{i}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{\\log(n)(\\log(n)+1)}{2}\\sim \\frac{(\\log n)^2}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(\\log^2 n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Doble ciclo con ambos límites log"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-propiedades-manipular-sumatorias",
+          "slug": "propiedades-manipular-sumatorias",
+          "title": "9.3 Propiedades útiles para manipular sumatorias",
+          "order": 4,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "learningObjectives": [
+            {
+              "objectiveId": "aplicar-propiedades-algebraicas",
+              "text": "Aplicar propiedades algebraicas para descomponer o simplificar sumatorias complejas."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              { "id": "mod-tabla-sumatorias-comunes", "kind": "required" }
+            ],
+            "sections": [
+              { "id": "sec-sumatorias-simples", "kind": "required" },
+              { "id": "sec-sumatorias-dobles", "kind": "required" }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-propiedades-sumatorias-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Estas propiedades permiten descomponer o simplificar sumatorias complejas antes de resolverlas."
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-propiedades-sumatorias",
+              "type": "table",
+              "title": "Propiedades útiles para manipular sumatorias",
+              "columns": [
+                {
+                  "key": "propiedad",
+                  "label": "Propiedad"
+                },
+                {
+                  "key": "formula",
+                  "label": "Fórmula"
+                },
+                {
+                  "key": "uso",
+                  "label": "Para qué sirve"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Linealidad (constante)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum c\\cdot f(i)=c\\sum f(i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sacar constantes fuera de la sumatoria"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Linealidad (suma)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum [f(i)+g(i)]=\\sum f(i)+\\sum g(i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Separar términos de una sumatoria compleja"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cambio de índice"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n} f(i)=\\sum_{i=0}^{n-1}f(i+1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Reindexar para aplicar fórmulas conocidas"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Telescópica"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}[f(i)-f(i-1)]=f(n)-f(0)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cancelar términos consecutivos"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Separación de términos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}=\\sum_{i=1}^{m}+\\sum_{i=m+1}^{n}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Dividir la suma en partes convenientes"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Inversión de orden"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}f(i)=\\sum_{i=1}^{n}f(n+1-i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Invertir el orden de suma (útil en pares)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sumatoria de sumatoria"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i}1=\\sum_{i=1}^{n}i=\\frac{n(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Colapsar doble a simple"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Truco de la suma doble"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2\\sum_{i=1}^{n}f(i)=\\text{suma directa}+\\text{suma invertida}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sumar la sumatoria con su copia invertida para cancelar términos"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

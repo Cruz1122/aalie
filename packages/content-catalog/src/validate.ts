@@ -9,14 +9,16 @@ import { discoverSpaces } from "./discover.js";
 import {
   DEFAULT_SCHEMAS_ROOT,
   REPO_ROOT,
-  deriveModuleRoute,
-  deriveSpaceRoute,
   readJsonFile,
   resolveTarget,
-  walkBlocks,
 } from "./load.js";
+import {
+  deriveModuleRoute,
+  deriveSpaceRoute,
+  flattenInlineText,
+  walkBlocks,
+} from "./utils.js";
 import { computeModuleProgress } from "./progress.js";
-import { flattenInlineText } from "./search.js";
 import type {
   CatalogModule,
   CatalogSection,
@@ -95,11 +97,41 @@ function collectBlockReferenceTokens(block: ContentBlock): ReferenceToken[] {
     case "exerciseSolution":
     case "evidenceBlock":
       return block.blocks.flatMap(collectBlockReferenceTokens);
+    case "stepByStepMethod":
+    case "proofSteps":
+      return block.steps.flatMap((step) =>
+        step.blocks.flatMap(collectBlockReferenceTokens),
+      );
     case "exercise":
       return [
         ...collectInlineTargets(block.prompt),
-        ...(block.solutionRef ? [{ kind: "block" as const, ref: block.solutionRef }] : []),
+        ...(block.solutionRef
+          ? [{ kind: "block" as const, ref: block.solutionRef }]
+          : []),
       ];
+    case "methodCard":
+      return [
+        ...collectInlineTargets(block.summary),
+        ...(block.whenToUse ?? []).flatMap(collectInlineTargets),
+        ...(block.steps ?? []).flatMap(collectInlineTargets),
+        ...(block.pitfalls ?? []).flatMap(collectInlineTargets),
+      ];
+    case "warningTrap":
+      return [
+        ...collectInlineTargets(block.misconception),
+        ...collectInlineTargets(block.whyItFails),
+        ...collectInlineTargets(block.fix),
+      ];
+    case "exampleSolved":
+      return [
+        ...collectInlineTargets(block.problem),
+        ...block.steps.flatMap((step) =>
+          collectInlineTargets(step.explanation),
+        ),
+        ...collectInlineTargets(block.answer),
+      ];
+    case "quizCheckpoint":
+      return collectInlineTargets(block.prompt);
     case "image":
     case "figure":
       return [{ kind: "resource", ref: block.resourceRef }];
@@ -194,6 +226,8 @@ function validateBlockSemantics(
       }
       return;
     case "table":
+    case "complexityTable":
+    case "formulaComparisonTable":
       for (const row of block.rows) {
         if (row.cells.length !== block.columns.length) {
           issues.push(
@@ -204,6 +238,64 @@ function validateBlockSemantics(
               filePath,
             ),
           );
+        }
+      }
+      return;
+    case "latexSteps":
+      for (const step of block.steps) {
+        if (!step.latex.trim()) {
+          issues.push(
+            createIssue(
+              "error",
+              "CONTENT_307",
+              `Latex steps block ${block.id} contains an empty latex step`,
+              filePath,
+            ),
+          );
+        }
+      }
+      return;
+    case "mermaid":
+      if (block.code.trim().length === 0) {
+        issues.push(
+          createIssue(
+            "error",
+            "CONTENT_308",
+            `Mermaid block ${block.id} has empty code`,
+            filePath,
+          ),
+        );
+      }
+      return;
+    case "recursionTree":
+      if (block.nodes.length === 0) {
+        issues.push(
+          createIssue(
+            "error",
+            "CONTENT_309",
+            `Recursion tree block ${block.id} has no nodes`,
+            filePath,
+          ),
+        );
+      }
+      return;
+    case "graph":
+      if (block.nodes.length === 0 || block.edges.length === 0) {
+        issues.push(
+          createIssue(
+            "error",
+            "CONTENT_310",
+            `Graph block ${block.id} must define nodes and edges`,
+            filePath,
+          ),
+        );
+      }
+      return;
+    case "stepByStepMethod":
+    case "proofSteps":
+      for (const step of block.steps) {
+        for (const nestedBlock of step.blocks) {
+          validateBlockSemantics(nestedBlock, issues, filePath);
         }
       }
       return;
@@ -221,8 +313,88 @@ function validateBlockSemantics(
         }
       }
       return;
+    case "methodCard":
+    case "warningTrap":
+    case "exampleSolved":
+    case "quizCheckpoint":
+    case "latex":
+    case "equationBlock":
     default:
       return;
+  }
+}
+
+function validateTerms(
+  module: CatalogModule,
+  bundle: LoadedSpaceBundle,
+  issues: ValidationIssue[],
+  filePath: string,
+): void {
+  const terms = module.terms ?? [];
+  const termIds = new Set<string>();
+  const allVariants = new Set<string>();
+
+  for (const term of terms) {
+    if (termIds.has(term.termId)) {
+      issues.push(
+        createIssue(
+          "error",
+          "CONTENT_501",
+          `Module ${module.moduleId} repeats termId ${term.termId}`,
+          filePath,
+        ),
+      );
+    }
+    termIds.add(term.termId);
+
+    if (term.primarySectionRef) {
+      const { moduleId, sectionId } = term.primarySectionRef;
+      const targetModule = bundle.modules.find(
+        (m) => m.module.moduleId === moduleId,
+      );
+      if (!targetModule) {
+        issues.push(
+          createIssue(
+            "error",
+            "CONTENT_502",
+            `Term ${term.termId} references unknown primary moduleId ${moduleId}`,
+            filePath,
+          ),
+        );
+      } else {
+        const sectionExists = targetModule.module.chapters.some((c) =>
+          c.sections.some((s) => s.sectionId === sectionId),
+        );
+        if (!sectionExists) {
+          issues.push(
+            createIssue(
+              "error",
+              "CONTENT_503",
+              `Term ${term.termId} references unknown primary sectionId ${sectionId} in module ${moduleId}`,
+              filePath,
+            ),
+          );
+        }
+      }
+    }
+
+    const variants = [
+      term.label.toLowerCase(),
+      ...(term.aliases ?? []).map((a) => a.toLowerCase()),
+    ];
+    for (const variant of variants) {
+      if (allVariants.has(variant)) {
+        issues.push(
+          createIssue(
+            "error",
+            "CONTENT_504",
+            `Module ${module.moduleId} has duplicate label or alias: "${variant}"`,
+            filePath,
+          ),
+        );
+      }
+      allVariants.add(variant);
+    }
   }
 }
 
@@ -415,8 +587,12 @@ function buildSchemaValidator() {
   }
 
   return {
-    validateSpace: ajv.getSchema("https://aalie.dev/schemas/content/space.schema.json"),
-    validateModule: ajv.getSchema("https://aalie.dev/schemas/content/module.schema.json"),
+    validateSpace: ajv.getSchema(
+      "https://aalie.dev/schemas/content/space.schema.json",
+    ),
+    validateModule: ajv.getSchema(
+      "https://aalie.dev/schemas/content/module.schema.json",
+    ),
   };
 }
 
@@ -437,8 +613,13 @@ function registerSchemaErrors(
   }
 }
 
-function validateReferences(bundle: LoadedSpaceBundle, issues: ValidationIssue[]): void {
-  const moduleIds = new Set(bundle.modules.map(({ module }) => module.moduleId));
+function validateReferences(
+  bundle: LoadedSpaceBundle,
+  issues: ValidationIssue[],
+): void {
+  const moduleIds = new Set(
+    bundle.modules.map(({ module }) => module.moduleId),
+  );
   const publishedModuleRoutes = new Set<string>();
 
   for (const loadedModule of bundle.modules) {
@@ -459,7 +640,10 @@ function validateReferences(bundle: LoadedSpaceBundle, issues: ValidationIssue[]
       publishedModuleRoutes.add(moduleRoute);
     }
 
-    if (!module.searchMeta?.aliases?.length && !module.searchMeta?.keywords?.length) {
+    if (
+      !module.searchMeta?.aliases?.length &&
+      !module.searchMeta?.keywords?.length
+    ) {
       issues.push(
         createIssue(
           "warning",
@@ -471,6 +655,7 @@ function validateReferences(bundle: LoadedSpaceBundle, issues: ValidationIssue[]
     }
 
     validateSectionOrders(module, issues, filePath);
+    validateTerms(module, bundle, issues, filePath);
 
     for (const relatedModuleId of module.relatedModuleIds ?? []) {
       if (!moduleIds.has(relatedModuleId)) {
@@ -503,7 +688,10 @@ function validateReferences(bundle: LoadedSpaceBundle, issues: ValidationIssue[]
       ...(module.resources?.images ?? []),
       ...(module.resources?.figures ?? []),
     ]) {
-      if (resource.source.kind === "publicPath" && !validatePublicPath(resource.source.path)) {
+      if (
+        resource.source.kind === "publicPath" &&
+        !validatePublicPath(resource.source.path)
+      ) {
         issues.push(
           createIssue(
             "error",
@@ -573,7 +761,10 @@ function validateReferences(bundle: LoadedSpaceBundle, issues: ValidationIssue[]
 
         for (const block of section.blocks) {
           for (const token of collectBlockReferenceTokens(block)) {
-            if (token.kind === "term" && !resolveTarget(bundle, { kind: "term", ref: token.ref })) {
+            if (
+              token.kind === "term" &&
+              !resolveTarget(bundle, { kind: "term", ref: token.ref })
+            ) {
               issues.push(
                 createIssue(
                   "error",
@@ -643,7 +834,10 @@ function validateReferences(bundle: LoadedSpaceBundle, issues: ValidationIssue[]
               }
             }
 
-            if (token.kind === "block" && !resolveTarget(bundle, { kind: "block", ref: token.ref })) {
+            if (
+              token.kind === "block" &&
+              !resolveTarget(bundle, { kind: "block", ref: token.ref })
+            ) {
               issues.push(
                 createIssue(
                   "error",
@@ -677,9 +871,13 @@ function validateLocaleCoverage(
     }
 
     const base = spaceBundles[0];
-    const expectedModuleIds = new Set(base.modules.map(({ module }) => module.moduleId));
+    const expectedModuleIds = new Set(
+      base.modules.map(({ module }) => module.moduleId),
+    );
     for (const bundle of spaceBundles.slice(1)) {
-      const actualModuleIds = new Set(bundle.modules.map(({ module }) => module.moduleId));
+      const actualModuleIds = new Set(
+        bundle.modules.map(({ module }) => module.moduleId),
+      );
       for (const moduleId of expectedModuleIds) {
         if (!actualModuleIds.has(moduleId)) {
           issues.push(
@@ -731,7 +929,11 @@ export function validateCatalog(): ValidationReport {
 
     for (const loadedModule of bundle.modules) {
       if (!validateModule(loadedModule.module)) {
-        registerSchemaErrors(issues, validateModule.errors, loadedModule.filePath);
+        registerSchemaErrors(
+          issues,
+          validateModule.errors,
+          loadedModule.filePath,
+        );
       }
     }
 
