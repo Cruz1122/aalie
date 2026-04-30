@@ -692,6 +692,54 @@
                   "text": "."
                 }
               ]
+            },
+            {
+              "id": "blk-arbol-mochila-mermaid",
+              "type": "mermaid",
+              "title": "Árbol de exploración Branch and Bound — Mochila 0/1",
+              "code": "flowchart TD\n  R[\"Raíz<br/>CI = 0<br/>CS = 10.25\"]\n\n  R -->|\"I: incluir obj1\"| A[\"A<br/>Incl. obj1<br/>CI = 2<br/>CS = 10.25\"]\n  R -->|\"N: no incluir obj1\"| B[\"B [Podado]<br/>No obj1<br/>CS = 9.50<br/>PODA\"]\n\n  A -->|\"I: incluir obj2\"| C[\"C<br/>Incl. obj2<br/>CI = 5<br/>CS = 10.25\"]\n  A -->|\"N: no incluir obj2\"| D[\"D [Podado]<br/>No obj2<br/>CS = 9.75<br/>PODA\"]\n\n  C -->|\"I: incluir obj3\"| E[\"E<br/>Incl. obj3<br/>CI = 9<br/>CS = 10.25\"]\n  C -->|\"N: no incluir obj3\"| F[\"F<br/>No obj3<br/>CI = 5<br/>CS = 10.00\"]\n\n  E -->|\"I: incluir obj4\"| G[\"G [Podado]<br/>Incl. obj4<br/>p = 10 mayor que 7<br/>INVIABLE\"]\n  E -->|\"N: no incluir obj4\"| H[\"H<br/>No obj4<br/>{1,2,3}<br/>val = 9\"]\n\n  F -->|\"I: incluir obj4\"| I[\"I [Optimo]<br/>Incl. obj4<br/>{1,2,4}<br/>val = 10<br/>ÓPTIMO\"]\n  F -->|\"N: no incluir obj4\"| J[\"J<br/>No obj4<br/>{1,2}<br/>val = 5\"]\n\n  classDef normal fill:#1e293b,stroke:#60a5fa,color:#e2e8f0,stroke-width:1px;\n  classDef poda fill:#3f1212,stroke:#ef4444,color:#fee2e2,stroke-width:1px,stroke-dasharray:5 5;\n  classDef solucion fill:#12351f,stroke:#22c55e,color:#dcfce7,stroke-width:2px;\n\n  class R,A,C,E,F,J normal;\n  class B,D,G poda;\n  class H,I solucion;"
+            },
+            {
+              "id": "blk-arbol-mochila-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Solución óptima",
+              "blocks": [
+                {
+                  "id": "blk-arbol-mochila-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La solución óptima es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "X=(1,1,0,1)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", es decir, tomar los objetos 1, 2 y 4. El peso total es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "1+2+4=7"
+                    },
+                    {
+                      "type": "text",
+                      "text": " y el valor total es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "2+3+5=10"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },

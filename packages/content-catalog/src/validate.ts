@@ -324,6 +324,136 @@ function validateBlockSemantics(
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function normalizeTreeKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/latex|forest|mermaid|arbol|árbol/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function maybeSameTree(
+  previousBlock: Record<string, unknown>,
+  currentBlock: Record<string, unknown>,
+): boolean {
+  const previousId =
+    typeof previousBlock.id === "string"
+      ? normalizeTreeKey(previousBlock.id)
+      : "";
+  const currentId =
+    typeof currentBlock.id === "string" ? normalizeTreeKey(currentBlock.id) : "";
+  const previousTitle =
+    typeof previousBlock.title === "string"
+      ? normalizeTreeKey(previousBlock.title)
+      : "";
+  const currentTitle =
+    typeof currentBlock.title === "string"
+      ? normalizeTreeKey(currentBlock.title)
+      : "";
+
+  return (
+    (previousId.length > 0 &&
+      currentId.length > 0 &&
+      (previousId === currentId ||
+        previousId.includes(currentId) ||
+        currentId.includes(previousId))) ||
+    (previousTitle.length > 0 &&
+      currentTitle.length > 0 &&
+      (previousTitle === currentTitle ||
+        previousTitle.includes(currentTitle) ||
+        currentTitle.includes(previousTitle)))
+  );
+}
+
+function validateCourseDiagramContract(
+  module: CatalogModule,
+  issues: ValidationIssue[],
+  filePath: string,
+): void {
+  if (module.spaceId !== "course") {
+    return;
+  }
+
+  const visit = (value: unknown): void => {
+    if (!isRecord(value)) {
+      return;
+    }
+
+    const blockType = value.type;
+    const blockId = typeof value.id === "string" ? value.id : "(sin-id)";
+    if (blockType === "latexDiagram") {
+      issues.push(
+        createIssue(
+          "error",
+          "CONTENT_311",
+          `Course no permite latexDiagram en bloque ${blockId}; convertir a Mermaid`,
+          filePath,
+        ),
+      );
+    }
+
+    if (value.engine === "forest") {
+      issues.push(
+        createIssue(
+          "error",
+          "CONTENT_312",
+          `Course no permite engine=forest en bloque ${blockId}; convertir árbol Forest a Mermaid`,
+          filePath,
+        ),
+      );
+    }
+
+    for (const nestedValue of Object.values(value)) {
+      if (Array.isArray(nestedValue)) {
+        for (const child of nestedValue) {
+          visit(child);
+        }
+      } else {
+        visit(nestedValue);
+      }
+    }
+  };
+
+  for (const chapter of module.chapters) {
+    for (const section of chapter.sections) {
+      const rawBlocks = section.blocks as unknown[];
+      for (let index = 0; index < rawBlocks.length; index += 1) {
+        const block = rawBlocks[index];
+        visit(block);
+
+        if (index === 0) {
+          continue;
+        }
+
+        const previousBlock = rawBlocks[index - 1];
+        if (!isRecord(block) || !isRecord(previousBlock)) {
+          continue;
+        }
+
+        const previousType = previousBlock.type;
+        const currentType = block.type;
+        const isMermaidLatexPair =
+          (previousType === "mermaid" && currentType === "latexDiagram") ||
+          (previousType === "latexDiagram" && currentType === "mermaid");
+        if (isMermaidLatexPair && maybeSameTree(previousBlock, block)) {
+          issues.push(
+            createIssue(
+              "error",
+              "CONTENT_313",
+              `Section ${section.sectionId} duplica árbol con Mermaid y latexDiagram consecutivos; conservar solo Mermaid`,
+              filePath,
+            ),
+          );
+        }
+      }
+    }
+  }
+}
+
 function validateTerms(
   module: CatalogModule,
   bundle: LoadedSpaceBundle,
@@ -851,6 +981,8 @@ function validateReferences(
         }
       }
     }
+
+    validateCourseDiagramContract(module, issues, filePath);
   }
 }
 

@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 
 import {
   buildSpaceSearchIndex,
@@ -129,4 +131,22 @@ test("seed catalog validates against schemas and semantic rules", () => {
 
   assert.equal(report.valid, true);
   assert.deepEqual(report.errors, []);
+});
+
+test("course catalog does not allow latex trees or forest engine", () => {
+  const courseBundle = getSpaceBundle("course", "es");
+
+  for (const loadedModule of courseBundle.modules) {
+    const rawFile = fs.readFileSync(loadedModule.filePath, "utf-8");
+    assert.equal(
+      /"type"\s*:\s*"latexDiagram"/.test(rawFile),
+      false,
+      `latexDiagram is forbidden in ${path.basename(loadedModule.filePath)}`,
+    );
+    assert.equal(
+      /"engine"\s*:\s*"forest"/.test(rawFile),
+      false,
+      `forest engine is forbidden in ${path.basename(loadedModule.filePath)}`,
+    );
+  }
 });
