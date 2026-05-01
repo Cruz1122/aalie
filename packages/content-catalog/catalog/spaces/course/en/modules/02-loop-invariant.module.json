@@ -1,0 +1,1397 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-loop-invariant",
+  "slug": "loop-invariant",
+  "title": "Loop Invariant",
+  "order": 2,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Principle of correctness, formulation of a cycle invariant and demonstration in the three mandatory moments: initialization, maintenance and termination. Applies to Insertion Sort and Bubble Sort.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 35,
+  "tags": [
+    "loop-invariant",
+    "cycle-invariant",
+    "correctness",
+    "initialization",
+    "maintenance",
+    "termination",
+    "insertion-sort",
+    "bubble sort",
+    "ordering",
+    "efficiency"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "cycle invariant",
+      "loop invariant",
+      "correctness of algorithms",
+      "proof of correctness",
+      "insertion sort",
+      "bubble sort"
+    ],
+    "keywords": [
+      "invariant",
+      "cycle",
+      "correctness",
+      "sequence",
+      "set",
+      "initialization",
+      "maintenance",
+      "termination",
+      "ordering",
+      "best case",
+      "worst case"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-complejidad-temporal-espacial",
+        "kind": "required"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-complejidad-temporal",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-for-limite-variable",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-complejidad-temporal-espacial"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "definir-loop-invariant",
+      "text": "Define what a loop invariant is and what it is used for in proving correctness."
+    },
+    {
+      "objectiveId": "explicar-tres-momentos",
+      "text": "Explain the three mandatory moments of an invariant: initialization, maintenance and termination."
+    },
+    {
+      "objectiveId": "diferenciar-secuencia-conjunto",
+      "text": "Distinguish between sequence and set when formulating properties about arrays."
+    },
+    {
+      "objectiveId": "formular-invariante-insertion-sort",
+      "text": "Formulate and justify the invariant of the main Insertion Sort cycle."
+    },
+    {
+      "objectiveId": "analizar-eficiencia-insertion-sort",
+      "text": "Analyze the best and worst case of Insertion Sort based on the behavior of the internal loop."
+    },
+    {
+      "objectiveId": "formular-invariante-bubble-sort",
+      "text": "Formulate and justify the invariant of the Bubble Sort external cycle."
+    },
+    {
+      "objectiveId": "analizar-eficiencia-bubble-sort",
+      "text": "Explain why Bubble Sort maintains quadratic order even when it does not perform swaps."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-loop-invariant",
+      "label": "Loop invariant",
+      "definition": "Logical property associated with the main loop of an algorithm that is used to demonstrate correctness."
+    },
+    {
+      "termId": "term-correctitud",
+      "label": "Correctness",
+      "definition": "Property of an algorithm that indicates that it does what it claims to do for all valid input."
+    },
+    {
+      "termId": "term-inicializacion",
+      "label": "Initialization",
+      "definition": "Moment of the proof where it is verified that the invariant is true before the first iteration."
+    },
+    {
+      "termId": "term-mantenimiento",
+      "label": "Maintenance",
+      "definition": "Moment of the proof where it is verified that if the invariant is true before one iteration, it remains true before the next."
+    },
+    {
+      "termId": "term-terminacion",
+      "label": "Termination",
+      "definition": "Demonstration point where the invariant is used along with the stopping condition to demonstrate that the algorithm works correctly."
+    },
+    {
+      "termId": "term-secuencia",
+      "label": "Sequence",
+      "definition": "Collection where the order of the elements matters."
+    },
+    {
+      "termId": "term-conjunto",
+      "label": "Set",
+      "definition": "Collection where the order of the elements does not matter."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-loop-invariant",
+      "slug": "loop-invariant",
+      "title": "Loop Invariant",
+      "order": 1,
+      "summary": "Proof of correctness through cycle invariants, applied to sorting algorithms.",
+      "sections": [
+        {
+          "sectionId": "sec-loop-invariant-introduccion",
+          "slug": "loop-invariant-introduccion",
+          "title": "2. Loop Invariant",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "learningObjectives": [
+            {
+              "objectiveId": "comprender-loop-invariant",
+              "text": "Understand that the loop invariant replaces validation for particular cases."
+            },
+            {
+              "objectiveId": "identificar-tres-momentos",
+              "text": "Identify initialization, maintenance and termination as the three mandatory moments."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-loop-invariant-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The loop invariant is the mechanism we use to prove that an algorithm is correct, that is, that it does what it says it does. It replaces the habit of testing with cases, since cases never demonstrate general correctness."
+                }
+              ]
+            },
+            {
+              "id": "blk-loop-invariant-propiedad-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The invariant is a logical property that:"
+                }
+              ]
+            },
+            {
+              "id": "blk-loop-invariant-propiedades",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "It captures the reason for the algorithm (its semantics)."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "It is associated with the main cycle of the algorithm."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "It must be demonstrated in exactly 3 moments."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-loop-invariant-tres-momentos-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The 3 moments of Loop Invariant"
+                }
+              ]
+            },
+            {
+              "id": "blk-loop-invariant-tres-momentos",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "INITIALIZATION:"
+                    },
+                    {
+                      "type": "text",
+                      "text": "The property is true before the first iteration of the loop."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "MAINTENANCE:"
+                    },
+                    {
+                      "type": "text",
+                      "text": "If the property is true before one iteration, it remains true before the next iteration."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "TERMINATION:"
+                    },
+                    {
+                      "type": "text",
+                      "text": "When the loop ends, the property combined with the stop condition proves that the algorithm is working correctly."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-secuencia-conjunto",
+          "slug": "secuencia-conjunto",
+          "title": "2.1 Notions of Sequence and Set",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "learningObjectives": [
+            {
+              "objectiveId": "diferenciar-secuencia-conjunto",
+              "text": "Differentiate sequence and set to avoid poorly formulated invariants."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-loop-invariant-introduccion",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-secuencia-conjunto-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "To formulate invariants correctly, it is crucial to distinguish:"
+                }
+              ]
+            },
+            {
+              "id": "blk-definicion-secuencia",
+              "type": "definition",
+              "title": "Sequence",
+              "blocks": [
+                {
+                  "id": "blk-definicion-secuencia-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The order matters."
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "S_1 = \\langle 3, 7, 1, 5, 4 \\rangle"
+                    },
+                    {
+                      "type": "text",
+                      "text": "is different from"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "S_2 = \\langle 7, 3, 5, 4, 1 \\rangle"
+                    },
+                    {
+                      "type": "text",
+                      "text": "even if they have the same elements."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-definicion-conjunto",
+              "type": "definition",
+              "title": "Set",
+              "blocks": [
+                {
+                  "id": "blk-definicion-conjunto-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The order doesn't matter."
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "A = \\{3, 7, 1, 5, 4\\}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "is the same as"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "B = \\{7, 1, 5, 3, 4\\}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-secuencia-conjunto-cierre",
+              "type": "note",
+              "variant": "info",
+              "title": "Rule for invariants",
+              "blocks": [
+                {
+                  "id": "blk-secuencia-conjunto-cierre-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "In invariants you always work with sequences when the order of the elements matters (as in ordering)."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-insertion-sort-invariante",
+          "slug": "insertion-sort-invariante",
+          "title": "2.2 Example: Insertion Algorithm",
+          "order": 3,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-insertion-sort",
+              "text": "Understand how Insertion Sort works under the incremental paradigm."
+            },
+            {
+              "objectiveId": "formular-invariante-for-insertion",
+              "text": "Formulate the invariant of the Insertion Sort for loop."
+            },
+            {
+              "objectiveId": "demostrar-invariante-insertion",
+              "text": "Demonstrate the invariant of Insertion Sort in initialization, maintenance and termination."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-secuencia-conjunto",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-insertion-sort-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The insertion sort algorithm works under the incremental paradigm: it maintains an ordered subarray that grows with each iteration."
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-sort-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "InsertionSort",
+              "code": "InsertionSort (E/S int A[n]) { for i <- 2 to n do x <- A[i] j <- i - 1 while (j >= 1) and (x < A[j]) do A[j+1] <- A[j] j <- j - 1 endwhile A[j+1] <- x endfor\n}"
+            },
+            {
+              "id": "blk-insertion-sort-como-funciona",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "How does it work? Start in position 2 ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i=2"
+                },
+                {
+                  "type": "text",
+                  "text": "). For each position"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i"
+                },
+                {
+                  "type": "text",
+                  "text": ", extract the element"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "A[i]"
+                },
+                {
+                  "type": "text",
+                  "text": "and inserts it in the correct position within the already sorted subarray"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "A[1..i-1]"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-sort-invariante",
+              "type": "note",
+              "variant": "info",
+              "title": "for loop invariant",
+              "blocks": [
+                {
+                  "id": "blk-insertion-sort-invariante-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The elements in the positions"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "A[1..i-1]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "They are the same elements that were in"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "A[1..i-1]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "at the beginning, but organized in non-decreasing order."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-sort-demostracion-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Demonstration of the 3 moments"
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-sort-demostracion-tabla",
+              "type": "table",
+              "title": "Demonstration of the Insertion Sort invariant",
+              "columns": [
+                {
+                  "key": "momento",
+                  "label": "Moment"
+                },
+                {
+                  "key": "i",
+                  "label": "i"
+                },
+                {
+                  "key": "estado",
+                  "label": "Fix Status"
+                },
+                {
+                  "key": "cumple",
+                  "label": "Is it fulfilled?"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Initialization"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "i = 2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "A[1..1]"
+                      },
+                      {
+                        "type": "text",
+                        "text": "It has only one element. By definition, an array of one element is ordered."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Maintenance"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "i = k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Before iteration"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "k"
+                      },
+                      {
+                        "type": "text",
+                        "text": ","
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "A[1..k-1]"
+                      },
+                      {
+                        "type": "text",
+                        "text": "It is ordered. The while inserts"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "A[k]"
+                      },
+                      {
+                        "type": "text",
+                        "text": "in its correct place, leaving"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "A[1..k]"
+                      },
+                      {
+                        "type": "text",
+                        "text": "ordered."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Termination"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "i = n+1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "When the for ends ("
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "i=n+1"
+                      },
+                      {
+                        "type": "text",
+                        "text": "), the property says that"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "A[1..n]"
+                      },
+                      {
+                        "type": "text",
+                        "text": "It is ordered. The entire arrangement is sorted."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Demonstrated correctness"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-sort-nota-j",
+              "type": "note",
+              "variant": "warning",
+              "title": "Note",
+              "blocks": [
+                {
+                  "id": "blk-insertion-sort-nota-j-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "In the formulation of the invariant we never talk about"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "j"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(internal loop variable). The for invariant only talks about"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "i"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Each cycle has its own invariant."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-insertion-sort-eficiencia",
+          "slug": "insertion-sort-eficiencia",
+          "title": "2.3 Efficiency Analysis — Insertion Sort",
+          "order": 4,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "analizar-mejor-caso-insertion",
+              "text": "Analyze the best case of Insertion Sort when the array is already sorted."
+            },
+            {
+              "objectiveId": "analizar-peor-caso-insertion",
+              "text": "Analyze the worst case of Insertion Sort when the array is in reverse order."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-insertion-sort-invariante",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-insertion-eficiencia-mejor-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Best Case (fix already ordered)"
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-eficiencia-mejor-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The while is never executed because the condition"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "x < A[j]"
+                },
+                {
+                  "type": "text",
+                  "text": "is always false (the element to be inserted is already in place)."
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-eficiencia-mejor-tabla",
+              "type": "table",
+              "title": "Best Case of Insertion Sort",
+              "columns": [
+                {
+                  "key": "linea",
+                  "label": "Line"
+                },
+                {
+                  "key": "costo",
+                  "label": "Cost"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "for i <- 2 to n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "x <- A[i]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n-1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "j <- i-1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n-1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "while (condition)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n-1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A[j+1] <- x"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n-1"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-eficiencia-mejor-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Best case result",
+              "blocks": [
+                {
+                  "id": "blk-insertion-eficiencia-mejor-resultado-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T_{best}(n) = A n — B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> linear"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-eficiencia-peor-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Worst Case (arrangement in reverse order)"
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-eficiencia-peor-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The while is executed the maximum number of times. For the iteration"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i"
+                },
+                {
+                  "type": "text",
+                  "text": ", the while is executed"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i-1"
+                },
+                {
+                  "type": "text",
+                  "text": "times (you have to move the element to position 1)."
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-eficiencia-peor-sumatoria",
+              "type": "equationBlock",
+              "latex": "\\sum_{i=2}^{n}(i-1) = 1 + 2 + 3 + \\cdots + (n-1) = \\frac{n(n-1)}{2}"
+            },
+            {
+              "id": "blk-insertion-eficiencia-peor-tabla",
+              "type": "table",
+              "title": "Worst Case of Insertion Sort",
+              "columns": [
+                {
+                  "key": "linea",
+                  "label": "Line"
+                },
+                {
+                  "key": "costo",
+                  "label": "Cost"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "for i <- 2 to n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "x <- A[i]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n-1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "j <- i-1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n-1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "while (condition)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n-1)}{2}"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A[j+1] <- x"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n-1"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-insertion-eficiencia-peor-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Worst case result",
+              "blocks": [
+                {
+                  "id": "blk-insertion-eficiencia-peor-resultado-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T_{worst}(n) = a n^2 + b n + c"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> quadratic"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(n^2)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-bubble-sort-invariante-eficiencia",
+          "slug": "bubble-sort-invariante-eficiencia",
+          "title": "2.4 Example: Bubble Sort Algorithm",
+          "order": 5,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "learningObjectives": [
+            {
+              "objectiveId": "formular-invariante-bubble",
+              "text": "Formulate the invariant of the external cycle of Bubble Sort."
+            },
+            {
+              "objectiveId": "demostrar-correctitud-bubble",
+              "text": "Demonstrate the correctness of Bubble Sort with initialization, maintenance, and termination."
+            },
+            {
+              "objectiveId": "analizar-eficiencia-bubble",
+              "text": "Analyze why Bubble Sort is quadratic in both cases."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-loop-invariant-introduccion",
+                "kind": "required"
+              },
+              {
+                "id": "sec-secuencia-conjunto",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-bubble-sort-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "BubbleSort",
+              "code": "BubbleSort (E/S int A[n]) { for i <- 1 to (n-1) do for j <- 1 to (n-i) do if A[j] > A[j+1] then swap(A[j], A[j+1]) endif endfor endfor\n}"
+            },
+            {
+              "id": "blk-bubble-sort-invariante",
+              "type": "note",
+              "variant": "info",
+              "title": "Invariant of the external for loop (variable i)",
+              "blocks": [
+                {
+                  "id": "blk-bubble-sort-invariante-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "After completing the iteration"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "i"
+                    },
+                    {
+                      "type": "text",
+                      "text": "of the external cycle,"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "i"
+                    },
+                    {
+                      "type": "text",
+                      "text": "larger elements are in their final positions at the end of the arrangement"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "A[n-i+1..n]"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", in non-decreasing order."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-bubble-sort-demostracion-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Demonstration of the 3 moments"
+                }
+              ]
+            },
+            {
+              "id": "blk-bubble-sort-demostracion",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Initialization (i=1):"
+                    },
+                    {
+                      "type": "text",
+                      "text": "Before we begin, there are no items secured at the end of the arrangement. The property is trivially true (0 elements ordered last)."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Maintenance:"
+                    },
+                    {
+                      "type": "text",
+                      "text": "During the iteration"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "i"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", the inner loop pushes the maximum element of the unordered subarray"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "A[1..n-i+1]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "towards the position"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n-i+1"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". When finished, that element remains in its final position."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Termination (i=n):"
+                    },
+                    {
+                      "type": "text",
+                      "text": "The"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n-1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "larger elements. The only one remaining is the smallest and is already in place. The arrangement is completely ordered."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-bubble-sort-eficiencia-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Bubble Sort Efficiency"
+                }
+              ]
+            },
+            {
+              "id": "blk-bubble-sort-for-interno",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The internal for is executed"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n-i"
+                },
+                {
+                  "type": "text",
+                  "text": "times for each value of"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i"
+                },
+                {
+                  "type": "text",
+                  "text": ":"
+                }
+              ]
+            },
+            {
+              "id": "blk-bubble-sort-sumatoria",
+              "type": "equationBlock",
+              "latex": "\\sum_{i=1}^{n-1}(n-i) = (n-1) + (n-2) + \\cdots + 1 = \\frac{n(n-1)}{2}"
+            },
+            {
+              "id": "blk-bubble-sort-tn",
+              "type": "latexSteps",
+              "title": "Bubble Sort Efficiency Feature",
+              "steps": [
+                {
+                  "stepId": "funcion-de-eficiencia",
+                  "title": "Efficiency function",
+                  "latex": "T(n) = C_1 n + (C_2 + C_3)\\frac{n(n-1)}{2} + C_4\\frac{n(n-1)}{2}"
+                },
+                {
+                  "stepId": "forma-cuadratica",
+                  "title": "quadratic shape",
+                  "latex": "T(n) = a n^2 + b n + c"
+                }
+              ]
+            },
+            {
+              "id": "blk-bubble-sort-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Result",
+              "blocks": [
+                {
+                  "id": "blk-bubble-sort-resultado-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n) = a n^2 + b n + c"
+                    },
+                    {
+                      "type": "text",
+                      "text": "->"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(n^2)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "in both cases."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-bubble-sort-nota",
+              "type": "note",
+              "variant": "warning",
+              "title": "Note",
+              "blocks": [
+                {
+                  "id": "blk-bubble-sort-nota-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Note: Bubble Sort is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(n^2)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "both in the best and worst case, because even if you don't make exchanges (best case), you still make all the comparisons."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

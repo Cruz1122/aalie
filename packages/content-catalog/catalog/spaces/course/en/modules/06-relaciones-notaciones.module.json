@@ -1,0 +1,724 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-relaciones-notaciones",
+  "slug": "relaciones-notaciones",
+  "title": "Relationships between the 6 notations",
+  "order": 6,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Implication, inclusion and exclusion relations between O, Ω, Θ, o, ω and ~. Includes pedagogical reading of each relationship and a table of when to use each notation.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 20,
+  "tags": [
+    "asymptotic-relations",
+    "asymptotic-notations",
+    "inclusion",
+    "implication",
+    "symmetry",
+    "transitivity",
+    "equivalence",
+    "big-o",
+    "omega",
+    "theta",
+    "little-o",
+    "little-omega",
+    "accent",
+    "cuchiflu"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "relationships between notations",
+      "asymptotic relations",
+      "notation inclusion diagram",
+      "when to use each notation",
+      "Theta implies O and Omega",
+      "tilde implies theta",
+      "little-o implies O",
+      "little-omega implies Omega"
+    ],
+    "keywords": [
+      "f si g",
+      "f to theta of g",
+      "f in O of g",
+      "f to Omega of g",
+      "f in little-o of g",
+      "f to little-omega of g",
+      "exact elevation",
+      "upper bound",
+      "lower bound",
+      "strict limit",
+      "exact equivalence",
+      "best case",
+      "worst case",
+      "average case"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-maestra-notaciones-convenciones",
+        "kind": "required"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-omega",
+        "kind": "required"
+      },
+      {
+        "id": "sec-theta",
+        "kind": "required"
+      },
+      {
+        "id": "sec-little-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-little-omega",
+        "kind": "required"
+      },
+      {
+        "id": "sec-tilde",
+        "kind": "required"
+      },
+      {
+        "id": "sec-tabla-maestra-notaciones-convenciones",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-notaciones-asintoticas",
+    "mod-tabla-maestra-notaciones-convenciones"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "entender-notaciones-no-independientes",
+      "text": "Understand that the six asymptotic notations are not independent, but are related by implication and inclusion."
+    },
+    {
+      "objectiveId": "explicar-tilde-implica-theta",
+      "text": "Explain why f ~ g implies f ∈ Θ(g)."
+    },
+    {
+      "objectiveId": "explicar-theta-implica-o-omega",
+      "text": "Explain why f ∈ Θ(g) simultaneously implies f ∈ O(g) and f ∈ Ω(g)."
+    },
+    {
+      "objectiveId": "distinguir-o-de-theta",
+      "text": "Distinguishing that f ∈ o(g) implies f ∈ O(g), but excludes f ∈ Θ(g)."
+    },
+    {
+      "objectiveId": "distinguir-omega-pequena-de-theta",
+      "text": "Distinguishing that f ∈ ω(g) implies f ∈ Ω(g), but excludes f ∈ Θ(g)."
+    },
+    {
+      "objectiveId": "usar-notacion-segun-situacion",
+      "text": "Select the recommended notation depending on whether you are analyzing best case, worst case, average case or strict comparison."
+    },
+    {
+      "objectiveId": "interpretar-diagrama-inclusion",
+      "text": "Interpret an inclusion diagram between asymptotic notations."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-relacion-asintotica",
+      "label": "Asymptotic relationship",
+      "definition": "Logical connection between two notations that allows one membership to be concluded from another."
+    },
+    {
+      "termId": "term-implicacion",
+      "label": "Implication",
+      "definition": "Logical relationship where one statement guarantees another. For example, f ~ g implies f ∈ Θ(g)."
+    },
+    {
+      "termId": "term-inclusion",
+      "label": "Inclusion",
+      "definition": "Relationship between families of functions where one family is contained within another."
+    },
+    {
+      "termId": "term-exclusion-theta",
+      "label": "Exclusion of Θ",
+      "definition": "Situation where a strict notation, such as o(g) or ω(g), prevents f from also belonging to Θ(g)."
+    },
+    {
+      "termId": "term-media-verdad",
+      "label": "half truth",
+      "definition": "Pedagogical way of saying that O and Ω separately only report one direction of the bound: up or down."
+    },
+    {
+      "termId": "term-cota-ajustada",
+      "label": "Adjusted dimension",
+      "definition": "Boundary that describes the exact growth of a function in the sense of Θ."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-relaciones-notaciones",
+      "slug": "relaciones-notaciones",
+      "title": "Relationships between the 6 notations",
+      "order": 1,
+      "summary": "Implications between the six notations and a practical guide to choosing the appropriate notation.",
+      "sections": [
+        {
+          "sectionId": "sec-relaciones-entre-notaciones",
+          "slug": "relaciones-entre-notaciones",
+          "title": "6. Relationships between the 6 notations",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-relaciones-principales",
+              "text": "Read the main relationships between ~, Θ, O, Ω, o and ω."
+            },
+            {
+              "objectiveId": "entender-exclusion-estricta",
+              "text": "Understand why the strict notations o and ω exclude membership in Θ(g)."
+            },
+            {
+              "objectiveId": "distinguir-cotas-parciales-exactas",
+              "text": "Distinguish between partial dimensions, exact dimensions and exact equivalence."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              },
+              {
+                "id": "mod-tabla-maestra-notaciones-convenciones",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-introduccion-notaciones-asintoticas",
+                "kind": "required"
+              },
+              {
+                "id": "sec-tabla-maestra-notaciones-convenciones",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-relaciones-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The notations are not independent; They are related like this:"
+                }
+              ]
+            },
+            {
+              "id": "blk-relacion-tilde-theta-o-omega",
+              "type": "equationBlock",
+              "latex": "f \\sim g \\Rightarrow f \\in \\Theta(g) \\Rightarrow \\bigl(f \\in O(g) \\ \\land \\ f \\in \\Omega(g)\\bigr)"
+            },
+            {
+              "id": "blk-relacion-little-o",
+              "type": "equationBlock",
+              "latex": "f \\in o(g) \\Rightarrow f \\in O(g), \\quad \\text{pero} \\quad f \\notin \\Theta(g)"
+            },
+            {
+              "id": "blk-relacion-little-omega",
+              "type": "equationBlock",
+              "latex": "f \\in \\omega(g) \\Rightarrow f \\in \\Omega(g), \\quad \\text{pero} \\quad f \\notin \\Theta(g)"
+            },
+            {
+              "id": "blk-diagrama-relaciones-notaciones",
+              "type": "mermaid",
+              "title": "Inclusion diagram between notations",
+              "code": "flowchart TD TILDE[\"f ~ g\"] --> THETA[\"f ∈ Θ(g)\"] THETA --> BIGO[\"f ∈ O(g)\"] THETA --> BIGOMEGA[\"f ∈ Ω(g)\"] LITTLEO[\"f ∈ o(g)\"] --> BIGO LITTLEO -. \"pero f ∉ Θ(g)\". -> NOTTHETA1[\"f ∉ Θ(g)\"] LITTLEOMEGA[\"f ∈ ω(g)\"] --> BIGOMEGA LITTLEOMEGA -. \"pero f ∉ Θ(g)\". -> NOTTHETA2[\"f ∉ Θ(g)\"]"
+            },
+            {
+              "id": "blk-dicho-forma-sencilla-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Simply put"
+                }
+              ]
+            },
+            {
+              "id": "blk-dicho-forma-sencilla-lista",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sim"
+                    },
+                    {
+                      "type": "text",
+                      "text": "is the most demanding: it implies everything else ("
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Omega"
+                    },
+                    {
+                      "type": "text",
+                      "text": ")."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta"
+                    },
+                    {
+                      "type": "text",
+                      "text": "is the second most demanding: it implies"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Omega"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", but it does not imply"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sim"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "O"
+                    },
+                    {
+                      "type": "text",
+                      "text": "only limits above;"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Omega"
+                    },
+                    {
+                      "type": "text",
+                      "text": "It only limits below. They are separate \"half-truths.\""
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "o"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\omega"
+                    },
+                    {
+                      "type": "text",
+                      "text": "are the most restrictive in their sense: they exclude equality, which is why a function cannot belong to"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "o(g)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and to"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(g)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "at the same time."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-relaciones-nota",
+              "type": "note",
+              "variant": "warning",
+              "title": "Care",
+              "blocks": [
+                {
+                  "id": "blk-relaciones-nota-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Don't confuse an implication with an equivalence. what"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f \\in o(g)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "imply"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f \\in O(g)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "does not mean that every function in"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(g)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "also be in"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "o(g)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Address matters."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-cual-usar-en-cada-situacion",
+          "slug": "cual-usar-en-cada-situacion",
+          "title": "Which one to use in each situation?",
+          "order": 2,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "seleccionar-notacion-por-caso",
+              "text": "Select the appropriate notation according to the type of analysis or comparison."
+            },
+            {
+              "objectiveId": "diferenciar-peor-caso-o-theta",
+              "text": "Differentiate when to use O for worst case and when to use Θ specifying worst case."
+            },
+            {
+              "objectiveId": "seleccionar-notacion-estricta",
+              "text": "Select o u ω when the comparison is strictly minor or major order."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              },
+              {
+                "id": "mod-tabla-maestra-notaciones-convenciones",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-relaciones-entre-notaciones",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-cual-usar-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The following table summarizes which notation should be used depending on the analysis situation."
+                }
+              ]
+            },
+            {
+              "id": "blk-cual-usar-tabla",
+              "type": "table",
+              "title": "Recommended notation depending on the situation",
+              "columns": [
+                {
+                  "key": "situacion",
+                  "label": "Situation"
+                },
+                {
+                  "key": "notacionRecomendada",
+                  "label": "Recommended notation"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Best case analysis (exact behavior)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(theta) — exact elevation"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analysis of the worst case (without knowing if the limit is tight)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(big-O)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analysis of the worst case with proven exact level"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta"
+                      },
+                      {
+                        "type": "text",
+                        "text": "specifying \"in the worst case\""
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analysis of the average case (always accurate)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta"
+                      },
+                      {
+                        "type": "text",
+                        "text": "always"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Compare that f is strictly lower order than g"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "o"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(little-o)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Compare that f is strictly higher order than g"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\omega"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(little-omega)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Show that f and g are almost identical (same principal constant)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sim"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(tilde)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-cual-usar-alerta-peor-caso",
+              "type": "note",
+              "variant": "warning",
+              "title": "Worst case: don't mix O with Θ without justification",
+              "blocks": [
+                {
+                  "id": "blk-cual-usar-alerta-peor-caso-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "For worst case you can use"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O"
+                    },
+                    {
+                      "type": "text",
+                      "text": "when you only have an upper bound. Use"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta"
+                    },
+                    {
+                      "type": "text",
+                      "text": "in the worst case only when the exact limit is already demonstrated."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-cual-usar-alerta-promedio",
+              "type": "note",
+              "variant": "info",
+              "title": "average case",
+              "blocks": [
+                {
+                  "id": "blk-cual-usar-alerta-promedio-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The average case is reported as"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta"
+                    },
+                    {
+                      "type": "text",
+                      "text": "because it represents an exact expected behavior under the defined probabilistic model."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
