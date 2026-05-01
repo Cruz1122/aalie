@@ -624,6 +624,12 @@ dialog::backdrop {
   font-size: 1em !important;
 }
 
+/* Aire horizontal: el glyph box de KaTeX suele “comerse” el espacio respecto al texto adyacente */
+.katex:not(.katex-display) {
+  margin-left: 0.2em !important;
+  margin-right: 0.2em !important;
+}
+
 .katex-display {
   display: block;
   max-width: 100%;

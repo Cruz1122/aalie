@@ -19,9 +19,9 @@ export default function RenderableContent({ content, className }: Props) {
           return (
             <pre
               key={index}
-              className={`${blockSpacingClass} overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-200`}
+              className={`${blockSpacingClass} overflow-x-auto whitespace-pre-wrap break-words rounded bg-slate-900 p-2 text-xs text-slate-200`}
             >
-              <code>{block.content}</code>
+              <code className="block whitespace-pre-wrap">{block.content}</code>
             </pre>
           );
         }

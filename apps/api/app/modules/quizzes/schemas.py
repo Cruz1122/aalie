@@ -130,6 +130,7 @@ class QuizSelectionRequest(BaseModel):
     recentResults: list[dict[str, object]] = Field(default_factory=list)
     recentQuestionIds: list[str] = Field(default_factory=list)
     sessionPreferences: QuizSessionPreferences = Field(default_factory=QuizSessionPreferences)
+    locale: str | None = None
 
 
 class QuizSession(BaseModel):
@@ -156,6 +157,7 @@ class QuizAnswerSubmission(BaseModel):
     sessionId: str
     questionIds: list[str]
     answers: list[StudentAnswer]
+    locale: str | None = None
 
 
 class QuizAttemptSubmission(QuizAnswerSubmission):

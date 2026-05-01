@@ -13,6 +13,7 @@ import {
 } from "./user-guide-transform";
 
 export const USER_GUIDE_SPACE_ID = "user-guide";
+export const USER_GUIDE_FALLBACK_LOCALE = "es";
 
 const ensureValidCatalog = cache(() => {
   const report = validateCatalog();
@@ -25,9 +26,21 @@ const ensureValidCatalog = cache(() => {
   return report;
 });
 
+function tryLoadUserGuideBundle(locale: string): LoadedSpaceBundle | null {
+  try {
+    return getSpaceBundle(USER_GUIDE_SPACE_ID, locale);
+  } catch {
+    return null;
+  }
+}
+
 const loadUserGuideBundle = cache((locale: string): LoadedSpaceBundle => {
   ensureValidCatalog();
-  return getSpaceBundle(USER_GUIDE_SPACE_ID, locale);
+  return (
+    tryLoadUserGuideBundle(locale) ??
+    tryLoadUserGuideBundle(USER_GUIDE_FALLBACK_LOCALE) ??
+    getSpaceBundle(USER_GUIDE_SPACE_ID, locale)
+  );
 });
 
 export function getUserGuideLandingData(locale: string) {
@@ -42,8 +55,10 @@ export function getUserGuideModuleData(locale: string, moduleSlug: string) {
 }
 
 export function getUserGuideStaticParams(locales: readonly string[]) {
+  const fallbackBundle = loadUserGuideBundle(USER_GUIDE_FALLBACK_LOCALE);
+
   return locales.flatMap((locale) =>
-    loadUserGuideBundle(locale).modules.map(({ module }) => ({
+    (tryLoadUserGuideBundle(locale) ?? fallbackBundle).modules.map(({ module }) => ({
       locale,
       moduleSlug: module.slug,
     })),

@@ -357,8 +357,8 @@ export function ContentBlockRenderer({
               {block.title}
             </header>
           ) : null}
-          <pre className="overflow-x-auto px-3 py-3 text-[13px] leading-6 text-slate-200">
-            <code>{block.code}</code>
+          <pre className="overflow-x-auto whitespace-pre-wrap break-words px-3 py-3 text-[13px] leading-6 text-slate-200">
+            <code className="block whitespace-pre-wrap">{block.code}</code>
           </pre>
           {block.caption ? (
             <footer className="border-t border-white/10 px-3 py-2 text-xs text-slate-500">

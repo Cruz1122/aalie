@@ -73,6 +73,56 @@ function normalizeForMatch(text: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+function normalizedPrefixLength(haystack: string, endExclusive: number): number {
+  return normalizeForMatch(haystack.slice(0, endExclusive)).length;
+}
+
+/** Primer índice en `haystack` donde el prefijo normalizado alcanza longitud >= normPos. */
+function originalIndexAtNormPosition(haystack: string, normPos: number): number {
+  let lo = 0;
+  let hi = haystack.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (normalizedPrefixLength(haystack, mid) < normPos) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+function findNormalizedMatch(
+  part: string,
+  pattern: string,
+): { start: number; end: number } | null {
+  const np = normalizeForMatch(part);
+  const idx = np.indexOf(pattern);
+  if (idx === -1) return null;
+  const start = originalIndexAtNormPosition(part, idx);
+  const end = originalIndexAtNormPosition(part, idx + pattern.length);
+  if (start >= end) return null;
+  return { start, end };
+}
+
+function isWordChar(ch: string | undefined): boolean {
+  if (!ch) return false;
+  return /[\p{L}\p{M}\p{N}_]/u.test(ch);
+}
+
+/** Incluye una -s final típica de plural en español si el patrón no termina en s. */
+function extendPluralS(part: string, start: number, end: number, pattern: string): number {
+  if (pattern.endsWith("s") || pattern.length < 4) return end;
+  if (end >= part.length) return end;
+  const ch = part[end];
+  if (ch !== "s" && ch !== "S") return end;
+  if (end + 1 < part.length && isWordChar(part[end + 1])) return end;
+  return end + 1;
+}
+
+function isAutoLinkSpanValid(part: string, start: number, end: number): boolean {
+  if (start > 0 && isWordChar(part[start - 1])) return false;
+  if (end < part.length && isWordChar(part[end])) return false;
+  return true;
+}
+
 function autoEnhanceTextWithTerms(
   text: string,
   termsIndex: TermIndexEntry[],
@@ -100,16 +150,18 @@ function autoEnhanceTextWithTerms(
         continue;
       }
 
-      const normalizedPart = normalizeForMatch(part);
-      const index = normalizedPart.indexOf(pattern);
+      const match = findNormalizedMatch(part, pattern);
 
-      if (
-        index !== -1 &&
-        shouldAutoLink(entry.termId)
-      ) {
-        const originalText = part.substring(index, index + pattern.length);
-        const prefix = part.substring(0, index);
-        const suffix = part.substring(index + pattern.length);
+      if (match && shouldAutoLink(entry.termId)) {
+        let { start, end } = match;
+        end = extendPluralS(part, start, end, pattern);
+        if (!isAutoLinkSpanValid(part, start, end)) {
+          newParts.push(part);
+          continue;
+        }
+        const originalText = part.slice(start, end);
+        const prefix = part.slice(0, start);
+        const suffix = part.slice(end);
 
         if (prefix) newParts.push(prefix);
 
@@ -119,7 +171,7 @@ function autoEnhanceTextWithTerms(
 
         newParts.push(
           <TermInline
-            key={`${entry.termId}-${index}`}
+            key={`${entry.termId}-${start}`}
             text={originalText}
             term={entry}
             href={href}

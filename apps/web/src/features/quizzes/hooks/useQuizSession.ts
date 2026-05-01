@@ -7,6 +7,7 @@ import type {
   QuizSessionResult,
   StudentAnswer,
 } from "@aa/types";
+import { useLocale } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
 import { createQuizAttempt, evaluateQuizAttempt } from "@/features/quizzes/api/quizClient";
@@ -25,6 +26,7 @@ function toWeakSkillIds(mastery: Record<string, number>): string[] {
 }
 
 export function useQuizSession() {
+  const locale = useLocale();
   const [session, setSession] = useState<QuizSession | null>(null);
   const [result, setResult] = useState<QuizSessionResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +45,7 @@ export function useQuizSession() {
         weakSkillIds: toWeakSkillIds(progress.masteryBySkill),
         recentQuestionIds: progress.recentQuestionIds,
         sessionPreferences: { questionCount, difficultyMix: {} },
+        locale,
       };
       const created = await createQuizAttempt(payload);
       setSession(created);
@@ -54,7 +57,7 @@ export function useQuizSession() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   const submitAnswers = useCallback(
     async (answers: StudentAnswer[]) => {
@@ -68,6 +71,7 @@ export function useQuizSession() {
           sessionId: session.sessionId,
           questionIds: session.questions.map((question) => question.questionId),
           answers,
+          locale: session.locale,
         });
         setResult(evaluated);
         applySessionResult(evaluated);

@@ -127,6 +127,8 @@ export interface QuizSelectionRequest {
   recentResults?: QuizRecentResult[];
   recentQuestionIds: string[];
   sessionPreferences?: QuizSessionPreferences;
+  /** Banco de preguntas: coincide con next-intl (ej. `en`, `es`). */
+  locale?: string | null;
 }
 
 export interface QuizSession {
@@ -189,6 +191,8 @@ export interface QuizSessionEvaluateRequest {
   sessionId: string;
   questionIds: string[];
   answers: StudentAnswer[];
+  /** Mismo locale que la sesión (p. ej. `session.locale`). */
+  locale?: string | null;
 }
 
 export interface QuizAnswerSubmission extends QuizSessionEvaluateRequest {}

@@ -5,7 +5,12 @@ from copy import deepcopy
 from uuid import uuid4
 
 from .grading import GradingError, compute_mastery_delta, grade_question, summarize_skill_outcomes
-from .repository import get_active_questions, get_question, get_validated_dataset
+from .repository import (
+    get_active_questions,
+    get_question,
+    get_validated_dataset,
+    normalize_quiz_locale,
+)
 from .schemas import (
     QuizAnswerSubmission,
     QuizQuestion,
@@ -60,11 +65,12 @@ def get_dataset_summary() -> dict[str, dict[str, int]]:
 
 
 def create_session(request: QuizSelectionRequest) -> QuizSession:
-    dataset, report = get_validated_dataset()
+    loc = normalize_quiz_locale(request.locale)
+    dataset, report = get_validated_dataset(loc)
     if report.errors:
         raise ValueError("Quiz dataset invalido; corra /quizzes/validate")
 
-    selection = select_questions(get_active_questions(), request, include_trace=False)
+    selection = select_questions(get_active_questions(loc), request, include_trace=False)
 
     return QuizSession(
         sessionId=f"quiz-session-{uuid4()}",
@@ -80,13 +86,14 @@ def create_session(request: QuizSelectionRequest) -> QuizSession:
 
 
 def evaluate_session(payload: QuizAnswerSubmission) -> QuizSessionResult:
+    loc = normalize_quiz_locale(payload.locale)
     answers_by_id = {answer.questionId: answer for answer in payload.answers}
 
     results = []
     mastery_delta_by_skill: dict[str, float] = defaultdict(float)
 
     for question_id in payload.questionIds:
-        question = get_question(question_id)
+        question = get_question(question_id, loc)
         if question is None:
             raise ValueError(f"Unknown questionId: {question_id}")
 
