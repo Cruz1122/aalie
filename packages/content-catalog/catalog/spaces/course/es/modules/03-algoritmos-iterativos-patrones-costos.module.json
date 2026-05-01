@@ -403,7 +403,7 @@
           "learningObjectives": [
             {
               "objectiveId": "leer-busqueda-secuencial",
-              "text": "Leer el pseudoc?digo de búsqueda secuencial e identificar sus l?neas principales."
+              "text": "Leer el pseudocódigo de búsqueda secuencial e identificar sus líneas principales."
             },
             {
               "objectiveId": "distinguir-casos-busqueda",
@@ -434,7 +434,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "BusquedaSecuencial",
-              "code": "int BusquedaSecuencial (E int A[n], E int x) { i <- 1 # C1 * 1 while (A[i]<>x) and (i<=n) # C2 * (n+1) en peor caso i <- i + 1 # C3 * n endwhile if (i <= n) then # C4 * 1 return i else return -1 # C5 * 1\n}"
+              "code": "int BusquedaSecuencial (E int A[n], E int x) {\n  i <- 1                             # C1 * 1\n  while (A[i]<>x) and (i<=n)         # C2 * (n+1) en peor caso\n    i <- i + 1                       # C3 * n\n  endwhile\n  if (i <= n) then                   # C4 * 1\n    return i\n  else\n    return -1                        # C5 * 1\n}"
             },
             {
               "id": "blk-busqueda-secuencial-precondiciones",
@@ -609,7 +609,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "Es igual de malo que"
+                      "text": "¿Es tan malo como que "
                     },
                     {
                       "type": "inlineMath",
@@ -617,7 +617,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "no está a que este en la?ltima posición?No. Si"
+                      "text": " esté en la última posición? No. Si "
                     },
                     {
                       "type": "inlineMath",
@@ -625,7 +625,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "no está, el algoritmo llega al final y hace una verificación más (la que causa la salida). Por eso el peor caso es que"
+                      "text": " no está en el arreglo, el algoritmo llega al final y hace una verificación más (la que causa la salida). Por eso el peor caso es que "
                     },
                     {
                       "type": "inlineMath",
@@ -633,7 +633,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "no este."
+                      "text": " no esté."
                     }
                   ]
                 }
@@ -656,7 +656,7 @@
             },
             {
               "objectiveId": "comparar-ordenes-intuitivamente",
-              "text": "Comparar intuitivamente funciones constantes, logar?tmicas, lineales, cuadráticas, exponenciales y factoriales."
+              "text": "Comparar intuitivamente funciones constantes, logarítmicas, lineales, cuadráticas, exponenciales y factoriales."
             }
           ],
           "prerequisites": {
@@ -675,7 +675,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Esta tabla es fundamental para comparar funciones r?pidamente. Cuanto más arriba en la tabla, más lenta crece la función (mejor). Cuanto más abajo, más r?pido crece (peor)."
+                  "text": "Esta tabla es fundamental para comparar funciones rápidamente. Cuanto más arriba en la tabla, más lenta crece la función (mejor). Cuanto más abajo, más rápido crece (peor)."
                 }
               ]
             },
@@ -1087,7 +1087,7 @@
             },
             {
               "objectiveId": "aplicar-limite-cociente",
-              "text": "Aplicar el límite del cociente para decidir que función crece más r?pido."
+              "text": "Aplicar el límite del cociente para decidir que función crece más rápido."
             },
             {
               "objectiveId": "interpretar-limite-cero-constante-infinito",
@@ -1195,7 +1195,7 @@
                       },
                       {
                         "type": "text",
-                        "text": "crece más r?pido que"
+                        "text": "crece más rápido que"
                       },
                       {
                         "type": "inlineMath",
@@ -1271,7 +1271,7 @@
                       },
                       {
                         "type": "text",
-                        "text": "crece más r?pido que"
+                        "text": "crece más rápido que"
                       },
                       {
                         "type": "inlineMath",
@@ -1336,7 +1336,7 @@
             {
               "id": "blk-ejemplo-comparar-funciones-limite",
               "type": "latexSteps",
-              "title": "C?lculo del l?mite",
+              "title": "Cálculo del límite",
               "steps": [
                 {
                   "stepId": "plantear-el-cociente",
@@ -1350,7 +1350,7 @@
                 },
                 {
                   "stepId": "evaluar-el-limite",
-                  "title": "Evaluar el l?mite",
+                  "title": "Evaluar el límite",
                   "latex": "3+0=3"
                 }
               ]
@@ -1359,7 +1359,7 @@
               "id": "blk-ejemplo-comparar-funciones-conclusion",
               "type": "note",
               "variant": "success",
-              "title": "Conclusi?n",
+              "title": "Conclusión",
               "blocks": [
                 {
                   "id": "blk-ejemplo-comparar-funciones-conclusion-texto",

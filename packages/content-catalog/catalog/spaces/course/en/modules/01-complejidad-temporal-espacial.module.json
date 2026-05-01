@@ -436,7 +436,7 @@
               "type": "code",
               "language": "text",
               "title": "General structure",
-              "code": "# Variables globales (si las hay)\ntipo NombreAlgoritmo (E tipo param1, E/S tipo param2) { # Area de variables locales tipo var1, var2 # Cuerpo del algoritmo instrucciones... return valor # Si retorna algo: es FUNCION # Si no retorna: es PROCEDIMIENTO\n}"
+              "code": "# Global variables (if any)\ntype AlgorithmName (I type param1, I/O type param2) {\n  # Local variable area\n  type var1, var2\n  # Algorithm body\n  instructions...\n  return value\n  # If it returns a value: it is a FUNCTION\n  # If it does not return: it is a PROCEDURE\n}"
             }
           ]
         },
@@ -489,7 +489,7 @@
               "type": "algorithm",
               "language": "text",
               "title": "AlgorithmSM",
-              "code": "int AlgoritmoSM (E int n) { int i, suma suma <- 0 # 1 vez --> 1 * C1 for i <- 1 to n do # n+1 veces --> (n+1) * C2 suma <- suma+i # n veces --> n * C3 endfor return suma # 1 vez --> 1 * C4\n}"
+              "code": "int AlgoritmoSM (I int n) {\n  int i, suma\n  suma <- 0                    # 1 time --> 1 * C1\n  for i <- 1 to n do           # n+1 times --> (n+1) * C2\n    suma <- suma+i             # n times --> n * C3\n  endfor\n  return suma                  # 1 time --> 1 * C4\n}"
             },
             {
               "id": "blk-ejemplo1-seguimiento-title",
@@ -1161,7 +1161,7 @@
               "type": "algorithm",
               "language": "text",
               "title": "AlgorithmSM2 with fixed limits",
-              "code": "AlgoritmoSM2 (E int A[n]) { x <- 1 # 1 vez --> 1*1 for i <- 1 to n do # n+1 veces --> (n+1)*3 for j <- 1 to n do # n(n+1) veces --> n(n+1)*3 x <- x + i # n*n veces --> n^2 * 2 endfor endfor\n}"
+              "code": "AlgoritmoSM2 (I int A[n]) {\n  x <- 1                       # 1 time --> 1*1\n  for i <- 1 to n do           # n+1 times --> (n+1)*3\n    for j <- 1 to n do         # n(n+1) times --> n(n+1)*3\n      x <- x + i               # n*n times --> n^2 * 2\n    endfor\n  endfor\n}"
             },
             {
               "id": "blk-ejemplo2-seguimiento-title",
@@ -1757,7 +1757,7 @@
               "type": "algorithm",
               "language": "text",
               "title": "SM2 algorithm with variable limit",
-              "code": "AlgoritmoSM2 (E int A[n]) { x <- 1 # 1 vez for i <- 1 to n do # n+1 veces for j <- 1 to i do # LIMITE VARIABLE: depende de i x <- x + i endfor endfor\n}"
+              "code": "AlgoritmoSM2 (I int A[n]) {\n  x <- 1                       # 1 time\n  for i <- 1 to n do           # n+1 times\n    for j <- 1 to i do         # VARIABLE UPPER BOUND: depends on i\n      x <- x + i\n    endfor\n  endfor\n}"
             },
             {
               "id": "blk-ejemplo3-seguimiento-title",
@@ -2472,7 +2472,7 @@
               "type": "algorithm",
               "language": "text",
               "title": "AlgorithmXXX",
-              "code": "AlgoritmoXXX (E int n) { x <- 1 # 1 vez --> 1*1 for i <- 1 to n do # n+1 veces --> (n+1)*3 j <- 1 # n veces --> n*1 while (j <= n) # n*(log2(n)+2) veces --> n*(log2(n)+2)*1 j <- j*2 # n*(log2(n)+1) veces --> n*(log2(n)+1)*2 endwhile endfor\n}"
+              "code": "AlgoritmoXXX (I int n) {\n  x <- 1                       # 1 time --> 1*1\n  for i <- 1 to n do           # n+1 times --> (n+1)*3\n    j <- 1                     # n times --> n*1\n    while (j <= n) do          # n*(log2(n)+2) times --> n*(log2(n)+2)*1\n      j <- j*2                 # n*(log2(n)+1) times --> n*(log2(n)+1)*2\n    endwhile\n  endfor\n}"
             },
             {
               "id": "blk-ejemplo4-seguimiento-title",

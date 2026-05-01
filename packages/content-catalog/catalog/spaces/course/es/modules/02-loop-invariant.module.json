@@ -9,7 +9,7 @@
   "locale": "es",
   "version": "1.0.0",
   "status": "draft",
-  "summary": "Principio de correctitud, formulacion de un invariante de ciclo y demostración en los tres momentos obligatorios: inicialización, mantenimiento y terminación. Se aplica a Insertion Sort y Bubble Sort.",
+  "summary": "Principio de correctitud, formulación de un invariante de ciclo y demostración en los tres momentos obligatorios: inicialización, mantenimiento y finalización. Se aplica a Insertion Sort y Bubble Sort.",
   "difficulty": "foundational",
   "estimatedMinutes": 35,
   "tags": [
@@ -41,7 +41,7 @@
       "conjunto",
       "inicialización",
       "mantenimiento",
-      "terminación",
+      "finalización",
       "ordenamiento",
       "mejor caso",
       "peor caso"
@@ -75,7 +75,7 @@
     },
     {
       "objectiveId": "explicar-tres-momentos",
-      "text": "Explicar los tres momentos obligatorios de un invariante: inicialización, mantenimiento y terminación."
+      "text": "Explicar los tres momentos obligatorios de un invariante: inicialización, mantenimiento y finalización."
     },
     {
       "objectiveId": "diferenciar-secuencia-conjunto",
@@ -104,37 +104,37 @@
     {
       "termId": "term-loop-invariant",
       "label": "Loop invariant",
-      "definition": "Propiedad logica asociada al ciclo principal de un algoritmo que se usa para demostrar correctitud."
+      "definition": "Propiedad lógica asociada al ciclo principal de un algoritmo que se usa para demostrar correctitud."
     },
     {
       "termId": "term-correctitud",
       "label": "Correctitud",
-      "definition": "Propiedad de un algoritmo que indica que hace lo que afirma hacer para toda entrada valida."
+      "definition": "Propiedad de un algoritmo que indica que hace lo que afirma hacer para toda entrada válida."
     },
     {
       "termId": "term-inicializacion",
-      "label": "Inicializacion",
-      "definition": "Momento de la demostración donde se verifica que el invariante es cierto antes de la primera iteraci?n."
+      "label": "Inicialización",
+      "definition": "Momento de la demostración donde se verifica que el invariante es cierto antes de la primera iteración."
     },
     {
       "termId": "term-mantenimiento",
       "label": "Mantenimiento",
-      "definition": "Momento de la demostración donde se verifica que si el invariante es cierto antes de una iteraci?n, sigue siendo cierto antes de la siguiente."
+      "definition": "Momento de la demostración donde se verifica que si el invariante es cierto antes de una iteración, sigue siendo cierto antes de la siguiente."
     },
     {
       "termId": "term-terminacion",
-      "label": "Terminacion",
+      "label": "Finalización",
       "definition": "Momento de la demostración donde se usa el invariante junto con la condición de parada para demostrar que el algoritmo funciona correctamente."
     },
     {
       "termId": "term-secuencia",
       "label": "Secuencia",
-      "definition": "Coleccion donde el orden de los elementos importa."
+      "definition": "Colección donde el orden de los elementos importa."
     },
     {
       "termId": "term-conjunto",
       "label": "Conjunto",
-      "definition": "Coleccion donde el orden de los elementos no importa."
+      "definition": "Colección donde el orden de los elementos no importa."
     }
   ],
   "chapters": [
@@ -143,7 +143,7 @@
       "slug": "loop-invariant",
       "title": "Loop Invariant (Invariante de Ciclo)",
       "order": 1,
-      "summary": "Demostracion de correctitud mediante invariantes de ciclo, aplicada a algoritmos de ordenamiento.",
+      "summary": "Demostración de correctitud mediante invariantes de ciclo, aplicada a algoritmos de ordenamiento.",
       "sections": [
         {
           "sectionId": "sec-loop-invariant-introduccion",
@@ -156,11 +156,11 @@
           "learningObjectives": [
             {
               "objectiveId": "comprender-loop-invariant",
-              "text": "Comprender que el loop invariant reemplaza la validacion por casos particulares."
+              "text": "Comprender que el loop invariant reemplaza la validación por casos particulares."
             },
             {
               "objectiveId": "identificar-tres-momentos",
-              "text": "Identificar inicialización, mantenimiento y terminación cómo los tres momentos obligatorios."
+              "text": "Identificar inicialización, mantenimiento y finalización como los tres momentos obligatorios."
             }
           ],
           "prerequisites": {
@@ -189,7 +189,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "El invariante es una propiedad logica que:"
+                  "text": "El invariante es una propiedad lógica que:"
                 }
               ]
             },
@@ -244,11 +244,11 @@
                   "content": [
                     {
                       "type": "strong",
-                      "text": "INICIALIZACION:"
+                      "text": "inicialización: "
                     },
                     {
                       "type": "text",
-                      "text": "La propiedad es cierta antes de la primera iteraci?n del ciclo."
+                      "text": "La propiedad es cierta antes de la primera iteración del ciclo."
                     }
                   ]
                 },
@@ -256,11 +256,11 @@
                   "content": [
                     {
                       "type": "strong",
-                      "text": "MANTENIMIENTO:"
+                      "text": "mantenimiento: "
                     },
                     {
                       "type": "text",
-                      "text": "Si la propiedad es cierta antes de una iteraci?n, sigue siendo cierta antes de la siguiente iteraci?n."
+                      "text": "Si la propiedad es cierta antes de una iteración, sigue siendo cierta antes de la siguiente iteración."
                     }
                   ]
                 },
@@ -268,7 +268,7 @@
                   "content": [
                     {
                       "type": "strong",
-                      "text": "TERMINACION:"
+                      "text": "finalización: "
                     },
                     {
                       "type": "text",
@@ -392,7 +392,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "En los invariantes siempre se trabaja con secuencias cuando el orden de los elementos importa (cómo en ordenamiento)."
+                      "text": "En los invariantes siempre se trabaja con secuencias cuando el orden de los elementos importa (como en ordenamiento)."
                     }
                   ]
                 }
@@ -403,7 +403,7 @@
         {
           "sectionId": "sec-insertion-sort-invariante",
           "slug": "insertion-sort-invariante",
-          "title": "2.2 Ejemplo: Algoritmo de Insercion",
+          "title": "2.2 Ejemplo: Algoritmo de Inserción",
           "order": 3,
           "kind": "example",
           "trackProgress": true,
@@ -419,7 +419,7 @@
             },
             {
               "objectiveId": "demostrar-invariante-insertion",
-              "text": "Demostrar el invariante de Insertion Sort en inicialización, mantenimiento y terminación."
+              "text": "Demostrar el invariante de Insertion Sort en inicialización, mantenimiento y finalización."
             }
           ],
           "prerequisites": {
@@ -443,7 +443,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "El algoritmo de ordenamiento por inserción funciona bajo el paradigma incremental: mantiene un subarreglo ordenado que crece en cada iteraci?n."
+                  "text": "El algoritmo de ordenamiento por inserción funciona bajo el paradigma incremental: mantiene un subarreglo ordenado que crece en cada iteración."
                 }
               ]
             },
@@ -452,7 +452,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "InsertionSort",
-              "code": "InsertionSort (E/S int A[n]) { for i <- 2 to n do x <- A[i] j <- i - 1 while (j >= 1) and (x < A[j]) do A[j+1] <- A[j] j <- j - 1 endwhile A[j+1] <- x endfor\n}"
+              "code": "InsertionSort (E/S int A[n]) {\n  for i <- 2 to n do\n    x <- A[i]\n    j <- i - 1\n    while (j >= 1) and (x < A[j]) do\n      A[j+1] <- A[j]\n      j <- j - 1\n    endwhile\n    A[j+1] <- x\n  endfor\n}"
             },
             {
               "id": "blk-insertion-sort-como-funciona",
@@ -460,7 +460,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "?C?mo funciona?Empieza en la posición 2 ("
+                  "text": "¿Cómo funciona? Empieza en la posición 2 ("
                 },
                 {
                   "type": "inlineMath",
@@ -537,14 +537,14 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Demostracion de los 3 momentos"
+                  "text": "Demostración de los 3 momentos"
                 }
               ]
             },
             {
               "id": "blk-insertion-sort-demostracion-tabla",
               "type": "table",
-              "title": "Demostracion del invariante de Insertion Sort",
+              "title": "Demostración del invariante de Insertion Sort",
               "columns": [
                 {
                   "key": "momento",
@@ -560,7 +560,7 @@
                 },
                 {
                   "key": "cumple",
-                  "label": "Se cumple?"
+                  "label": "¿Se cumple?"
                 }
               ],
               "rows": [
@@ -569,7 +569,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Inicializacion"
+                        "text": "Inicialización"
                       }
                     ],
                     [
@@ -613,7 +613,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Antes de la iteraci?n"
+                        "text": "Antes de la iteración"
                       },
                       {
                         "type": "inlineMath",
@@ -661,7 +661,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Terminacion"
+                        "text": "Finalización"
                       }
                     ],
                     [
@@ -944,7 +944,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "El while se ejecuta el m?ximo numero de veces. Para la iteraci?n"
+                  "text": "El while se ejecuta el máximo numero de veces. Para la iteración"
                 },
                 {
                   "type": "inlineMath",
@@ -1113,7 +1113,7 @@
             },
             {
               "objectiveId": "demostrar-correctitud-bubble",
-              "text": "Demostrar la correctitud de Bubble Sort con inicialización, mantenimiento y terminación."
+              "text": "Demostrar la correctitud de Bubble Sort con inicialización, mantenimiento y finalización."
             },
             {
               "objectiveId": "analizar-eficiencia-bubble",
@@ -1144,7 +1144,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "BubbleSort",
-              "code": "BubbleSort (E/S int A[n]) { for i <- 1 to (n-1) do for j <- 1 to (n-i) do if A[j] > A[j+1] then swap(A[j], A[j+1]) endif endfor endfor\n}"
+              "code": "BubbleSort (E/S int A[n]) {\n  for i <- 1 to (n-1) do\n    for j <- 1 to (n-i) do\n      if A[j] > A[j+1] then\n        swap(A[j], A[j+1])\n      endif\n    endfor\n  endfor\n}"
             },
             {
               "id": "blk-bubble-sort-invariante",
@@ -1158,7 +1158,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "Despues de completar la iteraci?n"
+                      "text": "Después de completar la iteración"
                     },
                     {
                       "type": "inlineMath",
@@ -1195,7 +1195,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Demostracion de los 3 momentos"
+                  "text": "Demostración de los 3 momentos"
                 }
               ]
             },
@@ -1208,7 +1208,7 @@
                   "content": [
                     {
                       "type": "strong",
-                      "text": "Inicializacion (i=1):"
+                      "text": "Inicialización (i=1):"
                     },
                     {
                       "type": "text",
@@ -1224,7 +1224,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "Durante la iteraci?n"
+                      "text": "Durante la iteración"
                     },
                     {
                       "type": "inlineMath",
@@ -1232,7 +1232,7 @@
                     },
                     {
                       "type": "text",
-                      "text": ", el ciclo interno empuja el m?ximo elemento del subarreglo no ordenado"
+                      "text": ", el ciclo interno empuja el máximo elemento del subarreglo no ordenado"
                     },
                     {
                       "type": "inlineMath",
@@ -1256,7 +1256,7 @@
                   "content": [
                     {
                       "type": "strong",
-                      "text": "Terminacion (i=n):"
+                      "text": "Finalización (i=n):"
                     },
                     {
                       "type": "text",
@@ -1268,7 +1268,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "elementos más grandes. El —nico restánte es el más peque?o y ya está en su lugar. El arreglo está completamente ordenado."
+                      "text": "elementos más grandes. El único restante es el más pequeño y ya está en su lugar. El arreglo está completamente ordenado."
                     }
                   ]
                 }
@@ -1307,7 +1307,7 @@
                 },
                 {
                   "type": "text",
-                  "text": ":"
+                  "text": ": "
                 }
               ]
             },
@@ -1319,16 +1319,16 @@
             {
               "id": "blk-bubble-sort-tn",
               "type": "latexSteps",
-              "title": "Funci?n de eficiencia de Bubble Sort",
+              "title": "Función de eficiencia de Bubble Sort",
               "steps": [
                 {
                   "stepId": "funcion-de-eficiencia",
-                  "title": "Funci?n de eficiencia",
+                  "title": "Función de eficiencia",
                   "latex": "T(n) = C_1 n + (C_2 + C_3)\\frac{n(n-1)}{2} + C_4\\frac{n(n-1)}{2}"
                 },
                 {
                   "stepId": "forma-cuadratica",
-                  "title": "Forma cuadr?tica",
+                  "title": "Forma cuadrática",
                   "latex": "T(n) = a n^2 + b n + c"
                 }
               ]
@@ -1383,7 +1383,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "tanto en el mejor cómo en el peor caso, porque aunque no haga intercambios (mejor caso), sigue haciendo todas las comparaciones."
+                      "text": "tanto en el mejor como en el peor caso, porque aunque no haga intercambios (mejor caso), sigue haciendo todas las comparaciones."
                     }
                   ]
                 }

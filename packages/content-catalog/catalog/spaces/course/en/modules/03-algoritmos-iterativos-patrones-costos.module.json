@@ -434,7 +434,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "SearchSequential",
-              "code": "int BusquedaSecuencial (E int A[n], E int x) { i <- 1 # C1 * 1 while (A[i]<>x) and (i<=n) # C2 * (n+1) en peor caso i <- i + 1 # C3 * n endwhile if (i <= n) then # C4 * 1 return i else return -1 # C5 * 1\n}"
+              "code": "int BusquedaSecuencial (E int A[n], E int x) {\n  i <- 1                             # C1 * 1\n  while (A[i]<>x) and (i<=n)         # C2 * (n+1) worst case\n    i <- i + 1                       # C3 * n\n  endwhile\n  if (i <= n) then                   # C4 * 1\n    return i\n  else\n    return -1                        # C5 * 1\n}"
             },
             {
               "id": "blk-busqueda-secuencial-precondiciones",
@@ -609,7 +609,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "It's just as bad as"
+                      "text": "Is it as bad as if "
                     },
                     {
                       "type": "inlineMath",
@@ -617,7 +617,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "Isn't it because I'm in the last position? No. Yes"
+                      "text": " were in the last position? No. If "
                     },
                     {
                       "type": "inlineMath",
@@ -625,7 +625,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "is not there, the algorithm reaches the end and does one more check (the one that causes the exit). Therefore the worst case is that"
+                      "text": " is not in the array, the algorithm reaches the end and does one more check (the one that causes the exit). So the worst case is that "
                     },
                     {
                       "type": "inlineMath",
@@ -633,7 +633,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "not this one."
+                      "text": " is not present."
                     }
                   ]
                 }

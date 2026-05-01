@@ -102,25 +102,13 @@ function findNormalizedMatch(
   return { start, end };
 }
 
-function isWordChar(ch: string | undefined): boolean {
-  if (!ch) return false;
-  return /[\p{L}\p{M}\p{N}_]/u.test(ch);
-}
-
 /** Incluye una -s final típica de plural en español si el patrón no termina en s. */
 function extendPluralS(part: string, start: number, end: number, pattern: string): number {
   if (pattern.endsWith("s") || pattern.length < 4) return end;
   if (end >= part.length) return end;
   const ch = part[end];
-  if (ch !== "s" && ch !== "S") return end;
-  if (end + 1 < part.length && isWordChar(part[end + 1])) return end;
-  return end + 1;
-}
-
-function isAutoLinkSpanValid(part: string, start: number, end: number): boolean {
-  if (start > 0 && isWordChar(part[start - 1])) return false;
-  if (end < part.length && isWordChar(part[end])) return false;
-  return true;
+  if (ch === "s" || ch === "S") return end + 1;
+  return end;
 }
 
 function autoEnhanceTextWithTerms(
@@ -155,10 +143,6 @@ function autoEnhanceTextWithTerms(
       if (match && shouldAutoLink(entry.termId)) {
         let { start, end } = match;
         end = extendPluralS(part, start, end, pattern);
-        if (!isAutoLinkSpanValid(part, start, end)) {
-          newParts.push(part);
-          continue;
-        }
         const originalText = part.slice(start, end);
         const prefix = part.slice(0, start);
         const suffix = part.slice(end);

@@ -36,9 +36,7 @@ export default function Formula({ latex, display = false, className }: Props) {
     () => renderLatexToHtml(latex, { displayMode: display }),
     [latex, display],
   );
-  const baseClassName = display
-    ? "block w-full"
-    : "inline-block align-middle max-w-full min-w-0";
+  const baseClassName = display ? "block w-full" : "inline mx-0.5";
   return (
     <span
       className={`${baseClassName} ${className || ""}`.trim()}
