@@ -11,6 +11,10 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import RenderableContent from "@/components/content/RenderableContent";
+import AALIEEmotionIcon, {
+  type AALIEEmotionIconName,
+} from "@/components/AALIEEmotionIcon";
+import { Link } from "@/i18n/navigation";
 import type { QuizOptionState } from "@/features/quizzes/components/types";
 
 import { DefinitionsConceptsQuestion } from "./DefinitionsConceptsQuestion";
@@ -295,15 +299,21 @@ export function QuizQuestionReviewCard({
 
       {result.contentRefs.length > 0 ? (
         <div className="mt-2 text-xs">
-          {result.contentRefs.map((ref, idx) => (
-            <a
-              key={`${ref.moduleId}-${ref.chapterId}-${idx}`}
-              className="mr-2 text-cyan-300 underline"
-              href={`/es/course#${ref.blockId ?? ref.chapterId}`}
-            >
-              {t("result.goToContent", { chapterId: ref.chapterId })}
-            </a>
-          ))}
+          {result.contentRefs.map((ref, idx) => {
+            const moduleSlug = ref.moduleId.replace(/^mod-/, "");
+            const chapterSlug = ref.chapterId.replace(/^cap-/, "");
+            const anchor = ref.blockId ? `#${ref.blockId}` : "";
+            
+            return (
+              <Link
+                key={`${ref.moduleId}-${ref.chapterId}-${idx}`}
+                className="mr-2 text-cyan-300 underline"
+                href={`/course/${moduleSlug}/${chapterSlug}${anchor}`}
+              >
+                {t("result.goToContent", { chapterId: ref.chapterId })}
+              </Link>
+            );
+          })}
         </div>
       ) : null}
     </QuestionCardShell>
@@ -319,14 +329,16 @@ export function QuizResultView({ result }: { result: QuizSessionResult }) {
   const accuracy = result.accuracy;
   const gradeOutOfFive =
     result.maxScore > 0 ? (result.score / result.maxScore) * 5 : 0;
-  const iconName =
+  
+  const emotionName: AALIEEmotionIconName =
     accuracy >= 0.85
-      ? "sentiment_excited"
+      ? "happy"
       : accuracy >= 0.65
-        ? "sentiment_satisfied"
+        ? "satisfied"
         : accuracy >= 0.45
-          ? "sentiment_neutral"
-          : "sentiment_dissatisfied";
+          ? "neutral"
+          : "worried";
+
   const iconColor =
     accuracy >= 0.85
       ? "text-emerald-300"
@@ -364,17 +376,11 @@ export function QuizResultView({ result }: { result: QuizSessionResult }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="scrollbar-custom mx-auto w-full max-w-xl overflow-y-auto py-2 text-center">
-        <span
-          aria-hidden="true"
-          className={`material-symbols-outlined leading-none ${iconColor}`}
-          style={{
-            fontSize: "clamp(3.5rem, 12vw, 6rem)",
-            lineHeight: 1,
-            fontVariationSettings: '"FILL" 1, "wght" 500, "GRAD" 0, "opsz" 48',
-          }}
-        >
-          {iconName}
-        </span>
+        <AALIEEmotionIcon
+          name={emotionName}
+          size={80}
+          className={`${iconColor} mb-2`}
+        />
         <h2 className="mt-3 text-xl font-semibold">{t("result.title")}</h2>
         <div
           className={`glass-card quiz-no-hover mt-3 rounded-lg border px-3 py-2 text-sm font-medium ${toneClass}`}

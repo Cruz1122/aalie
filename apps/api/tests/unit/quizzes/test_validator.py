@@ -142,9 +142,13 @@ def test_incompatible_grading_policy_fails():
     assert has_error(report, "incompatible")
 
 
-def test_dataset_above_50_fails():
+def test_dataset_above_500_fails():
     def mutate(data):
-        data["questions"].append(copy.deepcopy(data["questions"][0]))
+        seed = copy.deepcopy(data["questions"][0])
+        while len(data["questions"]) <= 500:
+            clone = copy.deepcopy(seed)
+            clone["questionId"] = f"bulk-test-{len(data['questions']) + 1:03d}"
+            data["questions"].append(clone)
 
     report = validate_dataset(build_dataset(mutate))
     assert has_error(report, "excede alcance")

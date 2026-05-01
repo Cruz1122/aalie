@@ -937,6 +937,8 @@
       "defaultCode": "busquedaBinaria(A[n], x, inicio, fin) BEGIN\n  IF (inicio > fin) THEN BEGIN\n    RETURN -1;\n  END\n  mitad <- (inicio + fin) / 2;\n  IF (A[mitad] = x) THEN BEGIN\n    RETURN mitad;\n  END\n  ELSE BEGIN\n    IF (x < A[mitad]) THEN BEGIN\n      RETURN busquedaBinaria(A, x, inicio, mitad - 1);\n    END\n    ELSE BEGIN\n      RETURN busquedaBinaria(A, x, mitad + 1, fin);\n    END\n  END\nEND"
     },
     "techniques": {
+      "noAstForClassification": "No hay AST disponible para clasificar la técnica con seguridad.",
+      "insufficientPedagogicEvidence": "No hay una evidencia pedagógica suficientemente clara todavía.",
       "openDetailsAriaLabel": "Ver explicación de esta técnica",
       "modal": {
         "evidenceTitle": "Fragmento que evidencia la forma",
@@ -947,8 +949,29 @@
         "diagnosticsTitle": "Diagnósticos y dudas"
       },
       "evidenceFacts": {
-        "exclusive_interval_partition": "El intervalo se divide por un corte fraccional y luego solo se explora una rama recursiva.",
-        "single_branch_after_interval_split": "Después de partir el intervalo, el algoritmo continúa solo por la rama que contiene el subproblema relevante."
+        "additive_shrink": "La reducción se hace por resta o desplazamiento aditivo.",
+        "bound_like_comparison": "Se detectan comparaciones con forma de cota o umbral.",
+        "branching_recursion_tree": "La forma genera un árbol de recursión ramificado.",
+        "co_executed_recursive_calls": "El bloque contiene varias llamadas recursivas co-ejecutadas.",
+        "early_return_from_stored_state": "La ejecución puede retornar directamente un estado ya almacenado.",
+        "exclusive_interval_partition": "El intervalo se parte con un corte fraccional y luego la recursión continúa por una sola rama.",
+        "external_partition_call": "Una llamada no recursiva parte el problema mientras las auto-llamadas recursivas resuelven subproblemas.",
+        "indexed_read_before_recursion": "Se consulta una estructura indexada antes de recalcular.",
+        "indexed_write_after_recursive_computation": "El resultado se escribe en una estructura indexada después del cálculo recursivo.",
+        "indexed_writes_inside_loop": "Se llenan estados indexados dentro de ciclos.",
+        "kWayBranchCount": "La descomposición abre {branchCount} subproblemas en el mismo nivel.",
+        "multi_previous_state_transition": "La transición usa varios estados previos, no una sola acumulación simple.",
+        "multiple_co_executed_recursive_calls": "Se expanden varias ramas recursivas dentro del mismo camino de ejecución.",
+        "partition_like_split": "Aparece una partición estructural que separa el problema antes de recursar.",
+        "post_recursive_combine": "Después de resolver los subproblemas aparece una fase de combinación.",
+        "previous_state_dependency": "Los estados actuales dependen de valores anteriores.",
+        "prune_like_return": "Hay una poda estructural que corta ramas antes de seguir explorando.",
+        "recursive_argument_shrink": "La llamada recursiva reduce el tamaño del problema.",
+        "same_storage_read_write_shape": "La lectura y la escritura apuntan a la misma forma de estado almacenado.",
+        "single_branch_after_interval_split": "Después de dividir el intervalo, el algoritmo sigue solo por la rama que conserva el subproblema relevante.",
+        "single_dominant_recursive_call": "En cada camino domina una única llamada recursiva.",
+        "structural_decomposition": "La estructura muestra una descomposición real del problema en subproblemas.",
+        "subproblem_shrink": "Cada llamada trabaja sobre una expresión de subproblema más pequeña."
       },
       "divide_and_conquer": {
         "title": "Divide y vencerás",

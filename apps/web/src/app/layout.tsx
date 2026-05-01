@@ -1,5 +1,6 @@
 import "./globals.css";
 import "katex/dist/katex.min.css";
+import "monaco-editor/min/vs/editor/editor.main.css";
 
 export default function RootLayout({
   children,

@@ -47,28 +47,28 @@ interface MethodInfo {
 const methods: Record<MethodType, MethodInfo> = {
   characteristic_equation: {
     id: "characteristic_equation",
-    icon: "calculate",
+    icon: "function",
     color: "text-blue-300",
     borderColor: "border-blue-500/30",
     bgColor: "bg-blue-500/20",
   },
   iteration: {
     id: "iteration",
-    icon: "unfold_more",
+    icon: "repeat",
     color: "text-purple-300",
     borderColor: "border-purple-500/30",
     bgColor: "bg-purple-500/20",
   },
   recursion_tree: {
     id: "recursion_tree",
-    icon: "account_tree",
+    icon: "schema",
     color: "text-cyan-300",
     borderColor: "border-cyan-500/30",
     bgColor: "bg-cyan-500/20",
   },
   master: {
     id: "master",
-    icon: "science",
+    icon: "gavel",
     color: "text-orange-300",
     borderColor: "border-orange-500/30",
     bgColor: "bg-orange-500/20",

@@ -1,0 +1,3847 @@
+[
+  {
+    "questionId": "ada-core-search-game-476",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "basic",
+    "cognitiveLevel": "understand",
+    "topic": "heuristics",
+    "tags": [
+      "algorithm_patterns",
+      "classification",
+      "search",
+      "problem_purpose"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "En búsqueda algorítmica, ¿qué es una heurística?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una función o regla que estima qué tan prometedor es un estado para guiar la exploración.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Una heurística orienta la búsqueda, pero por sí sola no garantiza optimalidad.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una prueba formal de que todo algoritmo termina en tiempo constante.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Una heurística no es una prueba de terminación ni una garantía de tiempo constante.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una estructura que siempre ordena todos los estados de forma exacta y óptima.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La heurística puede ser aproximada; no necesariamente representa el costo real exacto.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "El tamaño físico de la memoria RAM disponible.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Eso pertenece a recursos de máquina, no a la regla de guía de una búsqueda.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Una heurística se usa para decidir qué estado explorar antes. Su valor está en reducir exploración innecesaria, pero su calidad depende de qué tan bien estime el camino hacia la solución.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 60,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-477",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "uniform_cost_search",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "cost_analysis",
+      "classification"
+    ],
+    "skillIds": [
+      "skill.formulation.choose-control-structure-for-search",
+      "skill.semantic.classify-algorithm-purpose"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Qué criterio usa búsqueda de costo uniforme para decidir qué nodo expandir primero?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "El menor costo acumulado desde el inicio hasta el nodo actual.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. La prioridad depende de `g(n)`, el costo real acumulado hasta el nodo.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "La menor cantidad de letras en el nombre del nodo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. El nombre del nodo no representa costo de camino.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "El nodo generado más recientemente, sin importar el costo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Eso se parece a una política tipo pila; costo uniforme prioriza por costo acumulado.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una decisión local aleatoria en cada expansión.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La selección se hace por costo acumulado, no por azar.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Búsqueda de costo uniforme es apropiada cuando los costos de las aristas importan. Expande primero el camino más barato conocido hasta el momento.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 75,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "reinforcesSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-478",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "best_first_search",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "algorithm_patterns",
+      "classification"
+    ],
+    "skillIds": [
+      "skill.formulation.choose-control-structure-for-search",
+      "skill.semantic.classify-algorithm-purpose"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "En búsqueda best-first voraz, ¿qué suele priorizarse?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "El nodo con mejor estimación heurística hacia la meta.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Best-first voraz suele mirar `h(n)`, la estimación desde el nodo hasta la meta.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "El nodo con mayor costo acumulado desde el inicio.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Priorizar mayor costo acumulado no corresponde a la idea voraz de acercarse a la meta.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Todos los nodos simultáneamente sin criterio de selección.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La búsqueda best-first se define precisamente por una función de prioridad.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "El nodo que esté más a la izquierda en el dibujo, sin importar costos ni heurística.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La posición visual no define el criterio algorítmico.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Best-first voraz puede avanzar rápido hacia una meta prometedora, pero puede equivocarse si la heurística subestima mal el costo real o ignora caminos acumulados caros.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 75,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "reinforcesSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-479",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "a_star",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "cost_analysis",
+      "comparison"
+    ],
+    "skillIds": [
+      "skill.formulation.choose-control-structure-for-search",
+      "skill.semantic.classify-algorithm-purpose"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Qué combina A* al calcular la prioridad típica `f(n)` de un nodo?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "El costo acumulado `g(n)` y la estimación heurística restante `h(n)`.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. A* suele usar `f(n) = g(n) + h(n)`.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Solo el número de hijos del nodo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. El número de hijos no representa por sí solo costo acumulado ni distancia estimada a la meta.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Solo el orden de llegada del nodo a la frontera.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. A* no es una cola FIFO simple.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una suma de todos los nombres de variables del pseudocódigo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La prioridad debe representar información de costo y estimación, no nombres sintácticos.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "A* intenta balancear lo que ya costó llegar al nodo con lo que se estima que falta. Esa es la diferencia clave frente a mirar solo `g(n)` o solo `h(n)`.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 75,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "reinforcesSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-480",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "a_star",
+    "tags": [
+      "algorithm_patterns",
+      "correctness",
+      "search",
+      "precision"
+    ],
+    "skillIds": [
+      "skill.correctness.distinguish-termination-from-correctness",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Por qué la calidad de la heurística es crítica en A*?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Porque una heurística mal diseñada puede guiar la búsqueda hacia expansiones innecesarias o comprometer garantías si sobrestima costos en contextos donde no debe hacerlo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. A* depende de que la estimación sea informativa y compatible con las garantías que se quieren conservar.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Porque A* ignora por completo los costos acumulados.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. A* combina costo acumulado con estimación restante.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Porque la heurística reemplaza la necesidad de una frontera de búsqueda.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. A* sigue manteniendo una frontera de nodos candidatos.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Porque cualquier heurística convierte automáticamente todo problema en constante.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Una heurística puede reducir exploración, pero no elimina mágicamente la dificultad del problema.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "A* no es magia. Su rendimiento y sus garantías dependen de la función de prioridad. Una heurística pobre puede hacer que se parezca a una búsqueda amplia; una peligrosa puede llevar a conclusiones no óptimas si el problema exigía optimalidad.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 90,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.correctness.distinguish-termination-from-correctness"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-481",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "uniform_cost_search",
+    "tags": [
+      "search",
+      "cost_analysis",
+      "problem_statement",
+      "classification"
+    ],
+    "skillIds": [
+      "skill.formulation.extract-required-information-from-statement",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Un problema de rutas tiene aristas con costos distintos y se necesita encontrar el camino de menor costo desde un origen hasta una meta. No se dispone de una heurística confiable. ¿Qué enfoque es más razonable como punto de partida?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Búsqueda de costo uniforme.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Si importan costos acumulados y no hay heurística confiable, costo uniforme es una elección razonable.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una búsqueda que siempre escoge el nodo visualmente más cercano en el dibujo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La cercanía visual no necesariamente representa costo real del camino.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Ignorar los costos y contar únicamente la cantidad de nodos.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. El enunciado exige menor costo, no menor cantidad de nodos necesariamente.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Un algoritmo que retorna el primer camino encontrado sin comparar costos.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. El primer camino encontrado no necesariamente es el de menor costo.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "La técnica debe obedecer el contrato del problema. Si la salida exigida es camino de costo mínimo, la frontera debe priorizar costos reales acumulados o una estimación formalmente defendible.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 90,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.extract-required-information-from-statement"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-482",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "a_star",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "cost_analysis",
+      "comparison"
+    ],
+    "skillIds": [
+      "skill.formulation.choose-control-structure-for-search",
+      "skill.semantic.classify-algorithm-purpose"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Cuál es la diferencia central entre búsqueda de costo uniforme y A*?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Costo uniforme prioriza por `g(n)`; A* prioriza por `g(n) + h(n)`.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. A* incorpora una estimación heurística del costo restante.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Costo uniforme no usa costos, mientras A* tampoco usa costos.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Ambas consideran costos; A* además incluye una heurística.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "A* siempre ignora el camino recorrido.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. A* incluye el costo acumulado `g(n)`.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "No existe ninguna diferencia si ambos usan una cola.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La estructura de datos puede parecer similar, pero la función de prioridad cambia la técnica.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "La frontera puede implementarse con una cola de prioridad en ambos casos. La diferencia matemática está en la prioridad asignada a cada nodo.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 90,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "reinforcesSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-483",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "minimax",
+    "tags": [
+      "algorithm_patterns",
+      "classification",
+      "search",
+      "problem_purpose"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿En qué tipo de problemas aparece naturalmente minimax?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "En juegos o decisiones adversariales donde un jugador intenta maximizar y el oponente intenta minimizar.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Minimax modela decisiones alternadas entre agentes con objetivos opuestos.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "En cualquier suma lineal de un arreglo sin decisiones.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Una suma de arreglo no tiene adversario ni árbol de juego.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Solo en problemas donde no existen alternativas de movimiento.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Minimax requiere alternativas para construir un árbol de decisión.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Exclusivamente en algoritmos de ordenamiento in-place.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Minimax no es una técnica de ordenamiento.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Minimax no optimiza en un vacío. Optimiza bajo oposición: una elección buena debe seguir siendo razonable suponiendo que el oponente responderá de la forma más perjudicial.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 75,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-484",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "minimax",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "comparison",
+      "problem_purpose"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "En minimax, ¿qué representa un nodo MAX?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una decisión del jugador que intenta obtener el mayor valor posible.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. En un nodo MAX se elige la alternativa con mayor evaluación.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una decisión del oponente que intenta minimizar el resultado.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Eso describe un nodo MIN.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Un nodo que siempre se ignora sin evaluación.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Los nodos MAX son centrales para propagar valores en minimax.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una variable auxiliar constante del análisis espacial.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. MAX es un tipo de nodo de decisión en el árbol de juego.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "La alternancia MAX/MIN modela turnos adversariales. MAX elige lo mejor para sí; MIN elige lo peor para MAX.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 75,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-485",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "minimax",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "comparison",
+      "problem_purpose"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "En minimax, ¿qué representa un nodo MIN?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una decisión del oponente que intenta producir el menor valor para el jugador MAX.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. En un nodo MIN se asume que el oponente elige la alternativa más desfavorable para MAX.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una decisión del jugador que maximiza su beneficio.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Eso describe un nodo MAX.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una estructura que siempre contiene el menor índice del arreglo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. MIN no habla de índices de arreglo, sino de elección adversarial.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Un caso base que impide evaluar hojas.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Las hojas deben evaluarse para propagar valores hacia arriba.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "El supuesto adversarial es duro: en el turno del oponente, no se espera cooperación. Se espera la respuesta que minimiza el resultado de MAX.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 75,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-486",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "understand",
+    "topic": "alpha_beta_pruning",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "cost_analysis",
+      "correctness"
+    ],
+    "skillIds": [
+      "skill.formulation.choose-control-structure-for-search",
+      "skill.correctness.distinguish-termination-from-correctness"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Cuál es el objetivo principal de la poda alfa-beta?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Evitar explorar ramas que no pueden cambiar la decisión final de minimax.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Alfa-beta conserva el resultado de minimax, pero puede reducir el número de nodos evaluados.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Cambiar arbitrariamente el resultado de minimax para que el algoritmo sea más rápido.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Una poda correcta no debe alterar la decisión que minimax produciría.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Convertir cualquier juego en un arreglo ordenado.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Alfa-beta no ordena arreglos; poda árboles de decisión adversarial.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Eliminar la necesidad de evaluar cualquier hoja del árbol.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Alfa-beta puede evitar algunas hojas, pero no elimina toda evaluación.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Alfa-beta no es una heurística que “adivina” el resultado. Es una optimización de búsqueda: descarta ramas que ya no pueden afectar la elección óptima bajo minimax.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 90,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "reinforcesSkillIds": [
+        "skill.correctness.distinguish-termination-from-correctness"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-487",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "alpha_beta_pruning",
+    "tags": [
+      "search",
+      "cost_analysis",
+      "correctness",
+      "precision"
+    ],
+    "skillIds": [
+      "skill.correctness.distinguish-termination-from-correctness",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Por qué la poda alfa-beta puede mejorar el rendimiento sin cambiar la respuesta de minimax?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Porque poda solo cuando una rama ya no puede mejorar la decisión disponible para el jugador correspondiente.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. La poda se basa en límites que hacen irrelevante seguir explorando una rama.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Porque ignora ramas al azar y espera acertar.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La poda correcta no es aleatoria; se justifica con límites alfa y beta.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Porque reemplaza el árbol de juego por una suma lineal.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Sigue razonando sobre árbol adversarial, solo que evita explorar ramas inútiles.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Porque elimina los turnos del oponente.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La alternancia MAX/MIN se mantiene.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "La poda alfa-beta se apoya en una observación de dominancia: si una rama ya es peor que una alternativa conocida, evaluarla completa no cambiará la elección final.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 100,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.correctness.distinguish-termination-from-correctness"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-488",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "minimax",
+    "tags": [
+      "search",
+      "cost_analysis",
+      "input_size",
+      "algorithm_patterns"
+    ],
+    "skillIds": [
+      "skill.analysis.identify-input-size",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "En un árbol de juego con factor de ramificación `b` y profundidad `d`, ¿qué expresión describe mejor el número de nodos explorados por minimax completo en el peor caso?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "`Θ(b^d)`.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. El árbol crece exponencialmente con la profundidad cuando cada nodo genera hasta `b` alternativas.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "`Θ(b + d)` siempre.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La expansión por niveles no se suma linealmente; se multiplica a través de la profundidad.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "`Θ(log d)`.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Minimax completo no reduce la profundidad por mitades.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "`Θ(1)` porque solo se elige un movimiento final.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Elegir un movimiento puede requerir evaluar muchas alternativas del árbol.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Cada nivel puede multiplicar la cantidad de estados por `b`. Por eso los árboles de juego se vuelven costosos rápidamente al aumentar la profundidad.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 90,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.analysis.identify-input-size"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-489",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "heuristics",
+    "tags": [
+      "algorithm_patterns",
+      "comparison",
+      "correctness",
+      "problem_purpose"
+    ],
+    "skillIds": [
+      "skill.correctness.distinguish-termination-from-correctness",
+      "skill.semantic.classify-algorithm-purpose"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Cuál es la diferencia más responsable entre una heurística y una garantía de optimalidad?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una heurística guía decisiones; una garantía de optimalidad demuestra que la solución devuelta es la mejor bajo el contrato del problema.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. No basta con que una regla parezca buena: si se promete óptimo, se necesita justificación.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Toda heurística garantiza automáticamente optimalidad.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Muchas heurísticas son útiles, pero no necesariamente exactas.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Una garantía de optimalidad es solo una opinión sobre la heurística.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Una garantía requiere argumento formal o condiciones matemáticas claras.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "No hay diferencia conceptual.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Confundir guía práctica con prueba formal es un error serio de análisis.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "En diseño algorítmico, decir “funciona bien” no equivale a decir “es óptimo”. La primera afirmación puede ser empírica o intuitiva; la segunda exige prueba o condiciones formales.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 75,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.correctness.distinguish-termination-from-correctness"
+      ],
+      "reinforcesSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-490",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "true_false",
+    "difficulty": "basic",
+    "cognitiveLevel": "understand",
+    "topic": "a_star",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "cost_analysis"
+    ],
+    "skillIds": [
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "A* suele combinar costo acumulado y estimación heurística restante.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "true",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Verdadero",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. La forma usual es `f(n) = g(n) + h(n)`.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "false",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Falso",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. A* se distingue justamente por combinar lo recorrido con lo estimado.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "true"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "La combinación permite que A* no sea puramente voraz ni puramente costo acumulado: considera ambos lados del camino.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 60,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-491",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "true_false",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "minimax",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "comparison"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Minimax asume que el oponente también toma decisiones racionales para perjudicar el resultado del jugador MAX.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "true",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Verdadero",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Esa es la base adversarial de la alternancia MAX/MIN.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "false",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Falso",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Minimax no supone un oponente cooperativo; supone oposición racional.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "true"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Minimax no evalúa solo lo que MAX desea, sino lo que puede garantizarse si MIN responde de forma óptima para reducir ese resultado.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 60,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-492",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "true_false",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "alpha_beta_pruning",
+    "tags": [
+      "search",
+      "correctness",
+      "cost_analysis"
+    ],
+    "skillIds": [
+      "skill.correctness.distinguish-termination-from-correctness"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Una poda alfa-beta correcta debe conservar la misma decisión que produciría minimax completo.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "true",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Verdadero",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. La poda reduce exploración, no cambia el valor minimax correcto.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "false",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Falso",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Si la poda cambia la decisión minimax, la poda no está justificada.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "true"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Alfa-beta es una optimización exacta de minimax cuando se aplica correctamente. Si sacrifica el resultado, ya no es la misma técnica exacta.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 60,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.correctness.distinguish-termination-from-correctness"
+      ],
+      "reinforcesSkillIds": [
+        "skill.correctness.distinguish-termination-from-correctness"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-493",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "multiple_choice",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "heuristics",
+    "tags": [
+      "algorithm_patterns",
+      "search",
+      "comparison",
+      "correctness"
+    ],
+    "skillIds": [
+      "skill.formulation.choose-control-structure-for-search",
+      "skill.correctness.distinguish-termination-from-correctness"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Qué afirmaciones sobre heurísticas son correctas? Selecciona todas las opciones correctas.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Pueden reducir exploración al orientar la búsqueda hacia estados prometedores.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Esa es una de sus principales razones de uso.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "No siempre garantizan encontrar la solución óptima si no cumplen condiciones adicionales.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Una heurística puede ser útil sin ser una garantía formal de optimalidad.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Deben interpretarse como estimaciones o reglas de guía, no como pruebas automáticas.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. La prueba depende de las propiedades de la heurística y del algoritmo que la usa.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Siempre convierten cualquier búsqueda en `Θ(1)`.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Pueden mejorar la práctica, pero no eliminan automáticamente el costo de búsqueda.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a",
+        "b",
+        "c"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "partial_credit",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "La heurística es una herramienta de orientación. Su valor real depende de su precisión, del criterio de selección y de si se exigen soluciones óptimas o solo buenas soluciones.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 90,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "reinforcesSkillIds": [
+        "skill.correctness.distinguish-termination-from-correctness"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-494",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "multiple_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "minimax",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "comparison",
+      "cost_analysis"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Qué elementos son propios del modelado con minimax? Selecciona todas las opciones correctas.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Estados del juego o problema.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Cada nodo del árbol representa un estado o posición.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Alternancia entre decisiones MAX y MIN.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Esa alternancia representa turnos adversariales.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Evaluación de hojas o estados terminales.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. Los valores de las hojas se propagan hacia la raíz.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "El supuesto de que el oponente siempre coopera con MAX.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Minimax supone oposición, no cooperación.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a",
+        "b",
+        "c"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "partial_credit",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Minimax necesita estados, acciones, turnos y valores. Sin oponente adversarial, probablemente hay otra técnica más natural.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 100,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-495",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "ordering",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "a_star",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "algorithm_patterns",
+      "cost_analysis"
+    ],
+    "skillIds": [
+      "skill.formulation.choose-control-structure-for-search",
+      "skill.analysis.identify-dominant-operation-in-iterative-code"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Ordena un ciclo general de búsqueda A*.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "init-frontier",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Inicializar la frontera con el estado inicial.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Primero se crea el conjunto de candidatos por explorar.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "select-best",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Extraer el nodo con menor prioridad `f(n) = g(n) + h(n)`.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Después se selecciona el nodo más prometedor según costo acumulado y heurística.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "goal-test",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Verificar si el nodo extraído satisface la meta.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Luego se revisa si ya se llegó a una solución.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "expand-update",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Expandir vecinos y actualizar sus costos/prioridades en la frontera.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Si no era meta, se generan candidatos y se actualizan caminos conocidos.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [],
+      "orderedOptionIds": [
+        "init-frontier",
+        "select-best",
+        "goal-test",
+        "expand-update"
+      ],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "ordered_exact",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "A* se organiza alrededor de una frontera priorizada. El orden correcto evita confundir expansión indiscriminada con selección informada por costo y heurística.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 100,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "reinforcesSkillIds": [
+        "skill.analysis.identify-dominant-operation-in-iterative-code"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-496",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "ordering",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "minimax",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "correctness",
+      "cost_analysis"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Ordena el flujo conceptual de minimax.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "generate-tree",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Generar o considerar el árbol de decisiones hasta una profundidad o estado terminal.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Primero se define el espacio de decisiones adversariales.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "evaluate-leaves",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Evaluar las hojas o estados terminales.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Luego se asignan valores a los resultados finales o aproximados.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "propagate",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Propagar valores hacia arriba alternando mínimo y máximo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Después se modelan las decisiones de MAX y MIN.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "choose-root",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Elegir en la raíz la acción con mejor valor para MAX.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Finalmente se toma la decisión que minimax recomienda en el estado inicial.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [],
+      "orderedOptionIds": [
+        "generate-tree",
+        "evaluate-leaves",
+        "propagate",
+        "choose-root"
+      ],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "ordered_exact",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Minimax trabaja de abajo hacia arriba después de considerar el árbol: las hojas dan valores y los turnos MAX/MIN determinan cómo se propagan.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 100,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-497",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "match_pairs",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "heuristics",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "comparison",
+      "classification"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Relaciona cada técnica de búsqueda con su criterio principal de selección.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [],
+    "leftItems": [
+      {
+        "leftId": "ucs",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Búsqueda de costo uniforme",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "leftId": "best-first",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Best-first voraz",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "leftId": "a-star",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "A*",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "leftId": "minimax",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Minimax",
+              "language": "text"
+            }
+          ]
+        }
+      }
+    ],
+    "rightItems": [
+      {
+        "rightId": "g-cost",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Prioriza menor costo acumulado `g(n)`.",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "rightId": "h-only",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Prioriza mejor estimación heurística `h(n)`.",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "rightId": "g-plus-h",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Prioriza `g(n) + h(n)`.",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "rightId": "adversarial",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Propaga valores considerando decisiones adversariales MAX/MIN.",
+              "language": "text"
+            }
+          ]
+        }
+      }
+    ],
+    "answer": {
+      "correctOptionIds": [],
+      "orderedOptionIds": [],
+      "pairs": [
+        {
+          "leftId": "ucs",
+          "rightId": "g-cost"
+        },
+        {
+          "leftId": "best-first",
+          "rightId": "h-only"
+        },
+        {
+          "leftId": "a-star",
+          "rightId": "g-plus-h"
+        },
+        {
+          "leftId": "minimax",
+          "rightId": "adversarial"
+        }
+      ]
+    },
+    "gradingPolicy": {
+      "mode": "pairwise",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Estas técnicas pueden usar estructuras parecidas, como fronteras o árboles, pero se distinguen por el criterio de decisión que gobierna la exploración.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 100,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-498",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "match_pairs",
+    "difficulty": "intermediate",
+    "cognitiveLevel": "understand",
+    "topic": "minimax",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "comparison",
+      "correctness"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.correctness.distinguish-termination-from-correctness"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Relaciona cada concepto con su papel en minimax y alfa-beta.",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [],
+    "leftItems": [
+      {
+        "leftId": "max-node",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Nodo MAX",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "leftId": "min-node",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Nodo MIN",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "leftId": "leaf",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Hoja evaluada",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "leftId": "pruning",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Poda alfa-beta",
+              "language": "text"
+            }
+          ]
+        }
+      }
+    ],
+    "rightItems": [
+      {
+        "rightId": "choose-high",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Elige el mayor valor disponible.",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "rightId": "choose-low",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Elige el menor valor disponible.",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "rightId": "terminal-value",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Aporta un valor que se propaga hacia arriba.",
+              "language": "text"
+            }
+          ]
+        }
+      },
+      {
+        "rightId": "skip-irrelevant",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Evita explorar ramas que no cambiarán la decisión minimax.",
+              "language": "text"
+            }
+          ]
+        }
+      }
+    ],
+    "answer": {
+      "correctOptionIds": [],
+      "orderedOptionIds": [],
+      "pairs": [
+        {
+          "leftId": "max-node",
+          "rightId": "choose-high"
+        },
+        {
+          "leftId": "min-node",
+          "rightId": "choose-low"
+        },
+        {
+          "leftId": "leaf",
+          "rightId": "terminal-value"
+        },
+        {
+          "leftId": "pruning",
+          "rightId": "skip-irrelevant"
+        }
+      ]
+    },
+    "gradingPolicy": {
+      "mode": "pairwise",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Minimax se entiende por propagación de valores. Alfa-beta conserva esa propagación, pero evita trabajo cuando una rama ya no puede afectar la elección.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 100,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.correctness.distinguish-termination-from-correctness"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "medium"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-499",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "algorithm_formulation",
+    "tags": [
+      "search",
+      "problem_statement",
+      "constraints",
+      "classification"
+    ],
+    "skillIds": [
+      "skill.formulation.extract-required-information-from-statement",
+      "skill.semantic.classify-algorithm-purpose"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "Un problema dice: “Dado un tablero de juego y un jugador actual, elegir el movimiento que maximiza el resultado suponiendo que el rival responderá de la mejor forma posible”. ¿Qué técnica encaja mejor?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Minimax.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. El enunciado habla de decisión adversarial con rival óptimo.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Suma lineal de arreglo.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. No se está agregando una secuencia de números; se está eligiendo bajo oposición.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Búsqueda lineal con centinela.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. El problema no pide encontrar una aparición en una lista.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Conteo de operaciones elementales únicamente, sin diseñar una estrategia.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Antes de contar operaciones hay que modelar la toma de decisiones adversarial.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "La pista fuerte es “el rival responderá de la mejor forma posible”. Eso obliga a modelar turnos y oposición, no solo una decisión local aislada.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 90,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.formulation.extract-required-information-from-statement"
+      ],
+      "reinforcesSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  },
+  {
+    "questionId": "ada-core-search-game-500",
+    "questionVersion": 1,
+    "status": "draft",
+    "type": "single_choice",
+    "difficulty": "advanced",
+    "cognitiveLevel": "analyze",
+    "topic": "algorithm_formulation",
+    "tags": [
+      "search",
+      "algorithm_patterns",
+      "comparison",
+      "classification"
+    ],
+    "skillIds": [
+      "skill.semantic.classify-algorithm-purpose",
+      "skill.formulation.choose-control-structure-for-search"
+    ],
+    "prompt": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "¿Cuál es la mejor conclusión general sobre búsqueda informada, minimax y poda alfa-beta?",
+          "language": "text"
+        }
+      ]
+    },
+    "options": [
+      {
+        "optionId": "a",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Todas son formas de controlar la exploración de espacios grandes, pero difieren en el criterio: costos, heurísticas, adversarios o límites de poda.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Correcto. La clave es identificar qué gobierna la selección de ramas o estados.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "b",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Todas son lo mismo porque usan árboles o grafos.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Compartir una estructura de exploración no significa compartir criterio de decisión.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "c",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Ninguna requiere especificar objetivo, costos ni condición de meta.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. Sin objetivo y criterio de evaluación, la búsqueda queda mal definida.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      },
+      {
+        "optionId": "d",
+        "content": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Todas garantizan tiempo constante si se implementan con cola de prioridad.",
+              "language": "text"
+            }
+          ]
+        },
+        "feedback": {
+          "blocks": [
+            {
+              "type": "markdown",
+              "content": "Incorrecto. La estructura de datos ayuda, pero no elimina el crecimiento del espacio de búsqueda.",
+              "language": "text"
+            }
+          ],
+          "contentRefs": []
+        }
+      }
+    ],
+    "leftItems": [],
+    "rightItems": [],
+    "answer": {
+      "correctOptionIds": [
+        "a"
+      ],
+      "orderedOptionIds": [],
+      "pairs": []
+    },
+    "gradingPolicy": {
+      "mode": "all_or_nothing",
+      "maxScore": 1,
+      "penalty": 0,
+      "minScore": 0
+    },
+    "explanation": {
+      "blocks": [
+        {
+          "type": "markdown",
+          "content": "La comparación seria no se queda en “usa árbol”. Pregunta qué significa expandir un estado, qué función prioriza, qué garantiza la técnica y qué ramas pueden descartarse sin romper la respuesta.",
+          "language": "text"
+        }
+      ]
+    },
+    "contentRefs": [],
+    "selectionMeta": {
+      "weight": 1,
+      "estimatedTimeSec": 90,
+      "targetMastery": 0.75,
+      "prerequisiteSkillIds": [
+        "skill.semantic.classify-algorithm-purpose"
+      ],
+      "reinforcesSkillIds": [
+        "skill.formulation.choose-control-structure-for-search"
+      ],
+      "exposureLimit": 3,
+      "cooldownSessions": 0,
+      "discrimination": "high"
+    }
+  }
+]

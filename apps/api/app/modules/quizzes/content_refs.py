@@ -8,7 +8,7 @@ from .schemas import ContentRef
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 CATALOG_ROOT = (
-    REPO_ROOT / "packages" / "content-catalog" / "catalog" / "spaces" / "theory" / "es"
+    REPO_ROOT / "packages" / "content-catalog" / "catalog" / "spaces" / "course" / "es"
 )
 
 

@@ -937,6 +937,8 @@
       "defaultCode": "binarySearch(A[n], x, start, high) BEGIN\n  IF (start > high) THEN BEGIN\n    RETURN -1;\n  END\n  mid <- (start + high) / 2;\n  IF (A[mid] = x) THEN BEGIN\n    RETURN mid;\n  END\n  ELSE BEGIN\n    IF (x < A[mid]) THEN BEGIN\n      RETURN binarySearch(A, x, start, mid - 1);\n    END\n    ELSE BEGIN\n      RETURN binarySearch(A, x, mid + 1, high);\n    END\n  END\nEND"
     },
     "techniques": {
+      "noAstForClassification": "No AST is available to classify the technique safely.",
+      "insufficientPedagogicEvidence": "There is not enough clear pedagogical evidence yet.",
       "openDetailsAriaLabel": "View explanation for this technique",
       "modal": {
         "evidenceTitle": "Snippet that shows the pattern",
@@ -947,8 +949,29 @@
         "diagnosticsTitle": "Diagnostics and doubts"
       },
       "evidenceFacts": {
+        "additive_shrink": "The reduction is by subtraction or additive shift.",
+        "bound_like_comparison": "Comparisons with a bound-like or threshold form are detected.",
+        "branching_recursion_tree": "The shape yields a branching recursion tree.",
+        "co_executed_recursive_calls": "The block contains several co-executed recursive calls.",
+        "early_return_from_stored_state": "Execution can return directly from an already stored state.",
         "exclusive_interval_partition": "The interval is split by a fractional cut and then only one recursive branch is explored.",
-        "single_branch_after_interval_split": "After splitting the interval, the algorithm continues only through the branch that contains the relevant subproblem."
+        "external_partition_call": "A non-recursive call partitions the problem while recursive self-calls solve subproblems.",
+        "indexed_read_before_recursion": "An indexed structure is consulted before recomputing.",
+        "indexed_write_after_recursive_computation": "The result is written to an indexed structure after the recursive computation.",
+        "indexed_writes_inside_loop": "Indexed states are filled inside loops.",
+        "kWayBranchCount": "The decomposition opens {branchCount} subproblems at the same level.",
+        "multi_previous_state_transition": "The transition uses several previous states, not one simple accumulation.",
+        "multiple_co_executed_recursive_calls": "Several recursive branches expand within the same execution path.",
+        "partition_like_split": "A structural partition appears that separates the problem before recursing.",
+        "post_recursive_combine": "After solving subproblems, a combination phase appears.",
+        "previous_state_dependency": "Current states depend on earlier values.",
+        "prune_like_return": "There is structural pruning that cuts branches before continuing exploration.",
+        "recursive_argument_shrink": "The recursive call reduces the problem size.",
+        "same_storage_read_write_shape": "Reads and writes target the same stored-state shape.",
+        "single_branch_after_interval_split": "After splitting the interval, the algorithm continues only through the branch that contains the relevant subproblem.",
+        "single_dominant_recursive_call": "On each path, a single recursive call dominates.",
+        "structural_decomposition": "The structure shows a real decomposition of the problem into subproblems.",
+        "subproblem_shrink": "Each call works on a smaller subproblem expression."
       },
       "divide_and_conquer": {
         "title": "Divide and Conquer",

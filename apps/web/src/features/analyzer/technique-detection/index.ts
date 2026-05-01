@@ -13,12 +13,16 @@ type TranslationValues = Record<
 
 type TechniqueTranslator = (key: string, values?: TranslationValues) => string;
 
+const NO_AST_FALLBACK_EN =
+  "No AST is available to classify the technique safely.";
+
 export function detectTechniqueFromAst(
   ast: AstNode | Program | null | undefined,
   sourceCode?: string,
   t?: TechniqueTranslator,
 ): TechniqueDetectionResult {
   if (!ast || typeof ast !== "object" || kindOf(ast as AstNode) === "unknown") {
+    const noAstMsg = t?.("noAstForClassification") ?? NO_AST_FALLBACK_EN;
     return {
       technique: "unknown",
       confidence: "low",
@@ -27,13 +31,9 @@ export function detectTechniqueFromAst(
       evidence: {
         compactSnippet: "",
         items: [],
-        explanationFacts: [
-          "No hay AST disponible para clasificar la técnica con seguridad.",
-        ],
+        explanationFacts: [noAstMsg],
       },
-      diagnostics: [
-        "No hay AST disponible para clasificar la técnica con seguridad.",
-      ],
+      diagnostics: [noAstMsg],
     };
   }
 

@@ -84,6 +84,7 @@ export const AnalyzerEditor = forwardRef<
   AnalyzerEditorHandle,
   AnalyzerEditorProps
 >(function AnalyzerEditor(props, ref) {
+  const MOBILE_EDITOR_HEIGHT_PX = 550;
   const {
     initialValue = "",
     onChange,
@@ -113,9 +114,21 @@ export const AnalyzerEditor = forwardRef<
   const [monacoMountKey, setMonacoMountKey] = useState(0);
   const [techniqueModalOpen, setTechniqueModalOpen] = useState(false);
   const didRemountAfterZeroHeightRef = useRef(false);
-  const [, setMeasuredHeight] = useState<number | null>(null);
+  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
   const lastMeasuredHeightRef = useRef<number | null>(null);
   const hasFrozenMeasuredHeightRef = useRef(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    const syncViewport = () => {
+      setIsMobileViewport((globalThis.window?.innerWidth ?? 1024) < 768);
+    };
+    syncViewport();
+    globalThis.window?.addEventListener("resize", syncViewport);
+    return () => {
+      globalThis.window?.removeEventListener("resize", syncViewport);
+    };
+  }, []);
 
   // Sincronizar cambios externos del código
   useEffect(() => {
@@ -255,7 +268,7 @@ export const AnalyzerEditor = forwardRef<
       }
       // Si el primer montaje vino "con altura 0" (comprimido), un remount
       // asegura que el wrapper interno de Monaco calcule tamaño bien.
-      if (!didRemountAfterZeroHeightRef.current && height > 0) {
+      if (!didRemountAfterZeroHeightRef.current && height >= 120) {
         didRemountAfterZeroHeightRef.current = true;
         setMonacoMountKey((k) => k + 1);
       }
@@ -275,7 +288,13 @@ export const AnalyzerEditor = forwardRef<
     };
   }, [isEditorReady]);
 
-  const monacoHeightProp = height ?? "100%";
+  const monacoHeightProp = isMobileViewport
+    ? `${MOBILE_EDITOR_HEIGHT_PX}px`
+    : measuredHeight != null
+      ? `${measuredHeight}px`
+      : (height ?? "100%");
+  const suggestFontSize = isMobileViewport ? 11 : 13;
+  const suggestLineHeight = isMobileViewport ? 18 : 22;
   const editorPadding =
     topRightActions != null || onVerifyParse != null || onViewAst != null
       ? { top: 44, bottom: 88 }
@@ -406,7 +425,7 @@ export const AnalyzerEditor = forwardRef<
       {/* Editor: glass-card-editor sin hover difuminado */}
       <div
         ref={editorContainerRef}
-        className="glass-card glass-card-editor relative !z-0 flex-1 min-h-0 h-full w-full overflow-hidden rounded-xl"
+        className="glass-card glass-card-editor relative !z-0 flex-1 h-[320px] min-h-[320px] md:h-full md:min-h-0 w-full overflow-hidden rounded-xl"
       >
         <MonacoEditor
           key={monacoMountKey}
@@ -457,6 +476,8 @@ export const AnalyzerEditor = forwardRef<
             },
             renderLineHighlight: "none",
             wordBasedSuggestions: "off",
+            suggestFontSize,
+            suggestLineHeight,
             suggest: {
               showWords: false,
             },

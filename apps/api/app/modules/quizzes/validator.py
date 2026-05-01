@@ -143,9 +143,9 @@ def validate_dataset(dataset: QuizDataset) -> ValidationReport:
     report = ValidationReport()
 
     total_questions = len(dataset.questions)
-    if total_questions > 50:
+    if total_questions > 500:
         report.errors.append(
-            _issue(None, "questions", f"Dataset excede alcance: {total_questions} > 50")
+            _issue(None, "questions", f"Dataset excede alcance: {total_questions} > 500")
         )
     if total_questions < 5:
         report.errors.append(
