@@ -24,8 +24,8 @@
     "theta",
     "little-o",
     "little-omega",
-    "accent",
-    "cuchiflu"
+    "tilde",
+    "tilde"
   ],
   "searchMeta": {
     "aliases": [
@@ -37,7 +37,7 @@
       "comparison with the six notations",
       "table f g",
       "lim f over g",
-      "lim g about f"
+      "lim g over f"
     ],
     "keywords": [
       "n",
@@ -51,12 +51,12 @@
       "log^2 n",
       "5n",
       "3n",
-      "Or",
+      "O",
       "Omega",
       "Theta",
       "little-o",
       "little-omega",
-      "accent",
+      "tilde",
       "symmetry",
       "reciprocal"
     ]
@@ -176,7 +176,7 @@
     },
     {
       "termId": "term-simetria-limites",
-      "label": "Boundary symmetry",
+      "label": "Limit symmetry",
       "definition": "Relationship between both conventions: if one gives 0, the other gives ∞; If one gives a finite constant, the other gives its reciprocal; If one gives 1, the other also gives 1."
     },
     {
@@ -275,11 +275,11 @@
                 },
                 {
                   "key": "bigO",
-                  "label": "Or?"
+                  "label": "O?"
                 },
                 {
                   "key": "omega",
-                  "label": "Oh?"
+                  "label": "Ω?"
                 },
                 {
                   "key": "theta",
@@ -287,7 +287,7 @@
                 },
                 {
                   "key": "littleO",
-                  "label": "or?"
+                  "label": "o?"
                 },
                 {
                   "key": "littleOmega",

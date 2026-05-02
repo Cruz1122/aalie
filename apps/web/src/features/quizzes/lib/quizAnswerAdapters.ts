@@ -1,4 +1,5 @@
 import type { QuizQuestion, StudentAnswer } from "@aa/types";
+
 import type { AnswerState } from "./quizCompletion";
 
 /**
@@ -10,21 +11,21 @@ export function toStudentAnswers(
 ): StudentAnswer[] {
   return questions.map((question) => {
     const answer = answersByQuestion[question.questionId] ?? {};
-    
+
     if (question.type === "single_choice" || question.type === "true_false") {
       return {
         questionId: question.questionId,
         selectedOptionIds: answer.selectedOptionIds ?? [],
       };
     }
-    
+
     if (question.type === "multiple_choice") {
       return {
         questionId: question.questionId,
         selectedOptionIds: answer.selectedOptionIds ?? [],
       };
     }
-    
+
     if (question.type === "ordering") {
       return {
         questionId: question.questionId,
@@ -33,7 +34,7 @@ export function toStudentAnswers(
           (question.options ?? []).map((item) => item.optionId),
       };
     }
-    
+
     // Default handles match_pairs and others
     return {
       questionId: question.questionId,

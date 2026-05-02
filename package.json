@@ -9,6 +9,7 @@
     "dev": "pnpm -r dev",
     "dev:api": "cd apps/api && python -m uvicorn app.main:app --reload --port 8000",
     "build": "pnpm -r build",
+    "start": "pnpm -C apps/web start",
     "test": "pnpm -r test",
     "test:docs-contracts": "python scripts/check_docs_contracts.py",
     "lint": "pnpm -C apps/web lint",

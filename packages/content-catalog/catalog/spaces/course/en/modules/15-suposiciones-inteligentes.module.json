@@ -25,7 +25,7 @@
     "base-cases",
     "non-standard-recurrences",
     "akra-bazzi-intuition",
-    "verification-of-dimensions"
+    "verification-of-bounds"
   ],
   "searchMeta": {
     "aliases": [
@@ -33,7 +33,7 @@
       "substitution method",
       "replacement in recurrences",
       "proof by induction",
-      "test dimension by substitution",
+      "test bound by substitution",
       "guess and prove",
       "guess and prove",
       "inductive verification of recurrences"
@@ -204,7 +204,7 @@
     {
       "termId": "term-n0-sustitucion",
       "label": "n₀",
-      "definition": "Point from which the inductive limit begins to be fulfilled. Smaller values ​​can be treated as base cases."
+      "definition": "Point from which the inductive limit begins to be fulfilled. Smaller values can be treated as base cases."
     },
     {
       "termId": "term-hipotesis-fortalecida",
@@ -228,7 +228,7 @@
       "slug": "suposiciones-inteligentes",
       "title": "Intelligent Guesses Method",
       "order": 1,
-      "summary": "Inductive verification of dimensions for recurrences through substitution.",
+      "summary": "Inductive verification of bounds for recurrences through substitution.",
       "sections": [
         {
           "sectionId": "sec-cuando-usar-suposiciones-inteligentes",
@@ -420,7 +420,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "An assumption is not a solution. She's just a candidate. The solution begins when you manage to prove the inequality with induction and explicit constants."
+                      "text": "An assumption is not a solution. It is only a candidate. The solution begins when you prove the inequality with induction and explicit constants."
                     }
                   ]
                 }
@@ -531,7 +531,7 @@
                     [
                       {
                         "type": "inlineMath",
-                        "latex": "T(k)\\le Cg(k)\\quad \\text{para }k<n"
+                        "latex": "T(k)\\le Cg(k)\\quad \\text{for }k<n"
                       }
                     ],
                     [
@@ -559,7 +559,7 @@
                     [
                       {
                         "type": "inlineMath",
-                        "latex": "T(k)\\ge cg(k)\\quad \\text{para }k<n"
+                        "latex": "T(k)\\ge cg(k)\\quad \\text{for }k<n"
                       }
                     ],
                     [
@@ -790,7 +790,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "enough for the final inequality to be proven."
+                      "text": "enough for the endal inequality to be proven."
                     }
                   ]
                 },
@@ -863,7 +863,7 @@
                 {
                   "stepId": "step-hipotesis-inductiva",
                   "title": "Inductive hypothesis",
-                  "latex": "T(k)\\le Cg(k)\\quad \\text{para todo }k<n",
+                  "latex": "T(k)\\le Cg(k)\\quad \\text{for all }k<n",
                   "explanation": [
                     {
                       "type": "text",
@@ -882,7 +882,7 @@
                 {
                   "stepId": "step-sustituir",
                   "title": "Replace",
-                  "latex": "T(n)=\\text{recurrencia}\\le \\text{expresión con }Cg(k)",
+                  "latex": "T(n)=\\text{recurrence}\\le \\text{expression with }Cg(k)",
                   "explanation": [
                     {
                       "type": "text",
@@ -893,7 +893,7 @@
                 {
                   "stepId": "step-cerrar",
                   "title": "Close",
-                  "latex": "\\text{expresión obtenida}\\le Cg(n)",
+                  "latex": "\\text{obtained expression}\\le Cg(n)",
                   "explanation": [
                     {
                       "type": "text",
@@ -1003,7 +1003,7 @@
                 {
                   "stepId": "step-base-hipotesis",
                   "title": "Inductive hypothesis",
-                  "latex": "T(k)\\le Ck\\log k\\quad \\text{para }k<n",
+                  "latex": "T(k)\\le Ck\\log k\\quad \\text{for }k<n",
                   "explanation": [
                     {
                       "type": "text",
@@ -1385,7 +1385,7 @@
               "id": "blk-arbol-decision-suposicion",
               "type": "mermaid",
               "title": "Choice of assumption",
-              "code": "flowchart TD\n  A[\"Recurrencia T(n)\"] --> B{\"¿Aplica un método directo?\"}\n  B -- \"Sí\" --> C[\"Usa ese resultado como candidato\"]\n  B -- \"No\" --> D[\"Dibuja 2 o 3 niveles del árbol\"]\n  D --> E{\"¿Costo por nivel crece, decrece o se mantiene?\"}\n  E -- \"Crece\" --> F[\"Probar dominancia de hojas\"]\n  E -- \"Se mantiene\" --> G[\"Probar costo por nivel × altura\"]\n  E -- \"Decrece\" --> H[\"Probar dominancia de raíz\"]\n  C --> I[\"Traducir candidato a desigualdad\"]\n  F --> I\n  G --> I\n  H --> I\n  I --> J[\"Probar por sustitución\"]"
+              "code": "flowchart TD\n  A[\"Recurrence T(n)\"] --> B{\"Does a direct method apply?\"}\n  B -- \"Yes\" --> C[\"Use that result as candidate\"]\n  B -- \"No\" --> D[\"Draw 2 or 3 tree levels\"]\n  D --> E{\"Does the cost per level increase, decrease, or stay the same?\"}\n  E -- \"Increases\" --> F[\"Prove leaf dominance\"]\n  E -- \"Stays the same\" --> G[\"Prove cost per level × height\"]\n  E -- \"Decreases\" --> H[\"Prove root dominance\"]\n  C --> I[\"Translate candidate to inequality\"]\n  F --> I\n  G --> I\n  H --> I\n  I --> J[\"Prove by substitution\"]"
             }
           ]
         },
@@ -1540,7 +1540,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "When you want to finish"
+                        "text": "When you want to endish"
                       },
                       {
                         "type": "inlineMath",
@@ -1987,7 +1987,7 @@
                 {
                   "stepId": "step-sqrt-hipotesis",
                   "title": "Inductive hypothesis",
-                  "latex": "T(k)\\le Ck\\quad \\text{para }k<n",
+                  "latex": "T(k)\\le Ck\\quad \\text{for }k<n",
                   "explanation": [
                     {
                       "type": "text",
@@ -2209,7 +2209,7 @@
                 {
                   "stepId": "step-loglog-hipotesis",
                   "title": "Inductive hypothesis",
-                  "latex": "T(k)\\le Ck\\log\\log k\\quad \\text{para }k<n",
+                  "latex": "T(k)\\le Ck\\log\\log k\\quad \\text{for }k<n",
                   "explanation": [
                     {
                       "type": "text",
@@ -3039,7 +3039,7 @@
           "learningObjectives": [
             {
               "objectiveId": "evitar-errores-sustitucion",
-              "text": "Avoid frequent errors when testing dimensions by substitution."
+              "text": "Avoid frequent errors when testing bounds by substitution."
             }
           ],
           "prerequisites": {
@@ -3400,7 +3400,7 @@
                       "content": [
                         {
                           "type": "text",
-                          "text": "Conclude only the limit that was actually demonstrated."
+                          "text": "Conclude only the limit that was currently demonstrated."
                         }
                       ]
                     }

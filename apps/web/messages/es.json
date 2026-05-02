@@ -15,21 +15,26 @@
     "analyzer": "Analizador",
     "examples": "Ejemplos",
     "course": "Curso",
-    "quiz": "Quizzes",
     "about": "Acerca de",
     "openMenu": "Abrir menú",
-    "howToUse": "Cómo usar"
+    "howToUse": "Cómo usar",
+    "quizzes": "Quizzes"
   },
   "quizzes": {
-    "title": "Quiz ADA",
-    "subtitle": "Responde un quiz corto según tu progreso en el curso.",
+    "title": "Cuestionario ADA",
+    "subtitle": "Responde un cuestionario corto según tu progreso en el curso.",
+    "session": {
+      "moduleScope": "Quiz acotado al módulo: {title}"
+    },
     "actions": {
-      "start": "Iniciar quiz",
+      "start": "Iniciar cuestionario",
       "loadingSession": "Cargando...",
       "previous": "Anterior",
       "next": "Siguiente",
       "finish": "Finalizar intento",
-      "evaluating": "Evaluando..."
+      "finishEarly": "Finalizar ahora",
+      "evaluating": "Evaluando...",
+      "exit": "Salir"
     },
     "labels": {
       "attemptId": "attemptId"
@@ -59,11 +64,107 @@
       "helperText": "Selecciona el concepto que mejor corresponde a este elemento."
     },
     "topics": {
-      "asymptotic_notation": "Notación asintótica",
-      "elementary_operations": "Operaciones elementales",
+      "a_star": "A*",
+      "algorithm_analysis_fundamentals": "Fundamentos de Análisis",
+      "algorithm_correctness": "Corrección de Algoritmos",
+      "algorithm_formulation": "Formulación de Algoritmos",
+      "algorithm_specification": "Especificación de Algoritmos",
+      "alpha_beta_pruning": "Poda Alfa-Beta",
+      "asymptotic_notation": "Notación Asintótica",
+      "backtracking": "Backtracking",
+      "best_first_search": "Búsqueda Best-First",
+      "branch_and_bound": "Ramificación y Poda",
+      "characteristic_equation": "Ecuación Característica",
+      "cost_analysis": "Análisis de Costes",
+      "divide_and_conquer": "Divide y Vencerás",
+      "dynamic_programming": "Programación Dinámica",
+      "function_growth": "Crecimiento de Funciones",
+      "greedy_algorithms": "Algoritmos Voraces",
+      "heap_sort": "Heap Sort",
+      "heaps": "Montículos (Heaps)",
+      "heuristics": "Heurísticas",
+      "input_size": "Tamaño de Entrada",
+      "intelligent_substitution": "Sustitución Inteligente",
+      "iteration_method": "Método de Iteración",
       "limits": "Límites",
-      "loop_invariant": "Invariante de ciclo",
-      "recurrence_equations": "Ecuaciones de recurrencia"
+      "loop_invariant": "Invariante de Bucle",
+      "master_theorem": "Teorema Maestro",
+      "merge_sort": "Merge Sort",
+      "minimax": "Minimax",
+      "priority_queues": "Colas de Prioridad",
+      "recurrence_equations": "Ecuaciones de Recurrencia",
+      "recursion_tree_method": "Método del Árbol de Recurrencia",
+      "semantic_analysis": "Análisis Semántico",
+      "series": "Series",
+      "spatial_complexity": "Complejidad Espacial",
+      "temporal_complexity": "Complejidad Temporal",
+      "uniform_cost_search": "Búsqueda de Coste Uniforme",
+      "skill": {
+        "asymptotic": {
+          "big_o": {
+            "upper-bound-interpretation": "Interpretación de cota superior (Big-O)"
+          },
+          "theta": {
+            "identify-equivalent-order": "Identificación de orden equivalente (Theta)"
+          }
+        },
+        "elementary": {
+          "operations": {
+            "counting": "Conteo de operaciones"
+          }
+        },
+        "limits": {
+          "series": {
+            "growth-comparison": "Comparación de crecimiento de series"
+          }
+        },
+        "correctness": {
+          "distinguish-termination-from-correctness": "Distinguir terminación de corrección",
+          "loop-invariant": {
+            "three-moments": "Invariante de ciclo (Inicialización, Mantenimiento, Terminación)"
+          }
+        },
+        "analysis": {
+          "avoid-counting-structural-tokens": "Evitar contar tokens estructurales",
+          "avoid-superficial-loop-classification": "Evitar clasificación superficial de bucles",
+          "distinguish-algorithm-analysis-from-runtime-measurement": "Distinguir análisis algorítmico de medición de tiempo de ejecución",
+          "identify-dominant-operation-in-iterative-code": "Identificar la operación dominante en código iterativo",
+          "identify-elementary-operations": "Identificar operaciones elementales",
+          "identify-input-size": "Identificar el tamaño de entrada",
+          "identify-multiple-input-parameters": "Identificar múltiples parámetros de entrada",
+          "reason-about-constant-factors": "Razonar sobre factores constantes"
+        },
+        "formulation": {
+          "choose-control-structure-for-full-traversal": "Elegir estructura de control para recorrido completo",
+          "choose-control-structure-for-search": "Elegir estructura de control para búsqueda",
+          "extract-required-information-from-statement": "Extraer la información requerida del enunciado"
+        },
+        "invariant": {
+          "detect-bad-invariant": "Detectar un invariante incorrecto",
+          "explain-finalization": "Explicar la finalización",
+          "explain-initialization": "Explicar la inicialización",
+          "explain-maintenance": "Explicar el mantenimiento",
+          "formulate-invariant-for-maximum": "Formular invariante para máximo",
+          "formulate-invariant-for-sum": "Formular invariante para suma",
+          "interpret-before-iteration-state": "Interpretar el estado antes de la iteración"
+        },
+        "semantic": {
+          "classify-algorithm-purpose": "Clasificar el propósito del algoritmo",
+          "identify-algorithm-purpose": "Identificar el propósito del algoritmo",
+          "identify-state-variable": "Identificar la variable de estado"
+        },
+        "specification": {
+          "define-output-for-not-found-case": "Definir la salida para el caso no encontrado",
+          "distinguish-precondition-postcondition": "Distinguir precondición y poscondición",
+          "write-postcondition-from-code": "Escribir la poscondición a partir del código"
+        },
+        "recurrences": {
+          "method-selection": "Selección de método para resolver recurrencias",
+          "master": {
+            "case-selection": "Selección de caso del Teorema Maestro"
+          }
+        }
+      }
     },
     "empty": {
       "title": "Sin preguntas",
@@ -71,7 +172,7 @@
     },
     "error": {
       "title": "Error",
-      "backend": "No se pudo cargar el quiz. Revisa la conexión con el backend e inténtalo de nuevo.",
+      "backend": "No se pudo cargar el cuestionario. Revisa la conexión con el backend e inténtalo de nuevo.",
       "unsupportedQuestion": "Esta pregunta tiene un formato no soportado por la interfaz."
     },
     "result": {
@@ -86,12 +187,24 @@
       "headlineClose": "¡Muy cerca! Un repaso corto y la rompes.",
       "headlineKeepGoing": "¡Sigue así! Cada intento te hace más fuerte.",
       "areasIntro": "Conviene repasar este tema antes del siguiente intento:",
+      "areasIntroSingle": "Vas muy bien. Para el siguiente intento, te recomiendo repasar: {topics}.",
+      "areasIntroMany": "Vas muy bien. Para el siguiente intento, te recomiendo repasar estos temas: {topics}.",
+      "noAreasCongrats": "¡Excelente! No tienes tópicos pendientes por repasar. ¡Sigue así!",
       "none": "Ninguno",
       "correctLabel": "Correcta",
       "incorrectLabel": "Incorrecta",
-      "feedback": "Feedback de tu respuesta",
+      "feedback": "Retroalimentación de tu respuesta",
       "explanation": "Explicación general",
-      "goToContent": "Ir al contenido ({chapterId})"
+      "goToContent": "Ir al contenido ({chapterId})",
+      "goToContentNatural": "{prompt} {topic}",
+      "goToContentGood1": "Si quieres profundizar aún más, revisa:",
+      "goToContentGood2": "Buen trabajo. Si te interesa reforzarlo, mira:",
+      "goToContentGood3": "Vas muy bien. Puedes ampliar este tema en:",
+      "goToContentGood4": "Para consolidar lo que ya dominas, revisa:",
+      "goToContentRetry1": "Te conviene repasar este tema:",
+      "goToContentRetry2": "Antes del siguiente intento, mira:",
+      "goToContentRetry3": "Para afianzar esta parte, revisa:",
+      "goToContentRetry4": "Te puede ayudar volver a este contenido:"
     },
     "skill": {
       "asymptotic": {
@@ -113,9 +226,44 @@
         }
       },
       "correctness": {
+        "distinguish-termination-from-correctness": "Distinguir terminación de corrección",
         "loop-invariant": {
           "three-moments": "Invariante de ciclo (Inicialización, Mantenimiento, Terminación)"
         }
+      },
+      "analysis": {
+        "avoid-counting-structural-tokens": "Evitar contar tokens estructurales",
+        "avoid-superficial-loop-classification": "Evitar clasificación superficial de bucles",
+        "distinguish-algorithm-analysis-from-runtime-measurement": "Distinguir análisis algorítmico de medición de tiempo de ejecución",
+        "identify-dominant-operation-in-iterative-code": "Identificar la operación dominante en código iterativo",
+        "identify-elementary-operations": "Identificar operaciones elementales",
+        "identify-input-size": "Identificar el tamaño de entrada",
+        "identify-multiple-input-parameters": "Identificar múltiples parámetros de entrada",
+        "reason-about-constant-factors": "Razonar sobre factores constantes"
+      },
+      "formulation": {
+        "choose-control-structure-for-full-traversal": "Elegir estructura de control para recorrido completo",
+        "choose-control-structure-for-search": "Elegir estructura de control para búsqueda",
+        "extract-required-information-from-statement": "Extraer la información requerida del enunciado"
+      },
+      "invariant": {
+        "detect-bad-invariant": "Detectar un invariante incorrecto",
+        "explain-finalization": "Explicar la finalización",
+        "explain-initialization": "Explicar la inicialización",
+        "explain-maintenance": "Explicar el mantenimiento",
+        "formulate-invariant-for-maximum": "Formular invariante para máximo",
+        "formulate-invariant-for-sum": "Formular invariante para suma",
+        "interpret-before-iteration-state": "Interpretar el estado antes de la iteración"
+      },
+      "semantic": {
+        "classify-algorithm-purpose": "Clasificar el propósito del algoritmo",
+        "identify-algorithm-purpose": "Identificar el propósito del algoritmo",
+        "identify-state-variable": "Identificar la variable de estado"
+      },
+      "specification": {
+        "define-output-for-not-found-case": "Definir la salida para el caso no encontrado",
+        "distinguish-precondition-postcondition": "Distinguir precondición y poscondición",
+        "write-postcondition-from-code": "Escribir la poscondición a partir del código"
       },
       "recurrences": {
         "method-selection": "Selección de método para resolver recurrencias",
@@ -123,6 +271,106 @@
           "case-selection": "Selección de caso del Teorema Maestro"
         }
       }
+    },
+    "dashboard": {
+      "title": "Mis cuestionarios",
+      "subtitle": "Revisa tu progreso, fortalezas y áreas por mejorar.",
+      "startNew": "Nueva prueba",
+      "startFirst": "Hacer mi primer cuestionario",
+      "emptyTitle": "¡Empieza tu primer cuestionario!",
+      "emptySubtitle": "Completa al menos una sesión para ver tus estadísticas.",
+      "totalAttempts": "Intentos totales",
+      "avgAccuracy": "Precisión media",
+      "topStrength": "Fortaleza",
+      "topWeakness": "Área a mejorar",
+      "strengthsTitle": "Mis fortalezas",
+      "weakAreasTitle": "Áreas a reforzar",
+      "recentTitle": "Intentos recientes",
+      "noAttempts": "Aún no tienes intentos. ¡Anímate!",
+      "generalSession": "Sesión general",
+      "emptyCentered": {
+        "message": "Tu primer cuestionario te va a encantar. Comencemos ahora.",
+        "cta": "Hacer mi primer cuestionario"
+      },
+      "historyCard": {
+        "eyebrow": "Historial",
+        "completedWithScore": "Cuestionario completado con {correct}/{total} respuestas correctas.",
+        "moduleLabel": "Módulo: {moduleId}.",
+        "generalSessionLabel": "Sesión general.",
+        "scoreTitle": "{score}/5.0",
+        "feedbackImprove": "Retroalimentación: refuerza {topic}.",
+        "feedbackStrength": "Retroalimentación: buena base en {topic}.",
+        "feedbackNeutral": "Retroalimentación: sigue practicando para consolidar dominio.",
+        "progressLabel": "Resultado",
+        "ctaLabel": "Repetir práctica"
+      },
+      "cards": {
+        "newTestEyebrow": "Nueva prueba",
+        "firstQuizTitle": "Empieza tu primer cuestionario",
+        "firstQuizDescription": "Aún no hay historial. Realiza una primera prueba para construir estadísticas y detectar áreas por mejorar.",
+        "noHistoryProgress": "Sin historial",
+        "firstQuizCta": "Hacer primer cuestionario",
+        "emptyStateEyebrow": "Estado",
+        "noStatsTitle": "Sin estadísticas todavía",
+        "noStatsDescription": "Las métricas aparecen cuando completes al menos un cuestionario. No se muestran promedios inventados.",
+        "pendingProgress": "Pendiente",
+        "diagnosticCta": "Crear prueba diagnóstica",
+        "recommendedPracticeEyebrow": "Práctica recomendada",
+        "practiceAreaTitle": "Practicar {area}",
+        "newQuizTitle": "Hacer nuevo cuestionario",
+        "recommendedPracticeDescription": "Esta es el área que más conviene reforzar según tus resultados recientes.",
+        "adaptiveDescription": "Crea una nueva prueba con selección adaptativa basada en tu progreso local.",
+        "currentAverageProgress": "Promedio actual",
+        "startQuizCta": "Hacer cuestionario",
+        "averageEyebrow": "Promedio",
+        "averageUnavailableTitle": "Promedio no disponible",
+        "averageTitle": "{score}/5.0",
+        "averageDescription": "Resumen de desempeño acumulado en cuestionarios completados en este navegador.",
+        "averageAccuracyProgress": "Precisión promedio",
+        "viewHistoryCta": "Ver historial",
+        "weaknessEyebrow": "Área a mejorar",
+        "noCriticalWeaknessTitle": "Sin debilidad crítica",
+        "weaknessDescription": "Aparece como prioridad porque tiene bajo desempeño o errores recientes.",
+        "noWeaknessDescription": "No hay errores recurrentes para marcar una debilidad fuerte.",
+        "masteryProgress": "Dominio",
+        "practiceAreaCta": "Practicar área",
+        "generalTestCta": "Prueba general",
+        "latestTestEyebrow": "Última prueba",
+        "latestTitle": "{percent}% en el último cuestionario",
+        "noLatestTitle": "Sin última prueba",
+        "latestDescription": "Respondiste {correct}/{total} de forma correcta.",
+        "noLatestDescription": "Cuando completes un cuestionario, aquí se mostrará el resultado más reciente.",
+        "resultProgress": "Resultado",
+        "retryCta": "Repetir práctica",
+        "strengthEyebrow": "Fortaleza",
+        "pendingStrengthTitle": "Fortaleza pendiente",
+        "strengthDescription": "Esta área muestra consistencia suficiente en tus resultados recientes.",
+        "noStrengthDescription": "Aún falta historial para identificar una fortaleza defendible.",
+        "keepPracticingCta": "Seguir practicando"
+      }
+    },
+    "modal": {
+      "title": "Nuevo cuestionario",
+      "modeLabel": "Modo de estudio",
+      "mode": {
+        "adaptive": "Adaptativo",
+        "weak": "Áreas débiles",
+        "free": "Libre"
+      },
+      "modeDesc": {
+        "adaptive": "Según tu progreso y dominio actual.",
+        "weak": "Foco en los temas donde más fallas.",
+        "free": "Selección aleatoria del banco completo."
+      },
+      "weakAreasLabel": "Tus áreas débiles",
+      "questionCountLabel": "Número de preguntas",
+      "questionCountOption": "{count} preguntas",
+      "recommendedEyebrow": "Recomendado",
+      "recommendedTitle": "Practicar áreas débiles",
+      "recommendedDescription": "AALIE seleccionará preguntas usando tu progreso local y resultados recientes.",
+      "cancel": "Cancelar",
+      "start": "Comenzar cuestionario",
+      "note": "Las preguntas se seleccionan automáticamente de un banco de más de 475 preguntas."
     }
   },
   "footer": {
@@ -1880,6 +2128,8 @@
     "completed": "Completado",
     "references": "Referencias",
     "viewSolution": "Ver solución",
-    "brokenLinkTooltip": "Contenido no disponible"
+    "brokenLinkTooltip": "Contenido no disponible",
+    "startQuiz": "Hacer quiz",
+    "quizLocked": "Quiz al {threshold}%"
   }
 }

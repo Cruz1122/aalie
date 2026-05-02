@@ -6,6 +6,7 @@ import React, { useMemo } from "react";
 
 import { Link } from "@/i18n/navigation";
 import type { ContentTargetMap } from "@/lib/content/types";
+
 import Formula from "./Formula";
 import { MaterialIcon } from "./MaterialIcon";
 import { TermInline } from "./TermInline";
@@ -73,12 +74,18 @@ function normalizeForMatch(text: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function normalizedPrefixLength(haystack: string, endExclusive: number): number {
+function normalizedPrefixLength(
+  haystack: string,
+  endExclusive: number,
+): number {
   return normalizeForMatch(haystack.slice(0, endExclusive)).length;
 }
 
 /** Primer índice en `haystack` donde el prefijo normalizado alcanza longitud >= normPos. */
-function originalIndexAtNormPosition(haystack: string, normPos: number): number {
+function originalIndexAtNormPosition(
+  haystack: string,
+  normPos: number,
+): number {
   let lo = 0;
   let hi = haystack.length;
   while (lo < hi) {
@@ -103,7 +110,12 @@ function findNormalizedMatch(
 }
 
 /** Incluye una -s final típica de plural en español si el patrón no termina en s. */
-function extendPluralS(part: string, start: number, end: number, pattern: string): number {
+function extendPluralS(
+  part: string,
+  start: number,
+  end: number,
+  pattern: string,
+): number {
   if (pattern.endsWith("s") || pattern.length < 4) return end;
   if (end >= part.length) return end;
   const ch = part[end];
@@ -141,7 +153,8 @@ function autoEnhanceTextWithTerms(
       const match = findNormalizedMatch(part, pattern);
 
       if (match && shouldAutoLink(entry.termId)) {
-        let { start, end } = match;
+        const { start } = match;
+        let { end } = match;
         end = extendPluralS(part, start, end, pattern);
         const originalText = part.slice(start, end);
         const prefix = part.slice(0, start);

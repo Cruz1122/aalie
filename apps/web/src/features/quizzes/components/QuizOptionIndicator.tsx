@@ -27,13 +27,24 @@ export function QuizOptionIndicator({
   disabled = false,
 }: QuizOptionIndicatorProps) {
   const effectiveState =
-    state !== "idle" ? state : checked ? "selected" : disabled ? "disabled" : "idle";
+    state !== "idle"
+      ? state
+      : checked
+        ? "selected"
+        : disabled
+          ? "disabled"
+          : "idle";
   const color = getIconColor(effectiveState, disabled);
 
   if (kind === "neutral") {
     return (
-      <span aria-hidden="true" className="inline-flex h-6 w-6 shrink-0 items-center justify-center">
-        <span className={`material-symbols-outlined text-[18px] leading-none ${color}`}>
+      <span
+        aria-hidden="true"
+        className="inline-flex h-6 w-6 shrink-0 items-center justify-center"
+      >
+        <span
+          className={`material-symbols-outlined text-[18px] leading-none ${color}`}
+        >
           drag_indicator
         </span>
       </span>
@@ -50,11 +61,15 @@ export function QuizOptionIndicator({
         : "check_box";
 
   return (
-    <span aria-hidden="true" className="inline-flex h-6 w-6 shrink-0 items-center justify-center">
-      <span className={`material-symbols-outlined text-[20px] leading-none ${color}`}>
+    <span
+      aria-hidden="true"
+      className="inline-flex h-6 w-6 shrink-0 items-center justify-center"
+    >
+      <span
+        className={`material-symbols-outlined text-[20px] leading-none ${color}`}
+      >
         {iconName}
       </span>
     </span>
   );
 }
-

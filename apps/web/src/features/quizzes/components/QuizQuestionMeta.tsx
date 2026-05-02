@@ -15,10 +15,7 @@ function toTitleCaseFromSlug(slug: string): string {
     .join(" ");
 }
 
-export function QuizQuestionMeta({
-  topic,
-  current,
-}: QuizQuestionMetaProps) {
+export function QuizQuestionMeta({ topic, current }: QuizQuestionMetaProps) {
   const t = useTranslations("quizzes");
   const topicLabel = topic
     ? t.has(`topics.${topic}`)

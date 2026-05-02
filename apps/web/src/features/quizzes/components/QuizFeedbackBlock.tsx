@@ -70,4 +70,3 @@ export function QuizFeedbackBlock({
     </section>
   );
 }
-

@@ -19,11 +19,11 @@
     "theta",
     "little-o",
     "little-omega",
-    "accent",
-    "cuchiflu",
+    "tilde",
+    "tilde",
     "limits",
     "function-families",
-    "dimensions"
+    "bounds"
   ],
   "searchMeta": {
     "aliases": [
@@ -31,27 +31,27 @@
       "big o",
       "big omega",
       "theta",
-      "little or",
+      "little-o",
       "little omega",
-      "accent",
-      "cuchiflu",
+      "tilde",
+      "tilde",
       "asymptotic bounds",
       "asymptotic families"
     ],
     "keywords": [
-      "Or",
+      "O",
       "Omega",
       "Theta",
       "or",
-      "small omega",
-      "accent",
+      "little-omega",
+      "tilde",
       "upper bound",
       "lower bound",
-      "exact elevation",
-      "strict limit",
+      "exact bound",
+      "strict bound",
       "asymptotic equivalence",
       "lim f over g",
-      "lim g about f"
+      "lim g over f"
     ]
   },
   "prerequisites": {
@@ -102,7 +102,7 @@
     },
     {
       "objectiveId": "definir-tilde",
-      "text": "Define the tilde or cuchiflú as exact asymptotic equivalence and distinguish it from Theta."
+      "text": "Define the tilde or tilde as exact asymptotic equivalence and distinguish it from Theta."
     },
     {
       "objectiveId": "resolver-ejemplos-convenciones",
@@ -140,7 +140,7 @@
     {
       "termId": "term-theta",
       "label": "Theta",
-      "definition": "Exact dimension. It indicates that f and g grow at the same asymptotic rate."
+      "definition": "Exact bound. It indicates that f and g grow at the same asymptotic rate."
     },
     {
       "termId": "term-little-o",
@@ -154,7 +154,7 @@
     },
     {
       "termId": "term-tilde",
-      "label": "Tilde / cuchiflu",
+      "label": "Tilde",
       "definition": "Exact asymptotic equivalence. It indicates that f and g are asymptotically identical and their quotient tends to 1."
     },
     {
@@ -280,7 +280,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "okay"
+                  "text": "is"
                 },
                 {
                   "type": "inlineMath",
@@ -296,7 +296,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "it's worth it alone"
+                  "text": "is only worth"
                 },
                 {
                   "type": "inlineMath",
@@ -341,7 +341,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "that is to say that"
+                  "text": "that is to saying that"
                 },
                 {
                   "type": "inlineMath",
@@ -433,7 +433,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "(Theta) — exact elevation:"
+                      "text": "(Theta) — exact bound:"
                     },
                     {
                       "type": "inlineMath",
@@ -509,7 +509,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "(Tilde / Cuchiflú) — equivalence:"
+                      "text": "(Tilde / Tilde) — equivalence:"
                     },
                     {
                       "type": "inlineMath",
@@ -2044,7 +2044,7 @@
           "learningObjectives": [
             {
               "objectiveId": "explicar-tilde-intuitivamente",
-              "text": "Explain the accent or cuchiflú as the most demanding notation."
+              "text": "Explain the tilde or tilde as the most demanding notation."
             },
             {
               "objectiveId": "distinguir-tilde-theta",
@@ -2198,7 +2198,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "The accent requires L=1. Theta, on the other hand, accepts any finite positive constant."
+                      "text": "The tilde requires L=1. Theta, on the other hand, accepts any finite positive constant."
                     }
                   ]
                 }
@@ -2260,7 +2260,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "The accent implies Theta, but Theta does not imply accent. For example,"
+                      "text": "The tilde implies Theta, but Theta does not imply tilde. For example,"
                     },
                     {
                       "type": "inlineMath",

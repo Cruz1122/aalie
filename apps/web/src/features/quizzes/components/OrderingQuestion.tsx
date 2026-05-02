@@ -63,14 +63,20 @@ export function OrderingQuestion({
     setDragId(null);
   }
 
-  function handlePointerDown(e: React.PointerEvent<HTMLElement>, optionId: string) {
+  function handlePointerDown(
+    e: React.PointerEvent<HTMLElement>,
+    optionId: string,
+  ) {
     if (disabled) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     pointerCaptureRef.current = { el: e.currentTarget, id: e.pointerId };
     setDragId(optionId);
   }
 
-  function handlePointerMove(e: React.PointerEvent<HTMLElement>, currentDragId: string) {
+  function handlePointerMove(
+    e: React.PointerEvent<HTMLElement>,
+    currentDragId: string,
+  ) {
     if (!dragId || disabled) return;
     // Temporarily release to hit-test, then recapture
     const el = e.currentTarget;

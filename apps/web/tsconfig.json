@@ -17,10 +17,18 @@
     "paths": {
       "@/*": ["./src/*"],
       "@aa/content-catalog": ["../../packages/content-catalog/src/index.ts"],
-      "@aa/content-catalog/server": ["../../packages/content-catalog/src/server.ts"],
-      "@aa/content-catalog/terms": ["../../packages/content-catalog/src/terms.ts"],
-      "@aa/content-catalog/types": ["../../packages/content-catalog/src/types.ts"],
-      "@aa/content-catalog/utils": ["../../packages/content-catalog/src/utils.ts"],
+      "@aa/content-catalog/server": [
+        "../../packages/content-catalog/src/server.ts"
+      ],
+      "@aa/content-catalog/terms": [
+        "../../packages/content-catalog/src/terms.ts"
+      ],
+      "@aa/content-catalog/types": [
+        "../../packages/content-catalog/src/types.ts"
+      ],
+      "@aa/content-catalog/utils": [
+        "../../packages/content-catalog/src/utils.ts"
+      ],
       "@aa/types": ["../../packages/types/src"],
       "@aa/grammar": ["../../packages/grammar/ts/src"]
     },

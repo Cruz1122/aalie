@@ -38,7 +38,9 @@ describe("MermaidDiagramBlock", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Mermaid diagram")).toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: "Copiar Mermaid" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Copiar Mermaid" }),
+    ).toBeVisible();
     expect(screen.getByRole("button", { name: "Ampliar" })).toBeVisible();
   });
 
@@ -57,7 +59,9 @@ describe("MermaidDiagramBlock", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Mermaid inválido. Mostrando código fuente.")).toBeVisible();
+      expect(
+        screen.getByText("Mermaid inválido. Mostrando código fuente."),
+      ).toBeVisible();
     });
     expect(screen.getByText(/invalid syntax/i)).toBeVisible();
   });
@@ -85,7 +89,9 @@ describe("MermaidDiagramBlock", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Copiar Mermaid" })).toBeVisible();
+      expect(
+        screen.getByRole("button", { name: "Copiar Mermaid" }),
+      ).toBeVisible();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Copiar Mermaid" }));

@@ -1,7 +1,11 @@
 "use client";
 
 import { QuizOption } from "./QuizOption";
-import type { QuizOptionKind, QuizOptionState, QuizOptionViewModel } from "./types";
+import type {
+  QuizOptionKind,
+  QuizOptionState,
+  QuizOptionViewModel,
+} from "./types";
 
 export interface QuizOptionGroupProps {
   kind: QuizOptionKind;

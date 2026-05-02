@@ -13,7 +13,7 @@ export * from "./QuizOptionGroup";
 export * from "./QuizOptionIndicator";
 export * from "./QuizQuestionCard";
 export * from "./QuizQuestionMeta";
-export * from "./QuizSessionView";
+
 export * from "./SingleChoiceGroup";
 export * from "./SingleChoiceQuestion";
 export * from "./TrueFalseQuestion";

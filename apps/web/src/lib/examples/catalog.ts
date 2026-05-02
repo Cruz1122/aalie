@@ -459,7 +459,8 @@ const iterativeExamples: ExampleCatalogItem[] = [
     titleEs: "Gnome Sort",
     titleEn: "Gnome Sort",
     summaryEs: "Avanza o retrocede una posición según el orden local.",
-    summaryEn: "Moves forward or backward one position depending on local order.",
+    summaryEn:
+      "Moves forward or backward one position depending on local order.",
     tagsEs: ["ordenamiento", "retroceso", "while"],
     tagsEn: ["sorting", "backstep", "while"],
     sourceCodeEs: code(
@@ -2453,11 +2454,8 @@ export const examplesCatalog: ExampleCatalogItem[] = [
 export const getExampleCategoryPage = (category: ExampleCategory): number =>
   EXAMPLE_CATEGORY_META[category].pageIndex;
 
-export const getExampleCategoriesByPage = (
-  page: number,
-): ExampleCategory[] => {
-  const safePage =
-    page >= 1 && page <= EXAMPLE_CATEGORY_PAGE_COUNT ? page : 1;
+export const getExampleCategoriesByPage = (page: number): ExampleCategory[] => {
+  const safePage = page >= 1 && page <= EXAMPLE_CATEGORY_PAGE_COUNT ? page : 1;
 
   return EXAMPLE_CATEGORY_ORDER.filter(
     (category) => EXAMPLE_CATEGORY_META[category].pageIndex === safePage,
@@ -2472,9 +2470,7 @@ export const isRecursiveCategory = (category: ExampleCategory): boolean =>
 export const isExampleCategory = (value: string): value is ExampleCategory =>
   EXAMPLE_CATEGORY_ORDER.includes(value as ExampleCategory);
 
-export const getCategoryBySlug = (
-  slug: string,
-): ExampleCategory | undefined =>
+export const getCategoryBySlug = (slug: string): ExampleCategory | undefined =>
   EXAMPLE_CATEGORY_ORDER.find(
     (category) => EXAMPLE_CATEGORY_META[category].slug === slug,
   );

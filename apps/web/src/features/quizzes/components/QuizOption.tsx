@@ -36,7 +36,13 @@ export function QuizOption({
   onSelect,
 }: QuizOptionProps) {
   const effectiveState =
-    state !== "idle" ? state : checked ? "selected" : disabled ? "disabled" : "idle";
+    state !== "idle"
+      ? state
+      : checked
+        ? "selected"
+        : disabled
+          ? "disabled"
+          : "idle";
   const interactive = !!onSelect && !disabled;
 
   return (

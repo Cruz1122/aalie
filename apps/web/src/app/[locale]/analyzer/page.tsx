@@ -57,12 +57,12 @@ import {
 } from "@/lib/extract-core-data";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { buildLlmComparisonPayload } from "@/lib/llm-compare-payload";
+import { translateLlmError } from "@/lib/llm-error-translator";
 import {
   getNormalizedLlmStructured,
   getNormalizedLlmText,
   parseJsonFromText,
 } from "@/lib/llm-response";
-import { translateLlmError } from "@/lib/llm-error-translator";
 import { getSavedCase, saveCase } from "@/lib/polynomial";
 import {
   MAX_TXT_IMPORT_BYTES,
@@ -1372,7 +1372,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       if (structuredPayload && typeof structuredPayload === "object") {
         llmResponse = structuredPayload;
       } else {
-        const parsed = parseJsonFromText<Record<string, unknown>>(llmResponseText);
+        const parsed =
+          parseJsonFromText<Record<string, unknown>>(llmResponseText);
         if (parsed) {
           llmResponse = parsed as {
             analysis?: Record<string, unknown>;

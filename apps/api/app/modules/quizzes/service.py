@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from copy import deepcopy
+import random
 from uuid import uuid4
 
 from .grading import GradingError, compute_mastery_delta, grade_question, summarize_skill_outcomes
@@ -27,6 +28,15 @@ def _sanitize_question(question: QuizQuestion) -> QuizQuestion:
     question_copy.answer.orderedOptionIds = None
     question_copy.answer.pairs = None
     return question_copy
+
+
+def _shuffle_question_for_session(question: QuizQuestion, session_seed: str) -> QuizQuestion:
+    shuffled = deepcopy(question)
+    rng = random.Random(f"{session_seed}:{question.questionId}")
+    rng.shuffle(shuffled.options)
+    rng.shuffle(shuffled.leftItems)
+    rng.shuffle(shuffled.rightItems)
+    return shuffled
 
 
 def get_health() -> dict[str, object]:
@@ -71,13 +81,18 @@ def create_session(request: QuizSelectionRequest) -> QuizSession:
         raise ValueError("Quiz dataset invalido; corra /quizzes/validate")
 
     selection = select_questions(get_active_questions(loc), request, include_trace=False)
+    session_id = f"quiz-session-{uuid4()}"
+    sanitized_questions = [
+        _sanitize_question(_shuffle_question_for_session(question, session_id))
+        for question in selection.questions
+    ]
 
     return QuizSession(
-        sessionId=f"quiz-session-{uuid4()}",
+        sessionId=session_id,
         schemaVersion=dataset.schemaVersion,
         locale=dataset.locale,
         courseId=dataset.courseId,
-        questions=[_sanitize_question(question) for question in selection.questions],
+        questions=sanitized_questions,
         metadata={
             "selectionMode": "adaptive_deterministic",
             "warnings": selection.warnings,

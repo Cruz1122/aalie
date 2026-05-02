@@ -156,7 +156,7 @@
     },
     {
       "objectiveId": "evitar-mejoras-falsas",
-      "text": "Recognize when it makes no sense to say that an algorithm has been improved if the asymptotic order does not change."
+      "text": "Recognize when it makes no sense to saying that an algorithm has been improved if the asymptotic order does not change."
     },
     {
       "objectiveId": "recordar-notacion-curso",
@@ -178,7 +178,7 @@
     {
       "termId": "term-oe",
       "label": "OE",
-      "definition": "Operation Elemental."
+      "definition": "Elementary Operation."
     },
     {
       "termId": "term-t-n",
@@ -891,7 +891,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Operation Elemental"
+                        "text": "Elementary Operation"
                       }
                     ]
                   ]
@@ -971,7 +971,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Value of n from which the dimension applies"
+                        "text": "Value of n from which the bound applies"
                       }
                     ]
                   ]

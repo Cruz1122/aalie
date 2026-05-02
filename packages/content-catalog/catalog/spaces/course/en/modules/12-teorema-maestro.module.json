@@ -180,7 +180,7 @@
     {
       "termId": "term-exponente-critico",
       "label": "critical exponent",
-      "definition": "Value p=log_b(a). Defines the boundary n^p against which f(n) is compared."
+      "definition": "Value p=log_b(a). Deendes the boundary n^p against which f(n) is compared."
     },
     {
       "termId": "term-frontera-maestro",
@@ -287,7 +287,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "(to verify dimensions by induction) and the"
+                  "text": "(to verify bounds by induction) and the"
                 },
                 {
                   "type": "strong",
@@ -430,7 +430,7 @@
                     },
                     {
                       "type": "text",
-                      "text": ", that is, the size is actually reduced by division."
+                      "text": ", that is, the size is currently reduced by division."
                     }
                   ]
                 },
@@ -1142,7 +1142,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "requires that the total cost of the subproblems be strictly less than a constant fraction of the root cost. You must find a constant"
+                      "text": "requires that the total cost of the subproblems be strictly less than a constant fraction of the root cost. You must endd a constant"
                     },
                     {
                       "type": "inlineMath",
@@ -1194,7 +1194,7 @@
               "id": "blk-arbol-decision-maestro",
               "type": "mermaid",
               "title": "Applicability decision and case",
-              "code": "flowchart TD\n  A[\"Recurrencia T(n)\"] --> B{\"¿Tiene forma T(n)=aT(n/b)+f(n)?\"}\n  B -- \"No\" --> X[\"No aplica Teorema Maestro\\nUsar iteración, árbol, sustitución o ecuación característica\"]\n  B -- \"Sí\" --> C{\"¿a ≥ 1 y b > 1?\"}\n  C -- \"No\" --> X\n  C -- \"Sí\" --> D[\"Calcular p = log_b(a)\"]\n  D --> E{\"Comparar f(n) con n^p\"}\n  E -- \"f(n) ∈ O(n^(p-ε))\" --> F[\"Caso 1\\nT(n)=Θ(n^p)\"]\n  E -- \"f(n) ∈ Θ(n^p)\" --> G[\"Caso 2\\nT(n)=Θ(n^p log n)\"]\n  E -- \"f(n) ∈ Ω(n^(p+ε))\" --> H{\"¿Regularidad?\\na f(n/b) ≤ c f(n), 0<c<1\"}\n  H -- \"Sí\" --> I[\"Caso 3\\nT(n)=Θ(f(n))\"]\n  H -- \"No\" --> X\n  E -- \"Entre casos / sin ε\" --> X"
+              "code": "flowchart TD\n  A[\"Recurrence T(n)\"] --> B{\"Has form T(n)=aT(n/b)+f(n)?\"}\n  B -- \"No\" --> X[\"Does not apply Master Theorem\\nUse iteration, recursion tree, substitution, or characteristic equation\"]\n  B -- \"Yes\" --> C{\"a ≥ 1 and b > 1?\"}\n  C -- \"No\" --> X\n  C -- \"Yes\" --> D[\"Compute p = log_b(a)\"]\n  D --> E{\"Compare f(n) with n^p\"}\n  E -- \"f(n) ∈ O(n^(p-ε))\" --> F[\"Case 1\\nT(n)=Θ(n^p)\"]\n  E -- \"f(n) ∈ Θ(n^p)\" --> G[\"Case 2\\nT(n)=Θ(n^p log n)\"]\n  E -- \"f(n) ∈ Ω(n^(p+ε))\" --> H{\"Regularity?\\na f(n/b) ≤ c f(n), 0<c<1\"}\n  H -- \"Yes\" --> I[\"Case 3\\nT(n)=Θ(f(n))\"]\n  H -- \"No\" --> X\n  E -- \"Between cases / no ε\" --> X"
             }
           ]
         },
@@ -1285,7 +1285,7 @@
                 {
                   "stepId": "step-caso",
                   "title": "Case",
-                  "latex": "\\text{Caso 2}",
+                  "latex": "\\text{Case 2}",
                   "explanation": [
                     {
                       "type": "text",
@@ -1300,7 +1300,7 @@
                   "explanation": [
                     {
                       "type": "text",
-                      "text": "The final result adds a logarithmic factor to the boundary function, resulting in a complexity of n log n."
+                      "text": "The endal result adds a logarithmic factor to the boundary function, resulting in a complexity of n log n."
                     }
                   ]
                 }
@@ -1343,7 +1343,7 @@
                   "explanation": [
                     {
                       "type": "text",
-                      "text": "The critical exponent p=2 defines a quadratic boundary n^2."
+                      "text": "The critical exponent p=2 deendes a quadratic boundary n^2."
                     }
                   ]
                 },
@@ -1372,7 +1372,7 @@
                 {
                   "stepId": "step-caso-2",
                   "title": "Case",
-                  "latex": "\\text{Caso 1}",
+                  "latex": "\\text{Case 1}",
                   "explanation": [
                     {
                       "type": "text",
@@ -1448,7 +1448,7 @@
                 {
                   "stepId": "step-intento-caso",
                   "title": "Attempted case",
-                  "latex": "\\text{Parece Caso 3, pero falta regularidad}",
+                  "latex": "\\text{It looks like Case 3, but regularity is missing}",
                   "explanation": [
                     {
                       "type": "text",
@@ -1474,7 +1474,7 @@
                   "explanation": [
                     {
                       "type": "text",
-                      "text": "We find c=1/2, which must be less than 1. The regularity is satisfied."
+                      "text": "We endd c=1/2, which must be less than 1. The regularity is satisfied."
                     }
                   ]
                 },
@@ -1485,7 +1485,7 @@
                   "explanation": [
                     {
                       "type": "text",
-                      "text": "By dominating the work at the root (external cost), the final complexity is the order of f(n), that is, cubic."
+                      "text": "By dominating the work at the root (external cost), the endal complexity is the order of f(n), that is, cubic."
                     }
                   ]
                 }
@@ -1527,7 +1527,7 @@
                 {
                   "stepId": "step-caso-1-no-aplica",
                   "title": "Case 1",
-                  "latex": "\\frac{n}{\\log n}\\notin O(n^{1-\\varepsilon})\\quad \\text{para todo }\\varepsilon>0"
+                  "latex": "\\frac{n}{\\log n}\\notin O(n^{1-\\varepsilon})\\quad \\text{for all }\\varepsilon>0"
                 },
                 {
                   "stepId": "step-razon",
@@ -1547,7 +1547,7 @@
                 {
                   "stepId": "step-conclusion-no-aplica",
                   "title": "Conclusion",
-                  "latex": "\\text{El Teorema Maestro no aplica. Usar árbol de recursión o sustitución.}"
+                  "latex": "\\text{The Master Theorem does not apply. Use recursion tree or substitution.}"
                 }
               ]
             },
@@ -1592,7 +1592,7 @@
                 {
                   "stepId": "step-caso-5",
                   "title": "Case",
-                  "latex": "\\text{Caso 2}"
+                  "latex": "\\text{Case 2}"
                 },
                 {
                   "stepId": "step-resultado-5",
@@ -1663,12 +1663,12 @@
                 {
                   "stepId": "step-comparacion-e1",
                   "title": "Comparison",
-                  "latex": "n^2\\in O(n^{3-\\varepsilon})\\quad \\text{con }\\varepsilon=1"
+                  "latex": "n^2\\in O(n^{3-\\varepsilon})\\quad \\text{with }\\varepsilon=1"
                 },
                 {
                   "stepId": "step-caso-e1",
                   "title": "Case",
-                  "latex": "\\text{Caso 1}"
+                  "latex": "\\text{Case 1}"
                 },
                 {
                   "stepId": "step-resultado-e1",
@@ -1714,7 +1714,7 @@
                 {
                   "stepId": "step-caso-e2",
                   "title": "Case",
-                  "latex": "\\text{Caso 2}"
+                  "latex": "\\text{Case 2}"
                 },
                 {
                   "stepId": "step-resultado-e2",
@@ -1755,7 +1755,7 @@
                 {
                   "stepId": "step-comparacion-e3",
                   "title": "Comparison",
-                  "latex": "n\\in \\Omega(n^{0+\\varepsilon})\\quad \\text{con }\\varepsilon=1"
+                  "latex": "n\\in \\Omega(n^{0+\\varepsilon})\\quad \\text{with }\\varepsilon=1"
                 },
                 {
                   "stepId": "step-regularidad-e3",
@@ -1765,7 +1765,7 @@
                 {
                   "stepId": "step-caso-e3",
                   "title": "Case",
-                  "latex": "\\text{Caso 3}"
+                  "latex": "\\text{Case 3}"
                 },
                 {
                   "stepId": "step-resultado-e3",
@@ -1806,7 +1806,7 @@
                 {
                   "stepId": "step-comparacion-e4",
                   "title": "Comparison",
-                  "latex": "n^2\\in \\Omega(n^{0+\\varepsilon})\\quad \\text{por ejemplo con }\\varepsilon=1"
+                  "latex": "n^2\\in \\Omega(n^{0+\\varepsilon})\\quad \\text{for example with }\\varepsilon=1"
                 },
                 {
                   "stepId": "step-regularidad-e4",
@@ -1816,7 +1816,7 @@
                 {
                   "stepId": "step-caso-e4",
                   "title": "Case",
-                  "latex": "\\text{Caso 3}"
+                  "latex": "\\text{Case 3}"
                 },
                 {
                   "stepId": "step-resultado-e4",
@@ -1904,12 +1904,12 @@
                 {
                   "stepId": "step-no-caso-3",
                   "title": "No case 3 basic",
-                  "latex": "n^2\\log^5 n\\notin \\Omega(n^{2+\\varepsilon})\\quad \\text{para ningún }\\varepsilon>0"
+                  "latex": "n^2\\log^5 n\\notin \\Omega(n^{2+\\varepsilon})\\quad \\text{for no }\\varepsilon>0"
                 },
                 {
                   "stepId": "step-conclusion-basica",
                   "title": "Basic conclusion",
-                  "latex": "\\text{Teorema Maestro básico: no aplica}"
+                  "latex": "\\text{Basic Master Theorem: not applicable}"
                 },
                 {
                   "stepId": "step-resultado-extendido",
@@ -2133,7 +2133,7 @@
                       },
                       {
                         "type": "text",
-                        "text": "and find"
+                        "text": "and endd"
                       },
                       {
                         "type": "inlineMath",

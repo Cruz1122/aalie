@@ -11,7 +11,10 @@ import type {
 async function parseJsonOrThrow<T>(response: Response): Promise<T> {
   const data = (await response.json().catch(() => null)) as T | null;
   if (!response.ok) {
-    const detail = data && typeof data === "object" ? JSON.stringify(data) : response.statusText;
+    const detail =
+      data && typeof data === "object"
+        ? JSON.stringify(data)
+        : response.statusText;
     throw new Error(`Request failed (${response.status}): ${detail}`);
   }
   if (!data) {
@@ -20,7 +23,9 @@ async function parseJsonOrThrow<T>(response: Response): Promise<T> {
   return data;
 }
 
-export async function createQuizSession(payload: QuizSelectionRequest): Promise<QuizSession> {
+export async function createQuizSession(
+  payload: QuizSelectionRequest,
+): Promise<QuizSession> {
   const response = await fetch("/api/quizzes/session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -29,7 +34,9 @@ export async function createQuizSession(payload: QuizSelectionRequest): Promise<
   return parseJsonOrThrow<QuizSession>(response);
 }
 
-export async function createQuizAttempt(payload: QuizSelectionRequest): Promise<QuizAttempt> {
+export async function createQuizAttempt(
+  payload: QuizSelectionRequest,
+): Promise<QuizAttempt> {
   return createQuizSession(payload);
 }
 

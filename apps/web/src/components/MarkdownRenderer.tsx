@@ -496,7 +496,7 @@ const CustomPre = (props: any) => {
       const comment = commentStart >= 0 ? line.slice(commentStart) : "";
 
       return (
-        <div key={lineKey} className="whitespace-pre-wrap break-words">
+        <div key={lineKey} className="whitespace-pre">
           {renderTokens(before, lineKey)}
           {comment ? (
             <span className="text-slate-400/70">{comment}</span>
@@ -518,9 +518,9 @@ const CustomPre = (props: any) => {
     <div className="relative group w-full max-w-full min-w-0">
       <div
         ref={scrollRef}
-        className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[300px] overflow-y-auto mb-1.5 max-w-[min(100%,420px)] min-w-0 overflow-hidden"
+        className="bg-slate-900/80 border border-cyan-500/20 rounded-md p-3 max-h-[320px] overflow-y-auto overflow-x-auto mb-1.5 max-w-[min(100%,420px)] min-w-0"
       >
-        <pre className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed m-0">
+        <pre className="text-slate-100 text-[11px] font-mono whitespace-pre leading-relaxed m-0 [tab-size:4]">
           {renderedCode}
         </pre>
       </div>

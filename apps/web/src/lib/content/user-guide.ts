@@ -1,9 +1,6 @@
 import "server-only";
 
-import {
-  getSpaceBundle,
-  validateCatalog,
-} from "@aa/content-catalog/server";
+import { getSpaceBundle, validateCatalog } from "@aa/content-catalog/server";
 import type { LoadedSpaceBundle } from "@aa/content-catalog/types";
 import { cache } from "react";
 
@@ -58,9 +55,11 @@ export function getUserGuideStaticParams(locales: readonly string[]) {
   const fallbackBundle = loadUserGuideBundle(USER_GUIDE_FALLBACK_LOCALE);
 
   return locales.flatMap((locale) =>
-    (tryLoadUserGuideBundle(locale) ?? fallbackBundle).modules.map(({ module }) => ({
-      locale,
-      moduleSlug: module.slug,
-    })),
+    (tryLoadUserGuideBundle(locale) ?? fallbackBundle).modules.map(
+      ({ module }) => ({
+        locale,
+        moduleSlug: module.slug,
+      }),
+    ),
   );
 }

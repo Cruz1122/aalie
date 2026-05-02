@@ -19,7 +19,10 @@ export function QuizEmptyState({
       className={`glass-card rounded-xl border border-white/10 p-4 text-slate-200 ${className}`}
     >
       <div className="flex items-start gap-2.5">
-        <span aria-hidden="true" className="material-symbols-outlined text-slate-300">
+        <span
+          aria-hidden="true"
+          className="material-symbols-outlined text-slate-300"
+        >
           inbox
         </span>
         <div>

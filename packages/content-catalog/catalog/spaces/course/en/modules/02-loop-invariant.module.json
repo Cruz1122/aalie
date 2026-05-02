@@ -9,12 +9,12 @@
   "locale": "en",
   "version": "1.0.0",
   "status": "draft",
-  "summary": "Principle of correctness, formulation of a cycle invariant and demonstration in the three mandatory moments: initialization, maintenance and termination. Applies to Insertion Sort and Bubble Sort.",
+  "summary": "Principle of correctness, formulation of a loop invariant and proof in the three mandatory moments: initialization, maintenance and termination. Applies to Insertion Sort and Bubble Sort.",
   "difficulty": "foundational",
   "estimatedMinutes": 35,
   "tags": [
     "loop-invariant",
-    "cycle-invariant",
+    "loop-invariant",
     "correctness",
     "initialization",
     "maintenance",
@@ -26,7 +26,7 @@
   ],
   "searchMeta": {
     "aliases": [
-      "cycle invariant",
+      "loop invariant",
       "loop invariant",
       "correctness of algorithms",
       "proof of correctness",
@@ -35,7 +35,7 @@
     ],
     "keywords": [
       "invariant",
-      "cycle",
+      "loop",
       "correctness",
       "sequence",
       "set",
@@ -83,7 +83,7 @@
     },
     {
       "objectiveId": "formular-invariante-insertion-sort",
-      "text": "Formulate and justify the invariant of the main Insertion Sort cycle."
+      "text": "Formulate and justify the invariant of the main Insertion Sort loop."
     },
     {
       "objectiveId": "analizar-eficiencia-insertion-sort",
@@ -91,7 +91,7 @@
     },
     {
       "objectiveId": "formular-invariante-bubble-sort",
-      "text": "Formulate and justify the invariant of the Bubble Sort external cycle."
+      "text": "Formulate and justify the invariant of the Bubble Sort external loop."
     },
     {
       "objectiveId": "analizar-eficiencia-bubble-sort",
@@ -104,7 +104,7 @@
     {
       "termId": "term-loop-invariant",
       "label": "Loop invariant",
-      "definition": "Logical property associated with the main loop of an algorithm that is used to demonstrate correctness."
+      "definition": "Logical property associated with the main loop of an algorithm that is used to prove correctness."
     },
     {
       "termId": "term-correctitud",
@@ -124,7 +124,7 @@
     {
       "termId": "term-terminacion",
       "label": "Termination",
-      "definition": "Demonstration point where the invariant is used along with the stopping condition to demonstrate that the algorithm works correctly."
+      "definition": "Proof step where the invariant is used along with the stopping condition to demonstrate that the algorithm works correctly."
     },
     {
       "termId": "term-secuencia",
@@ -143,7 +143,7 @@
       "slug": "loop-invariant",
       "title": "Loop Invariant",
       "order": 1,
-      "summary": "Proof of correctness through cycle invariants, applied to sorting algorithms.",
+      "summary": "Proof of correctness through loop invariants, applied to sorting algorithms.",
       "sections": [
         {
           "sectionId": "sec-loop-invariant-introduccion",
@@ -210,7 +210,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "It is associated with the main cycle of the algorithm."
+                      "text": "It is associated with the main loop of the algorithm."
                     }
                   ]
                 },
@@ -268,11 +268,11 @@
                   "content": [
                     {
                       "type": "strong",
-                      "text": "FINALIZATION: "
+                      "text": "TERMINATION: "
                     },
                     {
                       "type": "text",
-                      "text": "When the loop ends, the property combined with the stop condition proves that the algorithm is working correctly."
+                      "text": "When the loop ends, the property combined with the termination condition proves that the algorithm is working correctly."
                     }
                   ]
                 }
@@ -452,7 +452,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "InsertionSort",
-              "code": "InsertionSort (E/S int A[n]) {\n  for i <- 2 to n do\n    x <- A[i]\n    j <- i - 1\n    while (j >= 1) and (x < A[j]) do\n      A[j+1] <- A[j]\n      j <- j - 1\n    endwhile\n    A[j+1] <- x\n  endfor\n}"
+              "code": "InsertionSort (I/O int A[n]) {\n for i <- 2 to n do\n  x <- A[i]\n  j <- i - 1\n  while (j >= 1) and (x < A[j]) do\n   A[j+1] <- A[j]\n   j <- j - 1\n  endwhile\n  A[j+1] <- x\n endfor\n}"
             },
             {
               "id": "blk-insertion-sort-como-funciona",
@@ -537,14 +537,14 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Demonstration of the 3 moments"
+                  "text": "Proof of the three moments"
                 }
               ]
             },
             {
               "id": "blk-insertion-sort-demostracion-tabla",
               "type": "table",
-              "title": "Demonstration of the Insertion Sort invariant",
+              "title": "Proof of the Insertion Sort invariant",
               "columns": [
                 {
                   "key": "momento",
@@ -556,7 +556,7 @@
                 },
                 {
                   "key": "estado",
-                  "label": "Fix Status"
+                  "label": "Fixed state"
                 },
                 {
                   "key": "cumple",
@@ -629,7 +629,7 @@
                       },
                       {
                         "type": "text",
-                        "text": "It is ordered. The while inserts"
+                        "text": "It is sorted. The while inserts"
                       },
                       {
                         "type": "inlineMath",
@@ -689,7 +689,7 @@
                       },
                       {
                         "type": "text",
-                        "text": "It is ordered. The entire arrangement is sorted."
+                        "text": "It is sorted. The entire array is sorted."
                       }
                     ],
                     [
@@ -730,7 +730,7 @@
                     },
                     {
                       "type": "text",
-                      "text": ". Each cycle has its own invariant."
+                      "text": ". Each loop has its own invariant."
                     }
                   ]
                 }
@@ -934,7 +934,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Worst Case (arrangement in reverse order)"
+                  "text": "Worst Case (array in reverse order)"
                 }
               ]
             },
@@ -1109,7 +1109,7 @@
           "learningObjectives": [
             {
               "objectiveId": "formular-invariante-bubble",
-              "text": "Formulate the invariant of the external cycle of Bubble Sort."
+              "text": "Formulate the invariant of the external loop of Bubble Sort."
             },
             {
               "objectiveId": "demostrar-correctitud-bubble",
@@ -1144,7 +1144,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "BubbleSort",
-              "code": "BubbleSort (E/S int A[n]) {\n  for i <- 1 to (n-1) do\n    for j <- 1 to (n-i) do\n      if A[j] > A[j+1] then\n        swap(A[j], A[j+1])\n      endif\n    endfor\n  endfor\n}"
+              "code": "BubbleSort (I/O int A[n]) {\n for i <- 1 to (n-1) do\n  for j <- 1 to (n-i) do\n   if A[j] > A[j+1] then\n    swap(A[j], A[j+1])\n   endif\n  endfor\n endfor\n}"
             },
             {
               "id": "blk-bubble-sort-invariante",
@@ -1166,7 +1166,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "of the external cycle,"
+                      "text": "of the external loop,"
                     },
                     {
                       "type": "inlineMath",
@@ -1174,7 +1174,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "larger elements are in their final positions at the end of the arrangement"
+                      "text": "larger elements are in their final positions at the end of the array"
                     },
                     {
                       "type": "inlineMath",
@@ -1195,7 +1195,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Demonstration of the 3 moments"
+                  "text": "Proof of the three moments"
                 }
               ]
             },
@@ -1212,7 +1212,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "Before we begin, there are no items secured at the end of the arrangement. The property is trivially true (0 elements ordered last)."
+                      "text": "Before we begin, there are no items secured at the end of the array. The property is trivially true (0 elements ordered last)."
                     }
                   ]
                 },
@@ -1268,7 +1268,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "larger elements. The only one remaining is the smallest and is already in place. The arrangement is completely ordered."
+                      "text": "larger elements. The only one remaining is the smallest and is already in place. The array is completely ordered."
                     }
                   ]
                 }

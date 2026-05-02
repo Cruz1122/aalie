@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -101,6 +101,23 @@ def _matches_studied(question: QuizQuestion, studied: set[tuple[str, str]]) -> b
     return bool(refs & studied)
 
 
+def _normalize_module_id(value: str) -> str:
+    normalized = value.strip()
+    if normalized.startswith("mod-"):
+        return normalized[4:]
+    return normalized
+
+
+def _module_matches(question: QuizQuestion, module_id: str) -> bool:
+    normalized_target = _normalize_module_id(module_id)
+    for ref in question.contentRefs:
+        if ref.moduleId == module_id:
+            return True
+        if _normalize_module_id(ref.moduleId) == normalized_target:
+            return True
+    return False
+
+
 def select_questions(
     questions: list[QuizQuestion],
     request: QuizSelectionRequest,
@@ -110,6 +127,28 @@ def select_questions(
     desired_count = max(1, request.sessionPreferences.questionCount)
 
     active = [question for question in questions if question.status == "active"]
+    
+    prefs = request.sessionPreferences
+    filtered_active = active
+    has_explicit_filters = False
+
+    if prefs.moduleId:
+        has_explicit_filters = True
+        filtered_active = [q for q in filtered_active if _module_matches(q, prefs.moduleId)]
+    
+    if prefs.topicIds:
+        has_explicit_filters = True
+        filtered_active = [q for q in filtered_active if q.topic in prefs.topicIds]
+        
+    if prefs.skillIds:
+        has_explicit_filters = True
+        filtered_active = [q for q in filtered_active if set(q.skillIds) & set(prefs.skillIds)]
+
+    if has_explicit_filters and not filtered_active:
+        warnings.append("explicit_filters_no_match")
+        active = []
+    else:
+        active = filtered_active
     studied = {(ref.moduleId, ref.chapterId) for ref in request.studiedContentRefs}
     seen = set(request.recentQuestionIds)
     recent = request.recentResults

@@ -5,8 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRef, useEffect, useMemo, useState } from "react";
 
 import { getApiKey } from "@/hooks/useApiKey";
-import { getNormalizedLlmText } from "@/lib/llm-response";
 import { translateLlmError } from "@/lib/llm-error-translator";
+import { getNormalizedLlmText } from "@/lib/llm-response";
 import type {
   CaseType,
   TraceApiResponse,

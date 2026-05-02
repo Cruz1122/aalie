@@ -93,7 +93,8 @@ def test_invalid_skill_id_fails():
 
 def test_single_choice_with_two_correct_answers_fails():
     def mutate(data):
-        data["questions"][0]["answer"]["correctOptionIds"] = ["a", "b"]
+        idx = find_question_index(data, "single_choice")
+        data["questions"][idx]["answer"]["correctOptionIds"] = ["a", "b"]
 
     report = validate_dataset(build_dataset(mutate))
     assert has_error(report, "exactamente una respuesta correcta")
@@ -101,7 +102,8 @@ def test_single_choice_with_two_correct_answers_fails():
 
 def test_multiple_choice_without_correct_answer_fails():
     def mutate(data):
-        data["questions"][1]["answer"]["correctOptionIds"] = []
+        idx = find_question_index(data, "multiple_choice")
+        data["questions"][idx]["answer"]["correctOptionIds"] = []
 
     report = validate_dataset(build_dataset(mutate))
     assert has_error(report, "al menos una respuesta correcta")

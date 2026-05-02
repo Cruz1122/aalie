@@ -24,8 +24,8 @@ test("discoverSpaces loads published spaces and modules from filesystem", () => 
     (bundle) => `${bundle.space.spaceId}:${bundle.space.locale}`,
   );
 
-  assert.equal(spaces.length, 3);
-  assert.deepEqual(spaceKeys, ["course:es", "user-guide:en", "user-guide:es"]);
+  assert.equal(spaces.length, 4);
+  assert.deepEqual(spaceKeys.sort(), ["course:en", "course:es", "user-guide:en", "user-guide:es"]);
   assert.equal(getSpaceBundle("user-guide", "es").modules.length, 7);
   assert.equal(getSpaceBundle("user-guide", "en").modules.length, 7);
 });

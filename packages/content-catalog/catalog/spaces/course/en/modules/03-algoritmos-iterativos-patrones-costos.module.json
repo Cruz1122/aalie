@@ -9,12 +9,12 @@
   "locale": "en",
   "version": "1.0.0",
   "status": "draft",
-  "summary": "Typical cycle patterns, sequential search analysis by best case, worst case and average case, growth table of common functions and formal comparison using limits.",
+  "summary": "Typical loop patterns, sequential search analysis by best case, worst case and average case, growth table of common functions and formal comparison using limits.",
   "difficulty": "foundational",
   "estimatedMinutes": 35,
   "tags": [
     "iterative-algorithms",
-    "cycle-patterns",
+    "loop-patterns",
     "for-simple",
     "for-nested",
     "while",
@@ -29,7 +29,7 @@
     "aliases": [
       "iterative algorithms",
       "iterative patterns",
-      "cycle patterns",
+      "loop patterns",
       "sequential search",
       "case analysis",
       "growth chart",
@@ -91,7 +91,7 @@
   "learningObjectives": [
     {
       "objectiveId": "identificar-patrones-ciclos",
-      "text": "Identify typical patterns of iterative cycles and associate them with their typical cost."
+      "text": "Identify typical iterative loop patterns and associate them with their typical cost."
     },
     {
       "objectiveId": "analizar-busqueda-secuencial",
@@ -120,7 +120,7 @@
     {
       "termId": "term-for-simple",
       "label": "for simple",
-      "definition": "Cycle whose counter runs through a linear range, usually from 1 to n."
+      "definition": "Loop whose counter runs through a linear range, usually from 1 to n."
     },
     {
       "termId": "term-for-anidado",
@@ -130,12 +130,12 @@
     {
       "termId": "term-limite-fijo",
       "label": "fixed limit",
-      "definition": "Limit of an internal cycle that does not depend on the external index."
+      "definition": "Limit of an internal loop that does not depend on the external index."
     },
     {
       "termId": "term-limite-variable",
       "label": "variable limit",
-      "definition": "Limit of an internal cycle that depends on the external index."
+      "definition": "Limit of an internal loop that depends on the external index."
     },
     {
       "termId": "term-while-duplicacion",
@@ -174,12 +174,12 @@
       "slug": "algoritmos-iterativos-patrones-costos",
       "title": "Iterative Algorithms — Patterns and Costs",
       "order": 1,
-      "summary": "Cycle patterns, sequential search, function growth and formal comparison using limits.",
+      "summary": "Loop patterns, sequential search, function growth and formal comparison using limits.",
       "sections": [
         {
           "sectionId": "sec-patrones-tipicos-ciclos",
           "slug": "patrones-tipicos-ciclos",
-          "title": "3.1 Typical cycle patterns",
+          "title": "3.1 Typical loop patterns",
           "order": 1,
           "kind": "theory",
           "trackProgress": true,
@@ -191,7 +191,7 @@
             },
             {
               "objectiveId": "reconocer-patron-for-anidado",
-              "text": "Recognize the typical cost of nested cycles with fixed and variable limits."
+              "text": "Recognize the typical cost of nested loops with fixed and variable limits."
             },
             {
               "objectiveId": "reconocer-patron-while-duplicacion",
@@ -228,7 +228,7 @@
             {
               "id": "blk-patrones-tipicos-ciclos-tabla",
               "type": "table",
-              "title": "Typical patterns of iterative cycles",
+              "title": "Typical patterns of iterative loops",
               "columns": [
                 {
                   "key": "patron",
@@ -434,7 +434,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "SearchSequential",
-              "code": "int BusquedaSecuencial (E int A[n], E int x) {\n  i <- 1                             # C1 * 1\n  while (A[i]<>x) and (i<=n)         # C2 * (n+1) worst case\n    i <- i + 1                       # C3 * n\n  endwhile\n  if (i <= n) then                   # C4 * 1\n    return i\n  else\n    return -1                        # C5 * 1\n}"
+              "code": "int SequentialSearch (I int A[n], I int x) {\n i <- 1               # C1 * 1\n while (A[i]<>x) and (i<=n)     # C2 * (n+1) worst case\n  i <- i + 1            # C3 * n\n endwhile\n if (i <= n) then          # C4 * 1\n  return i\n else\n  return -1            # C5 * 1\n}"
             },
             {
               "id": "blk-busqueda-secuencial-precondiciones",
@@ -530,7 +530,7 @@
                     [
                       {
                         "type": "inlineMath",
-                        "latex": "T_{best}(n)=\\text{constante}"
+                        "latex": "T_{best}(n)=\\text{constant}"
                       }
                     ]
                   ]
@@ -550,7 +550,7 @@
                       },
                       {
                         "type": "text",
-                        "text": "is not in the arrangement"
+                        "text": "is not in the array"
                       }
                     ],
                     [

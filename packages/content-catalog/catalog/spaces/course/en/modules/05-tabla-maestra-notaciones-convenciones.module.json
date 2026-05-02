@@ -15,16 +15,16 @@
   "tags": [
     "master-table",
     "asymptotic-notations",
-    "boundary-conventions",
+    "limit-conventions",
     "big-o",
     "omega",
     "theta",
     "little-o",
     "little-omega",
-    "accent",
-    "cuchiflu",
-    "lim-f-about-g",
-    "lim-g-about-f"
+    "tilde",
+    "tilde",
+    "lim-f-over-g",
+    "lim-g-over-f"
   ],
   "searchMeta": {
     "aliases": [
@@ -34,22 +34,22 @@
       "the six notations",
       "two conventions",
       "lim f over g",
-      "lim g about f",
-      "boundary criteria",
-      "table of dimensions"
+      "lim g over f",
+      "limit criteria",
+      "table of bounds"
     ],
     "keywords": [
       "O(g)",
       "Omega(g)",
       "Theta(g)",
-      "or(g)",
+      "o(g)",
       "omega(g)",
-      "accent",
-      "cuchiflu",
+      "tilde",
+      "tilde",
       "upper bound",
       "lower bound",
-      "exact elevation",
-      "strict limit",
+      "exact bound",
+      "strict bound",
       "exact equivalence",
       "equality with g",
       "convention A",
@@ -158,7 +158,7 @@
     },
     {
       "termId": "term-cota-estricta",
-      "label": "strict limit",
+      "label": "strict bound",
       "definition": "Boundary that excludes asymptotic equality with the reference function."
     },
     {
@@ -253,7 +253,7 @@
                 },
                 {
                   "key": "tipoCota",
-                  "label": "Dimension type"
+                  "label": "Bound type"
                 },
                 {
                   "key": "convencionA",
@@ -261,7 +261,7 @@
                 },
                 {
                   "key": "convencionB",
-                  "label": "Conv. B: lim g/f (COURSE)"
+                  "label": "Conv. B: lim g/f (course)"
                 },
                 {
                   "key": "incluyeIgualdad",
@@ -280,7 +280,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Superior (may be exact)"
+                        "text": "Upper bound (may be exact)"
                       }
                     ],
                     [
@@ -334,7 +334,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Lower (may be exact)"
+                        "text": "Lower bound (may be exact)"
                       }
                     ],
                     [
@@ -388,7 +388,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Exact (both at the same time)"
+                        "text": "Exact bound (both at the same time)"
                       }
                     ],
                     [
@@ -426,7 +426,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Superior STRICT (unattainable)"
+                        "text": "Strict upper bound"
                       }
                     ],
                     [
@@ -536,7 +536,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Yes (perfect)"
+                        "text": "If (perfect)"
                       }
                     ]
                   ]

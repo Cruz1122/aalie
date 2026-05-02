@@ -37,8 +37,7 @@ vi.mock("next-intl", () => ({
         "examples.categories.decreaseAndConquer.title": "Resta y vencerás",
         "examples.categories.decreaseAndGetConquered.title":
           "Resta y serás vencido",
-        "examples.categories.dpTopDown.title":
-          "Programación dinámica top-down",
+        "examples.categories.dpTopDown.title": "Programación dinámica top-down",
         "examples.categories.dpBottomUp.title":
           "Programación dinámica bottom-up",
         "examples.categories.greedy.title": "Voraces",

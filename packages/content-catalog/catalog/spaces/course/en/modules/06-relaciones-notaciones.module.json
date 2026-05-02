@@ -25,8 +25,8 @@
     "theta",
     "little-o",
     "little-omega",
-    "accent",
-    "cuchiflu"
+    "tilde",
+    "tilde"
   ],
   "searchMeta": {
     "aliases": [
@@ -46,10 +46,10 @@
       "f to Omega of g",
       "f in little-o of g",
       "f to little-omega of g",
-      "exact elevation",
+      "exact bound",
       "upper bound",
       "lower bound",
-      "strict limit",
+      "strict bound",
       "exact equivalence",
       "best case",
       "worst case",
@@ -162,7 +162,7 @@
     },
     {
       "termId": "term-cota-ajustada",
-      "label": "Adjusted dimension",
+      "label": "Tight bound",
       "definition": "Boundary that describes the exact growth of a function in the sense of Θ."
     }
   ],
@@ -193,7 +193,7 @@
             },
             {
               "objectiveId": "distinguir-cotas-parciales-exactas",
-              "text": "Distinguish between partial dimensions, exact dimensions and exact equivalence."
+              "text": "Distinguish between partial bounds, exact bounds and exact equivalence."
             }
           ],
           "prerequisites": {
@@ -237,18 +237,18 @@
             {
               "id": "blk-relacion-little-o",
               "type": "equationBlock",
-              "latex": "f \\in o(g) \\Rightarrow f \\in O(g), \\quad \\text{pero} \\quad f \\notin \\Theta(g)"
+              "latex": "f \\in o(g) \\Rightarrow f \\in O(g), \\quad \\text{but} \\quad f \\notin \\Theta(g)"
             },
             {
               "id": "blk-relacion-little-omega",
               "type": "equationBlock",
-              "latex": "f \\in \\omega(g) \\Rightarrow f \\in \\Omega(g), \\quad \\text{pero} \\quad f \\notin \\Theta(g)"
+              "latex": "f \\in \\omega(g) \\Rightarrow f \\in \\Omega(g), \\quad \\text{but} \\quad f \\notin \\Theta(g)"
             },
             {
               "id": "blk-diagrama-relaciones-notaciones",
               "type": "mermaid",
               "title": "Inclusion diagram between notations",
-              "code": "flowchart TD TILDE[\"f ~ g\"] --> THETA[\"f ∈ Θ(g)\"] THETA --> BIGO[\"f ∈ O(g)\"] THETA --> BIGOMEGA[\"f ∈ Ω(g)\"] LITTLEO[\"f ∈ o(g)\"] --> BIGO LITTLEO -. \"pero f ∉ Θ(g)\". -> NOTTHETA1[\"f ∉ Θ(g)\"] LITTLEOMEGA[\"f ∈ ω(g)\"] --> BIGOMEGA LITTLEOMEGA -. \"pero f ∉ Θ(g)\". -> NOTTHETA2[\"f ∉ Θ(g)\"]"
+              "code": "flowchart TD TILDE[\"f ~ g\"] --> THETA[\"f ∈ Θ(g)\"] THETA --> BIGO[\"f ∈ O(g)\"] THETA --> BIGOMEGA[\"f ∈ Ω(g)\"] LITTLEO[\"f ∈ o(g)\"] --> BIGO LITTLEO -. \"but f ∉ Θ(g)\". -> NOTTHETA1[\"f ∉ Θ(g)\"] LITTLEOMEGA[\"f ∈ ω(g)\"] --> BIGOMEGA LITTLEOMEGA -. \"but f ∉ Θ(g)\". -> NOTTHETA2[\"f ∉ Θ(g)\"]"
             },
             {
               "id": "blk-dicho-forma-sencilla-heading",
@@ -529,7 +529,7 @@
                       },
                       {
                         "type": "text",
-                        "text": "(theta) — exact elevation"
+                        "text": "(theta) — exact bound"
                       }
                     ]
                   ]

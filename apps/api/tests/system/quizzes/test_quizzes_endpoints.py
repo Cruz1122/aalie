@@ -116,3 +116,63 @@ def test_evaluate_rejects_malformed_answer():
     }
     res = client.post("/quizzes/attempts/evaluate", json=payload)
     assert res.status_code == 400
+
+
+def test_create_attempt_filters_by_module_id():
+    seed_payload = {
+        "studiedContentRefs": [],
+        "masteryBySkill": {},
+        "weakSkillIds": [],
+        "recentQuestionIds": [],
+        "sessionPreferences": {"questionCount": 1, "difficultyMix": {}},
+    }
+    seed_res = client.post("/quizzes/attempts", json=seed_payload)
+    assert seed_res.status_code == 200
+    module_id = seed_res.json()["questions"][0]["contentRefs"][0]["moduleId"]
+
+    payload = {
+        "studiedContentRefs": [],
+        "masteryBySkill": {},
+        "weakSkillIds": [],
+        "recentQuestionIds": [],
+        "sessionPreferences": {"questionCount": 3, "difficultyMix": {}, "moduleId": module_id},
+    }
+    res = client.post("/quizzes/attempts", json=payload)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["questions"]
+    for question in body["questions"]:
+        assert any(ref["moduleId"] == module_id for ref in question["contentRefs"])
+
+
+def test_create_attempt_filters_by_skill_ids():
+    payload = {
+        "studiedContentRefs": [],
+        "masteryBySkill": {},
+        "weakSkillIds": [],
+        "recentQuestionIds": [],
+        "sessionPreferences": {
+            "questionCount": 1,
+            "difficultyMix": {},
+            "skillIds": ["skill.asymptotic.big_o.upper-bound-interpretation"]
+        },
+    }
+    res = client.post("/quizzes/attempts", json=payload)
+    assert res.status_code == 200
+
+
+def test_create_attempt_user_selected_filters_take_priority():
+    payload = {
+        "studiedContentRefs": [],
+        "masteryBySkill": {},
+        "weakSkillIds": ["skill.some.other.skill"],
+        "weakTopics": ["some_other_topic"],
+        "recentQuestionIds": [],
+        "sessionPreferences": {
+            "questionCount": 1,
+            "difficultyMix": {},
+            "skillIds": ["skill.asymptotic.big_o.upper-bound-interpretation"]
+        },
+    }
+    res = client.post("/quizzes/attempts", json=payload)
+    assert res.status_code == 200

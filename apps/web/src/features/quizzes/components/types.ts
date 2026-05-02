@@ -22,4 +22,3 @@ export interface QuizOptionViewModel {
   state?: QuizOptionState;
   disabled?: boolean;
 }
-

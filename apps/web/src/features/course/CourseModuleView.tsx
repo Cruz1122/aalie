@@ -1,5 +1,6 @@
 "use client";
 
+import { buildTermsIndex } from "@aa/content-catalog/terms";
 import type {
   ImageResource,
   ReferenceResource,
@@ -17,7 +18,6 @@ import {
 } from "@/features/content-rendering";
 import { useSectionCompletionTracking } from "@/hooks/useContentProgress";
 import type { ContentModuleData } from "@/lib/content/types";
-import { buildTermsIndex } from "@aa/content-catalog/terms";
 interface CourseModuleViewProps {
   data: ContentModuleData;
 }

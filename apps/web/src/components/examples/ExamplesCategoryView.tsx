@@ -149,7 +149,9 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
 
   const handleAnalyze = (example: ExampleCatalogItem) => {
     setAnalyzingExampleId(example.id);
-    void runAnalysis(getLocalizedExampleSource(example, locale));
+    void runAnalysis(getLocalizedExampleSource(example, locale)).finally(() => {
+      setAnalyzingExampleId(null);
+    });
   };
 
   const toggleMethod = (method: RecursiveMethodBadge) => {

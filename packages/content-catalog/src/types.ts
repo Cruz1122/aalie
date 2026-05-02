@@ -1,4 +1,5 @@
 export type SchemaVersion = string;
+export type { TermIndexEntry } from "./terms.js";
 export type LocalizedStatus = "draft" | "published" | "archived";
 export type SpaceKind = "guide" | "theory" | "reference" | "mixed";
 export type Difficulty = "foundational" | "basic" | "intermediate" | "advanced";
@@ -247,7 +248,8 @@ export type PedagogyIconName =
   | "analytics"
   | "lightbulb"
   | "warning"
-  | "error_outline";
+  | "error_outline"
+  | "arrow_forward";
 
 export interface EvidenceBlock extends BaseBlock {
   type: "evidenceBlock";

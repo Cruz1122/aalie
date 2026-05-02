@@ -45,12 +45,7 @@ export function walkBlocks(blocks: ContentBlock[]): ContentBlock[] {
           ...block.steps.flatMap((step) => walkBlocks(step.blocks)),
         ];
       case "exampleSolved":
-        return [
-          block,
-          ...block.steps.flatMap((step) =>
-            step.blocks ? walkBlocks(step.blocks) : [],
-          ),
-        ];
+        return [block];
       default:
         return [block];
     }

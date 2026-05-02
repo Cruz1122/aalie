@@ -1,8 +1,11 @@
 "use client";
 
-import { ArrowRight, Clock3, TrendingUp } from "lucide-react";
+import { Clock3, Lock, PlayCircle, TrendingUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 
+import { isModuleQuizEligible } from "@/features/quizzes/lib/moduleQuizEligibility";
 import type { ContentModuleSummary } from "@/lib/content/types";
 
 import NavigationLink from "./NavigationLink";
@@ -11,10 +14,42 @@ import { UserGuideIcon } from "./UserGuideIcons";
 interface UserGuideCardProps {
   module: ContentModuleSummary;
   progress: number;
+  locale?: string;
 }
 
-export function UserGuideCard({ module, progress }: UserGuideCardProps) {
+export function UserGuideCard({
+  module,
+  progress,
+  locale = "es",
+}: UserGuideCardProps) {
   const t = useTranslations("contentUi");
+  const router = useRouter();
+  const [isRedirectingToQuiz, setIsRedirectingToQuiz] = useState(false);
+  const eligible = isModuleQuizEligible(progress);
+  const moduleButtonClass =
+    "inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-sky-100 transition-colors hover:bg-primary/20";
+  const quizButtonClass =
+    "inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-400/35 bg-emerald-400/10 px-4 py-2.5 text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-400/20";
+  const lockedQuizClass =
+    "inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-500/20 bg-slate-700/20 px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed select-none";
+  const actionsContainerClass = "mt-4 flex items-stretch gap-2";
+
+  function handleQuizClick() {
+    if (isRedirectingToQuiz) return;
+    setIsRedirectingToQuiz(true);
+    const params = new URLSearchParams({
+      start: "1",
+      moduleId: module.moduleId,
+      count: "10",
+      moduleTitle: module.title,
+    });
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      router.push(`/${locale}/quizzes?${params.toString()}` as any);
+    } catch {
+      setIsRedirectingToQuiz(false);
+    }
+  }
 
   return (
     <article className="documentation-card glass-card relative flex h-full flex-col rounded-2xl border border-white/10 p-4 sm:p-5">
@@ -68,14 +103,35 @@ export function UserGuideCard({ module, progress }: UserGuideCardProps) {
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className={actionsContainerClass}>
+        {eligible ? (
+          <button
+            onClick={handleQuizClick}
+            id={`quiz-btn-${module.moduleId}`}
+            disabled={isRedirectingToQuiz}
+            aria-busy={isRedirectingToQuiz}
+            className={quizButtonClass}
+          >
+            {isRedirectingToQuiz ? (
+              <span className="inline-block h-[15px] w-[15px] animate-spin rounded-full border-2 border-current border-r-transparent" />
+            ) : (
+              <PlayCircle size={15} />
+            )}
+            {t("startQuiz")}
+          </button>
+        ) : (
+          <div className={lockedQuizClass}>
+            <Lock size={13} />
+            {t("quizLocked", { threshold: 90 })}
+          </div>
+        )}
+
         <NavigationLink
           href={module.route}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-sky-100 transition-colors hover:bg-primary/20"
+          className={moduleButtonClass}
           title={module.title}
         >
           {t("openModule")}
-          <ArrowRight size={16} />
         </NavigationLink>
       </div>
     </article>

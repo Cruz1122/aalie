@@ -23,7 +23,7 @@ export function CourseSidebar({
     <div className="space-y-4">
       <aside className="glass-card rounded-2xl border border-white/10 p-4">
         <div className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-          Capítulos
+          Chapters
         </div>
         <div className="space-y-2">
           {chapters.map((chapter) => (

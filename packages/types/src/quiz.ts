@@ -107,6 +107,9 @@ export interface QuizDataset {
 export interface QuizSessionPreferences {
   questionCount?: number;
   difficultyMix?: Partial<Record<QuizDifficulty, number>>;
+  moduleId?: string;
+  topicIds?: string[];
+  skillIds?: string[];
 }
 
 export interface QuizRecentResult {

@@ -60,7 +60,9 @@ export function saveQuizProgress(snapshot: QuizProgressSnapshot): void {
   );
 }
 
-export function applySessionResult(result: QuizSessionResult): QuizProgressSnapshot {
+export function applySessionResult(
+  result: QuizSessionResult,
+): QuizProgressSnapshot {
   const current = loadQuizProgress();
   const nextMastery = { ...current.masteryBySkill };
 

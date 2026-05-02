@@ -19,8 +19,7 @@ const EVIDENCE_FACTS_FALLBACK_EN: Record<string, string> = {
     "The interval is split by a fractional cut and then only one recursive branch is explored.",
   single_branch_after_interval_split:
     "After splitting the interval, the algorithm continues only through the branch that contains the relevant subproblem.",
-  subproblem_shrink:
-    "Each call works on a smaller subproblem expression.",
+  subproblem_shrink: "Each call works on a smaller subproblem expression.",
   post_recursive_combine:
     "After solving subproblems, a combination phase appears.",
   single_dominant_recursive_call:

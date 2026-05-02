@@ -298,11 +298,7 @@ export function Dropdown<TItem>({
                   const isSelected = option.value === value;
                   const isHighlighted = index === highlightedIndex;
                   return (
-                    <li
-                      key={option.value}
-                      role="presentation"
-                      className=""
-                    >
+                    <li key={option.value} role="presentation" className="">
                       <button
                         type="button"
                         role="option"
@@ -337,4 +333,3 @@ export function Dropdown<TItem>({
     </div>
   );
 }
-

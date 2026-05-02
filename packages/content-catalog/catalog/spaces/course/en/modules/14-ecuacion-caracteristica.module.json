@@ -482,11 +482,11 @@
           "learningObjectives": [
             {
               "objectiveId": "definir-linealidad",
-              "text": "Define linearity in a recurrence."
+              "text": "Deende linearity in a recurrence."
             },
             {
               "objectiveId": "definir-homogeneidad",
-              "text": "Define homogeneity and recognize forcing terms."
+              "text": "Deende homogeneity and recognize forcing terms."
             },
             {
               "objectiveId": "definir-coeficientes-constantes",
@@ -1007,7 +1007,7 @@
                   "explanation": [
                     {
                       "type": "text",
-                      "text": "This is the polynomial that is solved to find the characteristic roots."
+                      "text": "This is the polynomial that is solved to endd the characteristic roots."
                     }
                   ]
                 }
@@ -1290,7 +1290,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "This is the classic Fibonacci recurrence, where each term is the sum of the previous two. Solving it using the characteristic equation allows us to find a direct (closed) formula without having to calculate all the intermediate values."
+                  "text": "This is the classic Fibonacci recurrence, where each term is the sum of the previous two. Solving it using the characteristic equation allows us to endd a direct (closed) formula without having to calculate all the intermediate values."
                 }
               ]
             },
@@ -1693,7 +1693,7 @@
                   "explanation": [
                     {
                       "type": "text",
-                      "text": "The final growth is linear."
+                      "text": "The endal growth is linear."
                     }
                   ]
                 }
@@ -2060,7 +2060,7 @@
               "id": "blk-mermaid-decision-caracteristica",
               "type": "mermaid",
               "title": "Applicability decision",
-              "code": "flowchart TD\n  A[\"Recurrencia T(n)\"] --> B{\"¿Es lineal?\"}\n  B -- \"No\" --> X[\"No aplicar ecuación característica\"]\n  B -- \"Sí\" --> C{\"¿Coeficientes constantes?\"}\n  C -- \"No\" --> X\n  C -- \"Sí\" --> D{\"¿Baja por resta fija?\"}\n  D -- \"No, baja por n/b\" --> Y[\"Usar Maestro, Árbol o cambio de variable\"]\n  D -- \"Sí\" --> E{\"¿Homogénea?\"}\n  E -- \"Sí\" --> F[\"Aplicar polinomio característico directamente\"]\n  E -- \"No\" --> G{\"¿Término forzante manejable?\"}\n  G -- \"Sí\" --> H[\"Solución homogénea + solución particular\"]\n  G -- \"No\" --> X\n  F --> I[\"Resolver raíces\"]\n  H --> I\n  I --> J[\"Aplicar condiciones iniciales\"]\n  J --> K[\"Identificar raíz dominante y concluir\"]"
+              "code": "flowchart TD\n  A[\"Recurrence T(n)\"] --> B{\"Es linear?\"}\n  B -- \"No\" --> X[\"Do not apply characteristic equation\"]\n  B -- \"Yes\" --> C{\"Constant coefficients?\"}\n  C -- \"No\" --> X\n  C -- \"Yes\" --> D{\"Decreases by fixed subtraction?\"}\n  D -- \"No, decreases by n/b\" --> Y[\"Use Master Theorem, Recursion Tree, or a change of variable\"]\n  D -- \"Yes\" --> E{\"Homogeneous?\"}\n  E -- \"Yes\" --> F[\"Apply characteristic polynomial directly\"]\n  E -- \"No\" --> G{\"Manageable forcing term?\"}\n  G -- \"Yes\" --> H[\"Homogeneous solution + particular solution\"]\n  G -- \"No\" --> X\n  F --> I[\"Solve roots\"]\n  H --> I\n  I --> J[\"Apply initial conditions\"]\n  J --> K[\"Identify dominant root and conclude\"]"
             }
           ]
         },
@@ -2392,7 +2392,7 @@
                       "content": [
                         {
                           "type": "text",
-                          "text": "Apply initial conditions to find constants."
+                          "text": "Apply initial conditions to endd constants."
                         }
                       ]
                     },
@@ -2484,7 +2484,7 @@
                 {
                   "stepId": "step-formula-dominancia",
                   "title": "Dominance",
-                  "latex": "T(n)\\in\\Theta(|r_{max}|^n)\\quad\\text{si }r_{max}\\text{ domina sin cancelación}",
+                  "latex": "T(n)\\in\\Theta(|r_{max}|^n)\\quad\\text{if }r_{max}\\text{ dominates without cancellation}",
                   "explanation": [
                     {
                       "type": "text",

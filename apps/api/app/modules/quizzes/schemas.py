@@ -119,6 +119,9 @@ class QuizDataset(BaseModel):
 class QuizSessionPreferences(BaseModel):
     questionCount: int = 5
     difficultyMix: dict[QuizDifficulty, float] = Field(default_factory=dict)
+    moduleId: str | None = None
+    topicIds: list[str] = Field(default_factory=list)
+    skillIds: list[str] = Field(default_factory=list)
 
 
 class QuizSelectionRequest(BaseModel):

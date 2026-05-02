@@ -7,8 +7,12 @@ import { createPortal } from "react-dom";
 
 import { AAProgressLoader } from "@/components/AAProgressLoader";
 import { getApiKey } from "@/hooks/useApiKey";
-import { getNormalizedLlmStructured, getNormalizedLlmText, parseJsonFromText } from "@/lib/llm-response";
 import { translateLlmError } from "@/lib/llm-error-translator";
+import {
+  getNormalizedLlmStructured,
+  getNormalizedLlmText,
+  parseJsonFromText,
+} from "@/lib/llm-response";
 
 interface RepairModalProps {
   open: boolean;
@@ -36,10 +40,7 @@ function normalizeLineTextForMatch(value: string): string {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
-function resolveLineReferences(
-  references: unknown,
-  lines: string[],
-): number[] {
+function resolveLineReferences(references: unknown, lines: string[]): number[] {
   if (!Array.isArray(references) || references.length === 0) {
     return [];
   }
@@ -76,7 +77,10 @@ function resolveLineReferences(
     if (found === -1) {
       for (let i = 0; i < normalizedLines.length; i += 1) {
         if (usedIndices.has(i)) continue;
-        if (normalizedLines[i].includes(ref) || ref.includes(normalizedLines[i])) {
+        if (
+          normalizedLines[i].includes(ref) ||
+          ref.includes(normalizedLines[i])
+        ) {
           found = i;
           break;
         }
@@ -90,25 +94,6 @@ function resolveLineReferences(
   }
 
   return Array.from(new Set(matches)).sort((a, b) => a - b);
-}
-
-function getLineListFromAliases(
-  payload: Record<string, unknown> | null | undefined,
-  aliases: string[],
-  maxLine: number,
-): number[] {
-  if (!payload || typeof payload !== "object") {
-    return [];
-  }
-
-  for (const alias of aliases) {
-    const lineList = normalizeLineNumbers(payload[alias], maxLine);
-    if (lineList.length > 0) {
-      return lineList;
-    }
-  }
-
-  return [];
 }
 
 function buildAutoLineDiff(
@@ -156,10 +141,16 @@ function normalizeRepairedCodeText(code: string): string {
     normalized = normalized
       .replace(/\bBEGIN\s+/g, "BEGIN\n")
       .replace(/;\s*/g, ";\n")
-      .replace(/\bEND\s+(?=(ELSE|RETURN|IF|WHILE|FOR|REPEAT|CALL|[A-Za-z_]))/g, "END\n");
+      .replace(
+        /\bEND\s+(?=(ELSE|RETURN|IF|WHILE|FOR|REPEAT|CALL|[A-Za-z_]))/g,
+        "END\n",
+      );
   }
 
-  return normalized.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return normalized
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function formatPseudocodeIndentation(code: string): string {
@@ -403,33 +394,34 @@ Sin texto extra, sin explicaciones, sin markdown.`;
         code: string;
         removedLines: unknown[];
         addedLines: unknown[];
-      } | null = structuredRepair && typeof structuredRepair === "object"
-        ? (() => {
-            const structuredObj = structuredRepair as Record<string, unknown>;
-            const code =
-              typeof structuredObj.code === "string"
-                ? structuredObj.code
-                : "";
+      } | null =
+        structuredRepair && typeof structuredRepair === "object"
+          ? (() => {
+              const structuredObj = structuredRepair as Record<string, unknown>;
+              const code =
+                typeof structuredObj.code === "string"
+                  ? structuredObj.code
+                  : "";
 
-            return {
-              code,
-              removedLines: Array.isArray(structuredObj.removedLines)
-                ? structuredObj.removedLines
-                : Array.isArray(structuredObj.removed_lines)
-                  ? (structuredObj.removed_lines as unknown[])
-                  : Array.isArray(structuredObj.lineas_eliminadas)
-                    ? (structuredObj.lineas_eliminadas as unknown[])
-                    : [],
-              addedLines: Array.isArray(structuredObj.addedLines)
-                ? structuredObj.addedLines
-                : Array.isArray(structuredObj.added_lines)
-                  ? (structuredObj.added_lines as unknown[])
-                  : Array.isArray(structuredObj.lineas_agregadas)
-                    ? (structuredObj.lineas_agregadas as unknown[])
-                    : [],
-            };
-          })()
-        : null;
+              return {
+                code,
+                removedLines: Array.isArray(structuredObj.removedLines)
+                  ? structuredObj.removedLines
+                  : Array.isArray(structuredObj.removed_lines)
+                    ? (structuredObj.removed_lines as unknown[])
+                    : Array.isArray(structuredObj.lineas_eliminadas)
+                      ? (structuredObj.lineas_eliminadas as unknown[])
+                      : [],
+                addedLines: Array.isArray(structuredObj.addedLines)
+                  ? structuredObj.addedLines
+                  : Array.isArray(structuredObj.added_lines)
+                    ? (structuredObj.added_lines as unknown[])
+                    : Array.isArray(structuredObj.lineas_agregadas)
+                      ? (structuredObj.lineas_agregadas as unknown[])
+                      : [],
+              };
+            })()
+          : null;
 
       if (!repairData || !repairData.code) {
         try {
@@ -444,7 +436,8 @@ Sin texto extra, sin explicaciones, sin markdown.`;
             parsedFromText?.code || parsedFromText?.codigo_corregido || "";
 
           if (codeFromText) {
-            const parsedObj = (parsedFromText as Record<string, unknown>) || null;
+            const parsedObj =
+              (parsedFromText as Record<string, unknown>) || null;
             repairData = {
               code: codeFromText,
               removedLines: Array.isArray(parsedObj?.removedLines)
@@ -503,7 +496,9 @@ Sin texto extra, sin explicaciones, sin markdown.`;
         return;
       }
 
-      const normalizedRepairedCode = normalizeToAnalyzerGrammar(repairData.code);
+      const normalizedRepairedCode = normalizeToAnalyzerGrammar(
+        repairData.code,
+      );
       const originalLinesList = originalCode.split("\n");
       const repairedLinesList = normalizedRepairedCode.split("\n");
       const normalizedRemovedLines = resolveLineReferences(
@@ -515,7 +510,10 @@ Sin texto extra, sin explicaciones, sin markdown.`;
         repairedLinesList,
       );
 
-      if (normalizedRemovedLines.length === 0 && normalizedAddedLines.length === 0) {
+      if (
+        normalizedRemovedLines.length === 0 &&
+        normalizedAddedLines.length === 0
+      ) {
         const autoDiff = buildAutoLineDiff(
           originalLinesList,
           repairedLinesList,

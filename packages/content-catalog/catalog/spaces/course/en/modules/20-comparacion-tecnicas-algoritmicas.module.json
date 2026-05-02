@@ -9,7 +9,7 @@
   "locale": "en",
   "version": "1.0.0",
   "status": "draft",
-  "summary": "Synthesis module to decide which algorithmic technique to use according to the structure of the problem: iteration, recursion, divide and conquer, subtraction and conquer, dynamic programming, greedy, backtracking, Branch and Bound and brute force. Compare requirements, warranties, costs, memory, type of problem, signs of wear and tear, and common errors.",
+  "summary": "Synthesis module to decide which algorithmic technique to use according to the structure of the problem: iteration, recursion, divide and conquer, subtraction and conquer, dynamic programming, greedy, backtracking, Branch and Bound and brute force. Compare requirements, guarantees, costs, memory, type of problem, structural signals, and common errors.",
   "difficulty": "advanced",
   "estimatedMinutes": 85,
   "tags": [
@@ -21,7 +21,7 @@
     "divide-and-conquer",
     "subtraction-and-conquer",
     "dynamic-programming",
-    "voracious",
+    "greedy",
     "backtracking",
     "branch-and-bound",
     "brute-force",
@@ -33,7 +33,7 @@
       "algorithm comparison",
       "when to use each technique",
       "how to choose algorithmic technique",
-      "PD vs voracious",
+      "PD vs greedy",
       "backtracking vs branch and bound",
       "divide and conquer vs dynamic programming",
       "brute force vs pruning"
@@ -41,11 +41,11 @@
     "keywords": [
       "independent subproblems",
       "overlapping subproblems",
-      "local election",
-      "voracious property",
+      "local choice",
+      "greedy property",
       "pruning for feasibility",
       "pruning for suboptimality",
-      "dimensions",
+      "bounds",
       "recurrences",
       "DP table",
       "decision tree",
@@ -199,7 +199,7 @@
     {
       "termId": "term-decision-irrevocable",
       "label": "Irrevocable decision",
-      "definition": "Decision that is not reconsidered after being accepted. It is typical of voracious algorithms."
+      "definition": "Decision that is not reconsidered after being accepted. It is typical of greedy algorithms."
     },
     {
       "termId": "term-decision-reversible",
@@ -219,7 +219,7 @@
     {
       "termId": "term-garantia-optimalidad",
       "label": "Optimality guarantee",
-      "definition": "Justification that the technique finds an optimal solution, not just a valid or reasonable solution."
+      "definition": "Justification that the technique endds an optimal solution, not just a valid or reasonable solution."
     },
     {
       "termId": "term-linea-base-fuerza-bruta",
@@ -384,7 +384,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Safe local election"
+                        "text": "Safe local choice"
                       }
                     ],
                     [
@@ -396,7 +396,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Voracious"
+                        "text": "Greedy"
                       }
                     ]
                   ]
@@ -428,7 +428,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Optimization with dimensions"
+                        "text": "Optimization with bounds"
                       }
                     ],
                     [
@@ -494,7 +494,7 @@
               "id": "blk-modelo-decision-cases",
               "type": "equationBlock",
               "title": "Technique selection model",
-              "latex": "Tecnica(P)=\\begin{cases}\\text{Iterativa},& P\\ \\text{se resuelve por acumulación de pasos en ciclos}\\\\\\text{Divide y Vencerás},& P\\to \\text{subproblemas independientes}\\\\\\text{Resta y Vencerás},& P\\to \\text{un subproblema menor dominante}\\\\\\text{Programación Dinámica},& P\\to \\text{subproblemas superpuestos}\\\\\\text{Voraz},& P\\to \\text{elección local segura demostrable}\\\\\\text{Backtracking},& P\\to \\text{decisiones reversibles con poda por factibilidad}\\\\\\text{Branch and Bound},& P\\to \\text{optimización con cotas de poda}\\\\\\text{Fuerza Bruta},& \\text{sin estructura explotable clara}\\end{cases}"
+              "latex": "Technique(P)=\\begin{cases}\\text{Iterative},& P\\ \\text{is solved by accumulating steps in loops}\\\\\\text{Divide and Conquer},& P\\to \\text{independent subproblems}\\\\\\text{Decrease and Conquer},& P\\to \\text{one dominant smaller subproblem}\\\\\\text{Dynamic Programming},& P\\to \\text{overlapping subproblems}\\\\\\text{Greedy},& P\\to \\text{provably safe local choice}\\\\\\text{Backtracking},& P\\to \\text{reversible decisions with feasibility pruning}\\\\\\text{Branch and Bound},& P\\to \\text{optimization with pruning bounds}\\\\\\text{Brute Force},& \\text{no clearly exploitable structure}\\end{cases}"
             },
             {
               "id": "blk-expl-modelo-decision-cases",
@@ -522,7 +522,7 @@
                 },
                 {
                   "type": "emphasis",
-                  "text": "Voracious"
+                  "text": "Greedy"
                 },
                 {
                   "type": "text",
@@ -534,7 +534,7 @@
               "id": "blk-flujo-decision-tecnica",
               "type": "mermaid",
               "title": "Technique selection flow",
-              "code": "flowchart TD\n A[\"Problema\"] --> B{\"¿Hay algoritmo dado para analizar?\"}\n B -- \"Sí\" --> C{\"¿Predominan ciclos?\"}\n C -- \"Sí\" --> D[\"Análisis iterativo\"]\n C -- \"No\" --> E{\"¿Predomina recursión?\"}\n E -- \"Sí\" --> F[\"Plantear recurrencia\"]\n F --> G{\"¿Subproblemas independientes?\"}\n G -- \"Sí\" --> H[\"Divide y Vencerás / métodos de recurrencia\"]\n G -- \"No\" --> I{\"¿Estados repetidos?\"}\n I -- \"Sí\" --> J[\"Programación Dinámica\"]\n I -- \"No\" --> K[\"Resta y Vencerás / recursión lineal\"]\n B -- \"No\" --> L{\"¿Es problema de optimización?\"}\n L -- \"Sí\" --> M{\"¿Elección local segura?\"}\n M -- \"Sí\" --> N[\"Voraz\"]\n M -- \"No\" --> O{\"¿Hay cotas útiles?\"}\n O -- \"Sí\" --> P[\"Branch and Bound\"]\n O -- \"No\" --> Q{\"¿Hay restricciones parciales?\"}\n Q -- \"Sí\" --> R[\"Backtracking\"]\n Q -- \"No\" --> S[\"Fuerza bruta / búsqueda exhaustiva\"]\n L -- \"No\" --> T{\"¿Se buscan soluciones válidas bajo restricciones?\"}\n T -- \"Sí\" --> R\n T -- \"No\" --> S"
+              "code": "flowchart TD\n A[\"Problem\"] --> B{\"Is there a given algorithm to analyze?\"}\n B -- \"Yes\" --> C{\"Do loops dominate?\"}\n C -- \"Yes\" --> D[\"Iterative analysis\"]\n C -- \"No\" --> E{\"Does recursion dominate?\"}\n E -- \"Yes\" --> F[\"Set up recurrence\"]\n F --> G{\"Independent subproblems?\"}\n G -- \"Yes\" --> H[\"Divide and Conquer / recurrence methods\"]\n G -- \"No\" --> I{\"Repeated states?\"}\n I -- \"Yes\" --> J[\"Dynamic Programming\"]\n I -- \"No\" --> K[\"Decrease and Conquer / linear recursion\"]\n B -- \"No\" --> L{\"Is it an optimization problem?\"}\n L -- \"Yes\" --> M{\"Safe local choice?\"}\n M -- \"Yes\" --> N[\"Greedy\"]\n M -- \"No\" --> O{\"Are there useful bounds?\"}\n O -- \"Yes\" --> P[\"Branch and Bound\"]\n O -- \"No\" --> Q{\"Are there partial constraints?\"}\n Q -- \"Yes\" --> R[\"Backtracking\"]\n Q -- \"No\" --> S[\"Brute force / exhaustive search\"]\n L -- \"No\" --> T{\"Are valid solutions under constraints being sought?\"}\n T -- \"Yes\" --> R\n T -- \"No\" --> S"
             }
           ]
         },
@@ -647,7 +647,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Voracious"
+                        "text": "Greedy"
                       }
                     ],
                     [
@@ -683,7 +683,7 @@
         {
           "sectionId": "sec-comparacion-pd-voraz",
           "slug": "comparacion-pd-voraz",
-          "title": "Dynamic vs. Voracious Programming",
+          "title": "Dynamic vs. Greedy Programming",
           "order": 4,
           "kind": "theory",
           "trackProgress": true,
@@ -695,7 +695,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Dynamic and Greedy Programming appear in optimization problems, but have a central difference: PD evaluates alternatives and saves results; the voracious makes a local decision and does not go back."
+                  "text": "Dynamic and Greedy Programming appear in optimization problems, but have a central difference: DP evaluates alternatives and saves results; the greedy algorithm makes a local decision and does not go back."
                 }
               ]
             },
@@ -703,7 +703,7 @@
               "id": "blk-pd-voraz-modelo",
               "type": "equationBlock",
               "title": "Formal difference",
-              "latex": "Decision(P)=\\begin{cases}\\max\\{opcion_1,opcion_2,\\ldots\\},& \\text{Programación Dinámica}\\\\seleccionar\\_local(C),& \\text{Voraz}\\end{cases}"
+              "latex": "Decision(P)=\\begin{cases}\\max\\{option_1,option_2,\\ldots\\},& \\text{Dynamic Programming}\\\\select\\_local(C),& \\text{Greedy}\\end{cases}"
             },
             {
               "id": "blk-expl-pd-voraz-modelo",
@@ -719,7 +719,7 @@
                 },
                 {
                   "type": "text",
-                  "text": ", the final value is chosen by comparing ("
+                  "text": ", the endal value is chosen by comparing ("
                 },
                 {
                   "type": "inlineMath",
@@ -731,7 +731,7 @@
                 },
                 {
                   "type": "strong",
-                  "text": "Voracious"
+                  "text": "Greedy"
                 },
                 {
                   "type": "text",
@@ -772,7 +772,7 @@
               "id": "blk-fb-bt-bb-modelo",
               "type": "equationBlock",
               "title": "Branch discard model",
-              "latex": "descartar(rama)=\\begin{cases}\\text{nunca antes de completar},& \\text{Fuerza Bruta}\\\\\\text{si viola restricciones},& \\text{Backtracking}\\\\\\text{si viola restricciones o no mejora el incumbente},& \\text{Branch and Bound}\\end{cases}"
+              "latex": "discard(branch)=\\begin{cases}\\text{never before completion},& \\text{Brute Force}\\\\\\text{if it violates constraints},& \\text{Backtracking}\\\\\\text{if it violates constraints or does not improve the incumbent},& \\text{Branch and Bound}\\end{cases}"
             },
             {
               "id": "blk-expl-fb-bt-bb-modelo",
@@ -780,7 +780,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "This model defines the aggressiveness of the"
+                  "text": "This model deendes the aggressiveness of the"
                 },
                 {
                   "type": "strong",
@@ -833,7 +833,7 @@
               "id": "blk-recursion-pd-modelo",
               "type": "equationBlock",
               "title": "Classification by subproblems",
-              "latex": "Subproblemas(P)=\\begin{cases}\\text{uno menor dominante},& \\text{Resta y Vencerás}\\\\\\text{varios independientes},& \\text{Divide y Vencerás}\\\\\\text{varios repetidos},& \\text{Programación Dinámica}\\end{cases}"
+              "latex": "Subproblems(P)=\\begin{cases}\\text{one dominant smaller subproblem},& \\text{Decrease and Conquer}\\\\\\text{several independent subproblems},& \\text{Divide and Conquer}\\\\\\text{several repeated subproblems},& \\text{Dynamic Programming}\\end{cases}"
             },
             {
               "id": "blk-expl-recursion-pd-modelo",
@@ -878,7 +878,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "The cost of a technique is not summarized in a single notation. It depends on the number of states, branches, levels, candidates or instructions that are actually processed."
+                  "text": "The cost of a technique is not summarized in a single notation. It depends on the number of states, branches, levels, candidates or instructions that are currently processed."
                 }
               ]
             },
@@ -890,7 +890,7 @@
                 {
                   "stepId": "step-costo-iterativo",
                   "title": "Iterative",
-                  "latex": "T(n)=\\sum_{linea} costo(linea)\\cdot veces(linea)",
+                  "latex": "T(n)=\\sum_{line} cost(line)\\cdot times(line)",
                   "explanation": [
                     {
                       "type": "text",
@@ -901,7 +901,7 @@
                 {
                   "stepId": "step-costo-pd",
                   "title": "Dynamic Programming",
-                  "latex": "T(n)=\\#estados\\cdot costo\\_transicion",
+                  "latex": "T(n)=\\#states\\cdot cost\\_transition",
                   "explanation": [
                     {
                       "type": "text",
@@ -912,11 +912,11 @@
                 {
                   "stepId": "step-costo-backtracking",
                   "title": "Backtracking",
-                  "latex": "T(n)=N_{visitados}\\cdot C_{validar}",
+                  "latex": "T(n)=N_{visited}\\cdot C_{validate}",
                   "explanation": [
                     {
                       "type": "text",
-                      "text": "It depends on how many nodes of the decision tree are actually explored."
+                      "text": "It depends on how many nodes of the decision tree are currently explored."
                     }
                   ]
                 }
@@ -980,7 +980,7 @@
                       "content": [
                         {
                           "type": "text",
-                          "text": "If there is a demonstrably safe local election, use Ravenous."
+                          "text": "If there is a demonstrably safe local choice, use Ravenous."
                         }
                       ]
                     },
@@ -1000,7 +1000,7 @@
               "id": "blk-modelo-general-poda",
               "type": "equationBlock",
               "title": "General pruning model",
-              "latex": "Poda=\\text{Infactibilidad}\\cup \\text{Suboptimalidad}"
+              "latex": "Pruning=\\text{Infeasibility}\\cup \\text{Suboptimality}"
             },
             {
               "id": "blk-expl-modelo-poda",

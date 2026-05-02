@@ -101,11 +101,11 @@
   "learningObjectives": [
     {
       "objectiveId": "definir-backtracking",
-      "text": "Define backtracking as systematic depth exploration with backtracking and pruning."
+      "text": "Deende backtracking as systematic depth exploration with backtracking and pruning."
     },
     {
       "objectiveId": "modelar-solucion-como-tupla",
-      "text": "Model a solution as an n-tuple where each component is chosen from a finite set of candidates."
+      "text": "Model a solution as an n-tuple where each component is chosen from a endite set of candidates."
     },
     {
       "objectiveId": "construir-arbol-de-decisiones",
@@ -125,7 +125,7 @@
     },
     {
       "objectiveId": "distinguir-backtracking-voraz",
-      "text": "Distinguish backtracking from voracious algorithms by the reversibility of decisions."
+      "text": "Distinguish backtracking from greedy algorithms by the reversibility of decisions."
     },
     {
       "objectiveId": "resolver-n-reinas-cuatro",
@@ -156,7 +156,7 @@
     {
       "termId": "term-solucion-parcial",
       "label": "Partial solution",
-      "definition": "Incomplete assignment of decisions, for example (x0, x1, ..., xk, ?, ..., ?)."
+      "definition": "Incomplete assignment of decisions, for example (x0, x1,..., xk, ?,..., ?)."
     },
     {
       "termId": "term-espacio-de-soluciones",
@@ -386,11 +386,11 @@
             },
             {
               "objectiveId": "identificar-conjuntos-finitos",
-              "text": "Identify the finite set of possible values for each decision."
+              "text": "Identify the endite set of possible values for each decision."
             },
             {
               "objectiveId": "definir-predicado-validez",
-              "text": "Define the predicate that decides whether a partial solution is still valid."
+              "text": "Deende the predicate that decides whether a partial solution is still valid."
             }
           ],
           "prerequisites": {
@@ -430,7 +430,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "X represents the final solution vector of size n. Each xi is the decision made in stage i (for example, the column number), and Si is the set of possible values ​​for that decision."
+                  "text": "X represents the endal solution vector of size n. Each xi is the decision made in stage i (for example, the column number), and Si is the set of possible values for that decision."
                 }
               ]
             },
@@ -540,7 +540,7 @@
                       },
                       {
                         "type": "text",
-                        "text": "comes out of a finite set"
+                        "text": "comes out of a endite set"
                       },
                       {
                         "type": "inlineMath",
@@ -630,7 +630,7 @@
           "learningObjectives": [
             {
               "objectiveId": "definir-estado-backtracking",
-              "text": "Define state, candidates, pruning predicate and solution condition."
+              "text": "Deende state, candidates, pruning predicate and solution condition."
             },
             {
               "objectiveId": "leer-modelo-formal-backtracking",
@@ -690,7 +690,7 @@
               "id": "blk-modelo-candidatos-bt",
               "type": "equationBlock",
               "title": "Candidate model",
-              "latex": "C_k(X_{k-1})=\\{v\\in S_k\\mid candidato(v,k,X_{k-1})\\}"
+              "latex": "C_k(X_{k-1})=\\{v\\in S_k\\mid candidate(v,k,X_{k-1})\\}"
             },
             {
               "id": "blk-expl-modelo-candidatos-bt",
@@ -706,7 +706,7 @@
               "id": "blk-modelo-poda-bt",
               "type": "equationBlock",
               "title": "Pruning model for feasibility",
-              "latex": "B_k(X_{k-1},v)=\\begin{cases}\\text{verdadero},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{puede extenderse a una solución}\\\\\\text{falso},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{viola restricciones}\\end{cases}"
+              "latex": "B_k(X_{k-1},v)=\\begin{cases}\\text{true},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{can be extended to a solution}\\\\\\text{false},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{violates constraints}\\end{cases}"
             },
             {
               "id": "blk-expl-modelo-poda-bt",
@@ -722,7 +722,7 @@
               "id": "blk-modelo-avance-bt",
               "type": "equationBlock",
               "title": "Forward and reverse model",
-              "latex": "X_k=\\begin{cases}X_{k-1}\\cup\\{x_k=v\\},& B_k(X_{k-1},v)=\\text{verdadero}\\\\X_{k-1},& B_k(X_{k-1},v)=\\text{falso}\\end{cases}"
+              "latex": "X_k=\\begin{cases}X_{k-1}\\cup\\{x_k=v\\},& B_k(X_{k-1},v)=\\text{true}\\\\X_{k-1},& B_k(X_{k-1},v)=\\text{false}\\end{cases}"
             },
             {
               "id": "blk-expl-modelo-avance-bt",
@@ -738,7 +738,7 @@
               "id": "blk-modelo-solucion-completa-bt",
               "type": "equationBlock",
               "title": "Complete solution model",
-              "latex": "esSolucion(X_k)=\\begin{cases}\\text{verdadero},& k=n-1\\ \\text{y}\\ X_k\\ \\text{satisface todas las restricciones}\\\\\\text{falso},& \\text{en otro caso}\\end{cases}"
+              "latex": "isSolution(X_k)=\\begin{cases}\\text{true},& k=n-1\\ \\text{and}\\ X_k\\ \\text{satisfies all constraints}\\\\\\text{false},& \\text{otherwise}\\end{cases}"
             },
             {
               "id": "blk-expl-modelo-solucion-completa-bt",
@@ -746,7 +746,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "esSolucion indicates that the process ends successfully only when we reach the last level (n-1) and all the constraints of the problem are met."
+                  "text": "isSolution indicates that the process ends successfully only when we reach the last level (n-1) and all the constraints of the problem are met."
                 }
               ]
             },
@@ -909,13 +909,13 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "General backtracking",
-              "code": "backtracking(k, X[n]) BEGIN\n IF (esSolucion(k, X)) THEN BEGIN\n reportar(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR cada candidato v EN candidatos(k, X) DO BEGIN\n IF (factible(k, v, X)) THEN BEGIN\n X[k] <- v;\n total <- total + backtracking(k + 1, X);\n X[k] <- NULL;\n END\n END\n\n RETURN total;\nEND"
+              "code": "backtracking(k, X[n]) BEGIN\n IF (isSolution(k, X)) THEN BEGIN\n report(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR each candidate v IN candidates(k, X) DO BEGIN\n IF (feasible(k, v, X)) THEN BEGIN\n X[k] <- v;\n total <- total + backtracking(k + 1, X);\n X[k] <- NULL;\n END\n END\n\n RETURN total;\nEND"
             },
             {
               "id": "blk-esquema-bt-flujo",
               "type": "mermaid",
               "title": "Flow of a backtracking call",
-              "code": "flowchart TD\n A[\"Entrar a backtracking(k)\"] --> B{\"¿La solución está completa?\"}\n B -- \"Sí\" --> C[\"Reportar solución\"]\n B -- \"No\" --> D[\"Generar candidatos para x_k\"]\n D --> E[\"Tomar siguiente candidato\"]\n E --> F{\"¿Es factible?\"}\n F -- \"No\" --> G[\"Podar candidato\"]\n G --> H{\"¿Quedan candidatos?\"}\n F -- \"Sí\" --> I[\"Asignar x_k\"]\n I --> J[\"Llamar backtracking(k+1)\"]\n J --> K[\"Deshacer x_k\"]\n K --> H\n H -- \"Sí\" --> E\n H -- \"No\" --> L[\"Retornar al nivel anterior\"]"
+              "code": "flowchart TD\n A[\"Enter backtracking(k)\"] --> B{\"Is the solution complete?\"}\n B -- \"Yes\" --> C[\"Report solution\"]\n B -- \"No\" --> D[\"Generate candidates for x_k\"]\n D --> E[\"Take next candidate\"]\n E --> F{\"Is it feasible?\"}\n F -- \"No\" --> G[\"Prune candidate\"]\n G --> H{\"Are candidates left?\"}\n F -- \"Yes\" --> I[\"Assign x_k\"]\n I --> J[\"Call backtracking(k+1)\"]\n J --> K[\"Undo x_k\"]\n K --> H\n H -- \"Yes\" --> E\n H -- \"No\" --> L[\"Return to previous level\"]"
             },
             {
               "id": "blk-esquema-bt-nota-deshacer",
@@ -1010,7 +1010,7 @@
               "id": "blk-nreinas-modelo-solucion",
               "type": "equationBlock",
               "title": "Solution model",
-              "latex": "X=(x_1,x_2,\\ldots,x_n),\\qquad x_i=\\text{columna de la reina en la fila }i"
+              "latex": "X=(x_1,x_2,\\ldots,x_n),\\qquad x_i=\\text{column de la queen en la row }i"
             },
             {
               "id": "blk-expl-nreinas-modelo-solucion",
@@ -1042,7 +1042,7 @@
               "id": "blk-nreinas-factibilidad",
               "type": "equationBlock",
               "title": "Feasibility model",
-              "latex": "valido(i,c)=\\begin{cases}\\text{verdadero},& \\forall r<i:\\ c\\ne x_r\\ \\land\\ |i-r|\\ne |c-x_r|\\\\\\text{falso},& \\text{en otro caso}\\end{cases}"
+              "latex": "valid(i,c)=\\begin{cases}\\text{true},& \\forall r<i:\\ c\\ne x_r\\ \\land\\ |i-r|\\ne |c-x_r|\\\\\\text{false},& \\text{otherwise}\\end{cases}"
             },
             {
               "id": "blk-expl-nreinas-factibilidad",
@@ -1058,7 +1058,7 @@
               "id": "blk-nreinas-solucion-completa",
               "type": "equationBlock",
               "title": "Complete solution model",
-              "latex": "esSolucion(i,X)=\\begin{cases}\\text{verdadero},& i=n+1\\\\\\text{falso},& i\\le n\\end{cases}"
+              "latex": "isSolution(i,X)=\\begin{cases}\\text{true},& i=n+1\\\\\\text{false},& i\\le n\\end{cases}"
             },
             {
               "id": "blk-expl-nreinas-solucion-completa",
@@ -1386,7 +1386,7 @@
             {
               "id": "blk-nreinas-cuatro-traza",
               "type": "table",
-              "title": "Trace until you find X = (2,4,1,3)",
+              "title": "Trace until you endd X = (2,4,1,3)",
               "columns": [
                 {
                   "key": "paso",
@@ -1790,7 +1790,7 @@
               "id": "blk-nreinas-cuatro-arbol",
               "type": "mermaid",
               "title": "Decision tree fragment",
-              "code": "flowchart TD\n A[\"Inicio\"] --> B[\"F1:C1\"]\n B --> C[\"F2:C1 podada\"]\n B --> D[\"F2:C2 podada\"]\n B --> E[\"F2:C3\"]\n E --> F[\"Fila 3 sin candidato válido\"]\n B --> G[\"F2:C4\"]\n G --> H[\"Fila 3 sin candidato válido\"]\n A --> I[\"F1:C2\"]\n I --> J[\"F2:C4\"]\n J --> K[\"F3:C1\"]\n K --> L[\"F4:C3 solución\"]"
+              "code": "flowchart TD\n A[\"Start\"] --> B[\"F1:C1\"]\n B --> C[\"F2:C1 pruned\"]\n B --> D[\"F2:C2 pruned\"]\n B --> E[\"F2:C3\"]\n E --> F[\"Row 3 with no valid candidate\"]\n B --> G[\"F2:C4\"]\n G --> H[\"Row 3 with no valid candidate\"]\n A --> I[\"F1:C2\"]\n I --> J[\"F2:C4\"]\n J --> K[\"F3:C1\"]\n K --> L[\"F4:C3 solution\"]"
             },
             {
               "id": "blk-nreinas-cuatro-resultado",
@@ -1857,7 +1857,7 @@
               "id": "blk-nreinas-valido-modelo",
               "type": "equationBlock",
               "title": "Validity condition",
-              "latex": "valido(fila,col)=\\begin{cases}\\text{verdadero},& \\forall r<fila:\\ col\\ne X[r]\\ \\land\\ |fila-r|\\ne |col-X[r]|\\\\\\text{falso},& \\text{en otro caso}\\end{cases}"
+              "latex": "valid(row,col)=\\begin{cases}\\text{true},& \\forall r<row:\\ col\\ne X[r]\\ \\land\\ |row-r|\\ne |col-X[r]|\\\\\\text{false},& \\text{otherwise}\\end{cases}"
             },
             {
               "id": "blk-expl-nreinas-valido-modelo",
@@ -1874,14 +1874,14 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "N-Queens with backtracking",
-              "code": "nReinas(n) BEGIN\n X[1..n] <- NULL;\n RETURN ubicarReina(1, n, X);\nEND\n\nubicarReina(fila, n, X[n]) BEGIN\n IF (fila = n + 1) THEN BEGIN\n reportar(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR col <- 1 TO n DO BEGIN\n IF (esValida(fila, col, X)) THEN BEGIN\n X[fila] <- col;\n total <- total + ubicarReina(fila + 1, n, X);\n X[fila] <- NULL;\n END\n END\n\n RETURN total;\nEND"
+              "code": "nQueens(n) BEGIN\n X[1..n] <- NULL;\n RETURN placeQueen(1, n, X);\nEND\n\nplaceQueen(row, n, X[n]) BEGIN\n IF (row = n + 1) THEN BEGIN\n report(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR col <- 1 TO n DO BEGIN\n IF (isValid(row, col, X)) THEN BEGIN\n X[row] <- col;\n total <- total + placeQueen(row + 1, n, X);\n X[row] <- NULL;\n END\n END\n\n RETURN total;\nEND"
             },
             {
               "id": "blk-nreinas-pseudocodigo-validez",
               "type": "algorithm",
               "language": "pseudocode",
               "title": "Validation of a position",
-              "code": "esValida(fila, col, X[n]) BEGIN\n FOR r <- 1 TO fila - 1 DO BEGIN\n IF (X[r] = col) THEN BEGIN\n RETURN F;\n END\n\n IF (abs(fila - r) = abs(col - X[r])) THEN BEGIN\n RETURN F;\n END\n END\n\n RETURN T;\nEND"
+              "code": "isValid(row, col, X[n]) BEGIN\n FOR r <- 1 TO row - 1 DO BEGIN\n IF (X[r] = col) THEN BEGIN\n RETURN F;\n END\n\n IF (abs(row - r) = abs(col - X[r])) THEN BEGIN\n RETURN F;\n END\n END\n\n RETURN T;\nEND"
             },
             {
               "id": "blk-nreinas-validacion-explicacion",
@@ -1935,7 +1935,7 @@
                     [
                       {
                         "type": "inlineMath",
-                        "latex": "|fila-r|\\ne |col-X[r]|"
+                        "latex": "|row-r|\\ne |col-X[r]|"
                       }
                     ],
                     [
@@ -1993,7 +1993,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "The complexity of backtracking depends on the number of nodes visited in the search tree and the cost of validating each candidate. Pruning can reduce the actual work a lot, but the worst case is still combinatorial."
+                  "text": "The complexity of backtracking depends on the number of nodes visited in the search tree and the cost of validating each candidate. Pruning can reduce the current work a lot, but the worst case is still combinatorial."
                 }
               ]
             },
@@ -2001,7 +2001,7 @@
               "id": "blk-complejidad-bt-general",
               "type": "equationBlock",
               "title": "General cost model",
-              "latex": "T(n)=\\sum_{k=0}^{d}N_k\\cdot C_{validar}(k)"
+              "latex": "T(n)=\\sum_{k=0}^{d}N_k\\cdot C_{validate}(k)"
             },
             {
               "id": "blk-expl-complejidad-bt-general",
@@ -2017,7 +2017,7 @@
               "id": "blk-complejidad-bt-exponencial",
               "type": "equationBlock",
               "title": "Worst case with uniform branching factor",
-              "latex": "T(d)=\\begin{cases}\\Theta(b^d\\cdot C_{validar}),& \\text{si se visitan casi todas las ramas}\\\\\\Theta(N_{visitados}\\cdot C_{validar}),& \\text{si la poda reduce el árbol}\\end{cases}"
+              "latex": "T(d)=\\begin{cases}\\Theta(b^d\\cdot C_{validate}),& \\text{if almost all branches are visited}\\\\\\Theta(N_{visited}\\cdot C_{validate}),& \\text{if pruning reduces the tree}\\end{cases}"
             },
             {
               "id": "blk-expl-complejidad-bt-exponencial",
@@ -2033,7 +2033,7 @@
               "id": "blk-complejidad-nreinas",
               "type": "equationBlock",
               "title": "Typical height for N-Queens",
-              "latex": "T(n)=\\begin{cases}O(n^n\\cdot n),& \\text{si se permite repetir columnas y validar cuesta }O(n)\\\\O(n!\\cdot n),& \\text{si se evita repetir columnas y validar cuesta }O(n)\\\\O(n!),& \\text{si columnas y diagonales se validan en }O(1)\\end{cases}"
+              "latex": "T(n)=\\begin{cases}O(n^n\\cdot n),& \\text{if repeated columns are allowed and validation costs }O(n)\\\\O(n!\\cdot n),& \\text{if repeated columns are avoided and validation costs }O(n)\\\\O(n!),& \\text{if columns and diagonals are validated in }O(1)\\end{cases}"
             },
             {
               "id": "blk-expl-complejidad-nreinas",
@@ -2241,7 +2241,7 @@
               "id": "blk-optimizacion-nreinas-modelo",
               "type": "equationBlock",
               "title": "O(1) Validation in N-Queens",
-              "latex": "valido(fila,col)=\\begin{cases}\\text{verdadero},& \\neg colUsada[col]\\ \\land\\ \\neg diagA[fila-col]\\ \\land\\ \\neg diagB[fila+col]\\\\\\text{falso},& \\text{en otro caso}\\end{cases}"
+              "latex": "valid(row,col)=\\begin{cases}\\text{true},& \\neg usedCol[col]\\ \\land\\ \\neg diagA[row-col]\\ \\land\\ \\neg diagB[row+col]\\\\\\text{false},& \\text{otherwise}\\end{cases}"
             },
             {
               "id": "blk-expl-optimizacion-nreinas-modelo",
@@ -2309,7 +2309,7 @@
                       },
                       {
                         "type": "inlineMath",
-                        "latex": "fila-col"
+                        "latex": "row-col"
                       },
                       {
                         "type": "text",
@@ -2317,7 +2317,7 @@
                       },
                       {
                         "type": "inlineMath",
-                        "latex": "fila+col"
+                        "latex": "row+col"
                       },
                       {
                         "type": "text",
@@ -2349,7 +2349,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "You may find a solution sooner, although it doesn't necessarily improve the worst case."
+                        "text": "You may endd a solution sooner, although it doesn't necessarily improve the worst case."
                       }
                     ]
                   ]
@@ -2383,7 +2383,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "N-Queens with O(1) validation",
-              "code": "ubicarReinaRapido(fila, n, X[n], colUsada[n], diagA[2*n], diagB[2*n]) BEGIN\n IF (fila = n + 1) THEN BEGIN\n reportar(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR col <- 1 TO n DO BEGIN\n dA <- fila - col + n;\n dB <- fila + col;\n\n IF (NOT colUsada[col] AND NOT diagA[dA] AND NOT diagB[dB]) THEN BEGIN\n X[fila] <- col;\n colUsada[col] <- T;\n diagA[dA] <- T;\n diagB[dB] <- T;\n\n total <- total + ubicarReinaRapido(fila + 1, n, X, colUsada, diagA, diagB);\n\n X[fila] <- NULL;\n colUsada[col] <- F;\n diagA[dA] <- F;\n diagB[dB] <- F;\n END\n END\n\n RETURN total;\nEND"
+              "code": "placeQueenFast(row, n, X[n], usedCol[n], diagA[2*n], diagB[2*n]) BEGIN\n IF (row = n + 1) THEN BEGIN\n report(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR col <- 1 TO n DO BEGIN\n dA <- row - col + n;\n dB <- row + col;\n\n IF (NOT usedCol[col] AND NOT diagA[dA] AND NOT diagB[dB]) THEN BEGIN\n X[row] <- col;\n usedCol[col] <- T;\n diagA[dA] <- T;\n diagB[dB] <- T;\n\n total <- total + placeQueenFast(row + 1, n, X, usedCol, diagA, diagB);\n\n X[row] <- NULL;\n usedCol[col] <- F;\n diagA[dA] <- F;\n diagB[dB] <- F;\n END\n END\n\n RETURN total;\nEND"
             }
           ]
         },
@@ -2464,7 +2464,7 @@
                     [
                       {
                         "type": "inlineMath",
-                        "latex": "X[i]=\\text{columna de la reina en fila }i"
+                        "latex": "X[i]=\\text{queen column in row }i"
                       }
                     ],
                     [
@@ -2520,7 +2520,7 @@
                     [
                       {
                         "type": "inlineMath",
-                        "latex": "X[v]=\\text{color del vértice }v"
+                        "latex": "X[v]=\\text{vertex color }v"
                       }
                     ],
                     [
@@ -2548,7 +2548,7 @@
                     [
                       {
                         "type": "inlineMath",
-                        "latex": "X[i]=\\text{valor de la celda vacía }i"
+                        "latex": "X[i]=\\text{value of the empty cell }i"
                       }
                     ],
                     [
@@ -2576,7 +2576,7 @@
                     [
                       {
                         "type": "inlineMath",
-                        "latex": "X[i]=\\text{elemento en posición }i"
+                        "latex": "X[i]=\\text{element at position }i"
                       }
                     ],
                     [
@@ -2600,7 +2600,7 @@
         {
           "sectionId": "sec-backtracking-vs-otras-tecnicas",
           "slug": "backtracking-vs-otras-tecnicas",
-          "title": "Backtracking vs brute force vs voracious",
+          "title": "Backtracking vs brute force vs greedy",
           "order": 11,
           "kind": "reference",
           "trackProgress": true,
@@ -2640,7 +2640,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Backtracking is between two extremes: it's not as blind as brute force, but it's also not as irrevocably committed as voracious."
+                  "text": "Backtracking is between two extremes: it's not as blind as brute force, but it's also not as irrevocably committed as greedy."
                 }
               ]
             },
@@ -2663,7 +2663,7 @@
                 },
                 {
                   "key": "voraz",
-                  "label": "Voracious"
+                  "label": "Greedy"
                 }
               ],
               "rows": [
@@ -2774,7 +2774,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Only if voracious ownership is demonstrated."
+                        "text": "Only if greedy ownership is demonstrated."
                       }
                     ]
                   ]
@@ -2813,7 +2813,7 @@
               "id": "blk-decision-bt-tecnica",
               "type": "mermaid",
               "title": "Technique selection",
-              "code": "flowchart TD\n A[\"Problema con decisiones\"] --> B{\"¿Hay regla local demostrable?\"}\n B -- \"Sí\" --> C[\"Voraz\"]\n B -- \"No\" --> D{\"¿Se pueden podar soluciones parciales inválidas?\"}\n D -- \"Sí\" --> E[\"Backtracking\"]\n D -- \"No\" --> F[\"Fuerza bruta o búsqueda exhaustiva\"]\n E --> G{\"¿Se busca optimizar con cotas?\"}\n G -- \"Sí\" --> H[\"Ramificación y poda\"]\n G -- \"No\" --> I[\"Backtracking clásico\"]"
+              "code": "flowchart TD\n A[\"Problem with decisions\"] --> B{\"Is there a provable local rule?\"}\n B -- \"Yes\" --> C[\"Greedy\"]\n B -- \"No\" --> D{\"Can invalid partial solutions be pruned?\"}\n D -- \"Yes\" --> E[\"Backtracking\"]\n D -- \"No\" --> F[\"Brute force or exhaustive search\"]\n E --> G{\"Is the goal to optimize using bounds?\"}\n G -- \"Yes\" --> H[\"Branch and Bound\"]\n G -- \"No\" --> I[\"Classic backtracking\"]"
             }
           ]
         },
@@ -2936,13 +2936,13 @@
                     [
                       {
                         "type": "text",
-                        "text": "Confusing backtracking with voracious"
+                        "text": "Confusing backtracking with greedy"
                       }
                     ],
                     [
                       {
                         "type": "text",
-                        "text": "The voracious does not reconsider; backtracking does go back."
+                        "text": "The greedy algorithm does not reconsider; backtracking does go back."
                       }
                     ],
                     [
@@ -2970,7 +2970,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Analyze visited nodes of the entire tree, not just the final solution."
+                        "text": "Analyze visited nodes of the entire tree, not just the endal solution."
                       }
                     ]
                   ]
@@ -3049,7 +3049,7 @@
                       "content": [
                         {
                           "type": "text",
-                          "text": "Define the solution as an n-tuple."
+                          "text": "Deende the solution as an n-tuple."
                         }
                       ]
                     },
@@ -3057,7 +3057,7 @@
                       "content": [
                         {
                           "type": "text",
-                          "text": "Defines what each position of the tuple represents."
+                          "text": "Deendes what each position of the tuple represents."
                         }
                       ]
                     },
@@ -3065,7 +3065,7 @@
                       "content": [
                         {
                           "type": "text",
-                          "text": "Define the candidates for each level."
+                          "text": "Deende the candidates for each level."
                         }
                       ]
                     },
@@ -3073,7 +3073,7 @@
                       "content": [
                         {
                           "type": "text",
-                          "text": "Defines the feasibility predicate."
+                          "text": "Deendes the feasibility predicate."
                         }
                       ]
                     },
@@ -3081,7 +3081,7 @@
                       "content": [
                         {
                           "type": "text",
-                          "text": "Defines when a solution is complete."
+                          "text": "Deendes when a solution is complete."
                         }
                       ]
                     },
@@ -3151,7 +3151,7 @@
                 {
                   "stepId": "step-formula-poda",
                   "title": "Pruning for feasibility",
-                  "latex": "B_k(X_{k-1},v)=\\begin{cases}\\text{verdadero},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{respeta restricciones}\\\\\\text{falso},& \\text{viola alguna restricción}\\end{cases}",
+                  "latex": "B_k(X_{k-1},v)=\\begin{cases}\\text{true},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{respects constraints}\\\\\\text{false},& \\text{violates a constraint}\\end{cases}",
                   "explanation": [
                     {
                       "type": "text",
@@ -3162,7 +3162,7 @@
                 {
                   "stepId": "step-formula-costo-gen",
                   "title": "Overall cost",
-                  "latex": "T(n)=\\sum_{k=0}^{d}N_k\\cdot C_{validar}(k)",
+                  "latex": "T(n)=\\sum_{k=0}^{d}N_k\\cdot C_{validate}(k)",
                   "explanation": [
                     {
                       "type": "text",

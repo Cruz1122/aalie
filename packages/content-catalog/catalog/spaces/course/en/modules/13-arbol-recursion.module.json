@@ -36,7 +36,7 @@
       "call tree",
       "summation by levels",
       "analysis by levels",
-      "cost of sheets",
+      "cost of leaves",
       "cost per level"
     ],
     "keywords": [
@@ -223,7 +223,7 @@
           "learningObjectives": [
             {
               "objectiveId": "definir-aplicabilidad-arbol",
-              "text": "Define the pedagogical applicability of the recursion tree method."
+              "text": "Deende the pedagogical applicability of the recursion tree method."
             },
             {
               "objectiveId": "distinguir-arbol-vs-maestro",
@@ -352,7 +352,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "The Teacher's result is not intuitive for the student"
+                        "text": "The Master Theorem result is not intuitive for the student"
                       }
                     ],
                     [
@@ -477,7 +477,7 @@
               "id": "blk-mermaid-esqueleto-arbol",
               "type": "mermaid",
               "title": "Tree skeleton for T(n)=2T(n/2)+f(n)",
-              "code": "flowchart TD\n  A[\"T(n)\\nCosto: f(n)\"] --> B[\"T(n/2)\\nCosto: f(n/2)\"]\n  A --> C[\"T(n/2)\\nCosto: f(n/2)\"]\n  B --> D[\"T(n/4)\\nCosto: f(n/4)\"]\n  B --> E[\"T(n/4)\\nCosto: f(n/4)\"]\n  C --> F[\"T(n/4)\\nCosto: f(n/4)\"]\n  C --> G[\"T(n/4)\\nCosto: f(n/4)\"]"
+              "code": "flowchart TD\n  A[\"T(n)\\nCost: f(n)\"] --> B[\"T(n/2)\\nCost: f(n/2)\"]\n  A --> C[\"T(n/2)\\nCost: f(n/2)\"]\n  B --> D[\"T(n/4)\\nCost: f(n/4)\"]\n  B --> E[\"T(n/4)\\nCost: f(n/4)\"]\n  C --> F[\"T(n/4)\\nCost: f(n/4)\"]\n  C --> G[\"T(n/4)\\nCost: f(n/4)\"]"
             }
           ]
         },
@@ -738,7 +738,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "leaves. If each sheet costs constant, the total cost of sheets is proportional to"
+                      "text": "leaves. If each sheet costs constant, the total cost of leaves is proportional to"
                     },
                     {
                       "type": "inlineMath",
@@ -770,7 +770,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "Compare intermediate levels against leaves and root to decide the final order."
+                      "text": "Compare intermediate levels against leaves and root to decide the endal order."
                     }
                   ]
                 }
@@ -821,7 +821,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "determines how many levels we go through, and the final term"
+                  "text": "determines how many levels we go through, and the endal term"
                 },
                 {
                   "type": "inlineMath",
@@ -829,7 +829,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "accounts for the total cost of the sheets at the base level."
+                  "text": "accounts for the total cost of the leaves at the base level."
                 }
               ]
             },
@@ -1310,7 +1310,7 @@
                   "stepId": "step-parametros"
                 },
                 {
-                  "latex": "\\text{Costo nivel }i=2^i\\cdot c\\left(\\frac{n}{2^i}\\right)=cn",
+                  "latex": "\\text{Level cost }i=2^i\\cdot c\\left(\\frac{n}{2^i}\\right)=cn",
                   "title": "Generic level",
                   "stepId": "step-nivel-generico"
                 },
@@ -1325,7 +1325,7 @@
                   "stepId": "step-numero-de-niveles"
                 },
                 {
-                  "latex": "2^{\\log_2 n}=n\\text{ hojas, cada una de costo constante}",
+                  "latex": "2^{\\log_2 n}=n\\text{ leaves, each with constant cost}",
                   "title": "Leaves",
                   "stepId": "step-hojas"
                 },
@@ -1609,12 +1609,12 @@
               "type": "latexSteps",
               "steps": [
                 {
-                  "latex": "\\text{Costo nivel }i=2^i",
+                  "latex": "\\text{Level cost }i=2^i",
                   "title": "Generic level",
                   "stepId": "step-nivel-generico"
                 },
                 {
-                  "latex": "h=n-1\\quad \\text{porque se resta 1 hasta llegar a }T(1)",
+                  "latex": "h=n-1\\quad \\text{because 1 is subtracted until reaching }T(1)",
                   "title": "Height",
                   "stepId": "step-altura"
                 },
@@ -1781,7 +1781,7 @@
                   "stepId": "step-costo-nivel-1"
                 },
                 {
-                  "latex": "\\text{La suma de tamaños de subproblemas en cada nivel completo es }n",
+                  "latex": "\\text{The sum of subproblem sizes at each complete level is }n",
                   "title": "Observation",
                   "stepId": "step-observacion"
                 },
@@ -1819,7 +1819,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "In unbalanced trees not all branches are the same height. For an initial explanation, it is enough to use the longest branch to limit the number of levels and observe that the cost per complete level is linear. For a fine formal proof, substitution or the Akra–Bazzi theorem is used, which is outside the scope of this module."
+                      "text": "In unbalanced trees not all branches are the same height. For an initial explanation, it is enough to use the longest branch to limit the number of levels and observe that the cost per complete level is linear. For a ende formal proof, substitution or the Akra–Bazzi theorem is used, which is outside the scope of this module."
                     }
                   ]
                 }
@@ -1966,7 +1966,7 @@
               "title": "Detail — T(n)=4T(n/2)+n",
               "steps": [
                 {
-                  "latex": "\\text{Costo nivel }i=4^i\\cdot \\frac{n}{2^i}=n2^i",
+                  "latex": "\\text{Level cost }i=4^i\\cdot \\frac{n}{2^i}=n2^i",
                   "title": "Generic level",
                   "stepId": "step-nivel-generico"
                 },
@@ -1993,7 +1993,7 @@
               "title": "Detail — T(n)=2T(n/2)+n²",
               "steps": [
                 {
-                  "latex": "\\text{Costo nivel }i=2^i\\cdot \\left(\\frac{n}{2^i}\\right)^2=\\frac{n^2}{2^i}",
+                  "latex": "\\text{Level cost }i=2^i\\cdot \\left(\\frac{n}{2^i}\\right)^2=\\frac{n^2}{2^i}",
                   "title": "Generic level",
                   "stepId": "step-nivel-generico"
                 },
@@ -2130,7 +2130,7 @@
                     [
                       {
                         "type": "text",
-                        "text": "Explicitly add the cost of sheets to the sum."
+                        "text": "Explicitly add the cost of leaves to the sum."
                       }
                     ]
                   ]
@@ -2347,7 +2347,7 @@
               "title": "Key formulas",
               "steps": [
                 {
-                  "latex": "\\text{Costo nivel }i=a^i f\\left(\\frac{n}{b^i}\\right)",
+                  "latex": "\\text{Level cost }i=a^i f\\left(\\frac{n}{b^i}\\right)",
                   "title": "Balanced generic level",
                   "stepId": "step-nivel-generico-balanceado"
                 },

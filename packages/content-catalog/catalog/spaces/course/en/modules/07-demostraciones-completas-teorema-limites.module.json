@@ -13,7 +13,7 @@
   "difficulty": "foundational",
   "estimatedMinutes": 35,
   "tags": [
-    "demonstrations",
+    "proofs",
     "limits-theorem",
     "asymptotic-notations",
     "convention",
@@ -23,7 +23,7 @@
     "theta",
     "little-o",
     "little-omega",
-    "accent",
+    "tilde",
     "formal-verification",
     "formal-definition"
   ],
@@ -34,10 +34,10 @@
       "limit criterion",
       "prove with limits",
       "lim f over g",
-      "lim g about f",
-      "theta demonstration",
-      "little-o demonstration",
-      "little-omega demonstration",
+      "lim g over f",
+      "theta proof",
+      "little-o proof",
+      "little-omega proof",
       "verification with formal definition"
     ],
     "keywords": [
@@ -437,7 +437,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "), the same painting but with"
+                      "text": "), the same table but with"
                     },
                     {
                       "type": "inlineMath",
@@ -809,7 +809,7 @@
             {
               "id": "blk-demo1-paso3-desigualdad",
               "type": "equationBlock",
-              "latex": "3n^2 \\le 3n^2 + 5n \\le 4n^2 \\quad \\text{para todo } n \\ge n_0"
+              "latex": "3n^2 \\le 3n^2 + 5n \\le 4n^2 \\quad \\text{for all } n \\ge n_0"
             },
             {
               "id": "blk-demo1-paso3-lista",

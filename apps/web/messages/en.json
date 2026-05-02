@@ -15,21 +15,26 @@
     "analyzer": "Analyzer",
     "examples": "Examples",
     "course": "Course",
-    "quiz": "Quizzes",
     "about": "About Us",
     "openMenu": "Open menu",
-    "howToUse": "How to use"
+    "howToUse": "How to use",
+    "quizzes": "Quizzes"
   },
   "quizzes": {
     "title": "ADA Quiz",
     "subtitle": "Answer a short quiz based on your course progress.",
+    "session": {
+      "moduleScope": "Quiz scoped to module: {title}"
+    },
     "actions": {
       "start": "Start quiz",
       "loadingSession": "Loading...",
       "previous": "Previous",
       "next": "Next",
       "finish": "Finish attempt",
-      "evaluating": "Evaluating..."
+      "finishEarly": "Finish now",
+      "evaluating": "Evaluating...",
+      "exit": "Exit"
     },
     "labels": {
       "attemptId": "attemptId"
@@ -59,11 +64,107 @@
       "helperText": "Choose the concept that best matches this item."
     },
     "topics": {
-      "asymptotic_notation": "Asymptotic notation",
-      "elementary_operations": "Elementary operations",
+      "a_star": "A Star",
+      "algorithm_analysis_fundamentals": "Algorithm Analysis Fundamentals",
+      "algorithm_correctness": "Algorithm Correctness",
+      "algorithm_formulation": "Algorithm Formulation",
+      "algorithm_specification": "Algorithm Specification",
+      "alpha_beta_pruning": "Alpha Beta Pruning",
+      "asymptotic_notation": "Asymptotic Notation",
+      "backtracking": "Backtracking",
+      "best_first_search": "Best First Search",
+      "branch_and_bound": "Branch And Bound",
+      "characteristic_equation": "Characteristic Equation",
+      "cost_analysis": "Cost Analysis",
+      "divide_and_conquer": "Divide And Conquer",
+      "dynamic_programming": "Dynamic Programming",
+      "function_growth": "Function Growth",
+      "greedy_algorithms": "Greedy Algorithms",
+      "heap_sort": "Heap Sort",
+      "heaps": "Heaps",
+      "heuristics": "Heuristics",
+      "input_size": "Input Size",
+      "intelligent_substitution": "Intelligent Substitution",
+      "iteration_method": "Iteration Method",
       "limits": "Limits",
-      "loop_invariant": "Loop invariant",
-      "recurrence_equations": "Recurrence equations"
+      "loop_invariant": "Loop Invariant",
+      "master_theorem": "Master Theorem",
+      "merge_sort": "Merge Sort",
+      "minimax": "Minimax",
+      "priority_queues": "Priority Queues",
+      "recurrence_equations": "Recurrence Equations",
+      "recursion_tree_method": "Recursion Tree Method",
+      "semantic_analysis": "Semantic Analysis",
+      "series": "Series",
+      "spatial_complexity": "Spatial Complexity",
+      "temporal_complexity": "Temporal Complexity",
+      "uniform_cost_search": "Uniform Cost Search",
+      "skill": {
+        "asymptotic": {
+          "big_o": {
+            "upper-bound-interpretation": "Upper-bound interpretation (Big-O)"
+          },
+          "theta": {
+            "identify-equivalent-order": "Identify equivalent order (Theta)"
+          }
+        },
+        "elementary": {
+          "operations": {
+            "counting": "Operation counting"
+          }
+        },
+        "limits": {
+          "series": {
+            "growth-comparison": "Series growth comparison"
+          }
+        },
+        "correctness": {
+          "distinguish-termination-from-correctness": "Distinguish termination from correctness",
+          "loop-invariant": {
+            "three-moments": "Loop invariant (Initialization, Maintenance, Termination)"
+          }
+        },
+        "analysis": {
+          "avoid-counting-structural-tokens": "Avoid counting structural tokens",
+          "avoid-superficial-loop-classification": "Avoid superficial loop classification",
+          "distinguish-algorithm-analysis-from-runtime-measurement": "Distinguish algorithm analysis from runtime measurement",
+          "identify-dominant-operation-in-iterative-code": "Identify dominant operation in iterative code",
+          "identify-elementary-operations": "Identify elementary operations",
+          "identify-input-size": "Identify input size",
+          "identify-multiple-input-parameters": "Identify multiple input parameters",
+          "reason-about-constant-factors": "Reason about constant factors"
+        },
+        "formulation": {
+          "choose-control-structure-for-full-traversal": "Choose control structure for full traversal",
+          "choose-control-structure-for-search": "Choose control structure for search",
+          "extract-required-information-from-statement": "Extract required information from statement"
+        },
+        "invariant": {
+          "detect-bad-invariant": "Detect bad invariant",
+          "explain-finalization": "Explain finalization",
+          "explain-initialization": "Explain initialization",
+          "explain-maintenance": "Explain maintenance",
+          "formulate-invariant-for-maximum": "Formulate invariant for maximum",
+          "formulate-invariant-for-sum": "Formulate invariant for sum",
+          "interpret-before-iteration-state": "Interpret before-iteration state"
+        },
+        "semantic": {
+          "classify-algorithm-purpose": "Classify algorithm purpose",
+          "identify-algorithm-purpose": "Identify algorithm purpose",
+          "identify-state-variable": "Identify state variable"
+        },
+        "specification": {
+          "define-output-for-not-found-case": "Define output for not-found case",
+          "distinguish-precondition-postcondition": "Distinguish precondition and postcondition",
+          "write-postcondition-from-code": "Write postcondition from code"
+        },
+        "recurrences": {
+          "method-selection": "Recurrence solving method selection",
+          "master": {
+            "case-selection": "Master Theorem case selection"
+          }
+        }
+      }
     },
     "empty": {
       "title": "No questions",
@@ -86,12 +187,24 @@
       "headlineClose": "Very close! A quick review and you got this.",
       "headlineKeepGoing": "Keep going! Every attempt makes you stronger.",
       "areasIntro": "It is recommended to review this topic before the next attempt:",
+      "areasIntroSingle": "Nice work. For your next attempt, try reviewing: {topics}.",
+      "areasIntroMany": "Nice work. For your next attempt, try reviewing these topics: {topics}.",
+      "noAreasCongrats": "Excellent! You have no pending topics to review. Keep it up!",
       "none": "None",
       "correctLabel": "Correct",
       "incorrectLabel": "Incorrect",
       "feedback": "Answer feedback",
       "explanation": "General explanation",
-      "goToContent": "Go to content ({chapterId})"
+      "goToContent": "Go to content ({chapterId})",
+      "goToContentNatural": "{prompt} {topic}",
+      "goToContentGood1": "If you want to go deeper, check:",
+      "goToContentGood2": "Great work. To reinforce it even more, see:",
+      "goToContentGood3": "You are doing great. You can expand this in:",
+      "goToContentGood4": "To consolidate what you already know, review:",
+      "goToContentRetry1": "It is worth reviewing this topic:",
+      "goToContentRetry2": "Before your next attempt, check:",
+      "goToContentRetry3": "To strengthen this part, review:",
+      "goToContentRetry4": "This content can help you a lot:"
     },
     "skill": {
       "asymptotic": {
@@ -113,9 +226,44 @@
         }
       },
       "correctness": {
+        "distinguish-termination-from-correctness": "Distinguish termination from correctness",
         "loop-invariant": {
           "three-moments": "Loop invariant (Initialization, Maintenance, Termination)"
         }
+      },
+      "analysis": {
+        "avoid-counting-structural-tokens": "Avoid counting structural tokens",
+        "avoid-superficial-loop-classification": "Avoid superficial loop classification",
+        "distinguish-algorithm-analysis-from-runtime-measurement": "Distinguish algorithm analysis from runtime measurement",
+        "identify-dominant-operation-in-iterative-code": "Identify dominant operation in iterative code",
+        "identify-elementary-operations": "Identify elementary operations",
+        "identify-input-size": "Identify input size",
+        "identify-multiple-input-parameters": "Identify multiple input parameters",
+        "reason-about-constant-factors": "Reason about constant factors"
+      },
+      "formulation": {
+        "choose-control-structure-for-full-traversal": "Choose control structure for full traversal",
+        "choose-control-structure-for-search": "Choose control structure for search",
+        "extract-required-information-from-statement": "Extract required information from statement"
+      },
+      "invariant": {
+        "detect-bad-invariant": "Detect bad invariant",
+        "explain-finalization": "Explain finalization",
+        "explain-initialization": "Explain initialization",
+        "explain-maintenance": "Explain maintenance",
+        "formulate-invariant-for-maximum": "Formulate invariant for maximum",
+        "formulate-invariant-for-sum": "Formulate invariant for sum",
+        "interpret-before-iteration-state": "Interpret before-iteration state"
+      },
+      "semantic": {
+        "classify-algorithm-purpose": "Classify algorithm purpose",
+        "identify-algorithm-purpose": "Identify algorithm purpose",
+        "identify-state-variable": "Identify state variable"
+      },
+      "specification": {
+        "define-output-for-not-found-case": "Define output for not-found case",
+        "distinguish-precondition-postcondition": "Distinguish precondition and postcondition",
+        "write-postcondition-from-code": "Write postcondition from code"
       },
       "recurrences": {
         "method-selection": "Recurrence solving method selection",
@@ -123,6 +271,106 @@
           "case-selection": "Master Theorem case selection"
         }
       }
+    },
+    "dashboard": {
+      "title": "My Quizzes",
+      "subtitle": "Review your progress, strengths, and areas to improve.",
+      "startNew": "New quiz",
+      "startFirst": "Take my first quiz",
+      "emptyTitle": "Start your first quiz!",
+      "emptySubtitle": "Complete at least one session to see your stats.",
+      "totalAttempts": "Total attempts",
+      "avgAccuracy": "Avg. accuracy",
+      "topStrength": "Top strength",
+      "topWeakness": "Area to improve",
+      "strengthsTitle": "My strengths",
+      "weakAreasTitle": "Areas to reinforce",
+      "recentTitle": "Recent attempts",
+      "noAttempts": "No attempts yet. Give it a try!",
+      "generalSession": "General session",
+      "emptyCentered": {
+        "message": "Your first quiz will be great. Let's start now.",
+        "cta": "Take my first quiz"
+      },
+      "historyCard": {
+        "eyebrow": "History",
+        "completedWithScore": "Quiz completed with {correct}/{total} correct answers.",
+        "moduleLabel": "Module: {moduleId}.",
+        "generalSessionLabel": "General session.",
+        "scoreTitle": "{score}/5.0",
+        "feedbackImprove": "Feedback: reinforce {topic}.",
+        "feedbackStrength": "Feedback: good baseline on {topic}.",
+        "feedbackNeutral": "Feedback: keep practicing to consolidate mastery.",
+        "progressLabel": "Result",
+        "ctaLabel": "Retry practice"
+      },
+      "cards": {
+        "newTestEyebrow": "New test",
+        "firstQuizTitle": "Start your first quiz",
+        "firstQuizDescription": "There is no history yet. Take a first test to build stats and detect areas to improve.",
+        "noHistoryProgress": "No history",
+        "firstQuizCta": "Take first quiz",
+        "emptyStateEyebrow": "Status",
+        "noStatsTitle": "No stats yet",
+        "noStatsDescription": "Metrics appear after at least one completed quiz. No invented averages are shown.",
+        "pendingProgress": "Pending",
+        "diagnosticCta": "Create diagnostic test",
+        "recommendedPracticeEyebrow": "Recommended practice",
+        "practiceAreaTitle": "Practice {area}",
+        "newQuizTitle": "Start new quiz",
+        "recommendedPracticeDescription": "This is the area worth reinforcing most based on your recent results.",
+        "adaptiveDescription": "Create a new test with adaptive selection based on your local progress.",
+        "currentAverageProgress": "Current average",
+        "startQuizCta": "Take quiz",
+        "averageEyebrow": "Average",
+        "averageUnavailableTitle": "Average unavailable",
+        "averageTitle": "{score}/5.0",
+        "averageDescription": "Summary of cumulative performance from quizzes completed in this browser.",
+        "averageAccuracyProgress": "Average accuracy",
+        "viewHistoryCta": "View history",
+        "weaknessEyebrow": "Area to improve",
+        "noCriticalWeaknessTitle": "No critical weakness",
+        "weaknessDescription": "This appears as priority due to low performance or recent errors.",
+        "noWeaknessDescription": "There are no recurrent errors to mark a strong weakness.",
+        "masteryProgress": "Mastery",
+        "practiceAreaCta": "Practice area",
+        "generalTestCta": "General test",
+        "latestTestEyebrow": "Latest test",
+        "latestTitle": "{percent}% in latest quiz",
+        "noLatestTitle": "No latest test",
+        "latestDescription": "You answered {correct}/{total} correctly.",
+        "noLatestDescription": "When you complete a quiz, the latest result appears here.",
+        "resultProgress": "Result",
+        "retryCta": "Retry practice",
+        "strengthEyebrow": "Strength",
+        "pendingStrengthTitle": "Strength pending",
+        "strengthDescription": "This area shows enough consistency in your recent results.",
+        "noStrengthDescription": "More history is needed to identify a defensible strength.",
+        "keepPracticingCta": "Keep practicing"
+      }
+    },
+    "modal": {
+      "title": "New quiz",
+      "modeLabel": "Study mode",
+      "mode": {
+        "adaptive": "Adaptive",
+        "weak": "Weak areas",
+        "free": "Free"
+      },
+      "modeDesc": {
+        "adaptive": "Based on your current progress and mastery.",
+        "weak": "Focus on the topics where you struggle most.",
+        "free": "Random selection from the full question bank."
+      },
+      "weakAreasLabel": "Your weak areas",
+      "questionCountLabel": "Number of questions",
+      "questionCountOption": "{count} questions",
+      "recommendedEyebrow": "Recommended",
+      "recommendedTitle": "Practice weak areas",
+      "recommendedDescription": "AALIE will select questions using your local progress and recent results.",
+      "cancel": "Cancel",
+      "start": "Start quiz",
+      "note": "Questions are automatically selected from a bank of 475+ items."
     }
   },
   "footer": {
@@ -1859,6 +2107,8 @@
     "completed": "Completed",
     "references": "References",
     "viewSolution": "View solution",
-    "brokenLinkTooltip": "Content not available"
+    "brokenLinkTooltip": "Content not available",
+    "startQuiz": "Take quiz",
+    "quizLocked": "Quiz at {threshold}%"
   }
 }

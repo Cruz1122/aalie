@@ -101,7 +101,7 @@
   "learningObjectives": [
     {
       "objectiveId": "definir-algoritmo-recursivo",
-      "text": "Define what a recursive algorithm is and differentiate its follow-up from the follow-up of an iterative algorithm."
+      "text": "Deende what a recursive algorithm is and differentiate its follow-up from the follow-up of an iterative algorithm."
     },
     {
       "objectiveId": "explicar-ambientes-ejecucion-pila",
@@ -278,7 +278,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Recursion is in nature: Russian dolls, fractals, the definition of the factorial. Its power lies in expressing complex solutions in an elegant and concise way."
+                  "text": "Recursion is in nature: Russian dolls, fractals, the deendition of the factorial. Its power lies in expressing complex solutions in an elegant and concise way."
                 }
               ]
             }
@@ -378,7 +378,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "As long as the environment is not terminated, all previous environments are suspended waiting on the stack. That is why recursion has a relevant spatial cost: each environment consumes memory."
+                  "text": "As long as the environment is not terminated, all previous environments are suspended waiting on the stack. That is why recursion has a relevant space cost: each environment consumes memory."
                 }
               ]
             },
@@ -498,7 +498,7 @@
           "learningObjectives": [
             {
               "objectiveId": "entender-fibonacci-recursivo",
-              "text": "Understand the recursive definition of Fibonacci."
+              "text": "Understand the recursive deendition of Fibonacci."
             },
             {
               "objectiveId": "leer-pseudocodigo-fibonacci",
@@ -561,7 +561,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "Fib",
-              "code": "int Fib(E int n) {\n  if (n=0) or (n=1) then\n    f <- n # caso base: Fib(0)=0, Fib(1)=1\n  else\n    f <- Fib(n-1) + Fib(n-2) # caso general\n  endif\n  return f\n}"
+              "code": "int Fib(E int n) {\n  if (n=0) or (n=1) then\n    f <- n # base case: Fib(0)=0, Fib(1)=1\n  else\n    f <- Fib(n-1) + Fib(n-2) # general case\n  endif\n  return f\n}"
             },
             {
               "id": "blk-fibonacci-seguimiento",
@@ -601,7 +601,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "of each level remains pending until the left one finishes."
+                  "text": "of each level remains pending until the left one endishes."
                 }
               ]
             },
@@ -681,12 +681,12 @@
                 {
                   "stepId": "step-fib-base-summary",
                   "title": "Base cases",
-                  "latex": "T(0)=1,\\quad T(1)=1 \\quad \\text{son constantes}"
+                  "latex": "T(0)=1,\\quad T(1)=1 \\quad \\text{are constants}"
                 },
                 {
                   "stepId": "step-fib-general",
                   "title": "General case",
-                  "latex": "T(n)=T(n-1)+T(n-2)\\quad \\text{para } n\\ge 2"
+                  "latex": "T(n)=T(n-1)+T(n-2)\\quad \\text{for } n\\ge 2"
                 }
               ]
             }
@@ -849,7 +849,7 @@
               "type": "algorithm",
               "language": "pseudocode",
               "title": "T.H.",
-              "code": "TH(E int n, E char o, E char a, E char d) {\n  if (n = 1) then\n    Print('mover disco del origen al destino') # caso base\n  else\n    TH(n-1, o, d, a) # mueve n-1 al auxiliar\n    Print('mover disco del origen al destino')\n    TH(n-1, a, o, d) # mueve n-1 al destino\n  endif\n}"
+              "code": "TH(E int n, E char o, E char a, E char d) {\n  if (n = 1) then\n    Print('move disk from source to destination') # base case\n  else\n    TH(n-1, o, d, a) # move n-1 disks to the auxiliary peg\n    Print('move disk from source to destination')\n    TH(n-1, a, o, d) # move n-1 disks to the destination peg\n  endif\n}"
             },
             {
               "id": "blk-hanoi-mermaid",
@@ -1175,7 +1175,7 @@
           "learningObjectives": [
             {
               "objectiveId": "definir-recursion-cola",
-              "text": "Define when a recursion is tail recursion."
+              "text": "Deende when a recursion is tail recursion."
             },
             {
               "objectiveId": "explicar-conversion-iterativa",

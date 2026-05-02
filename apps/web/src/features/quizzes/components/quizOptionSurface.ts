@@ -1,4 +1,9 @@
-import type { QuizPair, QuizQuestion, QuizQuestionResult, StudentAnswer } from "@aa/types";
+import type {
+  QuizPair,
+  QuizQuestion,
+  QuizQuestionResult,
+  StudentAnswer,
+} from "@aa/types";
 
 import type { QuizOptionState } from "./types";
 
@@ -6,7 +11,9 @@ import type { QuizOptionState } from "./types";
  * Quiz row surfaces. Uses Tailwind `!` so border/bg win over `.glass-card` shorthand
  * (defined after utilities in globals) and over `border-color: currentColor` on buttons.
  */
-export function surfaceClassesForQuizOptionState(state: QuizOptionState): string {
+export function surfaceClassesForQuizOptionState(
+  state: QuizOptionState,
+): string {
   if (state === "correct") {
     return "!border-emerald-300/50 !bg-emerald-500/20 hover:!border-emerald-300/70 hover:!bg-emerald-500/30";
   }
@@ -33,7 +40,10 @@ function getOrderedOptionIds(
   answer: StudentAnswer,
 ): string[] {
   if ("orderedOptionIds" in answer) {
-    return answer.orderedOptionIds ?? (question.options ?? []).map((item) => item.optionId);
+    return (
+      answer.orderedOptionIds ??
+      (question.options ?? []).map((item) => item.optionId)
+    );
   }
   return (question.options ?? []).map((item) => item.optionId);
 }
@@ -52,13 +62,16 @@ export function buildOrderingStateById(
 ): Record<string, QuizOptionState> {
   const student = getOrderedOptionIds(question, result.studentAnswer) ?? [];
   const correct =
-    result.correctAnswer?.orderedOptionIds ?? question.answer.orderedOptionIds ?? [];
+    result.correctAnswer?.orderedOptionIds ??
+    question.answer.orderedOptionIds ??
+    [];
   const byId: Record<string, QuizOptionState> = {};
 
   for (const [i, id] of student.entries()) {
     if (!id) continue;
     const expected = correct[i];
-    byId[id] = expected !== undefined && id === expected ? "correct" : "incorrect";
+    byId[id] =
+      expected !== undefined && id === expected ? "correct" : "incorrect";
   }
 
   return byId;

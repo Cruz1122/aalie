@@ -2,6 +2,7 @@
 
 import type { PedagogyIconName } from "@aa/content-catalog";
 import Analytics from "@mui/icons-material/Analytics";
+import ArrowForward from "@mui/icons-material/ArrowForward";
 import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import Lightbulb from "@mui/icons-material/Lightbulb";
 import School from "@mui/icons-material/School";
@@ -17,6 +18,7 @@ const ICON_COMPONENTS: Record<PedagogyIconName, ComponentType<SvgIconProps>> = {
   lightbulb: Lightbulb,
   warning: Warning,
   error_outline: ErrorOutline,
+  arrow_forward: ArrowForward,
 };
 
 export interface MaterialIconProps extends SvgIconProps {

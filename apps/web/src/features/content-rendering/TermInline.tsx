@@ -1,10 +1,11 @@
 "use client";
 
-import type { TermIndexEntry } from "@aa/content-catalog/types";
-import { Link } from "@/i18n/navigation";
-import { MaterialIcon } from "./MaterialIcon";
 import { Tooltip, Box, Typography, Link as MuiLink } from "@mui/material";
 import React from "react";
+
+import { Link } from "@/i18n/navigation";
+
+import { MaterialIcon } from "./MaterialIcon";
 
 interface TermInlineProps {
   text: string;
@@ -24,14 +25,32 @@ export function TermInline({ text, term, display, href }: TermInlineProps) {
 
   const tooltipContent = (
     <Box sx={{ p: 1.5, maxWidth: 280 }}>
-      <Typography variant="subtitle2" component="div" sx={{ fontWeight: 600, color: "white", mb: 0.5 }}>
+      <Typography
+        variant="subtitle2"
+        component="div"
+        sx={{ fontWeight: 600, color: "white", mb: 0.5 }}
+      >
         {term.label}
       </Typography>
-      <Typography variant="body2" component="div" sx={{ color: "rgba(255, 255, 255, 0.8)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+      <Typography
+        variant="body2"
+        component="div"
+        sx={{
+          color: "rgba(255, 255, 255, 0.8)",
+          fontSize: "0.85rem",
+          lineHeight: 1.6,
+        }}
+      >
         {term.definition}
       </Typography>
       {href && (
-        <Box sx={{ mt: 1.5, pt: 1, borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+        <Box
+          sx={{
+            mt: 1.5,
+            pt: 1,
+            borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+          }}
+        >
           <MuiLink
             component={Link}
             href={href}
@@ -42,7 +61,7 @@ export function TermInline({ text, term, display, href }: TermInlineProps) {
               fontSize: "0.75rem",
               color: "#7dd3fc",
               textDecoration: "none",
-              "&:hover": { textDecoration: "underline" }
+              "&:hover": { textDecoration: "underline" },
             }}
           >
             Ver explicación detallada
@@ -68,22 +87,20 @@ export function TermInline({ text, term, display, href }: TermInlineProps) {
             border: "1px solid rgba(255, 255, 255, 0.1)",
             borderRadius: "12px",
             boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.4)",
-            p: 0
-          }
+            p: 0,
+          },
         },
         arrow: {
           sx: {
             color: "#0f172a",
             "&::before": {
-              border: "1px solid rgba(255, 255, 255, 0.1)"
-            }
-          }
-        }
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+            },
+          },
+        },
       }}
     >
-      <span className={resolvedClassName}>
-        {text}
-      </span>
+      <span className={resolvedClassName}>{text}</span>
     </Tooltip>
   );
 }

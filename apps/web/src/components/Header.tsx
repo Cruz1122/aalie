@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
     color: "emerald",
   },
   { href: "/course", labelKey: "course", icon: "school", color: "amber" },
-  { href: "/course/quiz", labelKey: "quiz", icon: "quiz", color: "teal" },
+  { href: "/quizzes", labelKey: "quizzes", icon: "quiz", color: "teal" },
   { href: "/about-us", labelKey: "about", icon: "info", color: "cyan" },
 ];
 

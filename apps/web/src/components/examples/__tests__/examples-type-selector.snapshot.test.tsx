@@ -46,20 +46,15 @@ describe("ExamplesTypeSelector", () => {
     render(
       <ExamplesTypeSelector
         ctaLabel="Ver familia"
-        categories={[
-          "iterative",
-          "divide_and_conquer",
-          "decrease_and_conquer",
-        ]}
+        categories={["iterative", "divide_and_conquer", "decrease_and_conquer"]}
       />,
     );
 
     expect(screen.getByText("Iterativos")).toBeInTheDocument();
     expect(screen.getByText("Divide y vencerás")).toBeInTheDocument();
     expect(screen.getByText("Resta y vencerás")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /Ver familia/i })[0]).toHaveAttribute(
-      "href",
-      "/examples/iterative",
-    );
+    expect(
+      screen.getAllByRole("link", { name: /Ver familia/i })[0],
+    ).toHaveAttribute("href", "/examples/iterative");
   });
 });

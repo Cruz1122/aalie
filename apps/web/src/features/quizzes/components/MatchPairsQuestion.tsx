@@ -18,4 +18,3 @@ interface Props {
 export function MatchPairsQuestion(props: Props) {
   return <DefinitionsConceptsQuestion {...props} />;
 }
-

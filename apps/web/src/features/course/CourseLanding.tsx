@@ -11,9 +11,10 @@ import type { ContentLandingData } from "@/lib/content/types";
 
 interface CourseLandingProps {
   data: ContentLandingData;
+  locale: string;
 }
 
-export function CourseLanding({ data }: CourseLandingProps) {
+export function CourseLanding({ data, locale }: CourseLandingProps) {
   const { finishNavigation } = useNavigation();
   const { moduleProgressById } = useContentProgress(
     data.space.spaceId,
@@ -34,6 +35,7 @@ export function CourseLanding({ data }: CourseLandingProps) {
                 <UserGuideCard
                   module={module}
                   progress={moduleProgressById[module.moduleId] ?? 0}
+                  locale={locale}
                 />
               </div>
             ))}

@@ -7,20 +7,20 @@ interface ContentMetaBarProps {
 }
 
 const difficultyLabels: Record<string, string> = {
-  foundational: "Fundacional",
-  basic: "Básico",
-  intermediate: "Intermedio",
-  advanced: "Avanzado",
+  foundational: "Foundational",
+  basic: "Basic",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
 };
 
 export function ContentMetaBar({ module }: ContentMetaBarProps) {
   const items = [
     module.estimatedMinutes
-      ? { label: "Tiempo estimado", value: `${module.estimatedMinutes} min` }
+      ? { label: "Estimated time", value: `${module.estimatedMinutes} min` }
       : null,
     module.difficulty
       ? {
-          label: "Dificultad",
+          label: "Difficulty",
           value: difficultyLabels[module.difficulty] ?? module.difficulty,
         }
       : null,
