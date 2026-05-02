@@ -1,3 +1,5 @@
+import { pedagogyExamples } from "./pedagogy";
+
 export type ExampleLocale = "es" | "en";
 
 export type ExampleCategory =
@@ -3392,6 +3394,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
 export const examplesCatalog: ExampleCatalogItem[] = [
   ...iterativeExamples,
   ...divideAndConquerExamples,
+  ...pedagogyExamples,
   ...decreaseAndConquerExamples,
   ...decreaseByOneExamples,
 ];

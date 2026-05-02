@@ -19,11 +19,13 @@ export type MethodType =
   | "master";
 
 export type MethodPrecision = "high" | "medium" | "low";
+export type MethodBoundKind = "equivalent" | "upper" | "lower" | "partial";
 
 export interface MethodMetadata {
   applicable: boolean;
   recommended: boolean;
   precision: MethodPrecision;
+  boundKind: MethodBoundKind;
   reason: string;
 }
 
@@ -130,6 +132,10 @@ export default function MethodSelector({
         applicable: applicableMethods.includes(methodId),
         recommended: methodId === defaultMethod,
         precision: methodId === defaultMethod ? "high" : "medium",
+        boundKind:
+          applicableMethods.includes(methodId) && methodId === defaultMethod
+            ? "equivalent"
+            : "partial",
         reason: fallbackReason,
       };
       acc[methodId] = methodMetadata?.[methodId] ?? fallbackItem;
@@ -157,6 +163,7 @@ export default function MethodSelector({
       applicable: false,
       recommended: false,
       precision: "low",
+      boundKind: "partial",
       reason: t("reasons.fallback"),
     } as MethodMetadata);
   const isSelectionApplicable = selectedMethodData?.applicable ?? false;
@@ -165,6 +172,27 @@ export default function MethodSelector({
     if (precision === "high") return "text-blue-300";
     if (precision === "medium") return "text-slate-300";
     return "text-slate-400";
+  };
+  const boundKindStyles: Record<
+    MethodBoundKind,
+    { label: string; className: string }
+  > = {
+    equivalent: {
+      label: t("boundKinds.equivalent"),
+      className: "border-emerald-400/30 bg-emerald-500/15 text-emerald-200",
+    },
+    upper: {
+      label: t("boundKinds.upper"),
+      className: "border-sky-400/30 bg-sky-500/15 text-sky-200",
+    },
+    lower: {
+      label: t("boundKinds.lower"),
+      className: "border-violet-400/30 bg-violet-500/15 text-violet-200",
+    },
+    partial: {
+      label: t("boundKinds.partial"),
+      className: "border-amber-400/30 bg-amber-500/15 text-amber-200",
+    },
   };
   const rootClass = embeddedInLoader
     ? "absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-300 opacity-100"
@@ -206,6 +234,7 @@ export default function MethodSelector({
               const metadata = normalizedMetadata[methodId];
               const isSelected = selectedMethod === methodId;
               const isApplicable = metadata.applicable;
+              const boundInfo = boundKindStyles[metadata.boundKind];
 
               return (
                 <button
@@ -251,19 +280,6 @@ export default function MethodSelector({
                           </div>
                         </div>
                       )}
-                      {isApplicable && !metadata.recommended && (
-                        <div className="absolute -right-2 -top-2 group/warn">
-                          <div className="relative h-5 w-5">
-                            <div className="absolute inset-0 rounded-full bg-[#182431]" />
-                            <div className="absolute inset-0 rounded-full border border-amber-500/40 bg-amber-500/20 text-white text-[10px] font-bold flex items-center justify-center">
-                              !
-                            </div>
-                          </div>
-                          <div className="absolute right-0 top-6 z-[9999] w-56 rounded-lg border border-amber-500/30 bg-slate-950 p-2 text-xs text-amber-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/warn:opacity-100 group-hover/warn:visible">
-                            {metadata.reason}
-                          </div>
-                        </div>
-                      )}
                       <span
                         className={`material-symbols-outlined ${isSelected ? method.color : isApplicable ? "text-slate-400" : "text-slate-500"}`}
                       >
@@ -294,6 +310,18 @@ export default function MethodSelector({
                     >
                       {t(`methods.${methodId}.name`)}
                     </span>
+                    {isApplicable && (
+                      <span className="relative group/bound">
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${boundInfo.className}`}
+                        >
+                          {boundInfo.label}
+                        </span>
+                        <span className="absolute left-1/2 top-6 z-[9999] w-56 -translate-x-1/2 rounded-lg border border-amber-500/30 bg-slate-950 p-2 text-xs text-amber-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/bound:opacity-100 group-hover/bound:visible">
+                          {metadata.reason}
+                        </span>
+                      </span>
+                    )}
                   </div>
                 </button>
               );

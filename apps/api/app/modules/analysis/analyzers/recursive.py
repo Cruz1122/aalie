@@ -484,8 +484,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     proc_def, recursive_calls
                 )
                 use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
-                use_recursion_tree = self._detect_recursion_tree_method(
-                    proc_def, recursive_calls, a, b
+                # Árbol de recursión solo para casos pedagógicos controlados.
+                use_recursion_tree = self._should_enable_linear_shift_recursion_tree(
+                    proc_def, recursive_calls
                 )
             elif recurrence_type == "divide_conquer":
                 # En divide_conquer la ecuación característica no aplica de forma directa.
@@ -552,6 +553,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
             else:
                 default_method = recurrence.get("method", "master")
 
+            method_outcomes = self._build_method_outcomes(
+                recurrence, applicable_methods, default_method
+            )
+
             def _is_constant_work(raw_term: Any) -> bool:
                 raw = str(raw_term or "").strip().lower().replace(" ", "")
                 if raw in {
@@ -614,6 +619,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "type": recurrence.get("type"),
                 "form": recurrence.get("form"),
                 "applicable": recurrence.get("applicable"),
+                "method_outcomes": method_outcomes,
             }
             recurrence_info["strategy_family"] = _strategy_family(recurrence)
 
@@ -651,7 +657,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "default_method": default_method,
                 "recurrence_info": recurrence_info,
             }
-
         except Exception as e:
             return {
                 "ok": False,
@@ -659,7 +664,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     {
                         "message": f"Error detectando métodos: {str(e)}",
                         "line": None,
-                        "column": None,
                     }
                 ],
             }
@@ -671,13 +675,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "",
             "0",
             "1",
-            "\\theta(0)",
-            "theta(0)",
-            "\\theta(1)",
             "theta(1)",
+            "\\theta(1)",
+            "o(1)",
+            "\\mathcal{o}(1)",
         }:
             return True
-        # Constantes numéricas simples.
         try:
             _ = float(cleaned)
             return True
@@ -713,6 +716,117 @@ class RecursiveAnalyzer(BaseAnalyzer):
             return False
 
         return self._is_constant_work_term(recurrence.get("f", "1"))
+
+    def _infer_method_bound_kind(
+        self,
+        method: str,
+        recurrence: Dict[str, Any],
+        applicable_methods: List[str],
+    ) -> str:
+        recurrence_type = str(recurrence.get("type") or "")
+
+        if recurrence_type == "linear_shift" and method == "recursion_tree":
+            return "upper"
+
+        if method not in applicable_methods:
+            return "partial"
+
+        if recurrence_type == "linear_shift":
+            if method in {"characteristic_equation", "iteration"}:
+                return "equivalent"
+            return "partial"
+
+        if recurrence_type == "divide_conquer":
+            if method == "master":
+                return "equivalent"
+            if method == "recursion_tree":
+                return "equivalent"
+            if method == "iteration":
+                if self._is_single_branch_geometric_divide_conquer_recurrence(recurrence):
+                    return "equivalent"
+                return "upper"
+            return "partial"
+
+        if recurrence_type == "divide_conquer_multi":
+            if method == "recursion_tree":
+                return "upper"
+            return "partial"
+
+        return "partial"
+
+    def _build_method_outcomes(
+        self,
+        recurrence: Dict[str, Any],
+        applicable_methods: List[str],
+        default_method: str,
+    ) -> Dict[str, Dict[str, Any]]:
+        outcomes: Dict[str, Dict[str, Any]] = {}
+        for method in [
+            "characteristic_equation",
+            "iteration",
+            "recursion_tree",
+            "master",
+        ]:
+            bound_kind = self._infer_method_bound_kind(
+                method, recurrence, applicable_methods
+            )
+            outcomes[method] = {
+                "applicable": method in applicable_methods,
+                "recommended": method == default_method,
+                "bound_kind": bound_kind,
+                "bound_strength": "strong" if bound_kind == "equivalent" else "partial",
+                "bound_symbol": {
+                    "equivalent": "theta",
+                    "upper": "big_o",
+                    "lower": "big_omega",
+                    "partial": "partial",
+                }.get(bound_kind, "partial"),
+            }
+
+        return outcomes
+
+    def _should_enable_linear_shift_recursion_tree(
+        self,
+        proc_def: Dict[str, Any],
+        recursive_calls: List[Dict[str, Any]],
+    ) -> bool:
+        """
+        Habilita árbol de recursión para lineales solo en casos pedagógicos claros:
+        - rama única (T(n-k)+g(n)), o
+        - multi-rama densa tipo Fibonacci/Tribonacci (desplazamientos consecutivos 1..k).
+
+        Evita habilitarlo para patrones dispersos (ej. n-1 y n-4), donde su lectura
+        suele ser demasiado laxa y confunde con otras técnicas.
+        """
+        if len(recursive_calls) == 1:
+            return True
+
+        linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+        if not linear_info:
+            return False
+
+        shifts = sorted((linear_info.get("coefficients") or {}).keys())
+        if len(shifts) < 2:
+            return False
+
+        # Requiere desplazamientos consecutivos empezando en 1: [1,2], [1,2,3], ...
+        return shifts == list(range(1, max(shifts) + 1))
+
+    def _get_method_bound_kind(self, method: str) -> str:
+        """
+        Determina bound_kind para el método actual basado en la recurrencia.
+        
+        Returns: "equivalent" | "upper" | "lower" | "partial"
+        """
+        if not self.recurrence:
+            return "partial"
+        
+        return self._infer_method_bound_kind(
+            method,
+            self.recurrence,
+            # Para este cálculo, asumimos que si llegamos aquí, el método es aplicable
+            [method]
+        )
 
     def _has_object_field_access_in_recursive_calls(
         self, recursive_calls: List[Dict[str, Any]]
@@ -1550,7 +1664,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             elif method == "recursion_tree" and has_subtraction:
                 # Fibonacci-type: T(n) = T(n-1) + T(n-2) + ... (múltiples términos)
                 linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
-                if linear_info and len(linear_info.get("coefficients", {})) >= 2:
+                if linear_info and len(linear_info.get("coefficients", {})) >= 1:
                     coeffs = linear_info["coefficients"]
                     shifts_list = sorted(coeffs.keys())
                     coeffs_list = [coeffs[s] for s in shifts_list]
@@ -1619,6 +1733,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "notes": [],
                     "method": method,
                 }
+
+        recurrence["method_outcome"] = self._build_method_outcomes(
+            recurrence,
+            [method],
+            method,
+        ).get(method, {})
 
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
@@ -3738,6 +3858,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             a=max(a, 0),
             b=(self._canonicalize_numeric(b) if b > 0 else 0),
             f_n=f_n_str,
+            bound_kind=self._get_method_bound_kind("master"),
             p_latex=p_latex,
             reference_growth_latex=reference_growth,
             relation_type=relation_type,
@@ -3981,21 +4102,21 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         recursive_calls = self._find_recursive_calls(proc_def)
         proc_name = proc_def.get("name", "") or (self.procedure_name or "")
+        size_signals = self._extract_size_signals(proc_def, recursive_calls)
 
         call_sites: List[RecursiveCallSite] = []
         for call in recursive_calls:
             line = call.get("pos", {}).get("line") if isinstance(call, dict) else None
             args = call.get("args", []) if isinstance(call, dict) else []
+            call_name = call.get("name") or call.get("callee", "") if isinstance(call, dict) else ""
             call_sites.append(
                 RecursiveCallSite(
                     node=call,
-                    call_name=str(call.get("name") or call.get("callee") or proc_name),
+                    call_name=str(call_name),
                     args=list(args) if isinstance(args, list) else [],
                     line=line if isinstance(line, int) else None,
                 )
             )
-
-        size_signals = self._extract_size_signals(proc_def, recursive_calls)
         size_symbols: Set[str] = set(size_signals.get("size_symbols") or set())
         size_graph = size_signals.get("size_graph") or {}
 
@@ -5671,7 +5792,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         linear_info: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Valida si una recurrencia lineal encaja bien como caso de programación dinámica."""
-        coefficients = linear_info.get("coefficients", {})
+        coefficients = linear_info.get("coefficients", {}) or {}
         shifts = sorted(coefficients.keys())
         max_offset = int(linear_info.get("max_offset", 0) or 0)
         total_calls = sum(coefficients.values())
@@ -5731,31 +5852,29 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "recursive_call_count": total_calls,
                 "distinct_shifts": shifts,
                 "max_offset": max_offset,
-                "contiguous_shifts": contiguous_shifts,
                 "changed_non_size_params": changed_non_size_params,
             },
         }
-
         self.dp_validation_events.append(validation)
-        for reason in reasons:
-            prefix = "DP validada" if validation["applicable"] else "DP descartada"
-            self.add_note(f"{prefix}: {reason}")
-
+        if validation["applicable"]:
+            self.add_note(f"DP validada: {primary_pattern}")
+        else:
+            self.add_note(f"DP descartada: {reasons[0] if reasons else 'sin motivo'}")
         return validation
 
     def _build_non_dp_validation(self, reason: str) -> Dict[str, Any]:
-        """Registra el descarte explícito de PD para recurrencias fuera del perfil esperado."""
+        """Registra una validación conservadora para recurrencias que no son de PD."""
         validation = {
             "status": "rejected",
             "applicable": False,
             "confidence": "high",
-            "primary_pattern": "none",
+            "primary_pattern": "divide_and_conquer",
             "supported_patterns": [],
             "reasons": [reason],
             "debug": {},
         }
         self.dp_validation_events.append(validation)
-        self.add_note(f"DP descartada: {reason}")
+        self.add_note(f"PD descartada: {reason}")
         return validation
 
     def _detect_characteristic_equation_method(
@@ -6521,6 +6640,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 order=max_offset,
                 is_linear=bool(linear_info.get("is_linear")),
                 g_n=g_n_str,
+                bound_kind=self._get_method_bound_kind("characteristic_equation"),
                 is_homogeneous=is_homogeneous,
                 homogeneous_form=homogeneous_form,
                 equation=char_eq_latex,
@@ -7698,6 +7818,7 @@ FIN FUNCIÓN"""
                 recurrence_form=recurrence_form,
                 g_n=g_n_value,
                 is_supported=False,
+                bound_kind=self._get_method_bound_kind("iteration"),
                 support_code=support_code,
                 base_case_index=base_idx,
                 base_case_value=str(base_val) if base_val is not None else None,
@@ -7790,6 +7911,7 @@ FIN FUNCIÓN"""
                 recurrence_form=recurrence_form,
                 g_n=g_n_value,
                 is_supported=True,
+                bound_kind=self._get_method_bound_kind("iteration"),
                 support_code=None,
                 base_case_index=base_for_formula,
                 base_case_value=str(base_val) if base_val is not None else None,
@@ -7956,6 +8078,7 @@ FIN FUNCIÓN"""
                 recurrence_form=recurrence_form,
                 g_n=g_n_value,
                 is_supported=True,
+                bound_kind=self._get_method_bound_kind("iteration"),
                 support_code=None,
                 base_case_index=base_idx,
                 base_case_value=str(base_val) if base_val is not None else None,
@@ -8108,6 +8231,7 @@ FIN FUNCIÓN"""
             recurrence_form=recurrence_form,
             g_n=g_n_value,
             is_supported=True,
+            bound_kind=self._get_method_bound_kind("iteration"),
             support_code=None,
             base_case_index=base_idx,
             base_case_value=str(base_val) if base_val is not None else None,
@@ -8601,7 +8725,10 @@ FIN FUNCIÓN"""
                 n0_value = 1
 
             if support_code is None:
-                if recurrence_type != "divide_conquer":
+                linear_shift_shifts = self.recurrence.get("shifts", []) or []
+                if recurrence_type == "linear_shift" and len(linear_shift_shifts) >= 2:
+                    support_code = "RT_LINEAR_SHIFT_BALANCED"
+                elif recurrence_type != "divide_conquer":
                     support_code = "RT_UNSUPPORTED_FORM"
                 elif a_value is None or b_value is None or a_value < 1 or b_value <= 1:
                     support_code = "RT_INVALID_PARAMETERS"
@@ -8638,6 +8765,22 @@ FIN FUNCIÓN"""
             )
             leaf_count = f"L={a_display}^h=n^{{\\log_{{{b_display}}} {a_display}}}"
             leaf_cost = f"C_{{\\text{{hojas}}}}=L\\cdot T({n0_display})"
+            linear_shifts = []
+            linear_coefficients = []
+            linear_branch_factor = None
+            if recurrence_type == "linear_shift":
+                raw_shifts = self.recurrence.get("shifts", []) or []
+                raw_coeffs = self.recurrence.get("coefficients", []) or []
+                try:
+                    linear_shifts = [int(s) for s in raw_shifts]
+                except Exception:
+                    linear_shifts = []
+                try:
+                    linear_coefficients = [max(0, int(c)) for c in raw_coeffs]
+                except Exception:
+                    linear_coefficients = []
+                coeff_sum = sum(linear_coefficients)
+                linear_branch_factor = coeff_sum if coeff_sum > 0 else None
 
             step_ctx = RecursionTreeStepContext(
                 locale=self.locale,
@@ -8646,6 +8789,7 @@ FIN FUNCIÓN"""
                 a=a_value,
                 b=b_value,
                 f_n=f_n,
+                bound_kind=self._get_method_bound_kind("recursion_tree"),
                 n0=n0_value,
                 is_supported=is_supported,
                 support_code=support_code,
@@ -8659,6 +8803,9 @@ FIN FUNCIÓN"""
                 dominant_level=(str(dominant_level) if dominant_level is not None else None),
                 dominant_reason_latex=dominant_reason if is_supported else None,
                 theta_latex=theta_latex if is_supported else None,
+                linear_shifts=linear_shifts,
+                linear_coefficients=linear_coefficients,
+                linear_branch_factor=linear_branch_factor,
                 summation_partial=summation_partial,
                 tree_inconsistent=tree_inconsistent,
                 asymptotic_partial=asymptotic_partial,
@@ -8789,25 +8936,33 @@ FIN FUNCIÓN"""
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Suma aritmética } n + (n-1) + \\ldots + 1 = \\Theta(n^2)"
+                        "reason": "\\text{Cota superior por árbol balanceado: } O(n^2)"
                     },
                     "table_by_levels": [],
-                    "theta": f"\\Theta({theta})",
+                    "theta": theta,
                 }
-                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
-                    support_code="RT_UNSUPPORTED_FORM",
-                    asymptotic_partial=True,
+                    asymptotic_partial=False,
                 )
                 return {"success": True, "recursion_tree": recursion_tree}
 
             # Fibonacci-type: T(n) = c1*T(n-k1) + c2*T(n-k2) + ... (múltiples términos)
             # Árbol con subproblemas superpuestos; no usar estructura divide-and-conquer
             shifts = self.recurrence.get("shifts", [])
-            self.recurrence.get("coefficients", [])
+            coefficients = self.recurrence.get("coefficients", []) or []
             if len(shifts) >= 2:
                 recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + T(n-2) + 1")
+                coeff_ints = []
+                for c in coefficients:
+                    try:
+                        coeff_ints.append(max(0, int(c)))
+                    except Exception:
+                        continue
+                branch_factor = sum(coeff_ints) if coeff_ints else len(shifts)
+                if branch_factor < 2:
+                    branch_factor = 2
                 self.proof_steps.append(
                     {
                         "id": "tree_extract",
@@ -8817,10 +8972,10 @@ FIN FUNCIÓN"""
                 self.proof_steps.append(
                     {
                         "id": "step1_note",
-                        "text": "\\text{Árbol con subproblemas superpuestos: el mismo T(k) se calcula varias veces. Crecimiento exponencial } \\Theta(\\varphi^n)",
+                        "text": f"\\text{{Árbol no simétrico: se balancea con factor de ramificación }} B={branch_factor}\\text{{ para obtener una cota superior.}}",
                     }
                 )
-                theta = "\\varphi^n"
+                theta = f"{branch_factor}^n"
                 recursion_tree = {
                     "method": "recursion_tree",
                     "recurrence_type": "linear_shift",
@@ -8834,39 +8989,38 @@ FIN FUNCIÓN"""
                         },
                         {
                             "level": 1,
-                            "num_nodes_latex": "2",
-                            "subproblem_size_latex": "n-1, n-2",
+                            "num_nodes_latex": str(branch_factor),
+                            "subproblem_size_latex": ", ".join([f"n-{int(s)}" for s in shifts]),
                             "cost_per_node_latex": "1",
-                            "total_cost_latex": "2",
+                            "total_cost_latex": str(branch_factor),
                         },
                         {
                             "level": 2,
-                            "num_nodes_latex": "4",
-                            "subproblem_size_latex": "n-2, n-3, n-4",
+                            "num_nodes_latex": f"{branch_factor}^2",
+                            "subproblem_size_latex": "\\text{mezcla de desplazamientos acumulados}",
                             "cost_per_node_latex": "1",
-                            "total_cost_latex": "4",
+                            "total_cost_latex": f"{branch_factor}^2",
                         },
                     ],
                     "height": "n",
                     "summation": {
-                        "expression": "\\sum_{i=0}^{n} \\text{(nodos nivel } i) \\approx \\Theta(\\varphi^n)",
+                        "expression": f"\\sum_{{i=0}}^{{n}} {branch_factor}^i = \\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}",
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Subproblemas superpuestos: crecimiento exponencial } \\Theta(\\varphi^n)"
+                        "reason": f"\\text{{Cota superior por árbol balanceado: }} O({branch_factor}^n)"
                     },
                     "table_by_levels": [],
-                    "theta": f"\\Theta({theta})",
+                    "theta": theta,
                 }
-                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
-                    support_code="RT_UNSUPPORTED_FORM",
-                    asymptotic_partial=True,
+                    asymptotic_partial=False,
                 )
                 return {"success": True, "recursion_tree": recursion_tree}
 
-            # Recursión dentro de FOR (generación de subconjuntos): ramificación → Θ(2^n)
+            # Recursión dentro de FOR (generación de subconjuntos): cota superior por árbol balanceado.
             if self.recurrence.get("branching_subset"):
                 recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + \\Theta(1)")
                 self.proof_steps.append(
@@ -8878,31 +9032,31 @@ FIN FUNCIÓN"""
                 self.proof_steps.append(
                     {
                         "id": "step1_note",
-                        "text": "\\text{Nota: Recursión dentro de FOR (generación de subconjuntos). En cada nivel hay múltiples ramas; el árbol tiene } O(2^n) \\text{ nodos.}",
+                        "text": "\\text{Nota: se usa una cota superior balanceada. En cada nivel hay múltiples ramas; el árbol tiene } O(2^n) \\text{ nodos.}",
                     }
                 )
                 self.proof_steps.append(
                     {
                         "id": "step2",
-                        "text": "\\text{Paso 2: Análisis del árbol de recursión} \\\\ \\text{En cada llamada el FOR genera varias ramas recursivas}",
+                        "text": "\\text{Paso 2: Aproximación por árbol balanceado} \\\\ \\text{Tomamos la rama más larga para obtener una cota superior}",
                     }
                 )
                 self.proof_steps.append(
                     {
                         "id": "step3",
-                        "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{En el nivel } i \\text{, hay en el orden de } 2^i \\text{ nodos}",
+                        "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{Si el árbol se balancea por ramas, el nivel } i \\text{ queda acotado por } 2^i \\text{ nodos}",
                     }
                 )
                 self.proof_steps.append(
                     {
                         "id": "step4",
-                        "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura es } \\Theta(n)",
+                        "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura se acota por } O(n)",
                     }
                 )
                 self.proof_steps.append(
                     {
                         "id": "step5",
-                        "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = \\Theta(2^n)",
+                        "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = O(2^n)",
                     }
                 )
                 theta = "2^n"
@@ -8931,16 +9085,15 @@ FIN FUNCIÓN"""
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Ramificación: número de nodos } \\Theta(2^n)"
+                        "reason": "\\text{Cota superior por árbol balanceado: } O(2^n)"
                     },
                     "table_by_levels": [],
-                    "theta": f"\\Theta({theta})",
+                    "theta": theta,
                 }
-                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
-                    support_code="RT_UNSUPPORTED_FORM",
-                    asymptotic_partial=True,
+                    asymptotic_partial=False,
                 )
                 return {"success": True, "recursion_tree": recursion_tree}
 

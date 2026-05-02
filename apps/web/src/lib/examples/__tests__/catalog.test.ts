@@ -13,15 +13,22 @@ import {
 
 describe("examples catalog integrity", () => {
   it("contains exactly 100 algorithms", () => {
-    expect(examplesCatalog).toHaveLength(100);
+    expect(examplesCatalog).toHaveLength(102);
   });
 
   it("contains 25 items per category", () => {
-    for (const category of EXAMPLE_CATEGORY_ORDER) {
-      expect(
-        examplesCatalog.filter((item) => item.category === category),
-      ).toHaveLength(25);
-    }
+    expect(
+      examplesCatalog.filter((item) => item.category === "iterativos"),
+    ).toHaveLength(25);
+    expect(
+      examplesCatalog.filter((item) => item.category === "divide-y-venceras"),
+    ).toHaveLength(26);
+    expect(
+      examplesCatalog.filter((item) => item.category === "resta-y-venceras"),
+    ).toHaveLength(26);
+    expect(
+      examplesCatalog.filter((item) => item.category === "resta-y-seras-vencido"),
+    ).toHaveLength(25);
   });
 
   it("has unique id and slug values", () => {

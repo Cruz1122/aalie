@@ -56,6 +56,7 @@ export interface TreeLayout {
       level: number;
       nodeCount: number;
       isBaseCase: boolean;
+      isSynthetic?: boolean;
     };
     position: { x: number; y: number };
   }>;
@@ -386,6 +387,7 @@ export interface LinearTreeNode {
   argument: number; // valor del argumento (n, n-1, n-2, etc.)
   level: number; // nivel en el árbol (0 = raíz)
   isBaseCase: boolean; // si es caso base
+  isSynthetic?: boolean; // nodo agregado para balancear aproximación
   duplicateCount?: number; // número de veces que aparece este subproblema
   parentId?: string; // ID del nodo padre (para múltiples padres)
 }
@@ -769,6 +771,7 @@ export function generateLinearRecursionTree(
       level: node.level,
       nodeCount: nodesByLevel.get(node.level) || 1,
       isBaseCase: node.isBaseCase,
+      isSynthetic: node.isSynthetic ?? false,
       duplicateCount: node.duplicateCount,
       argument: node.argument,
       sourcePosition: sourcePos,
@@ -788,6 +791,152 @@ export function generateLinearRecursionTree(
     nodesPerLevel: Array.from(nodesByLevel.values()),
     duplicateNodes, // número de argumentos que aparecen múltiples veces
     growthType: "exponential" as const, // Para recurrencias lineales siempre es exponencial
+  };
+
+  return {
+    nodes,
+    edges: treeEdges,
+    metadata,
+  };
+}
+
+/**
+ * Genera un árbol lineal aproximado y balanceado para recorridos pedagógicos
+ * de cota superior (ej: recursion_tree sobre Fibonacci-like).
+ */
+export function generateBalancedApproxLinearRecursionTree(
+  recurrence: LinearRecurrenceData,
+  maxDepth: number | null = null,
+  orientation: "vertical" | "horizontal" = "vertical",
+  initialN: number = 3,
+): TreeLayout {
+  const realNodes = generateLinearTreeNodes(recurrence, maxDepth, initialN);
+  const allNodes: LinearTreeNode[] = realNodes.map((node) => ({
+    ...node,
+    isSynthetic: false,
+  }));
+
+  const effectiveMaxDepth = maxDepth !== null ? maxDepth : initialN;
+  const branchFactor = Math.max(
+    2,
+    recurrence.coefficients
+      .map((c) => Math.max(0, Math.floor(c || 0)))
+      .reduce((acc, val) => acc + val, 0),
+  );
+
+  const byParent = new Map<string, LinearTreeNode[]>();
+  const byId = new Map<string, LinearTreeNode>();
+  const queue: LinearTreeNode[] = [];
+  for (const node of allNodes) {
+    byId.set(node.id, node);
+    if (node.parentId) {
+      if (!byParent.has(node.parentId)) byParent.set(node.parentId, []);
+      byParent.get(node.parentId)!.push(node);
+    }
+    queue.push(node);
+  }
+
+  let syntheticCounter = 0;
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (current.level > effectiveMaxDepth) continue;
+
+    // Los nodos caso base solo pueden agregar sintéticos si no estamos
+    // en el nivel máximo
+    if (current.isBaseCase && current.level >= effectiveMaxDepth) continue;
+
+    const currentChildren = byParent.get(current.id) || [];
+    const missing = Math.max(0, branchFactor - currentChildren.length);
+    if (missing === 0) continue;
+
+    const nextLevel = current.level + 1;
+    // Prevenir que nodos sintéticos excedan la profundidad máxima
+    if (nextLevel > effectiveMaxDepth) continue;
+
+    for (let i = 0; i < missing; i++) {
+      syntheticCounter += 1;
+      const arg = Math.max(0, current.argument - 1);
+      const syntheticNode: LinearTreeNode = {
+        id: `${current.id}-synthetic-${syntheticCounter}`,
+        label: `~T(${arg})`,
+        argument: arg,
+        level: nextLevel,
+        isBaseCase: false, // Permitir que se expanda más
+        isSynthetic: true,
+        parentId: current.id,
+      };
+      allNodes.push(syntheticNode);
+      byId.set(syntheticNode.id, syntheticNode);
+      if (!byParent.has(current.id)) byParent.set(current.id, []);
+      byParent.get(current.id)!.push(syntheticNode);
+      // Encolar nodos sintéticos para que se expandan recursivamente
+      // hasta llenar la estructura balanceada
+      queue.push(syntheticNode);
+    }
+  }
+
+  const treeEdges = generateLinearTreeEdges(allNodes).map((edge) => {
+    const targetNode = byId.get(edge.target);
+    if (targetNode?.isSynthetic) {
+      return {
+        ...edge,
+        style: {
+          stroke: "#ef4444",
+          strokeWidth: 2,
+          strokeDasharray: "5,4",
+        },
+      };
+    }
+    return edge;
+  });
+
+  const positionMap = calculateLinearTreePositions(
+    allNodes,
+    initialN,
+    orientation,
+  );
+
+  const sourcePos = orientation === "vertical" ? "bottom" : "right";
+  const targetPos = orientation === "vertical" ? "top" : "left";
+
+  const nodesByLevel = new Map<number, number>();
+  const nodesByArgument = new Map<number, number>();
+  for (const node of allNodes) {
+    nodesByLevel.set(node.level, (nodesByLevel.get(node.level) || 0) + 1);
+    nodesByArgument.set(
+      node.argument,
+      (nodesByArgument.get(node.argument) || 0) + 1,
+    );
+  }
+
+  const nodes = allNodes.map((node) => ({
+    id: node.id,
+    type: "default",
+    data: {
+      label: node.label,
+      size: node.argument,
+      level: node.level,
+      nodeCount: nodesByLevel.get(node.level) || 1,
+      isBaseCase: node.isBaseCase,
+      isSynthetic: node.isSynthetic ?? false,
+      duplicateCount: node.duplicateCount,
+      argument: node.argument,
+      sourcePosition: sourcePos,
+      targetPosition: targetPos,
+    },
+    position: positionMap.get(node.id) || { x: 0, y: 0 },
+  }));
+
+  const duplicateNodes = Array.from(nodesByArgument.entries()).filter(
+    ([_, count]) => count > 1,
+  ).length;
+
+  const metadata = {
+    totalNodes: allNodes.length,
+    totalLevels: Math.max(...allNodes.map((n) => n.level)) + 1,
+    nodesPerLevel: Array.from(nodesByLevel.values()),
+    duplicateNodes,
+    growthType: "exponential" as const,
   };
 
   return {

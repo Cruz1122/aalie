@@ -115,7 +115,7 @@
     },
     "methodSelector": {
       "title": "Select Analysis Method",
-      "subtitle": "This algorithm can be solved with multiple methods. Pick the one you prefer and review its precision level.",
+      "subtitle": "This algorithm can be solved with multiple methods. Pick the one you prefer and review whether it yields an equivalent, upper, lower, or partial bound.",
       "selectedMethodLabel": "Currently selected method",
       "default": "Default",
       "recommended": "Recommended",
@@ -131,6 +131,12 @@
         "high": "Great fit for this algorithm: it matches the pattern well and usually gives a reliable result.",
         "medium": "It can work well here, but the final fit depends on some details of the recurrence shape.",
         "low": "This is a weaker fit in this case: it may work, but it is usually not the clearest approach."
+      },
+      "boundKinds": {
+        "equivalent": "Equivalent result",
+        "upper": "Upper bound",
+        "lower": "Lower bound",
+        "partial": "Partial bound"
       },
       "reasons": {
         "fallback": "This method does not meet the detected conditions for this recurrence pattern."
@@ -800,7 +806,9 @@
       "duplicateSubproblems": "Duplicate subproblems:",
       "zoomHint": "Use mouse to zoom and pan. Press Esc to close.",
       "irregularTree": "Tree with duplicate subproblems (e.g. Fibonacci)",
+      "balancedApproxLegend": "Balanced approximation",
       "duplicateSubproblem": "⚠ Duplicate subproblem ({count}x)",
+      "syntheticNode": "Added",
       "nodeCount": "{count} node{plural}",
       "returns": "Returns"
     },

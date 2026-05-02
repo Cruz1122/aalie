@@ -29,6 +29,7 @@ import "@xyflow/react/dist/style.css";
 import {
   generateRecursionTree,
   generateLinearRecursionTree,
+  generateBalancedApproxLinearRecursionTree,
   type RecurrenceData,
   type LinearRecurrenceData,
 } from "@/lib/recursion-tree-generator";
@@ -79,6 +80,7 @@ interface TreeNodeData {
   isBaseCase: boolean;
   duplicateCount?: number; // número de veces que aparece este subproblema (para árboles lineales)
   argument?: number; // valor del argumento (para árboles lineales)
+  isSynthetic?: boolean; // nodo agregado para balancear aproximación
 }
 
 /**
@@ -104,6 +106,7 @@ const TreeNode = React.memo(
       isBaseCase,
       duplicateCount,
       argument,
+      isSynthetic,
       sourcePosition,
       targetPosition,
     } = data;
@@ -134,12 +137,16 @@ const TreeNode = React.memo(
     return (
       <div
         style={{
-          background: isBaseCase
-            ? "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))"
-            : "linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9))",
+          background: isSynthetic
+            ? "linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(185, 28, 28, 0.2))"
+            : isBaseCase
+              ? "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))"
+              : "linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9))",
         }}
         className={`rounded-lg border-2 p-3 min-w-[160px] max-w-[180px] text-center transition-all duration-200 relative ${
-          isBaseCase
+          isSynthetic
+            ? "border-red-500/60 shadow-lg shadow-red-500/20"
+            : isBaseCase
             ? "border-green-500/50 shadow-lg shadow-green-500/20"
             : "border-white/20 shadow-md hover:border-purple-400/40 hover:shadow-xl hover:scale-105"
         }`}
@@ -191,7 +198,12 @@ const TreeNode = React.memo(
               })}
             </div>
           )}
-          {isBaseCase && (
+          {isSynthetic && (
+            <div className="text-red-300 font-semibold mt-1 pt-1 border-t border-red-500/30">
+              {t("syntheticNode")}
+            </div>
+          )}
+          {isBaseCase && !isSynthetic && (
             <div className="text-green-300 font-semibold mt-1 pt-1 border-t border-green-500/30">
               {t("returns")}
             </div>
@@ -278,27 +290,38 @@ export default function RecursionTreeModal({
   // Detectar tipo de recurrencia
   const isLinearRecurrence = recurrence?.type === "linear_shift";
   const isDivideConquer = recurrence?.type === "divide_conquer";
+  const isRecursionTreeLinearApprox =
+    isLinearRecurrence && recurrence?.method === "recursion_tree";
 
-  // Calcular profundidad base si no está configurada
+  // Calcular profundidad cuando cambia initialN o el tipo de recurrencia
   useEffect(() => {
-    if (recurrence && maxDepth === null) {
-      if (isLinearRecurrence) {
-        // Para recurrencias lineales, la profundidad es aproximadamente n
-        // Limitamos a un máximo razonable para evitar explosión
-        const depth = Math.min(initialN, 10); // Máximo 10 niveles para árboles lineales
-        setMaxDepth(depth);
-      } else if (isDivideConquer) {
-        // Para divide-and-conquer, calcular hasta caso base
-        let depth = 0;
-        let currentN = initialN;
-        while (currentN > recurrence.n0 && recurrence.b > 1) {
-          currentN = currentN / recurrence.b;
-          depth++;
-        }
-        setMaxDepth(depth);
+    if (!recurrence) return;
+
+    let calculatedDepth: number;
+
+    if (isLinearRecurrence) {
+      // Para recurrencias lineales, la profundidad es aproximadamente n
+      // Limitamos a un máximo razonable para evitar explosión
+      // Para aproximación balanceada, restamos 1 para que los agregados
+      // se coloquen en el último nivel real, no en un nivel extra
+      calculatedDepth = isRecursionTreeLinearApprox
+        ? Math.min(initialN - 1, 10)
+        : Math.min(initialN, 10);
+    } else if (isDivideConquer) {
+      // Para divide-and-conquer, calcular hasta caso base
+      let depth = 0;
+      let currentN = initialN;
+      while (currentN > recurrence.n0 && recurrence.b > 1) {
+        currentN = currentN / recurrence.b;
+        depth++;
       }
+      calculatedDepth = depth;
+    } else {
+      return;
     }
-  }, [recurrence, maxDepth, initialN, isLinearRecurrence, isDivideConquer]);
+
+    setMaxDepth(calculatedDepth);
+  }, [recurrence, initialN, isLinearRecurrence, isDivideConquer, isRecursionTreeLinearApprox]);
 
   // Ajustar initialN por defecto según el tipo de recurrencia solo al cargar
   useEffect(() => {
@@ -331,17 +354,25 @@ export default function RecursionTreeModal({
           return;
         }
 
-        treeLayout = generateLinearRecursionTree(
-          {
-            shifts: recurrence.shifts,
-            coefficients: recurrence.coefficients,
-            g_n: recurrence["g(n)"],
-            n0: recurrence.n0,
-          } as LinearRecurrenceData,
-          maxDepth,
-          orientation,
-          initialN,
-        );
+        const linearData = {
+          shifts: recurrence.shifts,
+          coefficients: recurrence.coefficients,
+          g_n: recurrence["g(n)"],
+          n0: recurrence.n0,
+        } as LinearRecurrenceData;
+        treeLayout = isRecursionTreeLinearApprox
+          ? generateBalancedApproxLinearRecursionTree(
+              linearData,
+              maxDepth,
+              orientation,
+              initialN,
+            )
+          : generateLinearRecursionTree(
+              linearData,
+              maxDepth,
+              orientation,
+              initialN,
+            );
       } else if (isDivideConquer) {
         // Generar árbol divide-and-conquer (uniforme)
         if (maxDepth === null) {
@@ -448,6 +479,7 @@ export default function RecursionTreeModal({
     setEdges,
     isLinearRecurrence,
     isDivideConquer,
+    isRecursionTreeLinearApprox,
     open,
   ]);
 
@@ -504,9 +536,10 @@ export default function RecursionTreeModal({
     if (!recurrence) return 0;
 
     if (isLinearRecurrence) {
-      // Para recurrencias lineales, la profundidad máxima es aproximadamente n
-      // Limitamos a un máximo razonable para evitar explosión
-      return Math.min(initialN, 10);
+      // Para la aproximación balanceada reducimos una capa para evitar una fila
+      // extra de nodos sintéticos debajo del último nivel visible.
+      const depth = isRecursionTreeLinearApprox ? initialN - 1 : initialN;
+      return Math.min(Math.max(depth, 1), 10);
     } else if (isDivideConquer) {
       // Para divide-and-conquer, calcular hasta caso base
       let depth = 0;
@@ -779,6 +812,11 @@ export default function RecursionTreeModal({
                       <span className="text-orange-300">
                         {t("growth")} Θ(
                         {characteristicEquation.growth_rate.toFixed(3)}ⁿ)
+                      </span>
+                    )}
+                    {isRecursionTreeLinearApprox && (
+                      <span className="text-red-300 font-semibold">
+                        {t("balancedApproxLegend")}
                       </span>
                     )}
                   </>

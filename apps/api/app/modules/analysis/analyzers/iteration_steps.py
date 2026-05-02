@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from .recursive_steps_core import (
     StepStatus,
     compute_overall_status,
+    get_asymptotic_notation,
     locale_key,
     make_recursive_step,
 )
@@ -96,6 +97,7 @@ class IterationStepContext:
     recurrence_form: str
     g_n: str
     is_supported: bool
+    bound_kind: str  # "equivalent" | "upper" | "lower" | "partial"
     support_code: Optional[str]
     base_case_index: Optional[int]
     base_case_value: Optional[str]
@@ -500,6 +502,10 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
         else None
     )
     step11_codes = ["ITER_ASYMPTOTIC_HEURISTIC"] if ctx.asymptotic_partial else []
+    
+    # Convertir a notación correcta basada en bound_kind
+    theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta)
+    
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
@@ -517,15 +523,15 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             ),
             concept_key="concept.iteration.asymptotic_concluded",
             warning_key=step11_warning_key,
-            primary_latex=f"T(n) = {ctx.theta}",
+            primary_latex=f"T(n) = {theta_with_notation}",
             payload={
-                "asymptoticResult": ctx.theta,
+                "asymptoticResult": theta_with_notation,
                 "supportReason": (
                     "ITER_ASYMPTOTIC_HEURISTIC" if ctx.asymptotic_partial else "complete"
                 ),
             },
             derivation={
-                "asymptoticResult": ctx.theta,
+                "asymptoticResult": theta_with_notation,
             },
             codes=step11_codes,
         )

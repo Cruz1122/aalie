@@ -45,6 +45,12 @@ Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
 - `step_by_step` con `method`, `version`, `overallStatus`, `steps`
 - advertencias o razones de soporte parcial cuando la cobertura sea incompleta
 
+### Alcance matemático por método
+
+- el contrato debe poder distinguir si un método aporta una `equivalent` result, una `upper` bound, una `lower` bound o una salida `partial`;
+- `applicable_methods` indica que el método puede seleccionarse, no que garantice la misma fuerza de conclusión que el método por defecto;
+- cuando un método sea aplicable pero solo produzca una cota parcial o una cota de un solo lado, el sistema debe explicitarlo en la metadata y en la explicación pedagógica.
+
 ## Inputs
 
 - AST recursivo válido;
@@ -92,6 +98,7 @@ Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
 
 - algunos bundles pueden terminar en `partial` o `unsupported` y aun así ser la salida correcta del sistema;
 - la metadata de PD es auxiliar y no reemplaza el método principal de complejidad.
+- el selector puede ofrecer métodos no recomendados siempre que su alcance matemático quede señalado como `equivalent`, `upper`, `lower` o `partial`.
 
 ## Archivos relacionados
 

@@ -109,7 +109,7 @@ describe("snippet catalog", () => {
       snippet.id.startsWith("catalog-"),
     );
 
-    expect(catalogAlgorithms).toHaveLength(100);
+    expect(catalogAlgorithms).toHaveLength(102);
   });
 
   it("localizes insert text when using english snippets", () => {

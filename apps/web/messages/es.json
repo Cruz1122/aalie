@@ -115,7 +115,7 @@
     },
     "methodSelector": {
       "title": "Seleccionar Método de Análisis",
-      "subtitle": "Este algoritmo puede resolverse con múltiples métodos. Selecciona el que prefieras y revisa su nivel de precisión.",
+      "subtitle": "Este algoritmo puede resolverse con múltiples métodos. Selecciona el que prefieras y revisa si da una cota equivalente, superior, inferior o parcial.",
       "selectedMethodLabel": "Método seleccionado actualmente",
       "default": "Por defecto",
       "recommended": "Recomendado",
@@ -131,6 +131,12 @@
         "high": "Muy buena elección para este algoritmo: encaja muy bien y suele dar un resultado confiable.",
         "medium": "Puede funcionar bien en este caso, pero depende de algunos detalles de la forma de la recurrencia.",
         "low": "Es una opción menos adecuada aquí: puede funcionar, pero normalmente no es la forma más clara de resolverlo."
+      },
+      "boundKinds": {
+        "equivalent": "Resultado equivalente",
+        "upper": "Cota superior",
+        "lower": "Cota inferior",
+        "partial": "Cota parcial"
       },
       "reasons": {
         "fallback": "Este método no cumple las condiciones detectadas para este patrón de recurrencia."
@@ -800,7 +806,9 @@
       "duplicateSubproblems": "Subproblemas duplicados:",
       "zoomHint": "Usa el mouse para hacer zoom y arrastrar. Presiona Esc para cerrar.",
       "irregularTree": "Árbol con subproblemas duplicados (ej. Fibonacci)",
+      "balancedApproxLegend": "Aproximación balanceada",
       "duplicateSubproblem": "⚠ Subproblema duplicado ({count}x)",
+      "syntheticNode": "Agregado",
       "nodeCount": "{count} nodo{plural}",
       "returns": "Retorna"
     },

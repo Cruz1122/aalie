@@ -53,11 +53,22 @@ interface DetectionRecurrenceInfo {
   a?: number;
   b?: number;
   f?: string;
+  method_outcomes?: Partial<Record<MethodType, MethodOutcome>>;
   strategy_family?: {
     key?: string;
     label?: string;
     description?: string;
   };
+}
+
+type MethodBoundKind = "equivalent" | "upper" | "lower" | "partial";
+
+interface MethodOutcome {
+  applicable?: boolean;
+  recommended?: boolean;
+  bound_kind?: MethodBoundKind;
+  bound_strength?: "strong" | "partial";
+  bound_symbol?: "theta" | "big_o" | "big_omega" | "partial";
 }
 
 const ALL_METHODS: MethodType[] = [
@@ -66,6 +77,22 @@ const ALL_METHODS: MethodType[] = [
   "recursion_tree",
   "master",
 ];
+
+const getBoundKindLabel = (
+  kind: MethodBoundKind | undefined,
+  locale: SupportedLocale,
+): string => {
+  if (kind === "equivalent") {
+    return locale === "es" ? "resultado equivalente (Θ)" : "equivalent result (Θ)";
+  }
+  if (kind === "upper") {
+    return locale === "es" ? "cota superior (O)" : "upper bound (O)";
+  }
+  if (kind === "lower") {
+    return locale === "es" ? "cota inferior (Ω)" : "lower bound (Ω)";
+  }
+  return locale === "es" ? "cota parcial" : "partial bound";
+};
 
 const naturalJoin = (parts: string[], locale: SupportedLocale): string => {
   const cleaned = parts.map((item) => item.trim()).filter(Boolean);
@@ -82,8 +109,14 @@ const getPrecisionByMethod = (
   method: MethodType,
   info: DetectionRecurrenceInfo | undefined,
   recommended: boolean,
+  outcome: MethodOutcome | undefined,
 ): MethodPrecision => {
   if (recommended) return "high";
+  if (outcome?.bound_kind === "equivalent") return "high";
+  if (outcome?.bound_kind === "upper" || outcome?.bound_kind === "lower") {
+    return "medium";
+  }
+  if (outcome?.bound_kind === "partial") return "low";
   if (info?.type === "divide_conquer") {
     if (method === "master" || method === "recursion_tree") return "high";
     if (method === "iteration") return "low";
@@ -104,6 +137,7 @@ const getApplicableReason = (
   info: DetectionRecurrenceInfo | undefined,
   recommended: boolean,
   locale: SupportedLocale,
+  outcome: MethodOutcome | undefined,
 ): string => {
   const divideConquer = info?.type === "divide_conquer";
   const linearShift = info?.type === "linear_shift";
@@ -116,38 +150,39 @@ const getApplicableReason = (
       : linearShift
         ? "Resta y Vencerás"
         : "");
+  const boundLabel = getBoundKindLabel(outcome?.bound_kind, locale);
 
   if (recommended) {
     return locale === "es"
-      ? `${familyLabel ? `La recurrencia cae en ${familyLabel}. ` : ""}Este método modela la estructura matemática de forma más directa y, por eso, normalmente produce una derivación más corta y estable.`
-      : `${familyLabel ? `The recurrence falls into ${familyLabel}. ` : ""}This method matches the mathematical structure most directly, so it usually yields a shorter and more stable derivation.`;
+      ? `${familyLabel ? `La recurrencia cae en ${familyLabel}. ` : ""}Este método modela la estructura matemática de forma más directa y, por eso, normalmente produce una derivación más corta y estable. Concluye como ${boundLabel}.`
+      : `${familyLabel ? `The recurrence falls into ${familyLabel}. ` : ""}This method matches the mathematical structure most directly, so it usually yields a shorter and more stable derivation. It concludes as a ${boundLabel}.`;
   }
 
   if (divideConquer && method === "recursion_tree") {
     return locale === "es"
-      ? "Útil para Divide y Vencerás: permite ver costo por nivel (raíz, intermedios, hojas) y entender visualmente por qué aparece la cota final."
-      : "Useful for Divide y Vencerás: it exposes per-level cost (root, internal levels, leaves) and makes the final bound visually clear.";
+      ? `Útil para Divide y Vencerás: permite ver costo por nivel (raíz, intermedios, hojas) y entender visualmente por qué aparece la cota final. Su salida típica aquí es una ${boundLabel}.`
+      : `Useful for Divide y Vencerás: it exposes per-level cost (root, internal levels, leaves) and makes the final bound visually clear. In this family it typically yields a ${boundLabel}.`;
   }
 
   if (divideConquer && method === "iteration") {
     return isSingleBranchDivideConquer
       ? locale === "es"
-        ? "Aplica en la variante de rama única: se puede desplegar geométricamente y llegar a la cota, aunque suele requerir más manipulación algebraica que Master o árbol."
-        : "It applies for the single-branch variant: geometric unrolling can reach the bound, though it usually needs more algebraic manipulation than Master or tree."
+        ? `Aplica en la variante de rama única: se puede desplegar geométricamente y llegar a la cota, aunque suele requerir más manipulación algebraica que Master o árbol. Aquí se interpreta como ${boundLabel}.`
+        : `It applies for the single-branch variant: geometric unrolling can reach the bound, though it usually needs more algebraic manipulation than Master or tree. Here it is interpreted as a ${boundLabel}.`
       : locale === "es"
-        ? "Es viable, pero en Divide y Vencerás con varias ramas suele ser más largo y menos transparente que resolver por casos de Master o por niveles del árbol."
-        : "It is viable, but for multi-branch Divide y Vencerás it is usually longer and less transparent than solving by Master cases or tree levels.";
+        ? `Es viable, pero en Divide y Vencerás con varias ramas suele ser más largo y menos transparente que resolver por casos de Master o por niveles del árbol. En este alcance, la lectura contractual es ${boundLabel}.`
+        : `It is viable, but for multi-branch Divide y Vencerás it is usually longer and less transparent than solving by Master cases or tree levels. Contractually, this is read as a ${boundLabel}.`;
   }
 
   if (linearShift && method === "iteration") {
     return locale === "es"
-      ? "En Resta y Vencerás funciona bien para mostrar cómo se acumula el costo paso a paso; es una buena vía pedagógica aunque no siempre la más compacta."
-      : "In Resta y Vencerás it works well to show step-by-step cost accumulation; pedagogically strong, though not always the most compact path.";
+      ? `En Resta y Vencerás funciona bien para mostrar cómo se acumula el costo paso a paso; es una buena vía pedagógica aunque no siempre la más compacta. Aquí la salida se interpreta como ${boundLabel}.`
+      : `In Resta y Vencerás it works well to show step-by-step cost accumulation; pedagogically strong, though not always the most compact path. Here the output is interpreted as a ${boundLabel}.`;
   }
 
   return locale === "es"
-    ? "Este método es compatible con la forma detectada y puede llegar a una cota válida, pero no ofrece la ruta más clara para este patrón."
-    : "This method is compatible with the detected shape and can reach a valid bound, but it is not the clearest path for this pattern.";
+    ? `Este método es compatible con la forma detectada y puede llegar a una cota válida, pero no ofrece la ruta más clara para este patrón. La lectura recomendada aquí es ${boundLabel}.`
+    : `This method is compatible with the detected shape and can reach a valid bound, but it is not the clearest path for this pattern. The recommended reading here is ${boundLabel}.`;
 };
 
 const getNotApplicableReason = (
@@ -237,14 +272,22 @@ const buildMethodMetadata = (
   return ALL_METHODS.reduce((acc, method) => {
     const applicable = applicableMethods.includes(method);
     const recommended = method === defaultMethod;
+    const outcome = recurrenceInfo?.method_outcomes?.[method];
     acc[method] = {
       applicable,
       recommended,
       precision: applicable
-        ? getPrecisionByMethod(method, recurrenceInfo, recommended)
+        ? getPrecisionByMethod(method, recurrenceInfo, recommended, outcome)
         : "low",
+      boundKind: outcome?.bound_kind ?? "partial",
       reason: applicable
-        ? getApplicableReason(method, recurrenceInfo, recommended, locale)
+        ? getApplicableReason(
+            method,
+            recurrenceInfo,
+            recommended,
+            locale,
+            outcome,
+          )
         : getNotApplicableReason(method, recurrenceInfo, locale),
     };
     return acc;

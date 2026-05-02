@@ -8,6 +8,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased] - 2026-04-28
 
 ### Added
+- Clasificación por método recursivo en la detección contractual: cada método ahora puede declararse como cota equivalente, superior, inferior o parcial en lugar de tratarse como si todos aportaran la misma conclusión.
 - Experiencia de trazado recursivo con stepping/playback interactivo sobre `structuredTrace`, mostrando llamadas, expansión y retornos como eventos separados.
 - Controles de seguimiento recursivo debajo del diagrama con play/pause, step, velocidad y contexto del nodo actual.
 - Navegación por niveles para diagramas recursivos, permitiendo acotar la profundidad visible sin alterar la traza contractual.
