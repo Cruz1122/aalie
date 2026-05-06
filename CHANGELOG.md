@@ -5,6 +5,18 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased] - 2026-05-06
+
+### Added
+- Método de iteración ampliado para mostrar una cota superior dinámica con justificación pedagógica explícita, incluyendo el paso de desigualdad clave antes de la generalización por $k$.
+- Soporte para que el método de iteración construya walkthroughs completos aun cuando la recurrencia no cierre de forma exacta, manteniendo el `bound_kind` correspondiente y la salida de paso a paso alineada con el análisis real.
+- Documentación de que el árbol de recursión también puede operar como cota superior cuando la forma no cumple exactamente la variante canónica, manteniendo el resultado metodológicamente consistente.
+
+### Changed
+- El selector de métodos y el análisis por iteración ya no presentan las conclusiones como equivalentes cuando en realidad producen cota superior, inferior o resultado parcial.
+- La narrativa del paso a paso de iteración ahora muestra la desigualdad concreta derivada de la recurrencia real antes de la iteración abstracta, evitando que el desarrollo parezca quemado o inventado.
+- El comportamiento del árbol de recursión quedó documentado y alineado con los casos en que la forma detectada no cumple la plantilla exacta, para que la UI y el backend describan la misma naturaleza matemática.
+
 ## [Unreleased] - 2026-04-28
 
 ### Added

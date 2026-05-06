@@ -310,18 +310,6 @@ export default function MethodSelector({
                     >
                       {t(`methods.${methodId}.name`)}
                     </span>
-                    {isApplicable && (
-                      <span className="relative group/bound">
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${boundInfo.className}`}
-                        >
-                          {boundInfo.label}
-                        </span>
-                        <span className="absolute left-1/2 top-6 z-[9999] w-56 -translate-x-1/2 rounded-lg border border-amber-500/30 bg-slate-950 p-2 text-xs text-amber-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/bound:opacity-100 group-hover/bound:visible">
-                          {metadata.reason}
-                        </span>
-                      </span>
-                    )}
                   </div>
                 </button>
               );

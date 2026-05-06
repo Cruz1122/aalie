@@ -45,6 +45,21 @@ Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
 - `step_by_step` con `method`, `version`, `overallStatus`, `steps`
 - advertencias o razones de soporte parcial cuando la cobertura sea incompleta
 
+### Procedimiento general del método de iteración
+
+El contrato de iteración debe poder describir el siguiente flujo, incluso cuando el cierre exacto no sea posible:
+
+1. normalizar la recurrencia para aislar la dependencia recursiva y el costo local;
+2. expandir la recurrencia durante varias iteraciones hasta observar un patrón estable;
+3. generalizar la forma tras `k` pasos, separando término residual y acumulación;
+4. resolver `k` imponiendo el caso base cuando exista cierre exacto;
+5. si no hay cierre exacto, comparar la recurrencia con una auxiliar más simple que la domine o quede por debajo de ella para derivar una cota defendible;
+6. convertir la expansión en una sumatoria o expresión simbólica equivalente;
+7. simplificar la sumatoria cuando sea posible, o conservarla como forma parcial válida;
+8. concluir con `theta`, `O` o `Omega` según la fuerza del resultado obtenido y registrar el `bound_kind` correspondiente.
+
+Este procedimiento no exige que la recurrencia tenga una forma exacta del tipo `T(n)=T(n-a)+b`; lo esencial es que la expansión y la comparación sean matemáticamente defendibles.
+
 ### Alcance matemático por método
 
 - el contrato debe poder distinguir si un método aporta una `equivalent` result, una `upper` bound, una `lower` bound o una salida `partial`;
