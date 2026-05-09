@@ -3,6 +3,7 @@
 import type {
   AnalyzeOpenResponse,
   LoopInvariant,
+  RecursiveInvariant,
   ParseError,
   ParseResponse,
   Program,
@@ -26,6 +27,7 @@ import GPUCPUModal from "@/components/GPUCPUModal";
 import Header from "@/components/Header";
 import IterativeAnalysisView from "@/components/IterativeAnalysisView";
 import LoopInvariantModal from "@/components/LoopInvariantModal";
+import RecursiveInvariantModal from "@/components/RecursiveInvariantModal";
 import MethodSelector, {
   MethodMetadataMap,
   MethodType,
@@ -451,6 +453,7 @@ export default function AnalyzerPage() {
     avg?: AnalyzeOpenResponse | "same_as_worst" | null;
     has_case_variability?: boolean;
     loopInvariant?: LoopInvariant | null;
+    recursiveInvariant?: RecursiveInvariant | null;
   } | null>(null);
 
   const hasComparableData = useMemo(() => {
@@ -516,6 +519,8 @@ export default function AnalyzerPage() {
   const [gpuCpuAnalysis, setGpuCpuAnalysis] =
     useState<GPUCPUAnalysisResult | null>(null);
   const [showLoopInvariantModal, setShowLoopInvariantModal] = useState(false);
+  const [showRecursiveInvariantModal, setShowRecursiveInvariantModal] =
+    useState(false);
   const [recursiveFocusedPanel, setRecursiveFocusedPanel] =
     useState<AssistantFocusedPanelContext | null>(null);
   const [traceFocusedPanel, setTraceFocusedPanel] =
@@ -978,6 +983,7 @@ export default function AnalyzerPage() {
         best?: AnalyzeOpenResponse | "same_as_worst";
         avg?: AnalyzeOpenResponse | "same_as_worst";
         loopInvariant?: LoopInvariant;
+        recursiveInvariant?: RecursiveInvariant;
         errors?: Array<{ message: string; line?: number; column?: number }>;
       };
 
@@ -1045,6 +1051,7 @@ export default function AnalyzerPage() {
         avg: analyzeRes.avg, // Puede ser undefined si falló, pero el frontend lo maneja
         has_case_variability: analyzeRes.has_case_variability, // Incluir variabilidad de casos
         loopInvariant: analyzeRes.loopInvariant || null,
+        recursiveInvariant: (analyzeRes as any).recursiveInvariant || null,
       });
 
       // Asegurar que algorithmType se mantenga usando la variable local 'kind'
@@ -3366,6 +3373,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     tView,
   ]);
 
+  // Extraer datos de invariantes recursivos
+  const recursiveInvariantData = data?.recursiveInvariant || null;
+  const isAlgorithmRecursive = isRecursiveAnalysis(data?.worst || null);
+
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
       {/* Loader de análisis */}
@@ -3663,24 +3674,45 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                             </div>
                           )}
                         </button>
-                        <button
-                          onClick={() => setShowLoopInvariantModal(true)}
-                          disabled={!loopInvariantData}
-                          className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-red-400/50 bg-gradient-to-br from-red-500/20 to-rose-500/20 border border-red-500/30 hover:from-red-500/30 hover:to-rose-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            verified_user
-                          </span>
-                          {!loopInvariantData ? (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                              {tView("loopInvariantUnavailable")}
-                            </div>
-                          ) : (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                              {tView("viewLoopInvariant")}
-                            </div>
-                          )}
-                        </button>
+                        {isAlgorithmRecursive ? (
+                          <button
+                            onClick={() => setShowRecursiveInvariantModal(true)}
+                            disabled={!recursiveInvariantData}
+                            className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-violet-400/50 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-violet-500/30 hover:from-violet-500/30 hover:to-fuchsia-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              verified_user
+                            </span>
+                            {!recursiveInvariantData ? (
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                                {tView("recursiveInvariantUnavailable")}
+                              </div>
+                            ) : (
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                                {tView("viewRecursiveInvariant")}
+                              </div>
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setShowLoopInvariantModal(true)}
+                            disabled={!loopInvariantData}
+                            className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-red-400/50 bg-gradient-to-br from-red-500/20 to-rose-500/20 border border-red-500/30 hover:from-red-500/30 hover:to-rose-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              verified_user
+                            </span>
+                            {!loopInvariantData ? (
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                                {tView("loopInvariantUnavailable")}
+                              </div>
+                            ) : (
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                                {tView("viewLoopInvariant")}
+                              </div>
+                            )}
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             if (!ast) return;
@@ -4004,6 +4036,12 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         open={showLoopInvariantModal}
         onClose={() => setShowLoopInvariantModal(false)}
         loopInvariant={loopInvariantData}
+      />
+
+      <RecursiveInvariantModal
+        open={showRecursiveInvariantModal}
+        onClose={() => setShowRecursiveInvariantModal(false)}
+        recursiveInvariant={recursiveInvariantData}
       />
 
       <Footer />

@@ -206,6 +206,8 @@
       "viewExecutionTrace": "Ver seguimiento de ejecución",
       "viewLoopInvariant": "Ver loop invariant",
       "loopInvariantUnavailable": "No hay loop invariant disponible",
+      "viewRecursiveInvariant": "Ver invariante recursivo",
+      "recursiveInvariantUnavailable": "No hay invariante recursivo disponible",
       "noInfoToCompare": "No hay información para comparar",
       "compareWithLLM": "Comparar con LLM",
       "noAstAvailable": "No hay AST disponible",
@@ -390,6 +392,44 @@
         "maintenance": "Mantenimiento no disponible.",
         "finalization": "Finalización no disponible.",
         "summary": "Ejecuta un análisis para generar un loop invariant determinista."
+      }
+    },
+    "recursiveInvariant": {
+      "title": "Invariante Recursivo",
+      "subtitle": "Estructura inductiva pedagógica",
+      "status": {
+        "ok": "Bien soportado",
+        "low_confidence": "Parcialmente soportado",
+        "unavailable": "No disponible"
+      },
+      "reason": {
+        "no_recursive_calls": "No se detectaron llamadas recursivas en el algoritmo.",
+        "complex_recursion": "El patrón de recursión es demasiado complejo para analizar.",
+        "insufficient_evidence": "La evidencia local del AST no es suficiente para un análisis confiable."
+      },
+      "sections": {
+        "recursiveStructure": "Estructura Recursiva",
+        "baseProperty": "Propiedad del Caso Base",
+        "inductiveHypothesis": "Hipótesis Inductiva",
+        "recursiveStep": "Paso Recursivo",
+        "terminationGarantee": "Garantía de Terminación",
+        "summary": "Resumen del Invariante",
+        "evidence": "Evidencia",
+        "unavailable": "El invariante recursivo no está disponible"
+      },
+      "labels": {
+        "baseCondition": "Condición base",
+        "baseResult": "Resultado base",
+        "recursiveCalls": "Llamadas recursivas",
+        "recursionType": "Tipo de recursión",
+        "detectedCalls": "Llamadas detectadas",
+        "baseConditions": "Condiciones base"
+      },
+      "recursionTypes": {
+        "linear": "Recursión Lineal",
+        "divideConquer": "Divide y Conquista",
+        "multiple": "Recursión Múltiple",
+        "unknown": "Desconocida"
       }
     },
     "executionTrace": {

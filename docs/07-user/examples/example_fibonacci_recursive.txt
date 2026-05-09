@@ -1,0 +1,12 @@
+"""
+Fibonacci Recursivo
+"""
+
+FUNCTION fib(n)
+BEGIN
+  IF n <= 1 THEN
+    RETURN 1
+  ELSE
+    RETURN fib(n-1) + fib(n-2)
+  END
+END

@@ -101,11 +101,55 @@ class LoopInvariantPayload(BaseModel):
     evidence: LoopInvariantEvidence
 
 
+# ============================================================================
+# RecursiveInvariant - Pedagogical artefact for recursive algorithms
+# ============================================================================
+
+
+class RecursiveCallPattern(BaseModel):
+    calls: str  # e.g., "f(n-1)", "f(n/2)"
+    parameters: List[str] = Field(default_factory=list)
+
+
+class RecursiveStructure(BaseModel):
+    baseCondition: str
+    baseResult: str
+    recursiveCallPattern: List[RecursiveCallPattern] = Field(default_factory=list)
+
+
+class RecursiveInvariantSections(BaseModel):
+    baseProperty: str
+    inductiveHypothesis: str
+    recursiveStep: str
+    terminationGarantee: str
+
+
+class RecursiveInvariantEvidence(BaseModel):
+    detectedRecursiveCalls: List[str] = Field(default_factory=list)
+    baseConditions: List[str] = Field(default_factory=list)
+    recursionType: Literal[
+        "linear_recursive", "divide_conquer", "multiple_recursive", "unknown"
+    ] = "unknown"
+
+
+class RecursiveInvariantPayload(BaseModel):
+    status: Literal["ok", "unavailable", "low_confidence"]
+    reason: Optional[
+        Literal["no_recursive_calls", "complex_recursion", "insufficient_evidence"]
+    ] = None
+    recursiveStructure: RecursiveStructure
+    invariant: RecursiveInvariantSections
+    didacticSummary: str
+    confidence: float = 0.0
+    evidence: RecursiveInvariantEvidence
+
+
 class AnalyzeOpenResponse(BaseModel):
     ok: bool = True
     byLine: List[LineCost]
     totals: Dict[str, Any]
     loopInvariant: Optional[LoopInvariantPayload] = None
+    recursiveInvariant: Optional[RecursiveInvariantPayload] = None
 
 
 class AnalyzeError(BaseModel):

@@ -5,6 +5,136 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased] - 2026-05-09
+
+### Added
+- **Invariante Recursivo - Completitud 100%**: Artefacto pedagógico completo con arquitectura formal, tests E2E, y ejemplos de algoritmos reales.
+
+#### Documentación Formal
+- `docs/04-api/recursive-invariant-design.md` - Especificación arquitectónica completa con 30 secciones:
+  - Modelo de dominio con path tracking y mutual exclusivity
+  - Pipeline completo: extracción → clasificación → generación narrativa → payload
+  - Decisiones de diseño: razonamiento de path tracking ('T'/'F'), cálculo de subproblemas, extracción de casos base
+  - 5 puntos de extensibilidad futura (recursión cola, mutual recursion, verificación formal, visualización, herramientas educativas)
+  - Integración backend/frontend/i18n documentada
+  - Análisis de performance: O(n) tiempo, O(d) espacio (d = profundidad de nesting)
+  - Estrategia de manejo de errores con degradación elegante
+  - Roadmap de Fases 2-5 para mejoras futuras
+- `docs/07-user/recursive-invariant-examples.md` - Guía de ejemplos con 7 algoritmos reales:
+  - Fibonacci (exponencial, recursión múltiple)
+  - Binary Search (divide-and-conquer)
+  - Countdown (recursión lineal)
+  - Merge Sort (recursión múltiple, O(n log n))
+  - Quick Sort (recursión múltiple, análisis promedio)
+  - Tower of Hanoi (recursión múltiple, O(2^n))
+  - Binary Exponentiation (divide-and-conquer, 96% confianza)
+  - Tabla comparativa de todos los algoritmos
+  - Guía pedagógica de uso de invariantes para comprensión y optimización
+- `RECURSIVE_INVARIANT_COMPLETION.md` - Resumen ejecutivo de completitud al 100% con checklist de deliverables, test coverage, métricas clave y status de producción.
+
+#### Tests E2E Completos
+- `apps/web/e2e/recursive-invariant.spec.ts` - Suite de 10 casos Playwright:
+  - Renderización de invariante para Fibonacci (múltiple recursión)
+  - Renderización de invariante para Binary Search (divide-and-conquer)
+  - Renderización de invariante para Countdown (recursión lineal)
+  - Validación que algoritmos no-recursivos muestran loop invariant en lugar de recursive
+  - Soporte de locale español con verificación de strings UI
+  - Validación de puntuaciones de confianza (0-100%)
+  - Cierre de modal con botón X
+  - Cierre de modal al hacer clic fuera (backdrop)
+  - Sección de evidencia con base conditions
+  - Llamadas recursivas detectadas correctamente
+- `apps/web/playwright.config.ts` - Configuración lista para producción:
+  - Soporte multi-browser (Chromium, Firefox)
+  - Web server automático en localhost:3000
+  - Reportes HTML + GitHub Actions
+  - Trazas on-first-retry, screenshots on-failure
+
+#### Tests Unitarios Complejos
+- `apps/api/tests/unit/analysis/test_complex_recursive_algorithms.py` - 5 algoritmos avanzados:
+  - Merge Sort: 2 llamadas no-exclusivas → multiple_recursive, 73% confianza
+  - Tower of Hanoi: 3 llamadas → multiple_recursive, 73% confianza
+  - Quick Sort: 2 llamadas no-exclusivas → multiple_recursive, 73% confianza
+  - Binary Exponentiation: 2 llamadas exclusivas → divide_conquer, 96% confianza ⭐ (máxima validación)
+  - Ackermann Function: 3 llamadas anidadas → multiple_recursive, 81% confianza
+
+#### Componentes Frontend Mejorados
+- `apps/web/src/components/RecursiveInvariantModal.tsx` - Modal completo con:
+  - Data-testid attributes para todas las secciones (status-badge, confidence-score, recursive-structure, etc.)
+  - Badge de estado con color semántico (esmeralda, ámbar, rojo)
+  - Porcentaje de confianza visible
+  - Estructura recursiva: condición base, resultado base, llamadas recursivas, tipo
+  - Grid responsivo 3-columnas: base property | inductive hypothesis | recursive step
+  - Sección de garantía de terminación
+  - Resumen didáctico destacado
+  - Sección de evidencia colapsable con llamadas detectadas y condiciones base
+
+### Changed
+- `apps/api/app/modules/analysis/recursive_invariants/extractor.py`:
+  - **Path tracking mejorado**: Cada llamada recursiva ahora registra ruta a través de bifurcaciones If ('T' para rama verdadera, 'F' para alterna)
+  - **Detección de mutual exclusivity**: Comparación pairwise de paths para identificar ramas mutuamente exclusivas
+  - **Extracción de caso base corregida**: Solo procesa la primera declaración If (asunción heurística de caso base)
+  - **Extracción de resultado base**: Solo extrae del consecuente de la primera If
+  - **Cálculo dinámico de subproblemas**: `subproblems_per_call = 1` si mutuamente exclusivas, else `recursive_call_count`
+
+- `apps/api/app/modules/analysis/recursive_invariants/schemas.py`:
+  - Nuevo campo `calls_are_mutually_exclusive: bool` para rastrear exclusividad
+  - Nuevo campo `subproblems_per_call: int` para contar subproblemas reales resueltos por llamada
+
+- `apps/api/app/modules/analysis/recursive_invariants/classifier.py`:
+  - Reordenamiento de prioridades: mutual_exclusivity (máxima) → multiple_recursive → linear → unknown
+  - Confidence ajustado: base 0.75, +0.08 si caso base claro, +0.10 si parámetro decrece, +0.05 si terminación clara
+  - Detección inmediata de divide-and-conquer si calls_are_mutually_exclusive=True
+
+- `apps/api/app/modules/analysis/recursive_invariants/templates.py`:
+  - Contexto mejorado con acceso a `subproblems_per_call` para seleccionar narrativa apropiada
+  - Templates de divide-and-conquer actualizados para enfatizar 1 subproblema por ejecución
+  - Narrativas mejoradas que reflejan semántica real de ejecución (mutual vs independiente)
+
+- `apps/api/app/modules/analysis/recursive.py`:
+  - IntegrationAnalyzer ahora genera invariante recursivo post-análisis
+  - Campo `recursive_invariant` almacenado en resultado del análisis
+
+- `apps/api/app/modules/analysis/service.py`:
+  - Respuestas enriquecidas con `recursiveInvariant` para algoritmos recursivos
+  - Manejo de degradación elegante si generación falla
+
+- `apps/web/src/app/[locale]/analyzer/page.tsx`:
+  - Lógica contextual: `isAlgorithmRecursive()` selecciona RecursiveInvariantButton vs LoopInvariantButton
+  - Modal state management para modal de invariante recursivo
+
+- `apps/web/messages/{en,es}.json`:
+  - Strings de UI para modal, secciones, badges, leyendas de recursión
+
+### Fixed
+- **Clasificación incorrecta de Binary Search**: Antes se clasificaba como "Recursión Múltiple" (2 llamadas), ahora correctamente como "Divide-y-Conquista" (2 llamadas mutuamente exclusivas en ramas If)
+- **Base result incorrecto**: Binary Search mostraba "return mitad" en lugar de "return -1" por iteración sobre ALL If statements; ahora solo procesa primera If
+- **Subproblemas incorrectos**: Binary Search mostraba 2 subproblemas cuando realmente solo 1 se ejecuta por llamada; ahora usa mutual exclusivity detection
+- **Generación consistente de invariantes**: Todos los 7 algoritmos reales (Fibonacci, Binary Search, Countdown, Merge Sort, Quick Sort, Tower of Hanoi, Binary Exp) generan invariantes correctas con confianzas apropiadas (73-96%)
+
+## [Unreleased] - 2026-05-07
+
+### Added
+- **Nuevo artefacto pedagógico: Invariante Recursivo** - Análogo a `loopInvariant` pero para algoritmos recursivos.
+  - Módulo backend completo: `apps/api/app/modules/analysis/recursive_invariants/` con extracción de hechos recursivos, clasificador de patrones, generador de plantillas y servicio orquestador.
+  - Tipos TypeScript en `@aa/types` y esquemas Pydantic en `apps/api/app/modules/analysis/schemas.py`.
+  - Componente React `RecursiveInvariantModal.tsx` con renderización de estructura recursiva, propiedades base, hipótesis inductiva, paso recursivo y garantía de terminación.
+  - Soporte i18n completo (inglés/español) con mensajes en `apps/web/messages/{en,es}.json`.
+  - Integración en `RecursiveAnalyzer` para generación automática durante análisis de algoritmos recursivos.
+  - Respuesta API enriquecida con campo `recursiveInvariant` en `AnalyzeOpenResponse`.
+- Clasificación automática de patrones recursivos: Recursión Lineal, Divide-y-Conquista, Recursión Múltiple.
+- Generación de narrativa inductiva estructurada con 4 componentes:
+  - Base Property: Propiedad garantizada por el caso base.
+  - Inductive Hypothesis: Suposición de que la recursión funciona para problemas menores.
+  - Recursive Step: Cómo el paso inductivo propaga la propiedad a instancias mayores.
+  - Termination Guarantee: Por qué el tamaño del problema siempre disminuye.
+- Extractor de hechos recursivos que analiza: llamadas recursivas, condiciones base, parámetros, patrones de decrecimiento y tipo de recursión.
+- Test suite completo: `test_recursive_invariant_generation.py` con validación de Fibonacci, recursión lineal y soporte multiidioma.
+
+### Changed
+- `RecursiveAnalyzer.result()` y `clear()` ahora gestionar el campo `recursive_invariant`.
+- Servicio `analyze_algorithm()` en `service.py` enriquece respuestas recursivas con invariante automáticamente.
+
 ## [Unreleased] - 2026-05-06
 
 ### Added

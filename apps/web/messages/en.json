@@ -205,6 +205,8 @@
       "viewExecutionTrace": "View execution analysis",
       "viewLoopInvariant": "View loop invariant",
       "loopInvariantUnavailable": "No loop invariant available",
+      "viewRecursiveInvariant": "View recursive invariant",
+      "recursiveInvariantUnavailable": "No recursive invariant available",
       "noInfoToCompare": "No information to compare",
       "compareWithLLM": "Compare with LLM",
       "noAstAvailable": "No AST available",
@@ -389,6 +391,44 @@
         "maintenance": "Maintenance is unavailable.",
         "finalization": "Finalization is unavailable.",
         "summary": "Run an analysis to generate a deterministic loop invariant."
+      }
+    },
+    "recursiveInvariant": {
+      "title": "Recursive Invariant",
+      "subtitle": "Pedagogical inductive structure",
+      "status": {
+        "ok": "Well-supported",
+        "low_confidence": "Partially supported",
+        "unavailable": "Not available"
+      },
+      "reason": {
+        "no_recursive_calls": "No recursive calls detected in the algorithm.",
+        "complex_recursion": "Recursion pattern is too complex to analyze.",
+        "insufficient_evidence": "Local AST evidence is not sufficient for reliable analysis."
+      },
+      "sections": {
+        "recursiveStructure": "Recursive Structure",
+        "baseProperty": "Base Case Property",
+        "inductiveHypothesis": "Inductive Hypothesis",
+        "recursiveStep": "Recursive Step",
+        "terminationGarantee": "Termination Guarantee",
+        "summary": "Invariant Summary",
+        "evidence": "Evidence",
+        "unavailable": "Recursive invariant is not available"
+      },
+      "labels": {
+        "baseCondition": "Base condition",
+        "baseResult": "Base result",
+        "recursiveCalls": "Recursive calls",
+        "recursionType": "Recursion type",
+        "detectedCalls": "Detected calls",
+        "baseConditions": "Base conditions"
+      },
+      "recursionTypes": {
+        "linear": "Linear Recursion",
+        "divideConquer": "Divide-and-Conquer",
+        "multiple": "Multiple Recursion",
+        "unknown": "Unknown"
       }
     },
     "executionTrace": {

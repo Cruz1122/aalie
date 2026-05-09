@@ -45,6 +45,7 @@ from .recursion_tree_steps import (
     RecursionTreeStepContext,
     build_recursion_tree_step_bundle,
 )
+from ..recursive_invariants import generate_recursive_invariant
 
 
 @dataclass(frozen=True)
@@ -124,6 +125,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.proof: List[Dict[str, str]] = []
         self.proof_steps: List[Dict[str, str]] = []
         self.dp_validation_events: List[Dict[str, Any]] = []
+        self.recursive_invariant: Optional[Dict[str, Any]] = None
         # Inicializar expr_converter si no está en BaseAnalyzer
         if not hasattr(self, "expr_converter"):
             from .expr_converter import ExprConverter
@@ -351,7 +353,20 @@ class RecursiveAnalyzer(BaseAnalyzer):
             self.master = master_result["master"]
 
         # 5. Generar resultado
-        return self.result()
+        result = self.result()
+
+        # 6. Generar invariante recursivo (artefacto pedagógico)
+        if result.get("ok"):
+            try:
+                self.recursive_invariant = generate_recursive_invariant(
+                    ast=ast,
+                    locale=self.locale,
+                )
+            except Exception:
+                # Si falla la generación del invariante, continuar sin él (no es crítico)
+                self.recursive_invariant = None
+
+        return result
 
     def detect_applicable_methods(self, ast: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -5672,6 +5687,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.recursion_tree = None
         self.characteristic_equation = None
         self.dp_validation_events = []
+        self.recursive_invariant = None
 
     # ============================================================================
     # MÉTODO DE ECUACIÓN CARACTERÍSTICA (LINEAL CON DESPLAZAMIENTOS CONSTANTES)

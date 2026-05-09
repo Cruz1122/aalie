@@ -318,6 +318,56 @@ export interface LoopInvariant {
   evidence: LoopInvariantEvidence;
 }
 
+// ============================================================================
+// RecursiveInvariant - Pedagogical artefact for recursive algorithms
+// ============================================================================
+
+export type RecursiveInvariantStatus = "ok" | "unavailable" | "low_confidence";
+export type RecursiveInvariantReason =
+  | "no_recursive_calls"
+  | "complex_recursion"
+  | "insufficient_evidence";
+
+export type RecursionType =
+  | "linear_recursive"
+  | "divide_conquer"
+  | "multiple_recursive"
+  | "unknown";
+
+export interface RecursiveCallPattern {
+  calls: string; // e.g., "f(n-1)", "f(n/2)"
+  parameters: string[]; // e.g., ["n-1"] or ["n/2"]
+}
+
+export interface RecursiveStructure {
+  baseCondition: string; // e.g., "n ≤ 1"
+  baseResult: string; // e.g., "return 1"
+  recursiveCallPattern: RecursiveCallPattern[];
+}
+
+export interface RecursiveInvariantSections {
+  baseProperty: string; // What holds for base case
+  inductiveHypothesis: string; // Inductive assumption
+  recursiveStep: string; // How induction works
+  terminationGarantee: string; // Why recursion terminates
+}
+
+export interface RecursiveInvariantEvidence {
+  detectedRecursiveCalls: string[]; // e.g., ["f(n-1)", "f(n-2)"]
+  baseConditions: string[]; // e.g., ["n ≤ 1", "n == 0"]
+  recursionType: RecursionType;
+}
+
+export interface RecursiveInvariant {
+  status: RecursiveInvariantStatus;
+  reason: RecursiveInvariantReason | null;
+  recursiveStructure: RecursiveStructure;
+  invariant: RecursiveInvariantSections;
+  didacticSummary: string;
+  confidence: number; // 0.0 to 1.0
+  evidence: RecursiveInvariantEvidence;
+}
+
 /** Modelo probabilístico para caso promedio */
 export interface AvgModelConfig {
   mode: "uniform" | "symbolic";  // modo del modelo
@@ -486,6 +536,7 @@ export interface AnalyzeOpenResponse {
   ok: true;
   byLine: LineCost[];   // tabla por línea
   loopInvariant?: LoopInvariant;
+  recursiveInvariant?: RecursiveInvariant;
   totals: {
     T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy (o A(n) para promedio)
     procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
