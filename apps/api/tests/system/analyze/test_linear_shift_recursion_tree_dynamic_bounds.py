@@ -145,8 +145,14 @@ def test_linear_shift_recursion_tree_dynamic_upper_bound(case):
 
     dominant_step = next((s for s in steps if s.get("id") == "rt_s10"), {})
     dominant_latex = str(dominant_step.get("math", {}).get("primaryLatex", ""))
-    assert f"O({expected_b}^n)" in dominant_latex, (
+    assert f"{expected_b}^n" in dominant_latex, (
         f"dominant term mismatch for {case['name']}: {dominant_latex}"
+    )
+    assert (
+        f"O({expected_b}^n)" in dominant_latex
+        or f"\\mathcal{{O}}({expected_b}^n)" in dominant_latex
+    ), (
+        f"dominant O notation mismatch for {case['name']}: {dominant_latex}"
     )
 
     # Guard extra: no debe degradar a Theta en esta rama de cota superior.
