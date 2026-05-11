@@ -51,9 +51,11 @@ export default defineConfig({
   },
 
   // Reporter configuration
-  reporter: [
-    ["html"],
-    ["list"],
-    ...(process.env.CI ? [["github"]] : []),
-  ],
+  reporter: process.env.CI
+    ? [
+        ["html"],
+        ["list"],
+        ["github"],
+      ]
+    : [["html"], ["list"]],
 });

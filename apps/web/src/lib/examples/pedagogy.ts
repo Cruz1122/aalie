@@ -40,7 +40,7 @@ const buildCopy = (
 const createExample = (
   item: Omit<
     ExampleCatalogItem,
-    "copy" | "catalogTier" | "sourceCodeByLocale"
+    "copy" | "catalogTier" | "sourceCodeByLocale" | "techniqueBadges"
   > & {
     titleEs: string;
     titleEn: string;
@@ -51,6 +51,7 @@ const createExample = (
     sourceCodeEs: string;
     sourceCodeEn?: string;
     catalogTier?: CatalogTier;
+    techniqueBadges?: ExampleCatalogItem["techniqueBadges"];
   },
 ): ExampleCatalogItem => ({
   id: item.id,
@@ -59,6 +60,7 @@ const createExample = (
   family: item.family,
   difficulty: item.difficulty,
   catalogTier: item.catalogTier ?? "contractual",
+  techniqueBadges: item.techniqueBadges ?? [],
   sourceCodeByLocale: buildSourceCodeByLocale(
     item.sourceCodeEs,
     item.sourceCodeEn,
@@ -79,10 +81,11 @@ export const pedagogyExamples: ExampleCatalogItem[] = [
   createExample({
     id: "linear-shift-equiv-vs-upper",
     slug: "linear-shift-equiv-vs-upper",
-    category: "resta-y-venceras",
+    category: "decrease_and_conquer",
     family: "secuencias",
     difficulty: "intermedio",
     verifiedMethods: ["EC", "AR"],
+    techniqueBadges: ["RyV", "N_MINUS_1", "SINGLE_BRANCH"],
     enabled: true,
     titleEs: "Desplazamiento lineal: suma recursiva (EC vs AR)",
     titleEn: "Linear-shift recursive sum (EC vs AR)",
@@ -104,10 +107,11 @@ export const pedagogyExamples: ExampleCatalogItem[] = [
   createExample({
     id: "merge-sort-master-vs-iteration",
     slug: "merge-sort-master-vs-iteration",
-    category: "divide-y-venceras",
+    category: "divide_and_conquer",
     family: "ordenamiento",
     difficulty: "intermedio",
     verifiedMethods: ["TM", "IT"],
+    techniqueBadges: ["DyV", "MERGE", "PARTITION"],
     enabled: true,
     titleEs: "Merge Sort (TM vs IT)",
     titleEn: "Merge Sort (TM vs IT)",

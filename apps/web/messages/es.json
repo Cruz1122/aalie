@@ -765,6 +765,11 @@
         "complex_recursion": "El patrón de recursión es demasiado complejo para analizar.",
         "insufficient_evidence": "La evidencia local del AST no es suficiente para un análisis confiable."
       },
+      "reasons": {
+        "no_recursive_calls": "No se detectaron llamadas recursivas en el algoritmo.",
+        "complex_recursion": "El patrón de recursión es demasiado complejo para analizar.",
+        "insufficient_evidence": "La evidencia local del AST no es suficiente para un análisis confiable."
+      },
       "sections": {
         "recursiveStructure": "Estructura Recursiva",
         "baseProperty": "Propiedad del Caso Base",
@@ -781,7 +786,8 @@
         "recursiveCalls": "Llamadas recursivas",
         "recursionType": "Tipo de recursión",
         "detectedCalls": "Llamadas detectadas",
-        "baseConditions": "Condiciones base"
+        "baseConditions": "Condiciones base",
+        "noRecursion": "No hay estructura recursiva para mostrar."
       },
       "recursionTypes": {
         "linear": "Recursión Lineal",

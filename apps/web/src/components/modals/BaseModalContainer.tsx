@@ -8,6 +8,8 @@ interface BaseModalContainerProps {
   onClose: () => void;
   children: React.ReactNode;
   title?: React.ReactNode;
+  /** Optional subtitle shown under the title in the header. */
+  description?: React.ReactNode;
   titleIcon?: React.ReactNode;
   titleIconClassName?: string;
   closeAriaLabel?: string;
@@ -22,6 +24,7 @@ interface BaseModalContainerProps {
   showCloseButton?: boolean;
   closeOnOverlay?: boolean;
   lockBodyScroll?: boolean;
+  dataTestId?: string;
 }
 
 const DEFAULT_SIZE = "w-[min(95vw,1000px)] max-h-[75vh]";
@@ -31,6 +34,7 @@ export default function BaseModalContainer({
   onClose,
   children,
   title,
+  description,
   titleIcon,
   titleIconClassName = "text-blue-400",
   closeAriaLabel = "Close modal",
@@ -45,6 +49,7 @@ export default function BaseModalContainer({
   showCloseButton = true,
   closeOnOverlay = true,
   lockBodyScroll = true,
+  dataTestId,
 }: Readonly<BaseModalContainerProps>) {
   const [mounted, setMounted] = useState(false);
 
@@ -86,6 +91,7 @@ export default function BaseModalContainer({
         aria-hidden
       />
       <div
+        data-testid={dataTestId}
         className={`relative z-10 ${sizeClassName} rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4 ${panelClassName}`}
         style={panelStyle}
       >
@@ -93,22 +99,27 @@ export default function BaseModalContainer({
           <div
             className={`flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header ${headerClassName}`}
           >
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              {typeof titleIcon === "string" ? (
-                <span
-                  className={`material-symbols-outlined ${titleIconClassName}`}
-                >
-                  {titleIcon}
-                </span>
-              ) : (
-                titleIcon
-              )}
-              {title}
-            </h3>
+            <div className="min-w-0 flex-1 pr-2">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                {typeof titleIcon === "string" ? (
+                  <span
+                    className={`material-symbols-outlined ${titleIconClassName}`}
+                  >
+                    {titleIcon}
+                  </span>
+                ) : (
+                  titleIcon
+                )}
+                {title}
+              </h3>
+              {description ? (
+                <p className="mt-1 text-sm text-slate-300">{description}</p>
+              ) : null}
+            </div>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg flex-shrink-0"
                 aria-label={closeAriaLabel}
               >
                 ✕
