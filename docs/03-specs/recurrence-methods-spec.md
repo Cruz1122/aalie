@@ -80,6 +80,18 @@ Este procedimiento no exige que la recurrencia tenga una forma exacta del tipo `
 - `recurrence_info`
 - detalle del método seleccionado dentro de `totals`
 
+### `method_outcomes` (metadata del selector)
+
+Cuando el analizador la materialice, `recurrence_info` puede incluir `method_outcomes`: un mapa con claves fijas `characteristic_equation`, `iteration`, `recursion_tree` y `master`. Cada entrada describe cómo se debe presentar ese método para la recurrencia actual:
+
+- `applicable` (bool): el usuario puede seleccionarlo.
+- `recommended` (bool): coincide con `default_method`.
+- `bound_kind`: `equivalent` | `upper` | `lower` | `partial` — fuerza de la conclusión asintótica que aporta ese método para esta forma (no confundir con “mismo Θ que el default”).
+- `bound_strength`: `strong` solo cuando `bound_kind` es `equivalent`; en otro caso `partial`.
+- `bound_symbol`: `theta` | `big_o` | `big_omega` | `partial` — guía de notación en UI y pasos.
+
+En flujos que serializan una sola instancia de método aplicado, puede aparecer `method_outcome` (singular) con la misma semántica de cotas para ese método concreto.
+
 ## Invariantes
 
 - `characteristic_equation` solo aplica a familias lineales con shift bajo cobertura;

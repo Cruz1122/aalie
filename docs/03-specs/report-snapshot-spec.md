@@ -112,6 +112,7 @@ Aplica al schema `AalieAnalysisSnapshotV1` y a toda la salida de export.
 
 - Algunas subsecciones pueden declararse `not_implemented` aun dentro de un snapshot válido.
 - `internal` puede incluir artefactos útiles para depuración, pero esos campos no deben tratarse como promesa institucional estable salvo que se promuevan explícitamente.
+- La normalización de `recurrence` en export (`apps/api/app/modules/export/snapshot_builder.py`, `_normalize_recurrence`) puede ser un subconjunto estricto de la recurrencia devuelta por el analizador en vivo; campos auxiliares (por ejemplo `method_outcomes` en `recurrence_info`) no forman parte del snapshot exportado hasta que el builder los incorpore de forma explícita y versionada.
 
 ## Archivos relacionados
 
