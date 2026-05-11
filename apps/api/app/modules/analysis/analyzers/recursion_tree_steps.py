@@ -656,6 +656,9 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
     
     # Convertir a notación correcta basada en bound_kind
     theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta_latex) if ctx.theta_latex else ctx.theta_latex
+    primary_display = theta_with_notation
+    if primary_display and not str(primary_display).lstrip().lower().startswith("t(n)"):
+        primary_display = f"T(n) = {theta_with_notation}"
 
     steps.append(
         make_recursive_step(
@@ -670,8 +673,8 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             summary_key=step11_summary,
             concept_key="concept.tree.asymptotic_conclusion",
             warning_key=step11_warning,
-            primary_latex=theta_with_notation,
-            payload={"asymptoticResult": theta_with_notation},
+            primary_latex=primary_display,
+            payload={"asymptoticResult": primary_display},
             codes=["RT_ASYMPTOTIC_HEURISTIC"] if step11_status == "partial" else [],
         )
     )
