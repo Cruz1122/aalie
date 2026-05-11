@@ -201,7 +201,9 @@ export function buildQuizDashboardCards({
     {
       kind: "recent",
       eyebrow: i18n.latestTestEyebrow,
-      title: latestAttempt ? gradeOverFive(latestAttempt.accuracy) : i18n.noLatestTitle,
+      title: latestAttempt
+        ? gradeOverFive(latestAttempt.accuracy)
+        : i18n.noLatestTitle,
       description: latestAttempt
         ? i18n.latestDescription(
             Math.round(latestAttempt.score),

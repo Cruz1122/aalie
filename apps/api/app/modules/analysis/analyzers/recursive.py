@@ -37,6 +37,7 @@ from sympy import (
     roots as sympy_roots,
 )
 
+from ..recursive_invariants import generate_recursive_invariant
 from .base import BaseAnalyzer
 from .characteristic_steps import StepContext, build_characteristic_step_bundle
 from .iteration_steps import IterationStepContext, build_iteration_step_bundle
@@ -45,7 +46,6 @@ from .recursion_tree_steps import (
     RecursionTreeStepContext,
     build_recursion_tree_step_bundle,
 )
-from ..recursive_invariants import generate_recursive_invariant
 
 
 @dataclass(frozen=True)
@@ -4173,7 +4173,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
         y provee evidencia para decidir variabilidad de casos.
         """
         recursive_calls = self._find_recursive_calls(proc_def)
-        proc_name = proc_def.get("name", "") or (self.procedure_name or "")
         size_signals = self._extract_size_signals(proc_def, recursive_calls)
 
         call_sites: List[RecursiveCallSite] = []

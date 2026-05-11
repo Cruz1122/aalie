@@ -7,15 +7,13 @@ from typing import Any, Dict, Optional
 from .classifier import classify_recursion_pattern
 from .extractor import extract_recursive_facts
 from .schemas import (
-    RecursiveInvariantReason,
-    RecursiveInvariantStatus,
     RecursiveFacts,
+    RecursiveInvariantStatus,
     empty_recursive_invariant,
     normalize_locale,
 )
 from .templates import (
     build_invariant_text,
-    generate_recursion_type_label,
 )
 
 

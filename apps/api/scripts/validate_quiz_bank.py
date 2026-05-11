@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.modules.quizzes.repository import get_validated_dataset
+from app.modules.quizzes.repository import get_validated_dataset  # noqa: E402
 
 
 def main() -> int:

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import random
 from collections import defaultdict
 from copy import deepcopy
-import random
 from uuid import uuid4
 
 from .grading import GradingError, compute_mastery_delta, grade_question, summarize_skill_outcomes

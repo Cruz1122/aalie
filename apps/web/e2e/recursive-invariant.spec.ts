@@ -8,7 +8,9 @@ test.describe("Recursive Invariant E2E Tests", () => {
     // Navigate to analyzer (adjust URL based on your deployment)
     await page.goto("http://localhost:3000/en/analyzer");
     // Wait for app to load
-    await page.waitForSelector('[data-testid="code-editor"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="code-editor"]', {
+      timeout: 10000,
+    });
   });
 
   test.afterEach(async () => {
@@ -35,11 +37,13 @@ END
     await page.click('[data-testid="analyze-button"]');
 
     // Wait for analysis results
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     // Since Fibonacci is recursive, should show recursive invariant button (not loop invariant)
     const recursiveInvariantButton = page.locator(
-      'button:has-text("View recursive invariant")'
+      'button:has-text("View recursive invariant")',
     );
     await expect(recursiveInvariantButton).toBeVisible();
 
@@ -57,27 +61,27 @@ END
 
     // Verify 4 sections are visible
     await expect(
-      modal.locator('[data-testid="section-base-property"]')
+      modal.locator('[data-testid="section-base-property"]'),
     ).toBeVisible();
     await expect(
-      modal.locator('[data-testid="section-inductive-hypothesis"]')
+      modal.locator('[data-testid="section-inductive-hypothesis"]'),
     ).toBeVisible();
     await expect(
-      modal.locator('[data-testid="section-recursive-step"]')
+      modal.locator('[data-testid="section-recursive-step"]'),
     ).toBeVisible();
     await expect(
-      modal.locator('[data-testid="section-termination-guarantee"]')
+      modal.locator('[data-testid="section-termination-guarantee"]'),
     ).toBeVisible();
 
     // Verify recursive structure shows 2 calls
-    const recursiveCallsText = await modal.locator(
-      '[data-testid="recursive-calls"]'
-    ).textContent();
+    const recursiveCallsText = await modal
+      .locator('[data-testid="recursive-calls"]')
+      .textContent();
     expect(recursiveCallsText).toContain("fib");
 
     // Verify recursion type is "Multiple Recursion"
     const recursionTypeElement = modal.locator(
-      '[data-testid="recursion-type"]'
+      '[data-testid="recursion-type"]',
     );
     await expect(recursionTypeElement).toContainText("Multiple Recursion");
 
@@ -109,11 +113,13 @@ END
 
     await page.fill('[data-testid="code-editor"]', binarySearchCode);
     await page.click('[data-testid="analyze-button"]');
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     // Open recursive invariant modal
     const recursiveInvariantButton = page.locator(
-      'button:has-text("View recursive invariant")'
+      'button:has-text("View recursive invariant")',
     );
     await expect(recursiveInvariantButton).toBeVisible();
     await recursiveInvariantButton.click();
@@ -123,20 +129,20 @@ END
 
     // Verify recursion type is "Divide-and-Conquer" (NOT Multiple)
     const recursionTypeElement = modal.locator(
-      '[data-testid="recursion-type"]'
+      '[data-testid="recursion-type"]',
     );
     await expect(recursionTypeElement).toContainText("Divide-and-Conquer");
 
     // Verify base result shows "-1"
-    const baseResultText = await modal.locator(
-      '[data-testid="base-result"]'
-    ).textContent();
+    const baseResultText = await modal
+      .locator('[data-testid="base-result"]')
+      .textContent();
     expect(baseResultText).toContain("-1");
 
     // Verify base condition shows "inicio > fin"
-    const baseConditionText = await modal.locator(
-      '[data-testid="base-condition"]'
-    ).textContent();
+    const baseConditionText = await modal
+      .locator('[data-testid="base-condition"]')
+      .textContent();
     expect(baseConditionText).toContain("inicio > fin");
   });
 
@@ -155,10 +161,12 @@ END
 
     await page.fill('[data-testid="code-editor"]', countdownCode);
     await page.click('[data-testid="analyze-button"]');
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     const recursiveInvariantButton = page.locator(
-      'button:has-text("View recursive invariant")'
+      'button:has-text("View recursive invariant")',
     );
     await expect(recursiveInvariantButton).toBeVisible();
     await recursiveInvariantButton.click();
@@ -168,14 +176,14 @@ END
 
     // Verify recursion type is "Linear Recursion"
     const recursionTypeElement = modal.locator(
-      '[data-testid="recursion-type"]'
+      '[data-testid="recursion-type"]',
     );
     await expect(recursionTypeElement).toContainText("Linear Recursion");
 
     // Verify didactic summary mentions linear pattern
-    const summary = await modal.locator(
-      '[data-testid="didactic-summary"]'
-    ).textContent();
+    const summary = await modal
+      .locator('[data-testid="didactic-summary"]')
+      .textContent();
     expect(summary?.toLowerCase()).toContain("single");
   });
 
@@ -194,16 +202,18 @@ END
 
     await page.fill('[data-testid="code-editor"]', iterativeCode);
     await page.click('[data-testid="analyze-button"]');
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     // Should show loop invariant button, NOT recursive invariant
     const loopInvariantButton = page.locator(
-      'button:has-text("View loop invariant")'
+      'button:has-text("View loop invariant")',
     );
     await expect(loopInvariantButton).toBeVisible();
 
     const recursiveInvariantButton = page.locator(
-      'button:has-text("View recursive invariant")'
+      'button:has-text("View recursive invariant")',
     );
     // Should not be visible or should be disabled
     const isDisabledOrHidden =
@@ -215,7 +225,9 @@ END
   test("should support Spanish locale", async () => {
     // Navigate to Spanish version
     await page.goto("http://localhost:3000/es/analyzer");
-    await page.waitForSelector('[data-testid="code-editor"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="code-editor"]', {
+      timeout: 10000,
+    });
 
     const fibonacciCode = `
 FUNCTION fib(n)
@@ -230,11 +242,13 @@ END
 
     await page.fill('[data-testid="code-editor"]', fibonacciCode);
     await page.click('[data-testid="analyze-button"]');
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     // Spanish button text
     const recursiveInvariantButton = page.locator(
-      'button:has-text("Ver invariante recursivo")'
+      'button:has-text("Ver invariante recursivo")',
     );
     await expect(recursiveInvariantButton).toBeVisible();
     await recursiveInvariantButton.click();
@@ -243,14 +257,14 @@ END
     await expect(modal).toBeVisible();
 
     // Verify Spanish labels
-    const titleText = await modal.locator(
-      '[data-testid="modal-title"]'
-    ).textContent();
+    const titleText = await modal
+      .locator('[data-testid="modal-title"]')
+      .textContent();
     expect(titleText).toContain("Invariante Recursivo");
 
     // Verify Spanish section names
     await expect(
-      modal.locator('[data-testid="section-base-property"]')
+      modal.locator('[data-testid="section-base-property"]'),
     ).toContainText("Propiedad del Caso Base");
   });
 
@@ -268,19 +282,21 @@ END
 
     await page.fill('[data-testid="code-editor"]', fibonacciCode);
     await page.click('[data-testid="analyze-button"]');
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     const recursiveInvariantButton = page.locator(
-      'button:has-text("View recursive invariant")'
+      'button:has-text("View recursive invariant")',
     );
     await recursiveInvariantButton.click();
 
     const modal = page.locator('[data-testid="recursive-invariant-modal"]');
 
     // Verify confidence is shown as percentage
-    const confidenceText = await modal.locator(
-      '[data-testid="confidence-score"]'
-    ).textContent();
+    const confidenceText = await modal
+      .locator('[data-testid="confidence-score"]')
+      .textContent();
     expect(confidenceText).toMatch(/\d+%/);
 
     // Extract and verify percentage is between 0-100
@@ -303,10 +319,12 @@ END
 
     await page.fill('[data-testid="code-editor"]', fibonacciCode);
     await page.click('[data-testid="analyze-button"]');
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     const recursiveInvariantButton = page.locator(
-      'button:has-text("View recursive invariant")'
+      'button:has-text("View recursive invariant")',
     );
     await recursiveInvariantButton.click();
 
@@ -332,10 +350,12 @@ END
 
     await page.fill('[data-testid="code-editor"]', fibonacciCode);
     await page.click('[data-testid="analyze-button"]');
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     const recursiveInvariantButton = page.locator(
-      'button:has-text("View recursive invariant")'
+      'button:has-text("View recursive invariant")',
     );
     await recursiveInvariantButton.click();
 
@@ -361,17 +381,19 @@ END
 
     await page.fill('[data-testid="code-editor"]', fibonacciCode);
     await page.click('[data-testid="analyze-button"]');
-    await page.waitForSelector('[data-testid="analysis-results"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="analysis-results"]', {
+      timeout: 15000,
+    });
 
     const recursiveInvariantButton = page.locator(
-      'button:has-text("View recursive invariant")'
+      'button:has-text("View recursive invariant")',
     );
     await recursiveInvariantButton.click();
 
     const modal = page.locator('[data-testid="recursive-invariant-modal"]');
 
     // Expand evidence details
-    const detailsElement = modal.locator('details');
+    const detailsElement = modal.locator("details");
     await detailsElement.click();
 
     // Verify evidence section shows
@@ -379,9 +401,9 @@ END
     await expect(evidenceSection).toBeVisible();
 
     // Verify base conditions are listed
-    const baseConditionsText = await modal.locator(
-      '[data-testid="base-conditions-list"]'
-    ).textContent();
+    const baseConditionsText = await modal
+      .locator('[data-testid="base-conditions-list"]')
+      .textContent();
     expect(baseConditionsText).toContain("n <= 1");
   });
 });

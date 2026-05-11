@@ -8,8 +8,12 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
+
+import type {
+  RecursionStepperState,
+  RecursionStepperActions,
+} from "@/hooks/useRecursionStepper";
 import type { GraphNode } from "@/types/trace";
-import type { RecursionStepperState, RecursionStepperActions } from "@/hooks/useRecursionStepper";
 
 interface RecursionSteppingControlsProps {
   state: RecursionStepperState;
@@ -41,22 +45,33 @@ export default function RecursionSteppingControls({
     [actions],
   );
 
-  const stepFill = state.totalSteps <= 1
-    ? 100
-    : (state.currentStep / Math.max(1, state.totalSteps - 1)) * 100;
+  const stepFill =
+    state.totalSteps <= 1
+      ? 100
+      : (state.currentStep / Math.max(1, state.totalSteps - 1)) * 100;
 
-  const speedFill = Math.max(0, Math.min(100, ((state.playbackSpeed - 100) / (5000 - 100)) * 100));
+  const speedFill = Math.max(
+    0,
+    Math.min(100, ((state.playbackSpeed - 100) / (5000 - 100)) * 100),
+  );
 
   if (state.totalSteps === 0) {
     return null;
   }
 
   return (
-    <div className={`flex flex-col gap-3 rounded-xl border border-slate-700/70 bg-slate-950/70 p-3 shadow-lg shadow-black/10 ${className}`}>
+    <div
+      className={`flex flex-col gap-3 rounded-xl border border-slate-700/70 bg-slate-950/70 p-3 shadow-lg shadow-black/10 ${className}`}
+    >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-slate-100">{t("steppingTitle")}</h3>
+        <h3 className="text-sm font-semibold text-slate-100">
+          {t("steppingTitle")}
+        </h3>
         <span className="text-xs text-slate-400">
-          {t("stepOf", { current: state.currentStep + 1, total: state.totalSteps })}
+          {t("stepOf", {
+            current: state.currentStep + 1,
+            total: state.totalSteps,
+          })}
         </span>
       </div>
 
@@ -97,7 +112,10 @@ export default function RecursionSteppingControls({
       </div>
 
       <div className="flex items-center gap-3">
-        <label htmlFor="step-slider" className="min-w-[3.5rem] text-xs font-medium uppercase tracking-wide text-slate-400">
+        <label
+          htmlFor="step-slider"
+          className="min-w-[3.5rem] text-xs font-medium uppercase tracking-wide text-slate-400"
+        >
           {t("steppingStep")}:
         </label>
         <input
@@ -113,11 +131,16 @@ export default function RecursionSteppingControls({
             backgroundRepeat: "no-repeat",
           }}
         />
-        <span className="w-10 text-right text-xs text-slate-300">{state.currentStep + 1}</span>
+        <span className="w-10 text-right text-xs text-slate-300">
+          {state.currentStep + 1}
+        </span>
       </div>
 
       <div className="flex items-center gap-3">
-        <label htmlFor="speed-slider" className="min-w-[3.5rem] text-xs font-medium uppercase tracking-wide text-slate-400">
+        <label
+          htmlFor="speed-slider"
+          className="min-w-[3.5rem] text-xs font-medium uppercase tracking-wide text-slate-400"
+        >
           {t("steppingSpeed")}:
         </label>
         <input
@@ -134,19 +157,27 @@ export default function RecursionSteppingControls({
             backgroundRepeat: "no-repeat",
           }}
         />
-        <span className="w-16 text-right text-xs text-slate-300">{(state.playbackSpeed / 1000).toFixed(1)}s</span>
+        <span className="w-16 text-right text-xs text-slate-300">
+          {(state.playbackSpeed / 1000).toFixed(1)}s
+        </span>
       </div>
 
       {currentNode && currentNode.data && (
         <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-slate-100">
-          <div className="font-semibold text-slate-100">{currentNode.data.label}</div>
+          <div className="font-semibold text-slate-100">
+            {currentNode.data.label}
+          </div>
           {isReturnEvent ? (
-            <div className="text-xs font-medium text-emerald-300">{t("phase_return")}</div>
+            <div className="text-xs font-medium text-emerald-300">
+              {t("phase_return")}
+            </div>
           ) : (
             <div className="text-xs text-slate-400">{t("phase_expansion")}</div>
           )}
           {isReturnEvent && currentNode.data.returnValue !== undefined && (
-            <div className="text-xs text-emerald-300">↩ {String(currentNode.data.returnValue)}</div>
+            <div className="text-xs text-emerald-300">
+              ↩ {String(currentNode.data.returnValue)}
+            </div>
           )}
           {currentNode.data.depth !== undefined && (
             <div className="text-xs text-slate-400">
@@ -156,7 +187,9 @@ export default function RecursionSteppingControls({
         </div>
       )}
 
-      <p className="text-xs italic leading-relaxed text-slate-400">{t("steppingInfo")}</p>
+      <p className="text-xs italic leading-relaxed text-slate-400">
+        {t("steppingInfo")}
+      </p>
     </div>
   );
 }

@@ -13,8 +13,8 @@ import type {
   AssistantQuizSessionReviewContext,
 } from "@/lib/assistant/types";
 
-import type { StoredQuizProgress } from "../storage/quizStorageTypes";
 import type { QuizDashboardMetrics } from "../dashboard/quizDashboardTypes";
+import type { StoredQuizProgress } from "../storage/quizStorageTypes";
 
 const PLAIN_BLOCK_JOIN = "\n\n";
 
@@ -82,7 +82,9 @@ function formatStudentAnswerSummary(
   }
   if ("pairs" in answer && answer.pairs && answer.pairs.length > 0) {
     const lines = answer.pairs.map((pair) => {
-      const leftItem = question.leftItems?.find((l) => l.leftId === pair.leftId);
+      const leftItem = question.leftItems?.find(
+        (l) => l.leftId === pair.leftId,
+      );
       const rightItem = question.rightItems?.find(
         (r) => r.rightId === pair.rightId,
       );
@@ -125,7 +127,9 @@ function formatCorrectAnswerSummary(
   }
   if (correct.pairs?.length) {
     const lines = correct.pairs.map((pair) => {
-      const leftItem = question.leftItems?.find((l) => l.leftId === pair.leftId);
+      const leftItem = question.leftItems?.find(
+        (l) => l.leftId === pair.leftId,
+      );
       const rightItem = question.rightItems?.find(
         (r) => r.rightId === pair.rightId,
       );
@@ -233,9 +237,7 @@ export function buildAssistantQuizDashboardContext(input: {
     areasToImprove: areas,
     strengths,
     weakSkillIds: progress?.weakSkillIds ?? [],
-    lastFailedTopicIds: (progress?.lastFailedTopicIds ?? []).map(
-      formatTopicId,
-    ),
+    lastFailedTopicIds: (progress?.lastFailedTopicIds ?? []).map(formatTopicId),
     recentAttempts: recent,
   };
 }
@@ -259,8 +261,8 @@ export function buildAssistantQuizSessionReviewContext(input: {
 
   const byId = new Map(questions.map((q) => [q.questionId, q]));
 
-  const allQuestions: AssistantQuizReviewQuestionContext[] =
-    result.results.map((qr, idx) => {
+  const allQuestions: AssistantQuizReviewQuestionContext[] = result.results.map(
+    (qr, idx) => {
       const q = byId.get(qr.questionId);
       if (!q) {
         return {
@@ -276,7 +278,8 @@ export function buildAssistantQuizSessionReviewContext(input: {
         };
       }
       return buildReviewQuestionContext(q, qr, idx, formatTopicId);
-    });
+    },
+  );
 
   let currentQuestion: AssistantQuizReviewQuestionContext | undefined;
   if (!isSummaryStep && reviewIndex > 0) {
@@ -284,12 +287,7 @@ export function buildAssistantQuizSessionReviewContext(input: {
     if (qr) {
       const q = byId.get(qr.questionId);
       currentQuestion = q
-        ? buildReviewQuestionContext(
-            q,
-            qr,
-            reviewIndex - 1,
-            formatTopicId,
-          )
+        ? buildReviewQuestionContext(q, qr, reviewIndex - 1, formatTopicId)
         : allQuestions[reviewIndex - 1];
     }
   }

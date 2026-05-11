@@ -271,8 +271,6 @@ def _analyze_parameter_decrease(
     if not calls or not size_params:
         return False
 
-    size_param = size_params[0]
-
     for call in calls:
         for param in call.parameters:
             # Check if parameter contains subtraction (n-1) or division (n/2)

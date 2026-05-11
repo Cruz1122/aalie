@@ -731,7 +731,8 @@ const shouldShowTreeButton = (
 ): boolean => {
   if (
     isRecursionTreeMethod &&
-    (recurrence?.type === "divide_conquer" || recurrence?.type === "linear_shift")
+    (recurrence?.type === "divide_conquer" ||
+      recurrence?.type === "linear_shift")
   )
     return true;
   if (isCharacteristicMethod && recurrence?.type === "linear_shift")

@@ -95,23 +95,30 @@ export default function Footer() {
   useEffect(() => {
     if (!pathname?.includes("/analyzer")) return;
 
-    const send = (hypothesisId: string, message: string, data: Record<string, unknown>) => {
-      fetch("http://127.0.0.1:7615/ingest/f8bbb90c-5683-490d-938c-8e69fd8876e2", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "6773fb",
+    const send = (
+      hypothesisId: string,
+      message: string,
+      data: Record<string, unknown>,
+    ) => {
+      fetch(
+        "http://127.0.0.1:7615/ingest/f8bbb90c-5683-490d-938c-8e69fd8876e2",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "6773fb",
+          },
+          body: JSON.stringify({
+            sessionId: "6773fb",
+            runId: "analyzer-footer-layout",
+            hypothesisId,
+            location: "Footer.tsx:layoutProbe",
+            message,
+            data,
+            timestamp: Date.now(),
+          }),
         },
-        body: JSON.stringify({
-          sessionId: "6773fb",
-          runId: "analyzer-footer-layout",
-          hypothesisId,
-          location: "Footer.tsx:layoutProbe",
-          message,
-          data,
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
+      ).catch(() => {});
     };
 
     const probe = () => {
@@ -124,7 +131,8 @@ export default function Footer() {
       const de = document.documentElement;
       const body = document.body;
       const m = main as HTMLElement | null;
-      const rootChain: { tag: string; cls: string; h: number; minH: string }[] = [];
+      const rootChain: { tag: string; cls: string; h: number; minH: string }[] =
+        [];
       let p: HTMLElement | null = el;
       for (let i = 0; i < 6 && p; i++) {
         const cs = window.getComputedStyle(p);

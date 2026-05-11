@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 
+import { useRecursionStepper } from "@/hooks/useRecursionStepper";
 import type { StructuredTrace } from "@/types/trace";
 
 import ExecutionGraphView from "../ExecutionGraphView";
 import RecursionSteppingControls from "./RecursionSteppingControls";
-import { useRecursionStepper } from "@/hooks/useRecursionStepper";
 
 interface DiagramSectionProps {
   structuredDiagram?: StructuredTrace | null;
@@ -71,7 +71,8 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
     return {
       nodes: graph.nodes.filter((node) => visibleNodeIds.has(node.id)),
       edges: graph.edges.filter(
-        (edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
+        (edge) =>
+          visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
       ),
     };
   }, [graph, maxVisibleDepth, recursiveDepth]);
@@ -80,7 +81,9 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
     graph?.nodes ?? [],
     graph?.edges ?? [],
   );
-  const currentSteppedNode = graph?.nodes?.find((n) => n.id === stepState.currentNodeId);
+  const currentSteppedNode = graph?.nodes?.find(
+    (n) => n.id === stepState.currentNodeId,
+  );
 
   const depthLabel =
     maxVisibleDepth === null
@@ -132,7 +135,9 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
       // If stepping is active, intersect stepping-visible nodes with depth-visible nodes
       let effectiveVisibleIds: Set<string> | undefined = undefined;
       if (!isIterative) {
-        const depthVisible = new Set((visibleGraph.nodes ?? []).map((n) => n.id));
+        const depthVisible = new Set(
+          (visibleGraph.nodes ?? []).map((n) => n.id),
+        );
         effectiveVisibleIds = new Set<string>();
         stepState.visibleNodeIds.forEach((id) => {
           if (depthVisible.has(id)) effectiveVisibleIds!.add(id);
@@ -225,7 +230,9 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
 
       <div className="h-[28px] flex items-center px-1 flex-shrink-0">
         <div className="flex items-center justify-between gap-2 w-full">
-          <p className="text-xs text-slate-400 truncate">{diagramNote ?? " "}</p>
+          <p className="text-xs text-slate-400 truncate">
+            {diagramNote ?? " "}
+          </p>
           {recursiveDepth !== null && !isIterative && (
             <div className="flex items-center gap-1 flex-shrink-0">
               <span className="text-[10px] uppercase tracking-wide text-slate-500 px-2 py-1 rounded-full border border-white/10 bg-slate-950/20">
@@ -257,7 +264,9 @@ export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
                   )
                 }
                 className="w-7 h-7 flex items-center justify-center rounded-md bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 disabled:opacity-40"
-                disabled={maxVisibleDepth !== null && maxVisibleDepth >= recursiveDepth}
+                disabled={
+                  maxVisibleDepth !== null && maxVisibleDepth >= recursiveDepth
+                }
                 title={t("diagramLevelsShowMore")}
                 aria-label={t("diagramLevelsShowMore")}
               >

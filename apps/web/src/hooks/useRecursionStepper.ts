@@ -1,17 +1,18 @@
 /**
  * Hook para controlar el stepping interactivo de árbol de recursión.
- * 
+ *
  * Características:
  * - Stepping nodo por nodo (máximo detalle)
  * - Ocultar nodos al retroceder (contracción del árbol)
  * - Velocidad configurable (slider)
  * - Play/Pause/Next/Prev controles
- * 
+ *
  * Author: AALIE - Recursive Stepping Feature
  * Version: 1.0.0
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import type { GraphEdge, GraphNode } from "@/types/trace";
 
 type RecursionStepEvent = {
@@ -48,9 +49,12 @@ export interface RecursionStepperActions {
   reset: () => void;
 }
 
-const edgePairKey = (sourceId: string, targetId: string): string => `${sourceId}::${targetId}`;
+const edgePairKey = (sourceId: string, targetId: string): string =>
+  `${sourceId}::${targetId}`;
 
-const normalizeParentNodeId = (rawParentId: string | null | undefined): string | null => {
+const normalizeParentNodeId = (
+  rawParentId: string | null | undefined,
+): string | null => {
   if (!rawParentId) {
     return null;
   }
@@ -65,7 +69,7 @@ const normalizeParentNodeId = (rawParentId: string | null | undefined): string |
 
 /**
  * Hook to manage recursive stepping visualization.
- * 
+ *
  * @param nodes - All graph nodes (with executionOrder/returnOrder metadata)
  * @param edges - All graph edges (used to resolve real edge IDs for call/return rendering)
  * @returns Stepping state and control actions
@@ -90,7 +94,8 @@ export function useRecursionStepper(
   const parentByNode = useMemo(() => {
     const mapping = new Map<string, string | null>();
     sortedNodes.forEach((node) => {
-      const parentId = node.parentId ?? normalizeParentNodeId(node.data?.parentCallId ?? null);
+      const parentId =
+        node.parentId ?? normalizeParentNodeId(node.data?.parentCallId ?? null);
       mapping.set(node.id, parentId);
     });
     return mapping;
@@ -100,7 +105,9 @@ export function useRecursionStepper(
     const childrenByParent = new Map<string, string[]>();
     edges.forEach((edge) => {
       const isReturnEdge =
-        edge.type === "return" || edge.label === "return" || edge.id.startsWith("e_ret_");
+        edge.type === "return" ||
+        edge.label === "return" ||
+        edge.id.startsWith("e_ret_");
       if (isReturnEdge) {
         return;
       }
@@ -165,7 +172,11 @@ export function useRecursionStepper(
     const visibleEdges = new Set<string>();
     const eventByNode = new Map<string, RecursionStepEvent>();
 
-    for (let index = 0; index <= currentStep && index < sortedEvents.length; index += 1) {
+    for (
+      let index = 0;
+      index <= currentStep && index < sortedEvents.length;
+      index += 1
+    ) {
       const event = sortedEvents[index];
       eventByNode.set(event.nodeId, event);
       visibleNodes.add(event.nodeId);
@@ -202,7 +213,7 @@ export function useRecursionStepper(
       visibleNodeIds: visibleNodes,
       visibleEdgeIds: visibleEdges,
     };
-  }, [currentStep]);
+  }, [currentStep, edgeIdByPair, sortedEvents, sortedNodes]);
 
   const currentNodeId = currentEvent?.nodeId ?? null;
   const currentEventKind = currentEvent?.kind ?? null;
@@ -245,10 +256,13 @@ export function useRecursionStepper(
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  const handleSetCurrentStep = useCallback((step: number) => {
-    const clamped = Math.max(0, Math.min(step, totalSteps - 1));
-    setCurrentStep(clamped);
-  }, [totalSteps]);
+  const handleSetCurrentStep = useCallback(
+    (step: number) => {
+      const clamped = Math.max(0, Math.min(step, totalSteps - 1));
+      setCurrentStep(clamped);
+    },
+    [totalSteps],
+  );
 
   const togglePlayback = useCallback(() => {
     setIsPlaying((prev) => !prev);

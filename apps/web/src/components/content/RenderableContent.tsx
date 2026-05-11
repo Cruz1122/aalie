@@ -131,7 +131,8 @@ function renderAaliePseudocodeHighlighted(source: string): ReactNode[] {
   return source.split("\n").map((line, lineIdx) => {
     const lineKey = `l${lineIdx}`;
     const commentStart = line.indexOf("//");
-    const beforeComment = commentStart >= 0 ? line.slice(0, commentStart) : line;
+    const beforeComment =
+      commentStart >= 0 ? line.slice(0, commentStart) : line;
     const comment = commentStart >= 0 ? line.slice(commentStart) : "";
 
     return (

@@ -1,6 +1,5 @@
 """Test recursive invariant for complex algorithms."""
 
-import json
 from app.modules.analysis.recursive_invariants import generate_recursive_invariant
 from app.modules.analysis.recursive_invariants.extractor import extract_recursive_facts
 

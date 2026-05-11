@@ -3,7 +3,11 @@
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 
-import type { CatalogTier, ExampleCatalogItem, ExampleLocale } from "@/lib/examples/catalog";
+import type {
+  CatalogTier,
+  ExampleCatalogItem,
+  ExampleLocale,
+} from "@/lib/examples/catalog";
 import {
   EXAMPLE_FAMILY_ICONS,
   getLocalizedExampleSource,

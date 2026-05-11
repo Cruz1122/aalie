@@ -1,5 +1,8 @@
 import { safeGet, safeSet } from "./quizLocalStorage";
-import { INITIAL_PROGRESS, QUIZ_PROGRESS_STORAGE_KEY } from "./quizProgressStorage";
+import {
+  INITIAL_PROGRESS,
+  QUIZ_PROGRESS_STORAGE_KEY,
+} from "./quizProgressStorage";
 import type { StoredQuizAttempt } from "./quizStorageTypes";
 
 export const QUIZ_ATTEMPTS_STORAGE_KEY = "aalie.quiz.attempts.v1";

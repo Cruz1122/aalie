@@ -173,27 +173,6 @@ export default function MethodSelector({
     if (precision === "medium") return "text-slate-300";
     return "text-slate-400";
   };
-  const boundKindStyles: Record<
-    MethodBoundKind,
-    { label: string; className: string }
-  > = {
-    equivalent: {
-      label: t("boundKinds.equivalent"),
-      className: "border-emerald-400/30 bg-emerald-500/15 text-emerald-200",
-    },
-    upper: {
-      label: t("boundKinds.upper"),
-      className: "border-sky-400/30 bg-sky-500/15 text-sky-200",
-    },
-    lower: {
-      label: t("boundKinds.lower"),
-      className: "border-violet-400/30 bg-violet-500/15 text-violet-200",
-    },
-    partial: {
-      label: t("boundKinds.partial"),
-      className: "border-amber-400/30 bg-amber-500/15 text-amber-200",
-    },
-  };
   const rootClass = embeddedInLoader
     ? "absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-300 opacity-100"
     : "fixed inset-0 z-[70] flex items-center justify-center transition-opacity duration-300 opacity-100";
@@ -234,7 +213,6 @@ export default function MethodSelector({
               const metadata = normalizedMetadata[methodId];
               const isSelected = selectedMethod === methodId;
               const isApplicable = metadata.applicable;
-              const boundInfo = boundKindStyles[metadata.boundKind];
 
               return (
                 <button

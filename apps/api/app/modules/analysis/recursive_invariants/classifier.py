@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Set
+from typing import Set
 
 from .schemas import (
     ClassificationResult,
-    RecursionType,
     RecursiveFacts,
     _clamp_confidence,
 )

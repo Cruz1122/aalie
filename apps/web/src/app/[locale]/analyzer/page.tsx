@@ -27,13 +27,13 @@ import GPUCPUModal from "@/components/GPUCPUModal";
 import Header from "@/components/Header";
 import IterativeAnalysisView from "@/components/IterativeAnalysisView";
 import LoopInvariantModal from "@/components/LoopInvariantModal";
-import RecursiveInvariantModal from "@/components/RecursiveInvariantModal";
 import MethodSelector, {
   MethodMetadataMap,
   MethodType,
 } from "@/components/MethodSelector";
 import ProcedureModal from "@/components/ProcedureModal";
 import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
+import RecursiveInvariantModal from "@/components/RecursiveInvariantModal";
 import RepairModal from "@/components/RepairModal";
 import TraceDedicatedView from "@/components/TraceDedicatedView";
 import TxtImportModal from "@/components/TxtImportModal";

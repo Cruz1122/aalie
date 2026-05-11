@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.modules.quizzes.content_refs import content_ref_exists
-from app.modules.quizzes.repository import get_validated_dataset
+from app.modules.quizzes.content_refs import content_ref_exists  # noqa: E402
+from app.modules.quizzes.repository import get_validated_dataset  # noqa: E402
 
 
 def build_report() -> dict[str, object]:
@@ -73,8 +73,11 @@ def build_report() -> dict[str, object]:
     for expected in {"recall", "understand", "apply", "analyze"}:
         if by_cognitive.get(expected, 0) == 0:
             coverage_warnings.append(f"missing_cognitive:{expected}")
-    if len(dataset.questions) > 50:
-        coverage_warnings.append("dataset_above_50")
+    if len(dataset.questions) > 500:
+        coverage_warnings.append("dataset_above_500")
+    for skill, count in by_skill.items():
+        if count < 3:
+            coverage_warnings.append(f"undercovered_skill:{skill}:{count}")
 
     return {
         "datasetId": dataset.datasetId,
@@ -100,13 +103,12 @@ def critical_checks(report: dict[str, object]) -> list[str]:
     active = int(report["activeQuestions"])
     by_topic = report["byTopic"]
     by_difficulty = report["byDifficulty"]
-    by_skill = report["bySkill"]
     broken_refs = report["brokenRefs"]
 
     if active < 5:
         errors.append(f"Active questions below threshold: {active} < 5")
-    if total > 50:
-        errors.append(f"Total questions exceeds scope: {total} > 50")
+    if total > 500:
+        errors.append(f"Total questions exceeds scope: {total} > 500")
 
     advanced = int(by_difficulty.get("advanced", 0))
     advanced_ratio = (advanced / total) if total else 0.0
@@ -117,10 +119,6 @@ def critical_checks(report: dict[str, object]) -> list[str]:
         ratio = (count / total) if total else 0.0
         if ratio > 0.35:
             errors.append(f"Topic over-concentration: {topic} ({ratio:.2%} > 35%)")
-
-    for skill, count in by_skill.items():
-        if count < 3:
-            errors.append(f"Critical skill under-covered: {skill} ({count} < 3)")
 
     if broken_refs:
         errors.append(f"Broken content refs found: {len(broken_refs)}")

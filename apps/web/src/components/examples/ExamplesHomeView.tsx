@@ -219,78 +219,78 @@ export function ExamplesHomeView({ page }: ExamplesHomeViewProps) {
         <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6">
           <section className="shrink-0 space-y-4">
             <div className="relative">
-            <label className="glass-card flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3">
-              <span className="material-symbols-outlined text-slate-400">
-                search
-              </span>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && topMatches.length > 0) {
-                    const first = topMatches[0];
-                    handleSelectMatch(
-                      first.slug,
-                      getCategoryMeta(first.category).slug,
-                    );
-                  }
-                }}
-                placeholder={t("searchPlaceholder")}
-                aria-label={t("searchAriaLabel")}
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-              />
-            </label>
-            {query.trim() && (
-              <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#182431] shadow-xl">
-                {topMatches.length > 0 ? (
-                  <ul className="divide-y divide-white/10">
-                    {topMatches.map((item) => {
-                      const copy = getLocalizedExampleContent(
-                        item,
-                        catalogItems,
-                        locale,
+              <label className="glass-card flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3">
+                <span className="material-symbols-outlined text-slate-400">
+                  search
+                </span>
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && topMatches.length > 0) {
+                      const first = topMatches[0];
+                      handleSelectMatch(
+                        first.slug,
+                        getCategoryMeta(first.category).slug,
                       );
-                      const recursive = isRecursiveCategory(item.category);
-                      const kindLabel = t("kind.recursive");
-                      const iterativeLabel = t("kind.iterative");
-                      return (
-                        <li key={item.id}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleSelectMatch(
-                                item.slug,
-                                getCategoryMeta(item.category).slug,
-                              )
-                            }
-                            className="w-full px-4 py-3 text-left transition-colors hover:bg-white/5"
-                          >
-                            <div className="text-sm font-semibold text-white">
-                              {copy.title}
-                            </div>
-                            <div className="mt-1 text-xs text-neutral-300">
-                              {tGlobal(CATEGORY_LABEL_KEYS[item.category])}
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
-                                {tGlobal(FAMILY_LABEL_KEYS[item.family])}
-                              </span>
-                              <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
-                                {recursive ? kindLabel : iterativeLabel}
-                              </span>
-                            </div>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <div className="px-4 py-3 text-sm text-neutral-300">
-                    {t("emptyTitle")}
-                  </div>
-                )}
-              </div>
-            )}
+                    }
+                  }}
+                  placeholder={t("searchPlaceholder")}
+                  aria-label={t("searchAriaLabel")}
+                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                />
+              </label>
+              {query.trim() && (
+                <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#182431] shadow-xl">
+                  {topMatches.length > 0 ? (
+                    <ul className="divide-y divide-white/10">
+                      {topMatches.map((item) => {
+                        const copy = getLocalizedExampleContent(
+                          item,
+                          catalogItems,
+                          locale,
+                        );
+                        const recursive = isRecursiveCategory(item.category);
+                        const kindLabel = t("kind.recursive");
+                        const iterativeLabel = t("kind.iterative");
+                        return (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleSelectMatch(
+                                  item.slug,
+                                  getCategoryMeta(item.category).slug,
+                                )
+                              }
+                              className="w-full px-4 py-3 text-left transition-colors hover:bg-white/5"
+                            >
+                              <div className="text-sm font-semibold text-white">
+                                {copy.title}
+                              </div>
+                              <div className="mt-1 text-xs text-neutral-300">
+                                {tGlobal(CATEGORY_LABEL_KEYS[item.category])}
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
+                                  {tGlobal(FAMILY_LABEL_KEYS[item.family])}
+                                </span>
+                                <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
+                                  {recursive ? kindLabel : iterativeLabel}
+                                </span>
+                              </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-neutral-300">
+                      {t("emptyTitle")}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
 

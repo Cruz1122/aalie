@@ -7,10 +7,10 @@ import ReactDOM from "react-dom";
 
 import { useTraceController } from "@/hooks/trace/useTraceController";
 import { useTraceRefreshOnAnalysis } from "@/hooks/trace/useTraceRefreshOnAnalysis";
+import { useRecursionStepper } from "@/hooks/useRecursionStepper";
 import { buildTraceFocusedPanelContext } from "@/lib/assistant/trace-focused-panel";
 import type { AssistantFocusedPanelContext } from "@/lib/assistant/types";
 import type { CaseType } from "@/types/trace";
-import { useRecursionStepper } from "@/hooks/useRecursionStepper";
 
 import ExecutionGraphView from "./ExecutionGraphView";
 import RecursionSteppingControls from "./trace/RecursionSteppingControls";
@@ -361,7 +361,8 @@ export default function TraceDedicatedView({
                     currentNodeId={recursionStepState.currentNodeId}
                   />
                 </div>
-                {isRecursiveOrHybrid && structuredDiagram?.graph?.nodes?.length ? (
+                {isRecursiveOrHybrid &&
+                structuredDiagram?.graph?.nodes?.length ? (
                   <RecursionSteppingControls
                     state={recursionStepState}
                     actions={recursionStepActions}

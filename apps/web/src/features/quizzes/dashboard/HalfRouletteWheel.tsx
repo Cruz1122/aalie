@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import AALIEIcon from "@/components/AALIEIcon";
 type RouletteOption = {
@@ -109,13 +115,15 @@ export function HalfRouletteWheel({
   const [wrapperWidth, setWrapperWidth] = useState(720);
   const [hoveredOptionKey, setHoveredOptionKey] = useState<string | null>(null);
   const wheelCaptureActiveRef = useRef(false);
-  const wheelCaptureReleaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const wheelCaptureReleaseTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const pointerInsideKeyRef = useRef<string | null>(null);
   const hoverBlockedRef = useRef(false);
   const hoverDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rotationUnblockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rotationUnblockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const skipFirstRotationBlockRef = useRef(true);
 
   const HOVER_DEBOUNCE_MS = 90;
@@ -498,9 +506,7 @@ export function HalfRouletteWheel({
 
               <span
                 className={`line-clamp-2 max-w-[10.5rem] text-xs font-semibold leading-snug transition-all duration-200 sm:max-w-[13rem] sm:text-sm sm:leading-snug lg:max-w-[16rem] lg:text-base lg:leading-snug xl:text-lg ${
-                  isHovered
-                    ? "text-slate-200"
-                    : titleColorForKind(option.kind)
+                  isHovered ? "text-slate-200" : titleColorForKind(option.kind)
                 }`}
               >
                 {isHovered ? clickHint : option.title}

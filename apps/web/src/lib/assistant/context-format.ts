@@ -170,7 +170,8 @@ function sanitizeQuizReviewQuestion(
     isCorrect: q.isCorrect,
     score: q.score,
     maxScore: q.maxScore,
-    userAnswerSummary: truncateText(q.userAnswerSummary, MAX_QUIZ_REVIEW_FIELD) || "",
+    userAnswerSummary:
+      truncateText(q.userAnswerSummary, MAX_QUIZ_REVIEW_FIELD) || "",
     correctAnswerSummary: truncateText(
       q.correctAnswerSummary,
       MAX_QUIZ_REVIEW_FIELD,

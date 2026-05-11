@@ -13,56 +13,22 @@ import { GlobalLoader } from "@/components/GlobalLoader";
 import Header from "@/components/Header";
 import { PaginationControls } from "@/components/PaginationControls";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
-import type { AssistantContext } from "@/lib/assistant/types";
 import type { Locale } from "@/i18n/routing";
+import type { AssistantContext } from "@/lib/assistant/types";
 
-import { clearQuizAutostartDedupeKeys } from "../lib/quizAutostartDedupe";
-import { buildAssistantQuizDashboardContext } from "../assistant/quizAssistantContext";
 import { buildQuizDashboardCards } from "./buildQuizDashboardCards";
 import { HalfRouletteWheel } from "./HalfRouletteWheel";
 import type { StartQuizOptions } from "./quizDashboardTypes";
 import { StartQuizModal } from "./StartQuizModal";
 import { useQuizDashboard } from "./useQuizDashboard";
-import { clearQuizDashboardStorage } from "../storage/quizAttemptStorage";
+import { buildAssistantQuizDashboardContext } from "../assistant/quizAssistantContext";
+import { clearQuizAutostartDedupeKeys } from "../lib/quizAutostartDedupe";
 import { QuizSessionView } from "../session/QuizSessionView";
+import { clearQuizDashboardStorage } from "../storage/quizAttemptStorage";
 
 interface QuizDashboardViewProps {
   locale: Locale | string;
   moduleTitleById?: Record<string, string>;
-}
-
-function iconForCard(kind: string) {
-  switch (kind) {
-    case "start":
-      return "school";
-    case "average":
-      return "donut_large";
-    case "weakness":
-      return "warning";
-    case "recent":
-      return "history";
-    case "strength":
-      return "military_tech";
-    default:
-      return "insights";
-  }
-}
-
-function hoverIconForCard(kind: string) {
-  switch (kind) {
-    case "start":
-      return "arrow_forward";
-    case "average":
-      return "visibility";
-    case "weakness":
-      return "play_circle";
-    case "recent":
-      return "history_toggle_off";
-    case "strength":
-      return "rocket_launch";
-    default:
-      return "arrow_forward";
-  }
 }
 
 /**
@@ -84,23 +50,6 @@ function getSearchParam(
     return fromHook;
   }
   return null;
-}
-
-function colorForCardIcon(kind: string) {
-  switch (kind) {
-    case "start":
-      return "text-cyan-300";
-    case "average":
-      return "text-violet-300";
-    case "weakness":
-      return "text-amber-300";
-    case "recent":
-      return "text-slate-200";
-    case "strength":
-      return "text-emerald-300";
-    default:
-      return "text-slate-200";
-  }
 }
 
 function scoreTone(accuracy: number) {

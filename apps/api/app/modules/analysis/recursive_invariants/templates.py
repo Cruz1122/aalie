@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from .schemas import InvariantText, RecursiveFacts, RecursionType, normalize_locale
+from .schemas import InvariantText, RecursionType, RecursiveFacts, normalize_locale
 
 
 def _template_by_type_and_locale(

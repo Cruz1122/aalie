@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 pytest.importorskip("sympy")
 
-from app.main import create_app
+from app.main import create_app  # noqa: E402
 
 client = TestClient(create_app())
 

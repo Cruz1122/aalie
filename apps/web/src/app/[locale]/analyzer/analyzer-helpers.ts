@@ -83,7 +83,9 @@ const getBoundKindLabel = (
   locale: SupportedLocale,
 ): string => {
   if (kind === "equivalent") {
-    return locale === "es" ? "resultado equivalente (Θ)" : "equivalent result (Θ)";
+    return locale === "es"
+      ? "resultado equivalente (Θ)"
+      : "equivalent result (Θ)";
   }
   if (kind === "upper") {
     return locale === "es" ? "cota superior (O)" : "upper bound (O)";

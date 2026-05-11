@@ -38,7 +38,13 @@ export function useQuizDashboard(): QuizDashboardState {
     const attempts = loadAttempts();
     const progress = loadQuizProgress();
     const metrics = deriveQuizDashboardMetrics(attempts, progress);
-    setState((prev) => ({ ...prev, metrics, progress, attempts, isLoaded: true }));
+    setState((prev) => ({
+      ...prev,
+      metrics,
+      progress,
+      attempts,
+      isLoaded: true,
+    }));
   }, []);
 
   useEffect(() => {

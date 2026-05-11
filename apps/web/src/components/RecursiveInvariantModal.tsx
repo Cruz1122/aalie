@@ -6,8 +6,6 @@ import type { RecursiveInvariant } from "@aa/types";
 import { useTranslations } from "next-intl";
 import React from "react";
 
-import Formula from "@/components/Formula";
-import InlineCodeMath from "@/components/InlineCodeMath";
 import BaseModalContainer from "@/components/modals/BaseModalContainer";
 
 import MarkdownRenderer from "./MarkdownRenderer";
@@ -20,10 +18,8 @@ interface RecursiveInvariantModalProps {
 
 const statusClass: Record<RecursiveInvariant["status"], string> = {
   ok: "bg-emerald-500/20 text-emerald-100 border-emerald-400/40",
-  low_confidence:
-    "bg-amber-500/20 text-amber-100 border-amber-400/40",
-  unavailable:
-    "bg-red-500/20 text-red-100 border-red-400/40",
+  low_confidence: "bg-amber-500/20 text-amber-100 border-amber-400/40",
+  unavailable: "bg-red-500/20 text-red-100 border-red-400/40",
 };
 
 function fallbackInvariant(
@@ -108,7 +104,10 @@ export default function RecursiveInvariantModal({
 
         {/* Recursive Structure Summary */}
         {data.status !== "unavailable" && (
-          <div data-testid="recursive-structure" className="bg-white/5 border border-white/10 rounded-md p-4">
+          <div
+            data-testid="recursive-structure"
+            className="bg-white/5 border border-white/10 rounded-md p-4"
+          >
             <h3 className="text-cyan-200 font-semibold text-sm mb-3 flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[16px]">
                 device_hub
@@ -118,7 +117,9 @@ export default function RecursiveInvariantModal({
             <div className="space-y-2 text-sm">
               {structure.baseCondition && (
                 <div data-testid="base-condition">
-                  <span className="text-gray-400">{t("labels.baseCondition")}:</span>
+                  <span className="text-gray-400">
+                    {t("labels.baseCondition")}:
+                  </span>
                   <code className="ml-2 bg-black/30 px-2 py-1 rounded text-cyan-300">
                     {structure.baseCondition}
                   </code>
@@ -126,7 +127,9 @@ export default function RecursiveInvariantModal({
               )}
               {structure.baseResult && (
                 <div data-testid="base-result">
-                  <span className="text-gray-400">{t("labels.baseResult")}:</span>
+                  <span className="text-gray-400">
+                    {t("labels.baseResult")}:
+                  </span>
                   <code className="ml-2 bg-black/30 px-2 py-1 rounded text-cyan-300">
                     {structure.baseResult}
                   </code>
@@ -134,10 +137,15 @@ export default function RecursiveInvariantModal({
               )}
               {structure.recursiveCallPattern.length > 0 && (
                 <div data-testid="recursive-calls">
-                  <span className="text-gray-400">{t("labels.recursiveCalls")}:</span>
+                  <span className="text-gray-400">
+                    {t("labels.recursiveCalls")}:
+                  </span>
                   <div className="mt-1 space-y-1">
                     {structure.recursiveCallPattern.map((pattern, idx) => (
-                      <div key={idx} className="ml-2 bg-black/30 px-2 py-1 rounded text-cyan-300 text-xs font-mono">
+                      <div
+                        key={idx}
+                        className="ml-2 bg-black/30 px-2 py-1 rounded text-cyan-300 text-xs font-mono"
+                      >
                         {pattern.calls}
                       </div>
                     ))}
@@ -145,7 +153,9 @@ export default function RecursiveInvariantModal({
                 </div>
               )}
               <div data-testid="recursion-type">
-                <span className="text-gray-400">{t("labels.recursionType")}:</span>
+                <span className="text-gray-400">
+                  {t("labels.recursionType")}:
+                </span>
                 <span className="ml-2 text-blue-300">{recursionTypeLabel}</span>
               </div>
             </div>
@@ -156,7 +166,10 @@ export default function RecursiveInvariantModal({
         {data.status !== "unavailable" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {/* Base Property */}
-            <article data-testid="section-base-property" className="bg-white/5 border border-white/10 rounded-md p-4">
+            <article
+              data-testid="section-base-property"
+              className="bg-white/5 border border-white/10 rounded-md p-4"
+            >
               <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[16px]">
                   check_circle
@@ -169,7 +182,10 @@ export default function RecursiveInvariantModal({
             </article>
 
             {/* Inductive Hypothesis */}
-            <article data-testid="section-inductive-hypothesis" className="bg-white/5 border border-white/10 rounded-md p-4">
+            <article
+              data-testid="section-inductive-hypothesis"
+              className="bg-white/5 border border-white/10 rounded-md p-4"
+            >
               <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[16px]">
                   lightbulb
@@ -184,7 +200,10 @@ export default function RecursiveInvariantModal({
             </article>
 
             {/* Recursive Step */}
-            <article data-testid="section-recursive-step" className="bg-white/5 border border-white/10 rounded-md p-4">
+            <article
+              data-testid="section-recursive-step"
+              className="bg-white/5 border border-white/10 rounded-md p-4"
+            >
               <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[16px]">
                   call_made
@@ -200,7 +219,10 @@ export default function RecursiveInvariantModal({
 
         {/* Termination Guarantee */}
         {data.status !== "unavailable" && (
-          <article data-testid="section-termination-guarantee" className="bg-white/5 border border-white/10 rounded-md p-4">
+          <article
+            data-testid="section-termination-guarantee"
+            className="bg-white/5 border border-white/10 rounded-md p-4"
+          >
             <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[16px]">
                 done_all
@@ -208,19 +230,18 @@ export default function RecursiveInvariantModal({
               {t("sections.terminationGarantee")}
             </h3>
             <div className="text-sm text-gray-200 leading-relaxed">
-              <MarkdownRenderer
-                content={data.invariant.terminationGarantee}
-              />
+              <MarkdownRenderer content={data.invariant.terminationGarantee} />
             </div>
           </article>
         )}
 
         {/* Didactic Summary */}
-        <article data-testid="didactic-summary" className="bg-blue-500/10 border border-blue-400/30 rounded-md p-4">
+        <article
+          data-testid="didactic-summary"
+          className="bg-blue-500/10 border border-blue-400/30 rounded-md p-4"
+        >
           <h3 className="text-blue-300 font-semibold text-sm mb-2 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[16px]">
-              info
-            </span>
+            <span className="material-symbols-outlined text-[16px]">info</span>
             {t("sections.summary")}
           </h3>
           <p className="text-sm text-gray-200 leading-relaxed">
@@ -230,13 +251,18 @@ export default function RecursiveInvariantModal({
 
         {/* Evidence (if detailed view wanted) */}
         {data.evidence.detectedRecursiveCalls.length > 0 && (
-          <details data-testid="evidence-section" className="text-sm text-gray-400">
+          <details
+            data-testid="evidence-section"
+            className="text-sm text-gray-400"
+          >
             <summary className="cursor-pointer hover:text-gray-300 font-medium">
               {t("sections.evidence")}
             </summary>
             <div className="mt-2 pl-4 space-y-2">
               <div>
-                <span className="text-gray-500">{t("labels.detectedCalls")}:</span>
+                <span className="text-gray-500">
+                  {t("labels.detectedCalls")}:
+                </span>
                 <div className="mt-1 space-y-1">
                   {data.evidence.detectedRecursiveCalls.map((call, idx) => (
                     <code
@@ -249,8 +275,13 @@ export default function RecursiveInvariantModal({
                 </div>
               </div>
               <div>
-                <span className="text-gray-500">{t("labels.baseConditions")}:</span>
-                <div data-testid="base-conditions-list" className="mt-1 space-y-1">
+                <span className="text-gray-500">
+                  {t("labels.baseConditions")}:
+                </span>
+                <div
+                  data-testid="base-conditions-list"
+                  className="mt-1 space-y-1"
+                >
                   {data.evidence.baseConditions.map((cond, idx) => (
                     <code
                       key={idx}
@@ -270,7 +301,9 @@ export default function RecursiveInvariantModal({
           <div className="bg-red-500/10 border border-red-400/30 rounded-md p-4 text-center">
             <p className="text-sm text-red-300">{data.didacticSummary}</p>
             {data.reason && (
-              <p className="text-xs text-red-400 mt-1">({t(`reasons.${data.reason}`)})</p>
+              <p className="text-xs text-red-400 mt-1">
+                ({t(`reasons.${data.reason}`)})
+              </p>
             )}
           </div>
         )}

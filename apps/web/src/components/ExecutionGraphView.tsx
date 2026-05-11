@@ -528,7 +528,10 @@ export default function ExecutionGraphView({
         opacity: visibleNodeIds.has(n.id) ? 1 : 0,
         // Use a subtle blue glow for the currently focused node instead of changing
         // the background/box behind it. This avoids rectangular blue artifacts.
-        boxShadow: n.id === currentNodeId ? "0 0 0 3px rgba(59,130,246,0.12)" : n.style?.boxShadow,
+        boxShadow:
+          n.id === currentNodeId
+            ? "0 0 0 3px rgba(59,130,246,0.12)"
+            : n.style?.boxShadow,
       },
       hidden: !visibleNodeIds.has(n.id),
     }));
@@ -551,7 +554,9 @@ export default function ExecutionGraphView({
     // Return edges must follow the stepper exactly.
     // Call edges may fall back to node visibility if the edge set arrives empty.
     if (visibleEdgeIds && visibleEdgeIds.size > 0) {
-      const filtered = initialEdges.filter((edge) => visibleEdgeIds.has(edge.id));
+      const filtered = initialEdges.filter((edge) =>
+        visibleEdgeIds.has(edge.id),
+      );
       if (filtered.length > 0) {
         return filtered;
       }
@@ -562,7 +567,9 @@ export default function ExecutionGraphView({
         return visibleEdgeIds ? visibleEdgeIds.has(e.id) : false;
       }
 
-      return visibleNodeIds ? visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target) : true;
+      return visibleNodeIds
+        ? visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target)
+        : true;
     });
   }, [initialEdges, visibleNodeIds, visibleEdgeIds]);
 

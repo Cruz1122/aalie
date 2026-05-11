@@ -97,13 +97,7 @@ export function QuizSessionView({
         selectedTopicIds,
         selectedSkillIds,
       }),
-    [
-      moduleId,
-      moduleTitle,
-      questionCount,
-      selectedSkillIds,
-      selectedTopicIds,
-    ],
+    [moduleId, moduleTitle, questionCount, selectedSkillIds, selectedTopicIds],
   );
 
   const isCurrentComplete = useMemo(() => {
@@ -135,14 +129,7 @@ export function QuizSessionView({
     if (session || loading || result) return;
     markQuizAutostartAttempt(autostartDedupeKey);
     void handleStart();
-  }, [
-    autoStart,
-    autostartDedupeKey,
-    handleStart,
-    loading,
-    result,
-    session,
-  ]);
+  }, [autoStart, autostartDedupeKey, handleStart, loading, result, session]);
 
   const leaveQuiz = useCallback(() => {
     clearQuizAutostartDedupeKeys();

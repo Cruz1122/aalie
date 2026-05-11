@@ -147,8 +147,8 @@ const TreeNode = React.memo(
           isSynthetic
             ? "border-red-500/60 shadow-lg shadow-red-500/20"
             : isBaseCase
-            ? "border-green-500/50 shadow-lg shadow-green-500/20"
-            : "border-white/20 shadow-md hover:border-purple-400/40 hover:shadow-xl hover:scale-105"
+              ? "border-green-500/50 shadow-lg shadow-green-500/20"
+              : "border-white/20 shadow-md hover:border-purple-400/40 hover:shadow-xl hover:scale-105"
         }`}
       >
         {/* Handles para conectar aristas - siempre visibles */}
@@ -321,7 +321,13 @@ export default function RecursionTreeModal({
     }
 
     setMaxDepth(calculatedDepth);
-  }, [recurrence, initialN, isLinearRecurrence, isDivideConquer, isRecursionTreeLinearApprox]);
+  }, [
+    recurrence,
+    initialN,
+    isLinearRecurrence,
+    isDivideConquer,
+    isRecursionTreeLinearApprox,
+  ]);
 
   // Ajustar initialN por defecto según el tipo de recurrencia solo al cargar
   useEffect(() => {
@@ -552,7 +558,13 @@ export default function RecursionTreeModal({
     }
 
     return 0;
-  }, [recurrence, initialN, isLinearRecurrence, isDivideConquer]);
+  }, [
+    recurrence,
+    initialN,
+    isLinearRecurrence,
+    isRecursionTreeLinearApprox,
+    isDivideConquer,
+  ]);
 
   const handleDepthChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
