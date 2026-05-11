@@ -23,6 +23,22 @@ export default function NavigationLink({
   const { startNavigation } = useNavigation();
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    // No activar loader para clicks modificados (nueva pestaña/ventana)
+    // ni para clicks que no son el botón principal.
+    if (
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey
+    ) {
+      if (onClick) {
+        onClick(e);
+      }
+      return;
+    }
+
     // Si es el mismo path, no mostrar loader
     if (typeof globalThis.window !== "undefined") {
       const pathname = globalThis.window.location.pathname;

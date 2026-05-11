@@ -24,8 +24,13 @@ import ReturnEdge from "./edges/ReturnEdge";
 
 interface ExecutionGraphViewProps {
   readonly graph: TraceGraph;
+  /** Set of visible node IDs for stepping visualization */
+  readonly visibleNodeIds?: Set<string>;
+  /** Set of visible edge IDs for stepping visualization */
+  readonly visibleEdgeIds?: Set<string>;
+  /** ID of the currently highlighted node */
+  readonly currentNodeId?: string | null;
 }
-
 const TraceNode = ({
   data,
 }: {
@@ -151,6 +156,7 @@ const TraceNode = ({
     return (
       <div
         className={`relative rounded-full border ${borderColor} ${bgColor} text-slate-50 px-3 py-2 shadow-sm ${shadowColor} backdrop-blur-sm opacity-60`}
+        style={{ zIndex: 10 }}
       >
         {type !== "input" && (
           <>
@@ -220,7 +226,7 @@ const TraceNode = ({
   return (
     <div
       className={`relative rounded-lg border ${borderColor} ${bgColor} text-slate-50 text-sm sm:text-base px-5 py-3 shadow-md ${shadowColor} backdrop-blur-sm min-w-[240px] max-w-[500px]`}
-      style={iterationStyle}
+      style={{ ...(iterationStyle || {}), zIndex: 30 }}
     >
       {type !== "input" && (
         <>
@@ -370,49 +376,6 @@ function mapNodes(nodes: GraphNode[]): Node[] {
   });
 }
 
-/**
- * Crea edges de retorno sintéticas basándose en las edges de llamada existentes.
- * Para cada edge llamada (padre→hijo), extrae el valor de retorno del label del
- * nodo hijo (formato "nombre(params)\n→ valor") y crea una edge inversa (hijo→padre).
- */
-function createReturnEdges(
-  originalEdges: GraphEdge[],
-  nodeIndex: Map<string, GraphNode>,
-): Edge[] {
-  const returnEdges: Edge[] = [];
-
-  originalEdges.forEach((edge) => {
-    const childNode = nodeIndex.get(edge.target);
-    const rawLabel = childNode?.data?.label ?? "";
-    if (!rawLabel) return;
-
-    // Extraer valor de retorno del label: busca "→ valor" al final o tras \n
-    const returnMatch = /(?:\n|^)→\s*(.+?)(?:\n|$)/.exec(rawLabel);
-    if (!returnMatch) return;
-
-    const returnValue = returnMatch[1]?.trim() ?? "";
-
-    returnEdges.push({
-      id: `return_${edge.target}_to_${edge.source}`,
-      source: edge.target,
-      target: edge.source,
-      type: "return",
-      sourceHandle: "bottom",
-      targetHandle: "bottom",
-      data: {
-        returnValue,
-      },
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: "#10b981",
-      },
-      className: "return-edge",
-    } as Edge);
-  });
-
-  return returnEdges;
-}
-
 function mapEdges(
   edges: GraphEdge[],
   nodeIndex: Map<string, GraphNode>,
@@ -430,14 +393,15 @@ function mapEdges(
     const edgeLabel = e.label || "";
     const translatedLabel =
       edgeLabel === "loop_start" ? t("loopEdgeStart") : edgeLabel;
-    const isReturnEdge = e.type === "return";
+    const isReturnEdge =
+      e.type === "return" || e.label === "return" || e.id.startsWith("e_ret_");
 
     const sourceNode = nodeIndex.get(e.source);
     const targetNode = nodeIndex.get(e.target);
     let sourceHandle: string | undefined;
     let targetHandle: string | undefined;
 
-    if (!isReturnEdge && sourceNode && targetNode) {
+    if (sourceNode && targetNode) {
       const dx = targetNode.position.x - sourceNode.position.x;
       const dy = targetNode.position.y - sourceNode.position.y;
       const horizontal = Math.abs(dx) >= Math.abs(dy);
@@ -469,39 +433,66 @@ function mapEdges(
       }
     }
 
-    const edgeStyle = {
-      stroke: "#94a3b8",
-      strokeWidth: "1.5px",
-    };
+    const edgeStyle = isReturnEdge
+      ? {
+          stroke: "#10b981",
+          strokeWidth: "2px",
+        }
+      : {
+          stroke: "#94a3b8",
+          strokeWidth: "1.5px",
+        };
+
+    let returnValue = "";
+    if (isReturnEdge) {
+      const sourceReturnValue = sourceNode?.data?.returnValue;
+      if (sourceReturnValue !== undefined && sourceReturnValue !== null) {
+        returnValue = String(sourceReturnValue);
+      } else {
+        const rawLabel = sourceNode?.data?.label ?? "";
+        const returnMatch = /(?:\n|^)→\s*(.+?)(?:\n|$)/.exec(rawLabel);
+        returnValue = returnMatch?.[1]?.trim() ?? "";
+      }
+    }
 
     return {
       id: e.id,
       source: e.source,
       target: e.target,
       label: translatedLabel,
-      type: "smoothstep",
+      type: isReturnEdge ? "return" : "smoothstep",
       sourceHandle,
       targetHandle,
       style: edgeStyle,
+      data: isReturnEdge
+        ? {
+            returnValue,
+          }
+        : undefined,
       labelStyle: {
-        fill: "#e5e7eb",
+        fill: isReturnEdge ? "#6ee7b7" : "#e5e7eb",
         fontSize: 11,
         fontWeight: 500,
       },
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: "#94a3b8",
+        color: isReturnEdge ? "#10b981" : "#94a3b8",
       },
       pathOptions: {
         offset: 20,
         borderRadius: 12,
       },
-      className: "call-edge",
+      className: isReturnEdge ? "return-edge" : "call-edge",
     } as Edge;
   });
 }
 
-export default function ExecutionGraphView({ graph }: ExecutionGraphViewProps) {
+export default function ExecutionGraphView({
+  graph,
+  visibleNodeIds,
+  visibleEdgeIds,
+  currentNodeId,
+}: ExecutionGraphViewProps) {
   const t = useTranslations("analyzer.executionTrace");
   const layoutedGraph = useMemo(
     () => getLayoutedGraph(graph, { direction: "LR" }),
@@ -520,21 +511,75 @@ export default function ExecutionGraphView({ graph }: ExecutionGraphViewProps) {
     () => mapNodes(layoutedGraph.nodes ?? []),
     [layoutedGraph.nodes],
   );
-
   const initialEdges = useMemo(() => {
     const originalEdges = layoutedGraph.edges ?? [];
-    const callEdges = mapEdges(originalEdges, nodeIndex, t);
-    const returnEdges = createReturnEdges(originalEdges, nodeIndex);
-    return [...callEdges, ...returnEdges];
+    return mapEdges(originalEdges, nodeIndex, t);
   }, [layoutedGraph.edges, nodeIndex, t]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  // Filter nodes and highlight current node if stepping is active
+  const steppingNodes = useMemo(() => {
+    if (!visibleNodeIds) {
+      return initialNodes;
+    }
+    return initialNodes.map((n) => ({
+      ...n,
+      style: {
+        ...n.style,
+        opacity: visibleNodeIds.has(n.id) ? 1 : 0,
+        // Use a subtle blue glow for the currently focused node instead of changing
+        // the background/box behind it. This avoids rectangular blue artifacts.
+        boxShadow:
+          n.id === currentNodeId
+            ? "0 0 0 3px rgba(59,130,246,0.12)"
+            : n.style?.boxShadow,
+      },
+      hidden: !visibleNodeIds.has(n.id),
+    }));
+  }, [initialNodes, visibleNodeIds, currentNodeId]);
+
+  // Filter edges to only show connections between visible nodes
+  const steppingEdges = useMemo(() => {
+    if (!visibleNodeIds && !visibleEdgeIds) {
+      return initialEdges;
+    }
+
+    const isReturnEdge = (edge: Edge): boolean => {
+      return (
+        edge.type === "return" ||
+        edge.className === "return-edge" ||
+        edge.id.startsWith("e_ret_")
+      );
+    };
+
+    // Return edges must follow the stepper exactly.
+    // Call edges may fall back to node visibility if the edge set arrives empty.
+    if (visibleEdgeIds && visibleEdgeIds.size > 0) {
+      const filtered = initialEdges.filter((edge) =>
+        visibleEdgeIds.has(edge.id),
+      );
+      if (filtered.length > 0) {
+        return filtered;
+      }
+    }
+
+    return initialEdges.filter((e) => {
+      if (isReturnEdge(e)) {
+        return visibleEdgeIds ? visibleEdgeIds.has(e.id) : false;
+      }
+
+      return visibleNodeIds
+        ? visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target)
+        : true;
+    });
+  }, [initialEdges, visibleNodeIds, visibleEdgeIds]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(steppingNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(steppingEdges);
 
   useEffect(() => {
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-  }, [initialNodes, initialEdges, setNodes, setEdges]);
+    setNodes(steppingNodes);
+    setEdges(steppingEdges);
+  }, [steppingNodes, steppingEdges, setNodes, setEdges]);
 
   const hasEdges = edges.length > 0;
 

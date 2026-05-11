@@ -81,7 +81,7 @@ def test_recursive_matrix_divide_conquer_method_metadata():
     result = detect_methods(DIVIDE_AND_CONQUER, algorithm_kind="recursive")
     assert result.get("ok"), result.get("errors", [])
     assert result.get("default_method") == "master"
-    assert result.get("applicable_methods") == ["master", "recursion_tree"]
+    assert result.get("applicable_methods") == ["master", "recursion_tree", "iteration"]
     recurrence = result.get("recurrence_info", {})
     assert recurrence.get("type") == "divide_conquer"
-    assert recurrence.get("dp_validation", {}).get("primary_pattern") == "none"
+    assert recurrence.get("dp_validation", {}).get("primary_pattern") == "divide_and_conquer"

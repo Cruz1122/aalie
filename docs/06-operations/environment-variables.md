@@ -13,10 +13,11 @@ Cubre frontend, BFF LLM y backend API.
 ## Fuente de verdad
 
 - `apps/api/app/core/config.py`
+- `apps/api/app/modules/llm/config.py`
 - `apps/api/app/modules/export/asset_registry.py`
 - `apps/web/src/app/api/`
 - `apps/web/.env.example`
-- `apps/web/src/app/api/llm/llm-config.ts`
+- `apps/api/.env.example`
 
 ## Estructura
 
@@ -29,14 +30,6 @@ Cubre frontend, BFF LLM y backend API.
 | `API_INTERNAL_BASE_URL` | URL interna backend en SSR/Docker | opcional |
 | `DOCKER` | activa fallback `http://api:8000` | opcional |
 | `NODE_ENV` | comportamiento de build/debug del frontend | opcional |
-| `NEXT_PUBLIC_API_KEY` | fallback pública heredada para cliente; no debe usarse como mecanismo principal de despliegue | opcional |
-| `API_KEY` | API key del servidor para Gemini y fuente preferida para habilitar funciones LLM | opcional |
-| `GEMINI_ENDPOINT_BASE` | endpoint base del proveedor | opcional |
-| `LLM_MODEL_PARSER_ASSIST` | modelo por job | opcional |
-| `LLM_MODEL_GENERAL` | modelo por job | opcional |
-| `LLM_MODEL_REPAIR` | modelo por job | opcional |
-| `LLM_MODEL_COMPARE` | modelo por job | opcional |
-| `LLM_MODEL_EXPLAIN` | modelo por job | opcional |
 | `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS` | flag frontend para diagramas deterministas | opcional |
 | `AALIE_USE_LATEX_ONLINE` | flag local heredada; hoy debe tratarse como deprecated hasta que exista consumo real en código | deprecated |
 
@@ -48,14 +41,23 @@ Cubre frontend, BFF LLM y backend API.
 | `CORS_ALLOWED_ORIGINS` | origins permitidos | opcional |
 | `DEV_CORS_ENABLED` | compatibilidad dev | deprecated-compatible |
 | `DEV_ALLOWED_ORIGINS` | compatibilidad dev | deprecated-compatible |
+| `API_KEY` | API key del servidor para LLM; prioridad sobre la key enviada por cliente | opcional |
+| `GEMINI_ENDPOINT_BASE` | endpoint base del proveedor Gemini | opcional |
+| `LLM_MODEL_CLASSIFY` | modelo para clasificación asistida por LLM (si aplica) | opcional |
+| `LLM_MODEL_PARSER_ASSIST` | modelo por job | opcional |
+| `LLM_MODEL_GENERAL` | modelo por job | opcional |
+| `LLM_MODEL_REPAIR` | modelo por job | opcional |
+| `LLM_MODEL_COMPARE` | modelo por job | opcional |
+| `LLM_MODEL_RECURSION_DIAGRAM` | modelo para generación/soporte de diagramas recursivos | opcional |
+| `LLM_MODEL_GENERATE_DIAGRAM` | modelo para generación de diagramas | opcional |
 | `AALIE_EXPORTER_ASSETS_DIR` | override de assets LaTeX | opcional |
 
 ## Ejemplos
 
 - en Docker web usa `API_INTERNAL_BASE_URL=http://api:8000`;
-- para soporte LLM servidor se configura `API_KEY`;
+- para soporte LLM servidor se configura `API_KEY` en `apps/api`;
 - el asistente embebido se habilita solo si existe `API_KEY` válida en servidor o API key válida almacenada localmente por el usuario;
-- con `API_KEY` válida, el BFF `/api/llm` no necesita que el navegador reenvíe una key en cada apertura del chat.
+- con `API_KEY` válida en backend, el navegador no necesita reenviar key en cada request.
 
 ## Comportamiento del asistente embebido
 
@@ -70,6 +72,7 @@ Cubre frontend, BFF LLM y backend API.
 
 - `DEV_*` se mantienen por compatibilidad, pero la configuración preferida es `CORS_*`.
 - algunas variables solo aplican al BFF/server-side y no al navegador.
+- la lista canónica de variables LLM para despliegue debe mantenerse sincronizada con `apps/api/.env.example`.
 
 ## Archivos relacionados
 

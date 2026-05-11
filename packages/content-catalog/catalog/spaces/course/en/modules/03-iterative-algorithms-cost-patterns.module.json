@@ -1,0 +1,1401 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-algoritmos-iterativos-patrones-costos",
+  "slug": "iterative-algorithms-cost-patterns",
+  "title": "Iterative Algorithms — Patterns and Costs",
+  "order": 3,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Typical loop patterns, sequential search analysis by best case, worst case and average case, growth table of common functions and formal comparison using limits.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 35,
+  "tags": [
+    "iterative-algorithms",
+    "loop-patterns",
+    "for-simple",
+    "for-nested",
+    "while",
+    "sequential-search",
+    "best-case",
+    "worst-case",
+    "average-case",
+    "asymptotic-growth",
+    "limits"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "iterative algorithms",
+      "iterative patterns",
+      "loop patterns",
+      "sequential search",
+      "case analysis",
+      "growth chart",
+      "feature comparison",
+      "limits method"
+    ],
+    "keywords": [
+      "for simple",
+      "for nested",
+      "fixed limit",
+      "variable limit",
+      "while with duplication",
+      "n log n",
+      "linear",
+      "quadratic",
+      "exponential",
+      "factorial",
+      "limit f over g"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-complejidad-temporal-espacial",
+        "kind": "required"
+      },
+      {
+        "id": "mod-loop-invariant",
+        "kind": "recommended"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-complejidad-temporal",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-for-simple",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-ciclos-anidados-fijos",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-for-limite-variable",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-for-while-logaritmico",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-complejidad-temporal-espacial",
+    "mod-loop-invariant"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "identificar-patrones-ciclos",
+      "text": "Identify typical iterative loop patterns and associate them with their typical cost."
+    },
+    {
+      "objectiveId": "analizar-busqueda-secuencial",
+      "text": "Analyze the sequential search in best case, worst case and average case."
+    },
+    {
+      "objectiveId": "interpretar-tabla-crecimiento",
+      "text": "Interpret the growth table of common functions and recognize which orders are manageable for large values of n."
+    },
+    {
+      "objectiveId": "ordenar-crecimientos",
+      "text": "Order functions by asymptotic growth from constant to factorial."
+    },
+    {
+      "objectiveId": "comparar-funciones-con-limites",
+      "text": "Compare functions correctly using the method of limits."
+    },
+    {
+      "objectiveId": "distinguir-mismo-orden-y-dominancia",
+      "text": "Distinguish when two functions grow at the same rate and when one dominates the other."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-for-simple",
+      "label": "for simple",
+      "definition": "Loop whose counter runs through a linear range, usually from 1 to n."
+    },
+    {
+      "termId": "term-for-anidado",
+      "label": "for nested",
+      "definition": "For loop located inside another for loop. Its cost depends on the combination of both ranges."
+    },
+    {
+      "termId": "term-limite-fijo",
+      "label": "fixed limit",
+      "definition": "Limit of an internal loop that does not depend on the external index."
+    },
+    {
+      "termId": "term-limite-variable",
+      "label": "variable limit",
+      "definition": "Limit of an internal loop that depends on the external index."
+    },
+    {
+      "termId": "term-while-duplicacion",
+      "label": "while with duplication",
+      "definition": "While loop where the control variable is multiplied by a constant, generating logarithmic behavior."
+    },
+    {
+      "termId": "term-busqueda-secuencial",
+      "label": "sequential search",
+      "definition": "Algorithm that traverses an array position by position until an element is found or confirmed that it is not there."
+    },
+    {
+      "termId": "term-mejor-caso",
+      "label": "best case",
+      "definition": "Input that causes the algorithm to perform the least amount of work possible."
+    },
+    {
+      "termId": "term-peor-caso",
+      "label": "worst case",
+      "definition": "Input that causes the algorithm to perform as much work as possible."
+    },
+    {
+      "termId": "term-caso-promedio",
+      "label": "average case",
+      "definition": "Expected cost when possible inputs are considered under a probabilistic model, for example uniform distribution."
+    },
+    {
+      "termId": "term-metodo-limites",
+      "label": "limits method",
+      "definition": "Formal technique to compare two functions by calculating the limit of the quotient between them when n tends to infinity."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-algoritmos-iterativos-patrones-costos",
+      "slug": "iterative-algorithms-cost-patterns",
+      "title": "Iterative Algorithms — Patterns and Costs",
+      "order": 1,
+      "summary": "Loop patterns, sequential search, function growth and formal comparison using limits.",
+      "sections": [
+        {
+          "sectionId": "sec-patrones-tipicos-ciclos",
+          "slug": "patrones-tipicos-ciclos",
+          "title": "3.1 Typical loop patterns",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "reconocer-patron-for-simple",
+              "text": "Recognize the typical cost of a simple for loop."
+            },
+            {
+              "objectiveId": "reconocer-patron-for-anidado",
+              "text": "Recognize the typical cost of nested loops with fixed and variable limits."
+            },
+            {
+              "objectiveId": "reconocer-patron-while-duplicacion",
+              "text": "Recognize the logarithmic cost of a while with multiplication."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-for-simple",
+                "kind": "required"
+              },
+              {
+                "id": "sec-ejemplo-ciclos-anidados-fijos",
+                "kind": "required"
+              },
+              {
+                "id": "sec-ejemplo-for-limite-variable",
+                "kind": "required"
+              },
+              {
+                "id": "sec-ejemplo-for-while-logaritmico",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-patrones-tipicos-ciclos-tabla",
+              "type": "table",
+              "title": "Typical patterns of iterative loops",
+              "columns": [
+                {
+                  "key": "patron",
+                  "label": "Pattern"
+                },
+                {
+                  "key": "estructura",
+                  "label": "Structure"
+                },
+                {
+                  "key": "ejecuciones",
+                  "label": "Body executions"
+                },
+                {
+                  "key": "costo",
+                  "label": "Typical cost"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "for simple"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "nested for (fixed limit)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i... for j <- 1 to n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "nested for (variable limit)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i... for j <- 1 to i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "while with duplication"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "while j<=n: j<-j*2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\log_2(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(\\log n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "for + while internal"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i... while j<=n: j*=2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n \\cdot \\log_2(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n \\log n)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-busqueda-secuencial-casos",
+          "slug": "busqueda-secuencial-casos",
+          "title": "3.2 Sequential Search — Analysis by cases",
+          "order": 2,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-busqueda-secuencial",
+              "text": "Read the sequential search pseudocode and identify its main lines."
+            },
+            {
+              "objectiveId": "distinguir-casos-busqueda",
+              "text": "Distinguish best case, worst case and average case in sequential search."
+            },
+            {
+              "objectiveId": "entender-peor-caso-ausente",
+              "text": "Understand why the worst case occurs when the element is not in the array."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-complejidad-temporal",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-busqueda-secuencial-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "SearchSequential",
+              "code": "int SequentialSearch (I int A[n], I int x) {\n i <- 1               # C1 * 1\n while (A[i]<>x) and (i<=n)     # C2 * (n+1) worst case\n  i <- i + 1            # C3 * n\n endwhile\n if (i <= n) then          # C4 * 1\n  return i\n else\n  return -1            # C5 * 1\n}"
+            },
+            {
+              "id": "blk-busqueda-secuencial-precondiciones",
+              "type": "note",
+              "variant": "info",
+              "title": "Preconditions",
+              "blocks": [
+                {
+                  "id": "blk-busqueda-secuencial-precondiciones-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "A[i] \\in \\mathbb{Z}"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "1 \\le i \\le n"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Yes"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "x"
+                    },
+                    {
+                      "type": "text",
+                      "text": "is not in the array, returns"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "-1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-busqueda-secuencial-tabla-casos",
+              "type": "table",
+              "title": "Analysis by sequential search cases",
+              "columns": [
+                {
+                  "key": "caso",
+                  "label": "Case"
+                },
+                {
+                  "key": "distribucion",
+                  "label": "Input distribution"
+                },
+                {
+                  "key": "funcion",
+                  "label": "Efficiency Function"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "best case"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "x"
+                      },
+                      {
+                        "type": "text",
+                        "text": "is in"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "A[1]"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(first position)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T_{best}(n)=\\text{constant}"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "worst case"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "x"
+                      },
+                      {
+                        "type": "text",
+                        "text": "is not in the array"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T_{worst}(n)=a n+b"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(linear)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "average case"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "x"
+                      },
+                      {
+                        "type": "text",
+                        "text": "can be in any position with equal probability"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T_{avg}(n)=\\frac{n+1}{2}"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(linear)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-busqueda-secuencial-nota-peor-caso",
+              "type": "note",
+              "variant": "warning",
+              "title": "Note",
+              "blocks": [
+                {
+                  "id": "blk-busqueda-secuencial-nota-peor-caso-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Is it as bad as if "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "x"
+                    },
+                    {
+                      "type": "text",
+                      "text": " were in the last position? No. If "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "x"
+                    },
+                    {
+                      "type": "text",
+                      "text": " is not in the array, the algorithm reaches the end and does one more check (the one that causes the exit). So the worst case is that "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "x"
+                    },
+                    {
+                      "type": "text",
+                      "text": " is not present."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-tabla-crecimiento-funciones-comunes",
+          "slug": "tabla-crecimiento-funciones-comunes",
+          "title": "3.3 Common Function Growth Chart",
+          "order": 3,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 9,
+          "learningObjectives": [
+            {
+              "objectiveId": "interpretar-crecimientos-comunes",
+              "text": "Interpret common growth orders for different values of n."
+            },
+            {
+              "objectiveId": "comparar-ordenes-intuitivamente",
+              "text": "Intuitively compare constant, logarithmic, linear, quadratic, exponential and factorial functions."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-tabla-crecimiento-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This table is essential to quickly compare functions. The higher up the table, the slower the function grows (the better). The lower it goes, the faster it grows (the worse)."
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-crecimiento",
+              "type": "table",
+              "title": "Common Function Growth Chart",
+              "columns": [
+                {
+                  "key": "orden",
+                  "label": "Order"
+                },
+                {
+                  "key": "nombre",
+                  "label": "Name"
+                },
+                {
+                  "key": "n10",
+                  "label": "n=10"
+                },
+                {
+                  "key": "n100",
+                  "label": "n=100"
+                },
+                {
+                  "key": "n1000",
+                  "label": "n=1000"
+                },
+                {
+                  "key": "comportamiento",
+                  "label": "Behavior"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Constant"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Ideal. It does not depend on n."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Logarithmic"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3.32"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "6.64"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "9.97"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Excellent. It grows very slowly."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Linear"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "10"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "100"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,000"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Good. It grows proportionally."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "linearithmic"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "33"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "664"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "9,966"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Acceptable (e.g. Merge Sort)."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n^2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Quadratic"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "100"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "10,000"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,000,000"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Slow for big n."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n^3)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cubic"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,000"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,000,000"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "10^9"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Very slow."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(2^n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Exponential"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,024"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "10^{30}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\gg 10^{300}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Unmanageable for large n."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n!)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Factorial"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3,628,800"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\gg 10^{157}"
+                      },
+                      {
+                        "type": "text",
+                        "text": "immense"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "immense"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Practically impossible."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-orden-crecimiento-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Order of growth (from smallest to largest)"
+                }
+              ]
+            },
+            {
+              "id": "blk-orden-crecimiento-formula",
+              "type": "equationBlock",
+              "latex": "1 < \\log(n) < n < n\\log(n) < n^2 < n^3 < \\cdots < 2^n < 3^n < n!"
+            },
+            {
+              "id": "blk-logaritmos-base-nota",
+              "type": "note",
+              "variant": "info",
+              "title": "Note",
+              "blocks": [
+                {
+                  "id": "blk-logaritmos-base-nota-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "In logarithms, if the base does not appear, base 2 is assumed (course convention)."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-comparar-funciones-correctamente",
+          "slug": "comparar-funciones-correctamente",
+          "title": "3.4 How to compare functions correctly",
+          "order": 4,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "rechazar-comparacion-grafica",
+              "text": "Understand why graphing or tabulating is not the formal way to compare functions."
+            },
+            {
+              "objectiveId": "aplicar-limite-cociente",
+              "text": "Apply the quotient limit to decide which function grows the fastest."
+            },
+            {
+              "objectiveId": "interpretar-limite-cero-constante-infinito",
+              "text": "Interpret the cases L=0, L constant positive and L infinite."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-tabla-crecimiento-funciones-comunes",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-comparar-funciones-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The correct way to compare functions is not by graphing or tabulating. Inequalities and limits are used."
+                }
+              ]
+            },
+            {
+              "id": "blk-metodo-limites-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Limits method"
+                }
+              ]
+            },
+            {
+              "id": "blk-metodo-limites-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "To compare"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "and"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "g(n)"
+                },
+                {
+                  "type": "text",
+                  "text": ", we calculate:"
+                }
+              ]
+            },
+            {
+              "id": "blk-metodo-limites-formula",
+              "type": "equationBlock",
+              "latex": "\\lim_{n \\to \\infty}\\frac{f(n)}{g(n)} = L"
+            },
+            {
+              "id": "blk-metodo-limites-tabla",
+              "type": "table",
+              "title": "Interpretation of the limit to compare functions",
+              "columns": [
+                {
+                  "key": "resultado",
+                  "label": "Result L"
+                },
+                {
+                  "key": "significado",
+                  "label": "Meaning"
+                },
+                {
+                  "key": "relacion",
+                  "label": "Relationship"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "g(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "grows faster than"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "grows slower than"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "g(n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "L = constant"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(c>0)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "and"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "g(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "they grow at the same speed"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "They are of the same order"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=\\infty"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "grows faster than"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "g(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "dominates"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "g(n)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-comparar-funciones-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Example"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-comparar-funciones-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Compare"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f(n)=3n^2+5n"
+                },
+                {
+                  "type": "text",
+                  "text": "and"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "g(n)=n^2"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-comparar-funciones-limite",
+              "type": "latexSteps",
+              "title": "Limit calculation",
+              "steps": [
+                {
+                  "stepId": "plantear-el-cociente",
+                  "title": "Set the quotient",
+                  "latex": "\\lim_{n \\to \\infty}\\frac{3n^2+5n}{n^2}"
+                },
+                {
+                  "stepId": "dividir-por-n-cuadrado",
+                  "title": "Divide by n^2",
+                  "latex": "\\lim_{n \\to \\infty}\\left(3+\\frac{5}{n}\\right)"
+                },
+                {
+                  "stepId": "evaluar-el-limite",
+                  "title": "Evaluate the limit",
+                  "latex": "3+0=3"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-comparar-funciones-conclusion",
+              "type": "note",
+              "variant": "success",
+              "title": "Conclusion",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo-comparar-funciones-conclusion-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "L=3"
+                    },
+                    {
+                      "type": "text",
+                      "text": "It is a positive constant. then"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "They are of the same order. They grow at the same speed."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

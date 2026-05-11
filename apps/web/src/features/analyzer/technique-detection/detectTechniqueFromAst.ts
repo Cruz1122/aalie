@@ -1,0 +1,1 @@
+export { detectTechniqueFromAst } from "./index";

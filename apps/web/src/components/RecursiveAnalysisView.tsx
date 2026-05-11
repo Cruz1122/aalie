@@ -261,10 +261,10 @@ const getMethodIconName = (
   isIterationMethod: boolean,
   isRecursionTreeMethod: boolean,
 ): string => {
-  if (isCharacteristicMethod) return "calculate";
-  if (isIterationMethod) return "unfold_more";
-  if (isRecursionTreeMethod) return "account_tree";
-  return "science";
+  if (isCharacteristicMethod) return "function";
+  if (isIterationMethod) return "repeat";
+  if (isRecursionTreeMethod) return "schema";
+  return "gavel";
 };
 
 /**
@@ -729,7 +729,11 @@ const shouldShowTreeButton = (
   isIterationMethod: boolean,
   recurrence: RecurrenceType,
 ): boolean => {
-  if (isRecursionTreeMethod && recurrence?.type === "divide_conquer")
+  if (
+    isRecursionTreeMethod &&
+    (recurrence?.type === "divide_conquer" ||
+      recurrence?.type === "linear_shift")
+  )
     return true;
   if (isCharacteristicMethod && recurrence?.type === "linear_shift")
     return true;
@@ -2025,7 +2029,9 @@ export default function RecursiveAnalysisView({
         )}
 
       {/* Modal del árbol de recursión - para recursion_tree, characteristic_equation, master e iteration */}
-      {((isRecursionTreeMethod && recurrence?.type === "divide_conquer") ||
+      {((isRecursionTreeMethod &&
+        (recurrence?.type === "divide_conquer" ||
+          recurrence?.type === "linear_shift")) ||
         (isCharacteristicMethod && recurrence?.type === "linear_shift") ||
         (isMasterMethod && recurrence?.type === "divide_conquer") ||
         (isIterationMethod && recurrence?.type === "divide_conquer")) && (

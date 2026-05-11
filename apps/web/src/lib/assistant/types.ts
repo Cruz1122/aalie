@@ -9,7 +9,15 @@ export interface ChatMessage {
   retryMessageId?: string;
 }
 
-export type AssistantSurface = "home" | "analyzer" | "examples" | "user-guide";
+export type AssistantSurface =
+  | "home"
+  | "analyzer"
+  | "examples"
+  | "user-guide"
+  | "course"
+  | "quizzes"
+  | "about"
+  | "privacy";
 
 export function isAssistantSurface(
   value: string | null | undefined,
@@ -18,7 +26,11 @@ export function isAssistantSurface(
     value === "home" ||
     value === "analyzer" ||
     value === "examples" ||
-    value === "user-guide"
+    value === "user-guide" ||
+    value === "course" ||
+    value === "quizzes" ||
+    value === "about" ||
+    value === "privacy"
   );
 }
 
@@ -95,6 +107,57 @@ export interface AssistantFeatureContext {
   availability?: string;
 }
 
+export interface AssistantQuizRecentAttemptContext {
+  attemptId?: string;
+  completedAt?: number;
+  moduleId?: string;
+  moduleTitle?: string;
+  accuracy: number;
+  score: number;
+  maxScore: number;
+  topicHighlights?: string[];
+  areasToImprove?: string[];
+}
+
+export interface AssistantQuizDashboardContext {
+  areasToImprove: string[];
+  strengths: string[];
+  weakSkillIds: string[];
+  lastFailedTopicIds: string[];
+  recentAttempts: AssistantQuizRecentAttemptContext[];
+}
+
+export interface AssistantQuizReviewQuestionContext {
+  index: number;
+  questionId: string;
+  questionType: string;
+  topic?: string;
+  difficulty?: string;
+  promptSummary: string;
+  isCorrect: boolean;
+  score: number;
+  maxScore: number;
+  userAnswerSummary: string;
+  correctAnswerSummary?: string;
+  explanationSummary?: string;
+  optionFeedbackSummaries?: string[];
+  skillIds?: string[];
+}
+
+export interface AssistantQuizSessionReviewContext {
+  view: "summary" | "question-review";
+  reviewStepIndex: number;
+  reviewStepTotal: number;
+  sessionId: string;
+  overallAccuracy: number;
+  overallScore: number;
+  overallMaxScore: number;
+  areasToImprove: string[];
+  strengths: string[];
+  currentQuestion?: AssistantQuizReviewQuestionContext;
+  allQuestions: AssistantQuizReviewQuestionContext[];
+}
+
 export interface AssistantContext {
   surface: AssistantSurface;
   locale: string;
@@ -107,4 +170,6 @@ export interface AssistantContext {
   guideSection?: AssistantGuideSectionContext;
   focusedPanel?: AssistantFocusedPanelContext;
   availableFeatures?: AssistantFeatureContext[];
+  quizDashboard?: AssistantQuizDashboardContext;
+  quizSessionReview?: AssistantQuizSessionReviewContext;
 }

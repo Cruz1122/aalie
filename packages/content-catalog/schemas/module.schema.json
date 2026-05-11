@@ -108,6 +108,18 @@
         "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/learningObjective"
       }
     },
+    "quizRefs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/quizRef"
+      }
+    },
+    "contentRefs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/contentRef"
+      }
+    },
     "resources": {
       "type": "object",
       "additionalProperties": false,
@@ -169,7 +181,15 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["sectionId", "slug", "title", "order", "kind", "trackProgress", "blocks"],
+              "required": [
+                "sectionId",
+                "slug",
+                "title",
+                "order",
+                "kind",
+                "trackProgress",
+                "blocks"
+              ],
               "properties": {
                 "sectionId": {
                   "type": "string",
@@ -199,6 +219,18 @@
                   "type": "array",
                   "items": {
                     "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/learningObjective"
+                  }
+                },
+                "quizRefs": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/quizRef"
+                  }
+                },
+                "contentRefs": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "https://aalie.dev/schemas/content/shared.schema.json#/$defs/contentRef"
                   }
                 },
                 "searchMeta": {

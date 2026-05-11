@@ -19,11 +19,13 @@ export type MethodType =
   | "master";
 
 export type MethodPrecision = "high" | "medium" | "low";
+export type MethodBoundKind = "equivalent" | "upper" | "lower" | "partial";
 
 export interface MethodMetadata {
   applicable: boolean;
   recommended: boolean;
   precision: MethodPrecision;
+  boundKind: MethodBoundKind;
   reason: string;
 }
 
@@ -47,28 +49,28 @@ interface MethodInfo {
 const methods: Record<MethodType, MethodInfo> = {
   characteristic_equation: {
     id: "characteristic_equation",
-    icon: "calculate",
+    icon: "function",
     color: "text-blue-300",
     borderColor: "border-blue-500/30",
     bgColor: "bg-blue-500/20",
   },
   iteration: {
     id: "iteration",
-    icon: "unfold_more",
+    icon: "repeat",
     color: "text-purple-300",
     borderColor: "border-purple-500/30",
     bgColor: "bg-purple-500/20",
   },
   recursion_tree: {
     id: "recursion_tree",
-    icon: "account_tree",
+    icon: "schema",
     color: "text-cyan-300",
     borderColor: "border-cyan-500/30",
     bgColor: "bg-cyan-500/20",
   },
   master: {
     id: "master",
-    icon: "science",
+    icon: "gavel",
     color: "text-orange-300",
     borderColor: "border-orange-500/30",
     bgColor: "bg-orange-500/20",
@@ -130,6 +132,10 @@ export default function MethodSelector({
         applicable: applicableMethods.includes(methodId),
         recommended: methodId === defaultMethod,
         precision: methodId === defaultMethod ? "high" : "medium",
+        boundKind:
+          applicableMethods.includes(methodId) && methodId === defaultMethod
+            ? "equivalent"
+            : "partial",
         reason: fallbackReason,
       };
       acc[methodId] = methodMetadata?.[methodId] ?? fallbackItem;
@@ -157,6 +163,7 @@ export default function MethodSelector({
       applicable: false,
       recommended: false,
       precision: "low",
+      boundKind: "partial",
       reason: t("reasons.fallback"),
     } as MethodMetadata);
   const isSelectionApplicable = selectedMethodData?.applicable ?? false;
@@ -248,19 +255,6 @@ export default function MethodSelector({
                           </div>
                           <div className="absolute left-0 top-6 z-[9999] w-44 rounded-lg border border-white bg-slate-950 p-2 text-xs text-slate-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/star:opacity-100 group-hover/star:visible">
                             {t("recommendedTooltip")}
-                          </div>
-                        </div>
-                      )}
-                      {isApplicable && !metadata.recommended && (
-                        <div className="absolute -right-2 -top-2 group/warn">
-                          <div className="relative h-5 w-5">
-                            <div className="absolute inset-0 rounded-full bg-[#182431]" />
-                            <div className="absolute inset-0 rounded-full border border-amber-500/40 bg-amber-500/20 text-white text-[10px] font-bold flex items-center justify-center">
-                              !
-                            </div>
-                          </div>
-                          <div className="absolute right-0 top-6 z-[9999] w-56 rounded-lg border border-amber-500/30 bg-slate-950 p-2 text-xs text-amber-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/warn:opacity-100 group-hover/warn:visible">
-                            {metadata.reason}
                           </div>
                         </div>
                       )}

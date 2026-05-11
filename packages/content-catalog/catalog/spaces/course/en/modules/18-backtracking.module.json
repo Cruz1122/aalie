@@ -1,0 +1,3180 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-backtracking",
+  "slug": "backtracking",
+  "title": "Backtracking",
+  "order": 18,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Systematic search technique that builds solutions step by step, drills down, and backtracks when a partial solution cannot be extended to a valid solution. It includes modeling such as n-tuple, decision tree, feasibility pruning, general scheme, N-Queens 4×4, complexity analysis and comparison with brute force and greedy algorithms.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 90,
+  "tags": [
+    "backtracking",
+    "turn-back",
+    "depth-search",
+    "dfs",
+    "decision-tree",
+    "pruning",
+    "feasibility",
+    "partial-solution",
+    "solutions-space",
+    "n-tuple",
+    "n-queens",
+    "subsets",
+    "graph-coloring",
+    "brute-force"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "backtracking",
+      "turn back",
+      "backward search",
+      "depth search with pruning",
+      "decision tree",
+      "N-Queens",
+      "N Queens",
+      "pruning for feasibility"
+    ],
+    "keywords": [
+      "DFS",
+      "stack",
+      "LIFO",
+      "partial solution",
+      "x0 x1 xn",
+      "n-tuple",
+      "candidates",
+      "restrictions",
+      "pruning",
+      "feasibility",
+      "isSolution",
+      "N-Queens",
+      "same column",
+      "diagonal",
+      "brute force",
+      "search tree"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-algoritmos-recursivos",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-algoritmos-voraces",
+        "kind": "recommended"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-ambientes-ejecucion-pila",
+        "kind": "required"
+      },
+      {
+        "id": "sec-estructura-algoritmo-recursivo",
+        "kind": "required"
+      },
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-voraces-vs-programacion-dinamica",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-algoritmos-recursivos",
+    "mod-notaciones-asintoticas",
+    "mod-algoritmos-voraces",
+    "mod-programacion-dinamica"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "definir-backtracking",
+      "text": "Deende backtracking as systematic depth exploration with backtracking and pruning."
+    },
+    {
+      "objectiveId": "modelar-solucion-como-tupla",
+      "text": "Model a solution as an n-tuple where each component is chosen from a endite set of candidates."
+    },
+    {
+      "objectiveId": "construir-arbol-de-decisiones",
+      "text": "Build the decision tree associated with a backtracking problem."
+    },
+    {
+      "objectiveId": "identificar-solucion-parcial",
+      "text": "Identify the meaning of a partial solution and a state of the tree."
+    },
+    {
+      "objectiveId": "aplicar-poda-factibilidad",
+      "text": "Apply pruning when a partial solution cannot be extended to a valid solution."
+    },
+    {
+      "objectiveId": "distinguir-backtracking-fuerza-bruta",
+      "text": "Distinguish backtracking from brute force by when invalid branches are discarded."
+    },
+    {
+      "objectiveId": "distinguir-backtracking-voraz",
+      "text": "Distinguish backtracking from greedy algorithms by the reversibility of decisions."
+    },
+    {
+      "objectiveId": "resolver-n-reinas-cuatro",
+      "text": "Solve N-Queens 4×4 by incremental construction and pruning by columns and diagonals."
+    },
+    {
+      "objectiveId": "analizar-complejidad-backtracking",
+      "text": "Analyze backtracking complexity based on the size of the search tree and the cost of validating candidates."
+    },
+    {
+      "objectiveId": "reconocer-problemas-backtracking",
+      "text": "Recognize classic problems solvable with backtracking: N-Queens, sum of subsets, graph coloring, Sudoku and restricted permutations."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-backtracking",
+      "label": "Backtracking",
+      "definition": "Search technique that builds incremental solutions and backtracks when it detects that the partial solution cannot lead to a valid solution."
+    },
+    {
+      "termId": "term-arbol-de-decisiones",
+      "label": "Decision tree",
+      "definition": "Tree where each level represents a stage of the problem and each branch represents a possible choice."
+    },
+    {
+      "termId": "term-solucion-parcial",
+      "label": "Partial solution",
+      "definition": "Incomplete assignment of decisions, for example (x0, x1,..., xk, ?,..., ?)."
+    },
+    {
+      "termId": "term-espacio-de-soluciones",
+      "label": "Solutions space",
+      "definition": "Set of all possible combinations before applying constraints or pruning."
+    },
+    {
+      "termId": "term-candidato-backtracking",
+      "label": "Candidate",
+      "definition": "Possible value to complete the next position of the partial solution."
+    },
+    {
+      "termId": "term-factibilidad-backtracking",
+      "label": "Feasibility",
+      "definition": "Condition that determines whether a partial solution still respects the constraints of the problem."
+    },
+    {
+      "termId": "term-poda",
+      "label": "Pruning",
+      "definition": "Removing a branch from the search tree because it cannot lead to a valid solution."
+    },
+    {
+      "termId": "term-retroceso",
+      "label": "Recoil",
+      "definition": "Action of undoing a decision and returning to the previous state to try another candidate."
+    },
+    {
+      "termId": "term-dfs",
+      "label": "DFS",
+      "definition": "Depth-First Search or depth search. Backtracking explores a branch to the bottom before turning back."
+    },
+    {
+      "termId": "term-nodo-vivo",
+      "label": "Live node",
+      "definition": "Tree node that can still be explored."
+    },
+    {
+      "termId": "term-nodo-muerto",
+      "label": "Dead node",
+      "definition": "Node that is no longer explored because it is invalid, has already been completed, or can no longer produce a solution."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-backtracking",
+      "slug": "backtracking",
+      "title": "Backtracking",
+      "order": 1,
+      "summary": "Modeling solutions such as n-tuples, DFS exploration, feasibility pruning and complete N-Queens example.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-backtracking",
+          "slug": "introduccion-backtracking",
+          "title": "Backtracking: central idea",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-retroceso",
+              "text": "Understand the idea of moving forward, detecting blockage and moving back."
+            },
+            {
+              "objectiveId": "entender-poda-temprana",
+              "text": "Understand that backtracking avoids exploring impossible branches before completing them."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ambientes-ejecucion-pila",
+                "kind": "required"
+              },
+              {
+                "id": "sec-estructura-algoritmo-recursivo",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-backtracking-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Backtracking is a systematic search technique. It builds a solution step by step, tests candidates, and rolls back as soon as it detects that the partial solution can no longer be converted into a valid solution."
+                }
+              ]
+            },
+            {
+              "id": "blk-backtracking-profundidad",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The exploration is done in depth. First an attempt is made to complete a branch of the decision tree. If the branch fails, it goes back to the previous level and tries the next candidate."
+                }
+              ]
+            },
+            {
+              "id": "blk-backtracking-idea",
+              "type": "note",
+              "variant": "info",
+              "title": "Essential idea",
+              "blocks": [
+                {
+                  "id": "blk-backtracking-idea-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Backtracking does not prevent the problem from being combinatorial. What it does is not waste time completing combinations that are already impossible from an intermediate stage."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-backtracking-vs-fuerza-bruta-intro",
+              "type": "table",
+              "title": "Backtracking vs brute force",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterion"
+                },
+                {
+                  "key": "fuerzaBruta",
+                  "label": "brute force"
+                },
+                {
+                  "key": "backtracking",
+                  "label": "Backtracking"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Construction"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Generate complete combinations."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Build partial solutions."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Discard moment"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Filter after generating."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Prune before completing the branch."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Typical structure"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Nested loops or full generation."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recursion + validation + rollback."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-caracterizacion-backtracking",
+          "slug": "caracterizacion-backtracking",
+          "title": "Characterization of problems solvable by backtracking",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "modelar-como-n-tupla",
+              "text": "Represent the solution as an n-tuple of decisions."
+            },
+            {
+              "objectiveId": "identificar-conjuntos-finitos",
+              "text": "Identify the endite set of possible values for each decision."
+            },
+            {
+              "objectiveId": "definir-predicado-validez",
+              "text": "Deende the predicate that decides whether a partial solution is still valid."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-introduccion-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-caracterizacion-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A problem fits well with backtracking when it can be expressed as a sequence of decisions. Each decision fills a position of a solution vector."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-solucion-tupla",
+              "type": "equationBlock",
+              "title": "Solution model",
+              "latex": "X=(x_0,x_1,\\ldots,x_{n-1}),\\qquad x_i\\in S_i"
+            },
+            {
+              "id": "blk-expl-modelo-solucion-tupla",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "X represents the endal solution vector of size n. Each xi is the decision made in stage i (for example, the column number), and Si is the set of possible values for that decision."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-solucion-parcial",
+              "type": "equationBlock",
+              "title": "Partial solution model",
+              "latex": "X_k=(x_0,x_1,\\ldots,x_k,?,\\ldots,?)"
+            },
+            {
+              "id": "blk-expl-modelo-solucion-parcial",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Xk is an incomplete solution that already has values assigned up to position k. Question marks (?) indicate decisions that have not yet been made."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-espacio-soluciones",
+              "type": "equationBlock",
+              "title": "Solution space size",
+              "latex": "|E|=\\prod_{i=0}^{n-1}|S_i|"
+            },
+            {
+              "id": "blk-expl-modelo-espacio-soluciones",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The total size of the search space |E| It is the product of the number of options available at each level. This explains why the cost grows so quickly as n increases."
+                }
+              ]
+            },
+            {
+              "id": "blk-caracterizacion-table",
+              "type": "table",
+              "title": "Conditions to apply backtracking",
+              "columns": [
+                {
+                  "key": "condicion",
+                  "label": "Condition"
+                },
+                {
+                  "key": "significado",
+                  "label": "Meaning"
+                },
+                {
+                  "key": "pregunta",
+                  "label": "control question"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Solution as n-tuple"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The solution can be written as a sequence of decisions."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Can I represent a solution like"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(x_0,x_1,\\ldots,x_{n-1})"
+                      },
+                      {
+                        "type": "text",
+                        "text": "?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Finite sets of candidates"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Each decision takes values from a bounded set."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Every"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "x_i"
+                      },
+                      {
+                        "type": "text",
+                        "text": "comes out of a endite set"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "S_i"
+                      },
+                      {
+                        "type": "text",
+                        "text": "?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Partial restrictions"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Invalidity may be detected before the entire solution is completed."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Can I prune a branch as soon as it violates a rule?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Decision tree"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Each level represents a position or stage of the solution vector."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Are the children of a node the candidates for the next decision?"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-caracterizacion-cuidado",
+              "type": "note",
+              "variant": "warning",
+              "title": "Deciding is not the same as optimizing",
+              "blocks": [
+                {
+                  "id": "blk-caracterizacion-cuidado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Backtracking can search for a valid solution, all valid solutions, or the best solution under a criterion. The model must say which of those three goals is pursued."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-modelo-general-backtracking",
+          "slug": "modelo-general-backtracking",
+          "title": "General backtracking model",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "definir-estado-backtracking",
+              "text": "Deende state, candidates, pruning predicate and solution condition."
+            },
+            {
+              "objectiveId": "leer-modelo-formal-backtracking",
+              "text": "Read the formal model for updating a partial solution."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-caracterizacion-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-modelo-general-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "At the level"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "k"
+                },
+                {
+                  "type": "text",
+                  "text": "of the tree an attempt is made to assign a value to"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "x_k"
+                },
+                {
+                  "type": "text",
+                  "text": ". If the candidate maintains the partial solution valid, he advances to the level"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "k+1"
+                },
+                {
+                  "type": "text",
+                  "text": ". If not, that branch is discarded."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-candidatos-bt",
+              "type": "equationBlock",
+              "title": "Candidate model",
+              "latex": "C_k(X_{k-1})=\\{v\\in S_k\\mid candidate(v,k,X_{k-1})\\}"
+            },
+            {
+              "id": "blk-expl-modelo-candidatos-bt",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ck is the set of valid values for position k, conditioned by the previous partial solution Xk-1."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-poda-bt",
+              "type": "equationBlock",
+              "title": "Pruning model for feasibility",
+              "latex": "B_k(X_{k-1},v)=\\begin{cases}\\text{true},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{can be extended to a solution}\\\\\\text{false},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{violates constraints}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-poda-bt",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Bk is the pruning or feasibility predicate. If it is false, the branch is cut immediately because it has been detected that this combination cannot lead to a valid solution."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-avance-bt",
+              "type": "equationBlock",
+              "title": "Forward and reverse model",
+              "latex": "X_k=\\begin{cases}X_{k-1}\\cup\\{x_k=v\\},& B_k(X_{k-1},v)=\\text{true}\\\\X_{k-1},& B_k(X_{k-1},v)=\\text{false}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-avance-bt",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This model shows how the solution vector advances if the candidate is feasible (union of states) or remains in the previous state if the candidate must be discarded."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-solucion-completa-bt",
+              "type": "equationBlock",
+              "title": "Complete solution model",
+              "latex": "isSolution(X_k)=\\begin{cases}\\text{true},& k=n-1\\ \\text{and}\\ X_k\\ \\text{satisfies all constraints}\\\\\\text{false},& \\text{otherwise}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-solucion-completa-bt",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "isSolution indicates that the process ends successfully only when we reach the last level (n-1) and all the constraints of the problem are met."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-bt-table",
+              "type": "table",
+              "title": "Model elements",
+              "columns": [
+                {
+                  "key": "elemento",
+                  "label": "Element"
+                },
+                {
+                  "key": "rol",
+                  "label": "Role"
+                },
+                {
+                  "key": "ejemploNReinas",
+                  "label": "Example in N-Queens"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Decision level or stage."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Current board row."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "x_k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Value chosen in stage k."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Column chosen for the queen of row k."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "S_k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Set of candidates."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\{1,2,\\ldots,n\\}"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "B_k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Predicate of feasibility or pruning."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Do not share a column or diagonal."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-esquema-algoritmico-backtracking",
+          "slug": "esquema-algoritmico-backtracking",
+          "title": "Algorithmic scheme",
+          "order": 4,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-pseudocodigo-backtracking",
+              "text": "Read the general recursive backtracking scheme."
+            },
+            {
+              "objectiveId": "diferenciar-avance-y-retroceso",
+              "text": "Differentiate the operations of choose, validate, advance and undo."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelo-general-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-esquema-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The basic pattern is recursive: if the solution is complete, it is reported; If not, candidates are tested for the next position. Each valid candidate opens a recursive call. Upon returning, the decision is undone."
+                }
+              ]
+            },
+            {
+              "id": "blk-esquema-bt-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "General backtracking",
+              "code": "backtracking(k, X[n]) BEGIN\n IF (isSolution(k, X)) THEN BEGIN\n report(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR each candidate v IN candidates(k, X) DO BEGIN\n IF (feasible(k, v, X)) THEN BEGIN\n X[k] <- v;\n total <- total + backtracking(k + 1, X);\n X[k] <- NULL;\n END\n END\n\n RETURN total;\nEND"
+            },
+            {
+              "id": "blk-esquema-bt-flujo",
+              "type": "mermaid",
+              "title": "Flow of a backtracking call",
+              "code": "flowchart TD\n A[\"Enter backtracking(k)\"] --> B{\"Is the solution complete?\"}\n B -- \"Yes\" --> C[\"Report solution\"]\n B -- \"No\" --> D[\"Generate candidates for x_k\"]\n D --> E[\"Take next candidate\"]\n E --> F{\"Is it feasible?\"}\n F -- \"No\" --> G[\"Prune candidate\"]\n G --> H{\"Are candidates left?\"}\n F -- \"Yes\" --> I[\"Assign x_k\"]\n I --> J[\"Call backtracking(k+1)\"]\n J --> K[\"Undo x_k\"]\n K --> H\n H -- \"Yes\" --> E\n H -- \"No\" --> L[\"Return to previous level\"]"
+            },
+            {
+              "id": "blk-esquema-bt-nota-deshacer",
+              "type": "note",
+              "variant": "warning",
+              "title": "Undo is required",
+              "blocks": [
+                {
+                  "id": "blk-esquema-bt-nota-deshacer-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If the decision is not undone upon returning from the recursive call, the next candidate is evaluated on a contaminated state. That error breaks the algorithm."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-n-reinas-planteamiento",
+          "slug": "ejemplo-n-reinas-planteamiento",
+          "title": "Example: N-Queens — approach",
+          "order": 5,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "modelar-n-reinas",
+              "text": "Model N-Queens as a vector of columns per row."
+            },
+            {
+              "objectiveId": "reducir-espacio-n-reinas",
+              "text": "Reduce the search space by using one queen per row."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelo-general-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-nreinas-planteamiento",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The problem of the N-Queens is to locate"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": "queens on a board"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n\\times n"
+                },
+                {
+                  "type": "text",
+                  "text": "without two queens attacking each other. Two queens attack each other if they share a row, column or diagonal."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-reduccion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Since there cannot be two queens in the same row, exactly one queen is placed per row. So the decision for each level is no longer choosing any square on the board, but rather choosing the column for the current row."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-modelo-solucion",
+              "type": "equationBlock",
+              "title": "Solution model",
+              "latex": "X=(x_1,x_2,\\ldots,x_n),\\qquad x_i=\\text{column de la queen en la row }i"
+            },
+            {
+              "id": "blk-expl-nreinas-modelo-solucion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In this vector X, the index i represents the row of the board and the value xi represents the column where we place the queen of that row."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-candidatos",
+              "type": "equationBlock",
+              "title": "Candidate model",
+              "latex": "S_i=\\{1,2,\\ldots,n\\}"
+            },
+            {
+              "id": "blk-expl-nreinas-candidatos",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "For each row, the Si candidates are simply the column numbers 1 through n."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-factibilidad",
+              "type": "equationBlock",
+              "title": "Feasibility model",
+              "latex": "valid(i,c)=\\begin{cases}\\text{true},& \\forall r<i:\\ c\\ne x_r\\ \\land\\ |i-r|\\ne |c-x_r|\\\\\\text{false},& \\text{otherwise}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-nreinas-factibilidad",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The function checks that column c is not repeated and that there are no diagonal attacks. The formula |i-r| != |c-xr| It ensures that the distance in rows is not equal to the distance in columns, which characterizes diagonals."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-solucion-completa",
+              "type": "equationBlock",
+              "title": "Complete solution model",
+              "latex": "isSolution(i,X)=\\begin{cases}\\text{true},& i=n+1\\\\\\text{false},& i\\le n\\end{cases}"
+            },
+            {
+              "id": "blk-expl-nreinas-solucion-completa",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The condition i=n+1 means that we have already managed to place a queen in each of the n rows of the board."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-reduccion-espacio",
+              "type": "table",
+              "title": "Search space reduction",
+              "columns": [
+                {
+                  "key": "modelo",
+                  "label": "Model"
+                },
+                {
+                  "key": "espacio",
+                  "label": "Approximate space"
+                },
+                {
+                  "key": "comentario",
+                  "label": "Comment"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Choose any square for each queen"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "(n^2)^n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Too big and with many obviously invalid combinations."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "One queen per row"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Each level decides a column."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "One queen per row and without repeating columns"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n!"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Column pruning drastically reduces the tree."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-n-reinas-cuatro",
+          "slug": "ejemplo-n-reinas-cuatro",
+          "title": "N-Queens 4×4 — step by step follow-up",
+          "order": 6,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "learningObjectives": [
+            {
+              "objectiveId": "seguir-n-reinas-cuatro",
+              "text": "Follow a backtracking run for N-Queens 4×4."
+            },
+            {
+              "objectiveId": "interpretar-poda-columnas-diagonales",
+              "text": "Interpret pruning by column and diagonal in N-Queens."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-n-reinas-planteamiento",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-nreinas-cuatro-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "For"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n=4"
+                },
+                {
+                  "type": "text",
+                  "text": "A solution can be represented as"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X=(2,4,1,3)"
+                },
+                {
+                  "type": "text",
+                  "text": ". This means: row 1 column 2, row 2 column 4, row 3 column 1 and row 4 column 3."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-cuatro-tablero",
+              "type": "table",
+              "title": "Solution board for X = (2,4,1,3)",
+              "columns": [
+                {
+                  "key": "fila",
+                  "label": "Row"
+                },
+                {
+                  "key": "c1",
+                  "label": "Col 1"
+                },
+                {
+                  "key": "c2",
+                  "label": "Col 2"
+                },
+                {
+                  "key": "c3",
+                  "label": "Col 3"
+                },
+                {
+                  "key": "c4",
+                  "label": "Col 4"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Q"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Q"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Q"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Q"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-cuatro-traza",
+              "type": "table",
+              "title": "Trace until you endd X = (2,4,1,3)",
+              "columns": [
+                {
+                  "key": "paso",
+                  "label": "Step"
+                },
+                {
+                  "key": "fila",
+                  "label": "Row"
+                },
+                {
+                  "key": "columna",
+                  "label": "Tested column"
+                },
+                {
+                  "key": "valida",
+                  "label": "Valid?"
+                },
+                {
+                  "key": "accion",
+                  "label": "Action"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Place queen and advance."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Same column. Try next."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Diagonal. Try next."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Place queen and advance."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,2,3,4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "They all fail by column or diagonal. Back."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Replace column 3 with 4 and move forward."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "7"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,2,3,4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "They all fail. Go back to row 1."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "8"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "New branch: place column 2 in row 1."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "9"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Place and advance."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "10"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Place and advance."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "11"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solution found."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-cuatro-arbol",
+              "type": "mermaid",
+              "title": "Decision tree fragment",
+              "code": "flowchart TD\n A[\"Start\"] --> B[\"F1:C1\"]\n B --> C[\"F2:C1 pruned\"]\n B --> D[\"F2:C2 pruned\"]\n B --> E[\"F2:C3\"]\n E --> F[\"Row 3 with no valid candidate\"]\n B --> G[\"F2:C4\"]\n G --> H[\"Row 3 with no valid candidate\"]\n A --> I[\"F1:C2\"]\n I --> J[\"F2:C4\"]\n J --> K[\"F3:C1\"]\n K --> L[\"F4:C3 solution\"]"
+            },
+            {
+              "id": "blk-nreinas-cuatro-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Result",
+              "blocks": [
+                {
+                  "id": "blk-nreinas-cuatro-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "A valid solution for the 4×4 board is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "X=(2,4,1,3)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". No pair of queens shares a column or diagonal."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-n-reinas-pseudocodigo",
+          "slug": "n-reinas-pseudocodigo",
+          "title": "N-Queens — algorithm",
+          "order": 7,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-algoritmo-n-reinas",
+              "text": "Read the N-Queens pseudocode with backtracking."
+            },
+            {
+              "objectiveId": "entender-validacion-n-reinas",
+              "text": "Understand validation by columns and diagonals."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-n-reinas-planteamiento",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-nreinas-valido-modelo",
+              "type": "equationBlock",
+              "title": "Validity condition",
+              "latex": "valid(row,col)=\\begin{cases}\\text{true},& \\forall r<row:\\ col\\ne X[r]\\ \\land\\ |row-r|\\ne |col-X[r]|\\\\\\text{false},& \\text{otherwise}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-nreinas-valido-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This model unifies the restrictions: the current queen must not share a column (col != X[r]) or diagonal (absolute row distance != absolute column distance) with any previously placed queen."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-pseudocodigo-principal",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "N-Queens with backtracking",
+              "code": "nQueens(n) BEGIN\n X[1..n] <- NULL;\n RETURN placeQueen(1, n, X);\nEND\n\nplaceQueen(row, n, X[n]) BEGIN\n IF (row = n + 1) THEN BEGIN\n report(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR col <- 1 TO n DO BEGIN\n IF (isValid(row, col, X)) THEN BEGIN\n X[row] <- col;\n total <- total + placeQueen(row + 1, n, X);\n X[row] <- NULL;\n END\n END\n\n RETURN total;\nEND"
+            },
+            {
+              "id": "blk-nreinas-pseudocodigo-validez",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Validation of a position",
+              "code": "isValid(row, col, X[n]) BEGIN\n FOR r <- 1 TO row - 1 DO BEGIN\n IF (X[r] = col) THEN BEGIN\n RETURN F;\n END\n\n IF (abs(row - r) = abs(col - X[r])) THEN BEGIN\n RETURN F;\n END\n END\n\n RETURN T;\nEND"
+            },
+            {
+              "id": "blk-nreinas-validacion-explicacion",
+              "type": "table",
+              "title": "Validation rules",
+              "columns": [
+                {
+                  "key": "regla",
+                  "label": "Rule"
+                },
+                {
+                  "key": "modelo",
+                  "label": "Model"
+                },
+                {
+                  "key": "significado",
+                  "label": "Meaning"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Not same column"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "col\\ne X[r]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Two queens in the same column attack each other."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Not same diagonal"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "|row-r|\\ne |col-X[r]|"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "On a diagonal, the difference in rows coincides with the difference in columns."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-complejidad-backtracking",
+          "slug": "complejidad-backtracking",
+          "title": "Backtracking complexity",
+          "order": 8,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "analizar-arbol-busqueda",
+              "text": "Analyze the cost of backtracking as the size of the search tree."
+            },
+            {
+              "objectiveId": "distinguir-peor-caso-practica",
+              "text": "Distinguish the worst case bound from the practical improvement by pruning."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-big-o",
+                "kind": "required"
+              },
+              {
+                "id": "sec-ejemplo-n-reinas-planteamiento",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-complejidad-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The complexity of backtracking depends on the number of nodes visited in the search tree and the cost of validating each candidate. Pruning can reduce the current work a lot, but the worst case is still combinatorial."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bt-general",
+              "type": "equationBlock",
+              "title": "General cost model",
+              "latex": "T(n)=\\sum_{k=0}^{d}N_k\\cdot C_{validate}(k)"
+            },
+            {
+              "id": "blk-expl-complejidad-bt-general",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Nk is the number of nodes visited at level k of the tree and Cvalidar is the cost of running the feasibility function at that level."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bt-exponencial",
+              "type": "equationBlock",
+              "title": "Worst case with uniform branching factor",
+              "latex": "T(d)=\\begin{cases}\\Theta(b^d\\cdot C_{validate}),& \\text{if almost all branches are visited}\\\\\\Theta(N_{visited}\\cdot C_{validate}),& \\text{if pruning reduces the tree}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-complejidad-bt-exponencial",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In the worst case, b is the branching factor (average number of children per node) and d is the depth of the tree. Pruning seeks to ensure that the nodes visited are much less than the theoretical total bd."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-nreinas",
+              "type": "equationBlock",
+              "title": "Typical height for N-Queens",
+              "latex": "T(n)=\\begin{cases}O(n^n\\cdot n),& \\text{if repeated columns are allowed and validation costs }O(n)\\\\O(n!\\cdot n),& \\text{if repeated columns are avoided and validation costs }O(n)\\\\O(n!),& \\text{if columns and diagonals are validated in }O(1)\\end{cases}"
+            },
+            {
+              "id": "blk-expl-complejidad-nreinas",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The cost n! It appears when we avoid repeating columns. If we also validate in constant O(1) time, the cost is simply reduced to the number of nodes in the factor tree."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bt-table",
+              "type": "table",
+              "title": "Factors affecting cost",
+              "columns": [
+                {
+                  "key": "factor",
+                  "label": "Factor"
+                },
+                {
+                  "key": "efecto",
+                  "label": "Effect"
+                },
+                {
+                  "key": "ejemplo",
+                  "label": "Example"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Depth"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Number of decisions that must be made."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "In N-Queens, depth"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Branching"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Number of candidates per decision."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Possible columns per row."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Pruning"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Reduces explored branches."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Discard attacked columns and diagonals."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cost to validate"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Multiplies each node visited."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "with scanning,"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "with auxiliary arrangements."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bt-advertencia",
+              "type": "note",
+              "variant": "warning",
+              "title": "Pruning does not automatically change the worst case",
+              "blocks": [
+                {
+                  "id": "blk-complejidad-bt-advertencia-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Just because the algorithm prunes many branches in small examples does not mean that the worst case is no longer exponential or factorial. To change the elevation, you must formally justify how many nodes are eliminated."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-optimizaciones-backtracking",
+          "slug": "optimizaciones-backtracking",
+          "title": "Validation and pruning optimization",
+          "order": 9,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "optimizar-validacion-nreinas",
+              "text": "Optimize N-Queens validation using auxiliary structures."
+            },
+            {
+              "objectiveId": "entender-poda-orden-candidatos",
+              "text": "Understand how the order of candidates can affect real time."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-complejidad-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-optimizacion-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Although the search tree is still large, real-time can be greatly improved by reducing the cost of validating candidates and ordering candidates in a more useful way."
+                }
+              ]
+            },
+            {
+              "id": "blk-optimizacion-nreinas-modelo",
+              "type": "equationBlock",
+              "title": "O(1) Validation in N-Queens",
+              "latex": "valid(row,col)=\\begin{cases}\\text{true},& \\neg usedCol[col]\\ \\land\\ \\neg diagA[row-col]\\ \\land\\ \\neg diagB[row+col]\\\\\\text{false},& \\text{otherwise}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-optimizacion-nreinas-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Using Boolean arrays for columns and diagonals (identified by row+col and row-col), we can know if a square is threatened in constant O(1) time, without needing to traverse previous queens."
+                }
+              ]
+            },
+            {
+              "id": "blk-optimizaciones-bt-table",
+              "type": "table",
+              "title": "Frequent optimizations",
+              "columns": [
+                {
+                  "key": "optimizacion",
+                  "label": "Optimization"
+                },
+                {
+                  "key": "idea",
+                  "label": "idea"
+                },
+                {
+                  "key": "efecto",
+                  "label": "Effect"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Column Arrangements"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Save which columns are already occupied."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Avoid scanning previous queens for columns."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Diagonal arrangements"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Save diagonals occupied by indices"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "row-col"
+                      },
+                      {
+                        "type": "text",
+                        "text": "and"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "row+col"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Validation of diagonals in constant time."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Order of candidates"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Test more promising candidates first."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "You may endd a solution sooner, although it doesn't necessarily improve the worst case."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Limit pruning"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Detect that even completing all the remaining steps will not reach the goal."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Useful in subset addition and selection problems."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-optimizacion-nreinas-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "N-Queens with O(1) validation",
+              "code": "placeQueenFast(row, n, X[n], usedCol[n], diagA[2*n], diagB[2*n]) BEGIN\n IF (row = n + 1) THEN BEGIN\n report(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR col <- 1 TO n DO BEGIN\n dA <- row - col + n;\n dB <- row + col;\n\n IF (NOT usedCol[col] AND NOT diagA[dA] AND NOT diagB[dB]) THEN BEGIN\n X[row] <- col;\n usedCol[col] <- T;\n diagA[dA] <- T;\n diagB[dB] <- T;\n\n total <- total + placeQueenFast(row + 1, n, X, usedCol, diagA, diagB);\n\n X[row] <- NULL;\n usedCol[col] <- F;\n diagA[dA] <- F;\n diagB[dB] <- F;\n END\n END\n\n RETURN total;\nEND"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-problemas-clasicos-backtracking",
+          "slug": "problemas-clasicos-backtracking",
+          "title": "Classic backtracking problems",
+          "order": 10,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "reconocer-familias-backtracking",
+              "text": "Recognize families of problems that are usually solved with backtracking."
+            },
+            {
+              "objectiveId": "identificar-modelo-por-problema",
+              "text": "Identify the solution vector and the main pruning of each family."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-caracterizacion-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-problemas-clasicos-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Backtracking appears when a sequence of decisions has to be made under restrictions. The shape changes, but the pattern of partial solution and pruning repeats itself."
+                }
+              ]
+            },
+            {
+              "id": "blk-problemas-clasicos-table",
+              "type": "table",
+              "title": "Typical families",
+              "columns": [
+                {
+                  "key": "problema",
+                  "label": "Problem"
+                },
+                {
+                  "key": "vectorSolucion",
+                  "label": "Vector solution"
+                },
+                {
+                  "key": "candidatos",
+                  "label": "Candidates"
+                },
+                {
+                  "key": "poda",
+                  "label": "Main pruning"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "N-Queens"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]=\\text{queen column in row }i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Board columns."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Not the same column or diagonal."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sum of subsets"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]\\in\\{0,1\\}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "To take or not to take each element."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The partial sum should not exceed the target if all numbers are positive."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Graph coloring"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[v]=\\text{vertex color }v"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Available colors."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Adjacent vertices cannot share color."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sudoku"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]=\\text{value of the empty cell }i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Possible digits."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Do not repeat in row, column or subbox."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Restricted permutations"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]=\\text{element at position }i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Unused items."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Problem-specific constraints."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-backtracking-vs-otras-tecnicas",
+          "slug": "backtracking-vs-otras-tecnicas",
+          "title": "Backtracking vs brute force vs greedy",
+          "order": 11,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "comparar-backtracking-fuerza-bruta",
+              "text": "Compare backtracking with brute force."
+            },
+            {
+              "objectiveId": "comparar-backtracking-voraces",
+              "text": "Compare backtracking with greedy algorithms."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-voraces",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-introduccion-algoritmos-voraces",
+                "kind": "recommended"
+              },
+              {
+                "id": "sec-introduccion-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-comparacion-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Backtracking is between two extremes: it's not as blind as brute force, but it's also not as irrevocably committed as greedy."
+                }
+              ]
+            },
+            {
+              "id": "blk-comparacion-bt-table",
+              "type": "table",
+              "title": "Comparison of techniques",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterion"
+                },
+                {
+                  "key": "fuerzaBruta",
+                  "label": "brute force"
+                },
+                {
+                  "key": "backtracking",
+                  "label": "Backtracking"
+                },
+                {
+                  "key": "voraz",
+                  "label": "Greedy"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Construction"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Generate everything."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Build and prune."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Choose locally."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recoil"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Not applicable."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Early pruning"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes, due to feasibility."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Does not explore discarded alternatives."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Guarantee"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Complete if it lists everything."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Complete if pruning is correct."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Only if greedy ownership is demonstrated."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Typical cost"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Complete combinatorial."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Combinatorial with pruning."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usually polynomial."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-decision-bt-tecnica",
+              "type": "mermaid",
+              "title": "Technique selection",
+              "code": "flowchart TD\n A[\"Problem with decisions\"] --> B{\"Is there a provable local rule?\"}\n B -- \"Yes\" --> C[\"Greedy\"]\n B -- \"No\" --> D{\"Can invalid partial solutions be pruned?\"}\n D -- \"Yes\" --> E[\"Backtracking\"]\n D -- \"No\" --> F[\"Brute force or exhaustive search\"]\n E --> G{\"Is the goal to optimize using bounds?\"}\n G -- \"Yes\" --> H[\"Branch and Bound\"]\n G -- \"No\" --> I[\"Classic backtracking\"]"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-errores-tipicos-backtracking",
+          "slug": "errores-tipicos-backtracking",
+          "title": "Typical errors",
+          "order": 12,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "evitar-errores-backtracking",
+              "text": "Avoid frequent errors when implementing or analyzing backtracking."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-esquema-algoritmico-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-errores-bt-table",
+              "type": "table",
+              "title": "Common errors in backtracking",
+              "columns": [
+                {
+                  "key": "error",
+                  "label": "Error"
+                },
+                {
+                  "key": "porQueEstaMal",
+                  "label": "Why is it wrong?"
+                },
+                {
+                  "key": "correccion",
+                  "label": "Correction"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Don't undo the decision"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The next candidate inherits a state that does not belong to him."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "After the recursive call, restore the modified position or structure."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Validate only at the end"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "That turns the algorithm into brute force."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Validate each partial solution before moving forward."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Prune a branch that could reach a solution"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Incorrect pruning makes the algorithm incomplete."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Pruning should be a necessary condition of disability, not an intuition."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Confusing backtracking with greedy"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The greedy algorithm does not reconsider; backtracking does go back."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "If there is undoing and exploring alternatives, it is backtracking."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analyze only the successful path"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The cost includes failed candidates and visited pruned branches."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analyze visited nodes of the entire tree, not just the endal solution."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Say pruning does the polynomial algorithm"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Pruning improves real cases, but does not necessarily change the worst case."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Formally justify any elevation improvement."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-backtracking",
+          "slug": "resumen-operativo-backtracking",
+          "title": "Operational summary",
+          "order": 13,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-receta-backtracking",
+              "text": "Consult the minimum recipe for modeling and implementing backtracking."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelo-general-backtracking",
+                "kind": "required"
+              },
+              {
+                "id": "sec-esquema-algoritmico-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-resumen-bt",
+              "type": "note",
+              "variant": "success",
+              "title": "Minimum recipe",
+              "blocks": [
+                {
+                  "id": "blk-resumen-bt-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deende the solution as an n-tuple."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes what each position of the tuple represents."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deende the candidates for each level."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes the feasibility predicate."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes when a solution is complete."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Drill down using recursion."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Before moving forward, validate the partial solution."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "After returning from the recursion, undo the decision."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Analyze the cost as nodes visited by validation cost."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-formulas-clave-bt",
+              "type": "latexSteps",
+              "title": "Key models",
+              "steps": [
+                {
+                  "stepId": "step-formula-tupla",
+                  "title": "Solution as a tuple",
+                  "latex": "X=(x_0,x_1,\\ldots,x_{n-1}),\\qquad x_i\\in S_i",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Each position of the vector represents a decision."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-parcial",
+                  "title": "Partial solution",
+                  "latex": "X_k=(x_0,x_1,\\ldots,x_k,?,\\ldots,?)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The solution is not yet complete, but it can already be partially validated."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-poda",
+                  "title": "Pruning for feasibility",
+                  "latex": "B_k(X_{k-1},v)=\\begin{cases}\\text{true},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{respects constraints}\\\\\\text{false},& \\text{violates a constraint}\\end{cases}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "If the predicate is false, the branch is cut."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-costo-gen",
+                  "title": "Overall cost",
+                  "latex": "T(n)=\\sum_{k=0}^{d}N_k\\cdot C_{validate}(k)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The cost depends on how many nodes are visited at each level and how much it costs to validate them."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

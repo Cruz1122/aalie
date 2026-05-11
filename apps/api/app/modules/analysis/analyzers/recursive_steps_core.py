@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Literal, Optional
 
 StepStatus = Literal["complete", "partial", "unsupported", "error"]
@@ -8,6 +9,44 @@ StepConfidence = Literal["high", "medium", "low"]
 
 def locale_key(locale: str) -> str:
     return "es" if str(locale).lower().startswith("es") else "en"
+
+
+def get_asymptotic_notation(bound_kind: str, result: str) -> str:
+    """
+    Convierte resultado a notación asintótica correcta según bound_kind.
+    
+    Args:
+        bound_kind: "equivalent" | "upper" | "lower" | "partial"
+        result: Expresión asintótica (ej. φⁿ, n², n)
+    
+    Returns:
+        Notación asintótica (ej. Θ(φⁿ), O(n²), Ω(n))
+    """
+    def _unwrap(expression: str) -> str:
+        expression = str(expression).strip()
+        expression = re.sub(r"^T\(n\)\s*=\s*", "", expression).strip()
+        for prefix in ("\\Theta(", "\\mathcal{O}(", "\\Omega("):
+            if expression.startswith(prefix) and expression.endswith(")"):
+                expression = expression[len(prefix):-1].strip()
+                break
+        return expression
+
+    # Limpiar resultado de notaciones previas y prefijos como T(n)=
+    result = _unwrap(result)
+    while True:
+        unwrapped = _unwrap(result)
+        if unwrapped == result:
+            break
+        result = unwrapped
+    
+    if bound_kind == "equivalent":
+        return f"\\Theta({result})"
+    elif bound_kind == "upper":
+        return f"\\mathcal{{O}}({result})"
+    elif bound_kind == "lower":
+        return f"\\Omega({result})"
+    else:  # "partial"
+        return f"\\approx {result}"
 
 
 def render_template(

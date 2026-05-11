@@ -6,8 +6,7 @@
   "description": "Contrato, catálogo y validación del contenido académico de AALIE",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node --import tsx --test \"src/__tests__/**/*.test.ts\"",
-    "validate": "node --import tsx ./scripts/validate-content-catalog.ts"
+    "test": "node --import tsx --test \"src/__tests__/**/*.test.ts\""
   },
   "dependencies": {
     "ajv": "^8.17.1",
@@ -22,6 +21,22 @@
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./terms": {
+      "import": "./src/terms.ts",
+      "types": "./src/terms.ts"
+    },
+    "./server": {
+      "import": "./src/server.ts",
+      "types": "./src/server.ts"
+    },
+    "./types": {
+      "import": "./src/types.ts",
+      "types": "./src/types.ts"
+    },
+    "./utils": {
+      "import": "./src/utils.ts",
+      "types": "./src/utils.ts"
     },
     "./schemas/*": "./schemas/*",
     "./catalog/*": "./catalog/*"

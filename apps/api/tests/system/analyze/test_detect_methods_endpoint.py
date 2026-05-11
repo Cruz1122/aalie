@@ -96,6 +96,58 @@ END
     assert payload["default_method"] in payload["applicable_methods"]
     assert "iteration" in payload["applicable_methods"]
     assert payload["recurrence_info"]["type"] == "linear_shift"
+    assert payload["recurrence_info"]["method_outcomes"]["characteristic_equation"][
+        "bound_kind"
+    ] == "equivalent"
+    assert payload["recurrence_info"]["method_outcomes"]["recursion_tree"][
+        "bound_kind"
+    ] == "upper"
+
+
+def test_detect_methods_endpoint_handles_single_branch_recursive_sum_as_linear_shift():
+    source = """sumaRecursiva(n) BEGIN
+    IF (n = 0) THEN BEGIN
+        RETURN 0;
+    END ELSE BEGIN
+        RETURN n + sumaRecursiva(n - 1);
+    END
+END
+"""
+    res = client.post(
+        "/analyze/detect-methods",
+        json={"source": source, "algorithm_kind": "recursive"},
+    )
+    assert res.status_code == 200
+    payload = res.json()
+    assert payload["ok"] is True
+    assert payload["recurrence_info"]["type"] == "linear_shift"
+    assert payload["recurrence_info"]["method_outcomes"]["characteristic_equation"][
+        "bound_kind"
+    ] == "equivalent"
+    assert payload["recurrence_info"]["method_outcomes"]["recursion_tree"][
+        "bound_kind"
+    ] == "upper"
+
+
+def test_detect_methods_endpoint_enables_recursion_tree_for_fibonacci_like_case():
+    source = """fibonacci(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN n;
+    END
+    RETURN fibonacci(n - 1) + fibonacci(n - 2);
+END
+"""
+    res = client.post(
+        "/analyze/detect-methods",
+        json={"source": source, "algorithm_kind": "recursive"},
+    )
+    assert res.status_code == 200
+    payload = res.json()
+    assert payload["ok"] is True
+    assert payload["recurrence_info"]["type"] == "linear_shift"
+    assert "characteristic_equation" in payload["applicable_methods"]
+    assert "recursion_tree" in payload["applicable_methods"]
+    assert payload["default_method"] == "characteristic_equation"
 
 
 def test_detect_methods_endpoint_does_not_crash_on_auxiliary_recursive_procedures():

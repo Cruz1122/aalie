@@ -4,6 +4,7 @@ import type {
 } from "@/lib/assistant/types";
 import {
   EXAMPLE_CATEGORY_ORDER,
+  getCategoryMeta,
   getExamplesByCategory,
   getLocalizedExampleSource,
   isRecursiveCategory,
@@ -65,15 +66,18 @@ export function buildAssistantExampleSectionsContext(
   locale: ExampleLocale,
   t: Translate,
 ): AssistantExampleSectionContext[] {
-  return EXAMPLE_CATEGORY_ORDER.map((category) => ({
-    id: category,
-    slug: category,
-    title: t(CATEGORY_LABEL_KEYS[category]),
-    description: t(CATEGORY_OFFTEXT_KEYS[category]),
-    exampleCount: getExamplesByCategory(category, {
-      enabledOnly: true,
-      locale,
-    }).length,
-    kind: isRecursiveCategory(category) ? "recursive" : "iterative",
-  }));
+  return EXAMPLE_CATEGORY_ORDER.map((category) => {
+    const meta = getCategoryMeta(category);
+    return {
+      id: category,
+      slug: meta.slug,
+      title: t(CATEGORY_LABEL_KEYS[category]),
+      description: t(CATEGORY_OFFTEXT_KEYS[category]),
+      exampleCount: getExamplesByCategory(category, {
+        enabledOnly: true,
+        locale,
+      }).length,
+      kind: isRecursiveCategory(category) ? "recursive" : "iterative",
+    };
+  });
 }

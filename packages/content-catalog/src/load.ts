@@ -11,6 +11,7 @@ import type {
   ResolvedTarget,
   TargetRef,
 } from "./types.js";
+import { walkBlocks } from "./utils.js";
 
 const SRC_DIR = path.dirname(fileURLToPath(import.meta.url));
 export const PACKAGE_ROOT = path.resolve(SRC_DIR, "..");
@@ -20,35 +21,6 @@ export const REPO_ROOT = path.resolve(PACKAGE_ROOT, "..", "..");
 
 export function readJsonFile<T>(filePath: string): T {
   return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
-}
-
-export function deriveSpaceRoute(space: CatalogSpace): string {
-  return `/${space.slug}`;
-}
-
-export function deriveModuleRoute(
-  space: CatalogSpace,
-  module: CatalogModule,
-): string {
-  return `${deriveSpaceRoute(space)}/${module.slug}`;
-}
-
-export function walkBlocks(blocks: ContentBlock[]): ContentBlock[] {
-  return blocks.flatMap((block) => {
-    switch (block.type) {
-      case "note":
-      case "callout":
-      case "definition":
-      case "theorem":
-      case "proof":
-      case "example":
-      case "exerciseSolution":
-      case "evidenceBlock":
-        return [block, ...walkBlocks(block.blocks)];
-      default:
-        return [block];
-    }
-  });
 }
 
 export function loadModule(filePath: string): LoadedModule {
@@ -112,7 +84,8 @@ export function getModuleBySlug(
   slug: string,
 ): LoadedModule | null {
   return (
-    bundle.modules.find((loadedModule) => loadedModule.module.slug === slug) ?? null
+    bundle.modules.find((loadedModule) => loadedModule.module.slug === slug) ??
+    null
   );
 }
 
@@ -148,7 +121,9 @@ export function resolveTarget(
     }
 
     if (target.kind === "term") {
-      const term = (module.terms ?? []).find((item) => item.termId === target.ref);
+      const term = (module.terms ?? []).find(
+        (item) => item.termId === target.ref,
+      );
       if (term) {
         return { kind: "term", ref: target.ref, title: term.label };
       }

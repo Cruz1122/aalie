@@ -1,0 +1,28 @@
+{
+  "schema": "aalie.content.space",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "slug": "course",
+  "kind": "theory",
+  "title": "Curso teorico",
+  "description": "Espacio de contenido academico modular descubierto por filesystem.",
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "published",
+  "search": {
+    "enabled": true,
+    "indexText": true,
+    "indexStructure": true,
+    "indexTerms": true,
+    "indexReferences": true,
+    "indexCaptions": true
+  },
+  "progress": {
+    "unit": "section",
+    "paginationUnit": "section"
+  },
+  "theme": {
+    "icon": "school",
+    "accentColor": "#D97706"
+  }
+}

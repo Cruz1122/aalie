@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from .recursive_steps_core import (
     compute_overall_status,
+    get_asymptotic_notation,
     locale_key,
     make_recursive_step,
 )
@@ -106,6 +107,7 @@ class MasterStepContext:
     a: int
     b: float | int
     f_n: str
+    bound_kind: str  # "equivalent" | "upper" | "lower" | "partial"
     p_latex: str
     reference_growth_latex: str
     relation_type: str  # less/equal/greater/undetermined/intermediate
@@ -499,6 +501,9 @@ def build_master_step_bundle(ctx: MasterStepContext) -> Dict[str, Any]:
         step10_status = "unsupported"
         step10_summary = "master.asymptotic_conclusion.unsupported"
 
+    # Convertir a notación correcta basada en bound_kind
+    theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta) if ctx.theta else None
+
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
@@ -511,9 +516,9 @@ def build_master_step_bundle(ctx: MasterStepContext) -> Dict[str, Any]:
             confidence="high" if step10_status == "complete" else "medium",
             summary_key=step10_summary,
             concept_key="concept.master.asymptotic_conclusion",
-            primary_latex=(f"T(n) = {ctx.theta}" if ctx.theta else None),
-            payload={"asymptoticResult": ctx.theta},
-            derivation={"asymptoticResult": ctx.theta} if ctx.theta else None,
+            primary_latex=(f"T(n) = {theta_with_notation}" if theta_with_notation else None),
+            payload={"asymptoticResult": theta_with_notation},
+            derivation={"asymptoticResult": theta_with_notation} if theta_with_notation else None,
             blocked_by=["master_s9"] if step10_status != "complete" else [],
         )
     )

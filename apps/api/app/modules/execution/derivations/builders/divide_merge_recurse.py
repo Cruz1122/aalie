@@ -17,7 +17,7 @@ from ..structured_trace_models import (
     StructuredTraceRenderConfig,
     StructuredTraceView,
 )
-from ._call_utils import call_to_label
+from ._call_utils import build_recursive_node_data, call_depth, call_to_label
 
 
 def build_divide_merge_recurse(
@@ -53,8 +53,9 @@ def build_divide_merge_recurse(
     nodes: List[StructuredTraceNode] = []
     edges: List[StructuredTraceEdge] = []
     max_nodes = 100
+    execution_order_counter = [0]
 
-    def add_call(call_id: str) -> None:
+    def add_call(call_id: str, fallback_depth: int = 0) -> None:
         if len(nodes) >= max_nodes:
             return
         call = calls_by_id.get(call_id)
@@ -68,13 +69,20 @@ def build_divide_merge_recurse(
             bc.get("detected", False) and bc.get("matched", False)
         )
         role = "base_return" if is_base else "call"
+        phase = "return" if is_base else "expansion"
+        current_depth = call_depth(call, fallback_depth)
 
         cost = cost_by_call.get(call_id, {})
-        data: Dict[str, Any] = {}
-        if cost.get("tokens"):
-            data["tokens"] = cost["tokens"]
-        if cost.get("microseconds"):
-            data["microseconds"] = cost["microseconds"]
+        data = build_recursive_node_data(
+            call,
+            node_type=role,
+            phase=phase,
+            is_base_case=is_base,
+            cost=cost,
+            depth=current_depth,
+            execution_order=execution_order_counter[0],
+        )
+        execution_order_counter[0] += 1
 
         nodes.append(
             StructuredTraceNode(
@@ -98,8 +106,16 @@ def build_divide_merge_recurse(
                     role="merge",
                     title=merge_title,
                     lines=[merge_line],
+                    data=build_recursive_node_data(
+                        call,
+                        node_type="merge",
+                        phase="construction",
+                        depth=current_depth,
+                        execution_order=execution_order_counter[0],
+                    ),
                 )
             )
+            execution_order_counter[0] += 1
             for child_id in children:
                 child_node_id = f"call_{child_id}"
                 edges.append(
@@ -110,7 +126,7 @@ def build_divide_merge_recurse(
                         label="call",
                     )
                 )
-                add_call(child_id)
+                add_call(child_id, current_depth + 1)
             for child_id in children:
                 child_node_id = f"call_{child_id}"
                 edges.append(
@@ -132,10 +148,10 @@ def build_divide_merge_recurse(
                         label="call",
                     )
                 )
-                add_call(child_id)
+                add_call(child_id, current_depth + 1)
 
     for rid in root_ids:
-        add_call(rid)
+        add_call(rid, 0)
 
     return StructuredTraceView(
         patternKind=classification.patternKind,

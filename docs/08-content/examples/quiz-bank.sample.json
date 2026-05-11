@@ -1,0 +1,715 @@
+{
+  "schemaVersion": "1.0.0",
+  "datasetId": "ada-quiz-bank-sample",
+  "locale": "es-CO",
+  "courseId": "ada",
+  "taxonomyVersion": "1.0.0",
+  "questions": [
+    {
+      "questionId": "ada-asymptotic-notation-basic-001",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "single_choice",
+      "difficulty": "basic",
+      "cognitiveLevel": "recall",
+      "topic": "asymptotic_notation",
+      "tags": [
+        "big_o",
+        "limits"
+      ],
+      "skillIds": [
+        "skill.asymptotic.big_o.upper-bound-interpretation"
+      ],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Pregunta 1 sobre asymptotic notation. Selecciona la opcion correcta segun analisis y diseno de algoritmos."
+          }
+        ]
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "La respuesta usa el concepto central de asymptotic notation con foco en justificacion formal."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "mod-complejidad-temporal-y-espacial",
+          "chapterId": "cap-crecimiento-asintotico",
+          "blockId": "blk-notacion-theorem"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1.0,
+        "estimatedTimeSec": 45,
+        "targetMastery": 0.7,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": [
+          "skill.asymptotic.big_o.upper-bound-interpretation"
+        ],
+        "exposureLimit": 3,
+        "cooldownSessions": 2,
+        "discrimination": "medium"
+      },
+      "options": [
+        {
+          "optionId": "a",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Interpretacion correcta de asymptotic_notation."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcto."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "b",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Confunde definicion con caso particular."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto: no aplica en general."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "c",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Invierte cota superior e inferior."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto: cota invertida."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "correctOptionIds": [
+          "a"
+        ]
+      },
+      "gradingPolicy": {
+        "mode": "all_or_nothing",
+        "maxScore": 1,
+        "penalty": 0,
+        "minScore": 0
+      }
+    },
+    {
+      "questionId": "ada-asymptotic-notation-intermediate-002",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "multiple_choice",
+      "difficulty": "intermediate",
+      "cognitiveLevel": "understand",
+      "topic": "asymptotic_notation",
+      "tags": [
+        "big_o",
+        "limits"
+      ],
+      "skillIds": [
+        "skill.asymptotic.big_o.upper-bound-interpretation"
+      ],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Pregunta 2 sobre asymptotic notation. Selecciona la opcion correcta segun analisis y diseno de algoritmos."
+          }
+        ]
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "La respuesta usa el concepto central de asymptotic notation con foco en justificacion formal."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "mod-complejidad-temporal-y-espacial",
+          "chapterId": "cap-crecimiento-asintotico",
+          "blockId": "blk-notacion-theorem"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1.1,
+        "estimatedTimeSec": 75,
+        "targetMastery": 0.8,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": [
+          "skill.asymptotic.big_o.upper-bound-interpretation"
+        ],
+        "exposureLimit": 3,
+        "cooldownSessions": 2,
+        "discrimination": "medium"
+      },
+      "options": [
+        {
+          "optionId": "a",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Afirmacion correcta 1."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcta."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "b",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Afirmacion correcta 2."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcta."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "c",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Afirmacion incorrecta."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecta."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "d",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Generalizacion invalida."
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecta."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "correctOptionIds": [
+          "a",
+          "b"
+        ]
+      },
+      "gradingPolicy": {
+        "mode": "partial_credit",
+        "maxScore": 1,
+        "penalty": 0.1,
+        "minScore": 0
+      }
+    },
+    {
+      "questionId": "ada-asymptotic-notation-advanced-003",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "true_false",
+      "difficulty": "advanced",
+      "cognitiveLevel": "apply",
+      "topic": "asymptotic_notation",
+      "tags": [
+        "big_o",
+        "limits"
+      ],
+      "skillIds": [
+        "skill.asymptotic.big_o.upper-bound-interpretation"
+      ],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Pregunta 3 sobre asymptotic notation. Selecciona la opcion correcta segun analisis y diseno de algoritmos."
+          }
+        ]
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "La respuesta usa el concepto central de asymptotic notation con foco en justificacion formal."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "mod-complejidad-temporal-y-espacial",
+          "chapterId": "cap-crecimiento-asintotico",
+          "blockId": "blk-notacion-theorem"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1.25,
+        "estimatedTimeSec": 110,
+        "targetMastery": 0.8,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": [
+          "skill.asymptotic.big_o.upper-bound-interpretation"
+        ],
+        "exposureLimit": 3,
+        "cooldownSessions": 3,
+        "discrimination": "high"
+      },
+      "options": [
+        {
+          "optionId": "true",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Verdadero"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcto."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "false",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Falso"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecto."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "correctOptionIds": [
+          "true"
+        ]
+      },
+      "gradingPolicy": {
+        "mode": "all_or_nothing",
+        "maxScore": 1,
+        "penalty": 0,
+        "minScore": 0
+      }
+    },
+    {
+      "questionId": "ada-asymptotic-notation-basic-004",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "ordering",
+      "difficulty": "basic",
+      "cognitiveLevel": "analyze",
+      "topic": "asymptotic_notation",
+      "tags": [
+        "big_o",
+        "limits"
+      ],
+      "skillIds": [
+        "skill.asymptotic.big_o.upper-bound-interpretation"
+      ],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Pregunta 4 sobre asymptotic notation. Selecciona la opcion correcta segun analisis y diseno de algoritmos."
+          }
+        ]
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "La respuesta usa el concepto central de asymptotic notation con foco en justificacion formal."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "mod-complejidad-temporal-y-espacial",
+          "chapterId": "cap-crecimiento-asintotico",
+          "blockId": "blk-notacion-theorem"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1.0,
+        "estimatedTimeSec": 45,
+        "targetMastery": 0.7,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": [
+          "skill.asymptotic.big_o.upper-bound-interpretation"
+        ],
+        "exposureLimit": 3,
+        "cooldownSessions": 2,
+        "discrimination": "medium"
+      },
+      "options": [
+        {
+          "optionId": "step-1",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Paso 1"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Primer paso."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "step-2",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Paso 2"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Segundo paso."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "step-3",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Paso 3"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Tercer paso."
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-y-espacial",
+                "chapterId": "cap-crecimiento-asintotico",
+                "blockId": "blk-notacion-theorem"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "orderedOptionIds": [
+          "step-1",
+          "step-2",
+          "step-3"
+        ]
+      },
+      "gradingPolicy": {
+        "mode": "partial_credit",
+        "maxScore": 1,
+        "penalty": 0,
+        "minScore": 0
+      }
+    },
+    {
+      "questionId": "ada-asymptotic-notation-intermediate-005",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "match_pairs",
+      "difficulty": "intermediate",
+      "cognitiveLevel": "recall",
+      "topic": "asymptotic_notation",
+      "tags": [
+        "big_o",
+        "limits"
+      ],
+      "skillIds": [
+        "skill.asymptotic.big_o.upper-bound-interpretation"
+      ],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Pregunta 5 sobre asymptotic notation. Selecciona la opcion correcta segun analisis y diseno de algoritmos."
+          }
+        ]
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "La respuesta usa el concepto central de asymptotic notation con foco en justificacion formal."
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "mod-complejidad-temporal-y-espacial",
+          "chapterId": "cap-crecimiento-asintotico",
+          "blockId": "blk-notacion-theorem"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1.1,
+        "estimatedTimeSec": 75,
+        "targetMastery": 0.8,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": [
+          "skill.asymptotic.big_o.upper-bound-interpretation"
+        ],
+        "exposureLimit": 3,
+        "cooldownSessions": 2,
+        "discrimination": "medium"
+      },
+      "leftItems": [
+        {
+          "leftId": "left-1",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Concepto A"
+              }
+            ]
+          }
+        },
+        {
+          "leftId": "left-2",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Concepto B"
+              }
+            ]
+          }
+        }
+      ],
+      "rightItems": [
+        {
+          "rightId": "right-1",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Definicion A"
+              }
+            ]
+          }
+        },
+        {
+          "rightId": "right-2",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Definicion B"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": {
+        "pairs": [
+          {
+            "leftId": "left-1",
+            "rightId": "right-1"
+          },
+          {
+            "leftId": "left-2",
+            "rightId": "right-2"
+          }
+        ]
+      },
+      "gradingPolicy": {
+        "mode": "pairwise",
+        "maxScore": 1,
+        "penalty": 0,
+        "minScore": 0
+      },
+      "options": []
+    }
+  ]
+}

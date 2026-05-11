@@ -39,8 +39,8 @@ function looksLikeInlineMath(value: string): boolean {
   if (
     /\\[A-Za-z]+/.test(value) ||
     /\\[{}[\]^_]/.test(value) ||
-    /[A-Za-z]\^\{[^}]+\}/.test(value) ||
-    /[A-Za-z]_\{[^}]+\}/.test(value) ||
+    /[A-Za-z0-9)\]]\^\{[^}]+\}/.test(value) ||
+    /[A-Za-z0-9)\]]_\{[^}]+\}/.test(value) ||
     /(frac|sqrt|sum|prod|Theta|Omega|alpha|beta|gamma|delta|lambda|log)/.test(
       value,
     )
@@ -49,7 +49,7 @@ function looksLikeInlineMath(value: string): boolean {
   }
 
   const hasSimpleScript =
-    /(^|[^A-Za-z0-9_])(?:[A-Za-z)\]](?:_(?:\{[^}]+\}|[A-Za-z0-9+\-]+)|\^(?:\{[^}]+\}|[A-Za-z0-9+\-]+)))(?=[^A-Za-z0-9_]|$)/.test(
+    /(^|[^A-Za-z0-9_])(?:[A-Za-z0-9)\]](?:_(?:\{[^}]+\}|[A-Za-z0-9+\-]+)|\^(?:\{[^}]+\}|[A-Za-z0-9+\-]+)))(?=[^A-Za-z0-9_]|$)/.test(
       value,
     );
 
@@ -59,7 +59,7 @@ function looksLikeInlineMath(value: string): boolean {
 
   const hasMathExpressionWithScripts =
     /[=+\-*/()]/.test(value) &&
-    /(?:[A-Za-z)\]](?:_(?:\{[^}]+\}|[A-Za-z0-9+\-]+)|\^(?:\{[^}]+\}|[A-Za-z0-9+\-]+)))/.test(
+    /(?:[A-Za-z0-9)\]](?:_(?:\{[^}]+\}|[A-Za-z0-9+\-]+)|\^(?:\{[^}]+\}|[A-Za-z0-9+\-]+)))/.test(
       value,
     );
 

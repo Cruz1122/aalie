@@ -21,8 +21,8 @@ describe("assistant context formatting", () => {
       },
       exampleSections: [
         {
-          id: "divide-y-venceras",
-          slug: "divide-y-venceras",
+          id: "divide_and_conquer",
+          slug: "divide-and-conquer",
           title: "Divide y vencerás",
           description: "Subdivide el problema",
           exampleCount: 6,
@@ -100,6 +100,22 @@ describe("assistant context formatting", () => {
     expect(sanitized.sourceCode?.endsWith("…")).toBe(true);
   });
 
+  it("sanitizes quiz dashboard context surfaces", () => {
+    const sanitized = sanitizeAssistantContext({
+      surface: "quizzes",
+      locale: "en",
+      pageContext: {
+        route: "/en/quizzes",
+        view: "dashboard",
+        title: "My Quizzes",
+        notes: ["totalAttempts=3", "averageAccuracy=0.75"],
+      },
+    });
+
+    expect(sanitized.surface).toBe("quizzes");
+    expect(sanitized.pageContext.route).toBe("/en/quizzes");
+  });
+
   it("adds embedded assistant source-of-truth rules to the system prompt", () => {
     const supplement = buildAssistantSystemSupplement({
       surface: "examples",
@@ -114,6 +130,67 @@ describe("assistant context formatting", () => {
     expect(supplement.toLowerCase()).toContain("comparación con llm");
     expect(supplement.toLowerCase()).toContain('evita repetir "en aalie"');
     expect(supplement.toLowerCase()).toContain("referencia principal");
+    expect(supplement.toLowerCase()).toContain("skill.");
+  });
+
+  it("includes quiz dashboard and session review in formatted prompt", () => {
+    const prompt = formatAssistantContextForPrompt({
+      surface: "quizzes",
+      locale: "es",
+      pageContext: { route: "/es/quizzes", view: "dashboard" },
+      quizDashboard: {
+        areasToImprove: ["Recursion"],
+        strengths: ["Loops"],
+        weakSkillIds: ["skill_a"],
+        lastFailedTopicIds: ["Asymptotic notation"],
+        recentAttempts: [
+          {
+            accuracy: 0.6,
+            score: 3,
+            maxScore: 5,
+            topicHighlights: ["Loops"],
+            areasToImprove: ["Recursion"],
+          },
+        ],
+      },
+      quizSessionReview: {
+        view: "summary",
+        reviewStepIndex: 0,
+        reviewStepTotal: 3,
+        sessionId: "sess-1",
+        overallAccuracy: 0.66,
+        overallScore: 2,
+        overallMaxScore: 3,
+        areasToImprove: ["Graphs"],
+        strengths: ["Sorting"],
+        allQuestions: [
+          {
+            index: 0,
+            questionId: "q1",
+            questionType: "single_choice",
+            topic: "Sorting",
+            difficulty: "basic",
+            promptSummary: "What is O(n)?",
+            isCorrect: true,
+            score: 1,
+            maxScore: 1,
+            userAnswerSummary: "Linear time",
+            explanationSummary: "Because single loop.",
+            skillIds: ["skill.hidden.test"],
+          },
+        ],
+      },
+    });
+
+    expect(prompt).toContain("PANORAMA QUIZ (DASHBOARD LOCAL)");
+    expect(prompt).toContain("areasAReforzar: Recursion");
+    expect(prompt).toContain(
+      "senalInternaCompetenciasDebiles (recuento, sin ids): 1",
+    );
+    expect(prompt).not.toContain("skill.hidden");
+    expect(prompt).toContain("INTENTO ACTUAL: FEEDBACK DE QUIZ");
+    expect(prompt).toContain("TODAS_LAS_PREGUNTAS_DE_ESTE_INTENTO");
+    expect(prompt).toContain("What is O(n)?");
   });
 
   it("formats focused panels and available app features", () => {

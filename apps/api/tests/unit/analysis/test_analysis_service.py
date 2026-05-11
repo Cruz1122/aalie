@@ -553,6 +553,15 @@ class TestDetectMethods:
             "default_method": "characteristic_equation",
             "recurrence_info": {
                 "type": "linear_shift",
+                "method_outcomes": {
+                    "characteristic_equation": {
+                        "applicable": True,
+                        "recommended": True,
+                        "bound_kind": "equivalent",
+                        "bound_strength": "strong",
+                        "bound_symbol": "theta",
+                    }
+                },
                 "dp_validation": {
                     "status": "clear",
                     "applicable": True,
@@ -572,6 +581,9 @@ class TestDetectMethods:
             result["recurrence_info"]["dp_validation"]["primary_pattern"]
             == "tabulation"
         )
+        assert result["recurrence_info"]["method_outcomes"]["characteristic_equation"][
+            "bound_kind"
+        ] == "equivalent"
         assert (
             "memoization"
             in result["recurrence_info"]["dp_validation"]["supported_patterns"]

@@ -37,6 +37,7 @@ from sympy import (
     roots as sympy_roots,
 )
 
+from ..recursive_invariants import generate_recursive_invariant
 from .base import BaseAnalyzer
 from .characteristic_steps import StepContext, build_characteristic_step_bundle
 from .iteration_steps import IterationStepContext, build_iteration_step_bundle
@@ -124,6 +125,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.proof: List[Dict[str, str]] = []
         self.proof_steps: List[Dict[str, str]] = []
         self.dp_validation_events: List[Dict[str, Any]] = []
+        self.recursive_invariant: Optional[Dict[str, Any]] = None
         # Inicializar expr_converter si no está en BaseAnalyzer
         if not hasattr(self, "expr_converter"):
             from .expr_converter import ExprConverter
@@ -172,23 +174,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 ],
             }
 
-        self.proc_def = proc_def  # Guardar para uso posterior
+        self.proc_def = proc_def
         self.procedure_name = proc_def.get("name")
 
-        # 2.1. Detectar variables de tamaño candidatas a partir del ProcDef
-        # Mantendremos la notación estándar T(n), pero registraremos el mapeo si
-        # el parámetro real tiene otro nombre.
-        try:
-            size_candidates = self.detect_size_variables_from_proc(proc_def)
-        except Exception:
-            size_candidates = []
-        if size_candidates:
-            primary = size_candidates[0]
-            if isinstance(primary, str) and primary and primary != "n":
-                # Registrar que nuestro 'n' conceptual corresponde a este parámetro
-                self.add_symbol("n", primary)
-
-        # 2. Validar condiciones iniciales (divide-and-conquer canónico)
+        # 2. Validar condiciones iniciales
         validation_result = self._validate_conditions(proc_def)
         if not validation_result["valid"]:
             return {
@@ -202,12 +191,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 ],
             }
 
-        # 2.5. Perfil de expansión recursiva y decisión de variabilidad (contractual).
-        # Esta fase separa:
-        # - caso base estructural (no autoriza best asintótico distinto)
-        # - poda dependiente de datos (sí puede justificar best diferente)
+        # 2.5. Perfil de expansión recursiva y decisión de variabilidad.
         profile = self._build_recursive_expansion_profile(proc_def)
         decision = self._classify_case_variability(profile)
+
         self.expansion_profile = profile  # debug/inspección (no contractual por sí mismo)
         self.case_variability_decision = decision
 
@@ -366,7 +353,20 @@ class RecursiveAnalyzer(BaseAnalyzer):
             self.master = master_result["master"]
 
         # 5. Generar resultado
-        return self.result()
+        result = self.result()
+
+        # 6. Generar invariante recursivo (artefacto pedagógico)
+        if result.get("ok"):
+            try:
+                self.recursive_invariant = generate_recursive_invariant(
+                    ast=ast,
+                    locale=self.locale,
+                )
+            except Exception:
+                # Si falla la generación del invariante, continuar sin él (no es crítico)
+                self.recursive_invariant = None
+
+        return result
 
     def detect_applicable_methods(self, ast: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -484,8 +484,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     proc_def, recursive_calls
                 )
                 use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
-                use_recursion_tree = self._detect_recursion_tree_method(
-                    proc_def, recursive_calls, a, b
+                # Árbol de recursión solo para casos pedagógicos controlados.
+                use_recursion_tree = self._should_enable_linear_shift_recursion_tree(
+                    proc_def, recursive_calls
                 )
             elif recurrence_type == "divide_conquer":
                 # En divide_conquer la ecuación característica no aplica de forma directa.
@@ -495,9 +496,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 use_recursion_tree = self._detect_recursion_tree_method(
                     proc_def, recursive_calls, a, b
                 )
-                # Iteración geométrica para rama única: T(n)=T(n/b)+Theta(1).
-                use_iteration = self._is_single_branch_geometric_divide_conquer_recurrence(
-                    recurrence
+                # Iteración: permitida para rama única (a=1) O para cualquier divide-and-conquer regular
+                use_iteration = (
+                    self._is_single_branch_geometric_divide_conquer_recurrence(recurrence)
+                    or self._can_use_iteration_for_divide_conquer(recurrence)
                 )
             else:
                 # Fallback conservador para tipos no estandarizados.
@@ -551,6 +553,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     default_method = recurrence.get("method", "master")
             else:
                 default_method = recurrence.get("method", "master")
+
+            method_outcomes = self._build_method_outcomes(
+                recurrence, applicable_methods, default_method
+            )
 
             def _is_constant_work(raw_term: Any) -> bool:
                 raw = str(raw_term or "").strip().lower().replace(" ", "")
@@ -614,6 +620,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "type": recurrence.get("type"),
                 "form": recurrence.get("form"),
                 "applicable": recurrence.get("applicable"),
+                "method_outcomes": method_outcomes,
             }
             recurrence_info["strategy_family"] = _strategy_family(recurrence)
 
@@ -651,7 +658,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "default_method": default_method,
                 "recurrence_info": recurrence_info,
             }
-
         except Exception as e:
             return {
                 "ok": False,
@@ -659,7 +665,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     {
                         "message": f"Error detectando métodos: {str(e)}",
                         "line": None,
-                        "column": None,
                     }
                 ],
             }
@@ -671,13 +676,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "",
             "0",
             "1",
-            "\\theta(0)",
-            "theta(0)",
-            "\\theta(1)",
             "theta(1)",
+            "\\theta(1)",
+            "o(1)",
+            "\\mathcal{o}(1)",
         }:
             return True
-        # Constantes numéricas simples.
         try:
             _ = float(cleaned)
             return True
@@ -713,6 +717,188 @@ class RecursiveAnalyzer(BaseAnalyzer):
             return False
 
         return self._is_constant_work_term(recurrence.get("f", "1"))
+
+    def _can_use_iteration_for_divide_conquer(
+        self, recurrence: Dict[str, Any]
+    ) -> bool:
+        """
+        Detecta si iteración es aplicable para ANY divide-and-conquer recurrence,
+        no solo rama única (a=1).
+        
+        Permite iteración para:
+        - T(n)=T(n/b)+Theta(g(n)) (rama única, a=1)
+        - T(n)=a*T(n/b)+Theta(g(n)) (múltiples ramas, a>1)
+        
+        La iteración geométrica es útil siempre que tengamos una estructura regular.
+        """
+        if recurrence.get("type") != "divide_conquer":
+            return False
+        
+        if not isinstance(self.proc_def, dict):
+            return False
+        
+        try:
+            a_val = int(recurrence.get("a", 0))
+            b_val = float(recurrence.get("b", 0))
+        except Exception:
+            return False
+        
+        # Requiere a >= 1 y b > 1 (divide-and-conquer regular)
+        if a_val < 1 or b_val <= 1:
+            return False
+        
+        try:
+            recursive_calls = self._find_recursive_calls(self.proc_def)
+        except Exception:
+            return False
+        
+        if not recursive_calls:
+            return False
+        
+        # Verificar que el trabajo sea computationally feasible (no exponencial en a, b)
+        # O(1), O(n), O(n^2), etc. son permitidos
+        return self._is_polynomial_work_term(recurrence.get("f", "1"))
+
+    def _is_polynomial_work_term(self, f_str: str) -> bool:
+        """
+        Verifica si f(n) es un término polinomial manejable (O(1), O(n), O(n^2), etc.).
+        """
+        if not f_str or f_str in {"1", "0"}:
+            return True
+        
+        f_lower = str(f_str).lower().strip()
+        
+        # Términos que consideramos "manejables" para iteración
+        manageable = {
+            "theta(1)", "o(1)", "1",
+            "theta(n)", "o(n)", "n",
+            "theta(n^2)", "o(n^2)", "n^2",
+            "theta(log(n))", "o(log(n))", "log(n)",
+            "theta(n*log(n))", "o(n*log(n))", "n*log(n)",
+        }
+        
+        for term in manageable:
+            if term in f_lower:
+                return True
+        
+        return False
+
+    def _infer_method_bound_kind(
+        self,
+        method: str,
+        recurrence: Dict[str, Any],
+        applicable_methods: List[str],
+    ) -> str:
+        recurrence_type = str(recurrence.get("type") or "")
+
+        if recurrence_type == "linear_shift" and method == "recursion_tree":
+            return "upper"
+
+        if method not in applicable_methods:
+            return "partial"
+
+        if recurrence_type == "linear_shift":
+            if method in {"characteristic_equation", "iteration"}:
+                return "equivalent"
+            return "partial"
+
+        if recurrence_type == "divide_conquer":
+            if method == "master":
+                return "equivalent"
+            if method == "recursion_tree":
+                return "equivalent"
+            if method == "iteration":
+                if self._is_single_branch_geometric_divide_conquer_recurrence(recurrence):
+                    return "equivalent"
+                return "upper"
+            return "partial"
+
+        if recurrence_type == "divide_conquer_multi":
+            if method == "recursion_tree":
+                return "upper"
+            return "partial"
+
+        return "partial"
+
+    def _build_method_outcomes(
+        self,
+        recurrence: Dict[str, Any],
+        applicable_methods: List[str],
+        default_method: str,
+    ) -> Dict[str, Dict[str, Any]]:
+        outcomes: Dict[str, Dict[str, Any]] = {}
+        for method in [
+            "characteristic_equation",
+            "iteration",
+            "recursion_tree",
+            "master",
+        ]:
+            bound_kind = self._infer_method_bound_kind(
+                method, recurrence, applicable_methods
+            )
+            outcomes[method] = {
+                "applicable": method in applicable_methods,
+                "recommended": method == default_method,
+                "bound_kind": bound_kind,
+                "bound_strength": "strong" if bound_kind == "equivalent" else "partial",
+                "bound_symbol": {
+                    "equivalent": "theta",
+                    "upper": "big_o",
+                    "lower": "big_omega",
+                    "partial": "partial",
+                }.get(bound_kind, "partial"),
+            }
+
+        return outcomes
+
+    def _should_enable_linear_shift_recursion_tree(
+        self,
+        proc_def: Dict[str, Any],
+        recursive_calls: List[Dict[str, Any]],
+    ) -> bool:
+        """
+        Habilita árbol de recursión para lineales solo en casos pedagógicos claros:
+        - rama única (T(n-k)+g(n)), o
+        - multi-rama densa tipo Fibonacci/Tribonacci (desplazamientos consecutivos 1..k).
+
+        Evita habilitarlo para patrones dispersos (ej. n-1 y n-4), donde su lectura
+        suele ser demasiado laxa y confunde con otras técnicas.
+        """
+        if len(recursive_calls) == 1:
+            return True
+
+        linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+        if not linear_info:
+            return False
+
+        shifts = sorted((linear_info.get("coefficients") or {}).keys())
+        if len(shifts) < 2:
+            return False
+
+        # Requiere desplazamientos consecutivos empezando en 1: [1,2], [1,2,3], ...
+        return shifts == list(range(1, max(shifts) + 1))
+
+    def _get_method_bound_kind(self, method: str) -> str:
+        """
+        Determina bound_kind para el método actual basado en la recurrencia.
+        
+        Returns: "equivalent" | "upper" | "lower" | "partial"
+        """
+        if not self.recurrence:
+            return "partial"
+
+        recurrence = self.recurrence
+        recurrence_type = str(recurrence.get("type") or "").strip()
+        effective: Dict[str, Any] = dict(recurrence)
+        if not recurrence_type:
+            if method == "characteristic_equation":
+                effective["type"] = "linear_shift"
+            elif isinstance(recurrence.get("terms"), list) and recurrence.get("terms"):
+                effective["type"] = "divide_conquer_multi"
+            elif recurrence.get("b") is not None:
+                effective["type"] = "divide_conquer"
+
+        return self._infer_method_bound_kind(method, effective, [method])
 
     def _has_object_field_access_in_recursive_calls(
         self, recursive_calls: List[Dict[str, Any]]
@@ -1550,7 +1736,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             elif method == "recursion_tree" and has_subtraction:
                 # Fibonacci-type: T(n) = T(n-1) + T(n-2) + ... (múltiples términos)
                 linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
-                if linear_info and len(linear_info.get("coefficients", {})) >= 2:
+                if linear_info and len(linear_info.get("coefficients", {})) >= 1:
                     coeffs = linear_info["coefficients"]
                     shifts_list = sorted(coeffs.keys())
                     coeffs_list = [coeffs[s] for s in shifts_list]
@@ -1619,6 +1805,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "notes": [],
                     "method": method,
                 }
+
+        recurrence["method_outcome"] = self._build_method_outcomes(
+            recurrence,
+            [method],
+            method,
+        ).get(method, {})
 
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
@@ -3738,6 +3930,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             a=max(a, 0),
             b=(self._canonicalize_numeric(b) if b > 0 else 0),
             f_n=f_n_str,
+            bound_kind=self._get_method_bound_kind("master"),
             p_latex=p_latex,
             reference_growth_latex=reference_growth,
             relation_type=relation_type,
@@ -3980,22 +4173,21 @@ class RecursiveAnalyzer(BaseAnalyzer):
         y provee evidencia para decidir variabilidad de casos.
         """
         recursive_calls = self._find_recursive_calls(proc_def)
-        proc_name = proc_def.get("name", "") or (self.procedure_name or "")
+        size_signals = self._extract_size_signals(proc_def, recursive_calls)
 
         call_sites: List[RecursiveCallSite] = []
         for call in recursive_calls:
             line = call.get("pos", {}).get("line") if isinstance(call, dict) else None
             args = call.get("args", []) if isinstance(call, dict) else []
+            call_name = call.get("name") or call.get("callee", "") if isinstance(call, dict) else ""
             call_sites.append(
                 RecursiveCallSite(
                     node=call,
-                    call_name=str(call.get("name") or call.get("callee") or proc_name),
+                    call_name=str(call_name),
                     args=list(args) if isinstance(args, list) else [],
                     line=line if isinstance(line, int) else None,
                 )
             )
-
-        size_signals = self._extract_size_signals(proc_def, recursive_calls)
         size_symbols: Set[str] = set(size_signals.get("size_symbols") or set())
         size_graph = size_signals.get("size_graph") or {}
 
@@ -5500,6 +5692,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.recursion_tree = None
         self.characteristic_equation = None
         self.dp_validation_events = []
+        self.recursive_invariant = None
 
     # ============================================================================
     # MÉTODO DE ECUACIÓN CARACTERÍSTICA (LINEAL CON DESPLAZAMIENTOS CONSTANTES)
@@ -5671,7 +5864,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         linear_info: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Valida si una recurrencia lineal encaja bien como caso de programación dinámica."""
-        coefficients = linear_info.get("coefficients", {})
+        coefficients = linear_info.get("coefficients", {}) or {}
         shifts = sorted(coefficients.keys())
         max_offset = int(linear_info.get("max_offset", 0) or 0)
         total_calls = sum(coefficients.values())
@@ -5731,31 +5924,29 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "recursive_call_count": total_calls,
                 "distinct_shifts": shifts,
                 "max_offset": max_offset,
-                "contiguous_shifts": contiguous_shifts,
                 "changed_non_size_params": changed_non_size_params,
             },
         }
-
         self.dp_validation_events.append(validation)
-        for reason in reasons:
-            prefix = "DP validada" if validation["applicable"] else "DP descartada"
-            self.add_note(f"{prefix}: {reason}")
-
+        if validation["applicable"]:
+            self.add_note(f"DP validada: {primary_pattern}")
+        else:
+            self.add_note(f"DP descartada: {reasons[0] if reasons else 'sin motivo'}")
         return validation
 
     def _build_non_dp_validation(self, reason: str) -> Dict[str, Any]:
-        """Registra el descarte explícito de PD para recurrencias fuera del perfil esperado."""
+        """Registra una validación conservadora para recurrencias que no son de PD."""
         validation = {
             "status": "rejected",
             "applicable": False,
             "confidence": "high",
-            "primary_pattern": "none",
+            "primary_pattern": "divide_and_conquer",
             "supported_patterns": [],
             "reasons": [reason],
             "debug": {},
         }
         self.dp_validation_events.append(validation)
-        self.add_note(f"DP descartada: {reason}")
+        self.add_note(f"PD descartada: {reason}")
         return validation
 
     def _detect_characteristic_equation_method(
@@ -6521,6 +6712,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 order=max_offset,
                 is_linear=bool(linear_info.get("is_linear")),
                 g_n=g_n_str,
+                bound_kind=self._get_method_bound_kind("characteristic_equation"),
                 is_homogeneous=is_homogeneous,
                 homogeneous_form=homogeneous_form,
                 equation=char_eq_latex,
@@ -6823,48 +7015,44 @@ FIN FUNCIÓN"""
         self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]
     ) -> bool:
         """
-        Detecta si debe usarse automáticamente el Método de Iteración (V1).
+        Detecta si debe usarse automáticamente el Método de Iteración.
 
-        Cobertura V1 (estricta):
-        - Solo recurrencias equivalentes a T(n)=T(n-1)+g(n)
-        - Una única llamada recursiva
-        - Desplazamiento unitario (n-1)
-        - Coeficiente 1 para T(n-1)
+        Cobertura:
+        - Recurrencias de desplazamiento lineal (linear_shift)
+        - Rama única T(n-1)+g(n)
+        - Familias multi-término consecutivas como Fibonacci/Tribonacci
+          cuando los desplazamientos son contiguos y arrancan en 1.
 
         Args:
             proc_def: Nodo ProcDef del procedimiento
             recursive_calls: Lista de llamadas recursivas encontradas
 
         Returns:
-            True si la forma cumple la cobertura V1 de Iteración
+            True si la forma cumple la cobertura contractual de Iteración
         """
         if not recursive_calls:
             return False
 
-        # V1: no soporta múltiples llamadas ni órdenes > 1.
-        if len(recursive_calls) != 1:
-            return False
-
-        subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
-        if not subproblem_info or subproblem_info.get("type") != "subtraction":
-            return False
-
-        # Debe ser desplazamiento unitario: n-1.
-        factor = subproblem_info.get("factor")
-        pattern = str(subproblem_info.get("pattern", "")).replace(" ", "")
-        is_unit_shift = factor == 1 or pattern == "n-1"
-        if not is_unit_shift:
-            return False
-
-        # Verificación adicional con extractor lineal, cuando está disponible.
         linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
-        if linear_info:
-            coefficients = linear_info.get("coefficients", {}) or {}
-            max_offset = int(linear_info.get("max_offset", 1))
-            if max_offset != 1:
-                return False
-            if coefficients.get(1, 1) != 1:
-                return False
+        if not linear_info:
+            return False
+
+        coefficients = linear_info.get("coefficients", {}) or {}
+        shifts = sorted(int(shift) for shift in coefficients.keys() if int(shift) > 0)
+        if not shifts:
+            return False
+
+        # Solo iteramos lineales de decremento continuo: [1], [1,2], [1,2,3], ...
+        if shifts != list(range(1, max(shifts) + 1)):
+            return False
+
+        if int(linear_info.get("max_offset", 1) or 1) != max(shifts):
+            return False
+
+        # La iteración sigue siendo útil aunque haya varios términos, siempre que
+        # la secuencia de desplazamientos sea consecutiva y no existan huecos.
+        if 1 not in coefficients:
+            return False
 
         return True
 
@@ -7697,18 +7885,24 @@ FIN FUNCIÓN"""
                 locale=self.locale,
                 recurrence_form=recurrence_form,
                 g_n=g_n_value,
-                is_supported=False,
+                is_supported=True,
+                generic_walkthrough=True,
+                bound_kind=self._get_method_bound_kind("iteration"),
                 support_code=support_code,
                 base_case_index=base_idx,
                 base_case_value=str(base_val) if base_val is not None else None,
-                expansions=[],
-                general_form=recurrence_form,
+                expansions=[
+                    recurrence_form,
+                    r"\text{Sustituir la recurrencia una vez para desplegar el primer nivel}",
+                    r"\text{Repetir la sustitución y acumular los términos visibles}",
+                ],
+                general_form=r"\text{Forma iterada parcial tras }k\text{ sustituciones}",
                 k_condition=f"n-k={base_idx}",
-                k_value="N/A",
-                summation_expression="N/A",
-                summation_evaluated="N/A",
-                final_expression="T(n)=\\text{N/A}",
-                dominant_term="\\text{N/A}",
+                k_value="k",
+                summation_expression=r"\text{Acumulación simbólica parcial}",
+                summation_evaluated=r"\text{No hay cierre exacto; se conserva la forma simbólica}",
+                final_expression=r"T(n)=\text{forma parcial por iteración}",
+                dominant_term=r"\text{N/A}",
                 theta="N/A",
                 summation_partial=True,
                 asymptotic_partial=True,
@@ -7729,68 +7923,259 @@ FIN FUNCIÓN"""
                 {
                     "id": "iteration_unsupported",
                     "text": (
-                        "\\text{La cobertura actual del método de iteración no soporta esta forma de recurrencia.}"
+                        "\\text{La forma no cierra de manera exacta, pero se puede mostrar un walkthrough parcial por iteración.}"
                     ),
                 }
             )
             return {"success": True, "iteration": iteration}
 
-        if recurrence_type == "divide_conquer":
-            if not self._is_single_branch_geometric_divide_conquer_recurrence(self.recurrence):
-                return _build_unsupported_result(
-                    support_code="ITER_UNSUPPORTED_NON_LINEAR_FORM",
-                    g_n_value=str(self.recurrence.get("f", "1")),
-                )
-
+        def _build_generic_upper_bound_result(
+            support_code: str,
+            g_n_value: str,
+        ) -> Dict[str, Any]:
+            # Preferir detección de casos divide-and-conquer multiplicativos
+            # donde los tamaños son n/b_i (por ejemplo n/2 y n/4). En ese caso
+            # la profundidad del árbol está acotada por el mayor factor de reducción
+            # f_max = 1/b_min y la cota superior se aproxima por n^{log_{b_max} a}.
             base_idx, base_val, missing_base = _base_case_info()
-            base_for_formula = base_idx if isinstance(base_idx, int) and base_idx > 0 else 1
+            base_for_formula = base_idx if isinstance(base_idx, int) and base_idx >= 0 else 0
 
-            try:
-                b_value = float(self.recurrence.get("b", 2))
-            except Exception:
-                b_value = 2.0
-            b_display = self._simplify_number_latex(b_value if b_value > 1 else 2.0)
+            # Si la recurrencia es de tipo linear_shift (ej. Fibonacci), construir
+            # una demostración explícita usando monotonicidad para acotar T(n-2) ≤ T(n-1).
+            if str(self.recurrence.get("type") or "") == "linear_shift":
+                # Calcular factor de ramificación como suma de coeficientes
+                coeffs_raw = self.recurrence.get("coefficients", []) or []
+                branch_factor = 0
+                if isinstance(coeffs_raw, dict):
+                    for value in coeffs_raw.values():
+                        try:
+                            branch_factor += max(0, int(value))
+                        except Exception:
+                            continue
+                elif isinstance(coeffs_raw, list):
+                    for value in coeffs_raw:
+                        try:
+                            branch_factor += max(0, int(value))
+                        except Exception:
+                            continue
+                if branch_factor <= 1:
+                    branch_factor = max(2, len(self.recurrence.get("shifts", []) or []))
 
-            g_n_value = _normalize_g(str(self.recurrence.get("f", "1")))
-            if g_n_value == "0":
-                theta = "\\Theta(1)"
-                dominant_term = "1"
-                summation_evaluated = "0"
-                final_expression = f"T(n)=T({base_for_formula})"
-            else:
-                theta = "\\Theta(\\log n)"
-                dominant_term = "\\log n"
-                if base_for_formula == 1:
-                    k_value = f"\\log_{{{b_display}}} n"
-                else:
-                    k_value = (
-                        f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
-                    )
-                summation_evaluated = (
-                    f"\\sum_{{j=0}}^{{k-1}} {g_n_value}={g_n_value}\\cdot {k_value}"
+                branch_factor_latex = self._simplify_number_latex(branch_factor)
+                # Construir pasos explícitos y justificación
+                expansions = [
+                    recurrence_form,
+                    r"\text{Como }T(n)\text{ es creciente, }T(n-2)\leq T(n-1)",
+                    rf"T(n)=T(n-1)+T(n-2)+{g_n_value}",
+                    rf"T(n)\leq {branch_factor_latex}T(n-1)+{g_n_value}",
+                    rf"{branch_factor_latex}^{{k}}T(n-k)+\sum_{{j=0}}^{{k-1}} {branch_factor_latex}^j {g_n_value}",
+                ]
+
+                general_form = rf"T(n)\leq {branch_factor_latex}^kT(n-k)+\sum_{{j=0}}^{{k-1}} {branch_factor_latex}^j {g_n_value}"
+                k_condition = f"n-k={base_for_formula}"
+                k_value = f"n-{base_for_formula}" if base_for_formula > 0 else "n"
+                summation_expression = general_form
+                summation_evaluated = rf"\sum_{{j=0}}^{{k-1}} {branch_factor_latex}^j {g_n_value}"
+                final_expression = rf"T(n)\leq {branch_factor_latex}^{{{k_value}}}T({base_for_formula})+({branch_factor_latex}^{{{k_value}}}-1)\cdot {g_n_value}"
+
+                context = IterationStepContext(
+                    locale=self.locale,
+                    recurrence_form=recurrence_form,
+                    g_n=g_n_value,
+                    is_supported=True,
+                    generic_walkthrough=True,
+                    upper_bound_walkthrough=True,
+                    bound_kind="upper",
+                    support_code=support_code,
+                    base_case_index=base_for_formula,
+                    base_case_value=str(base_val) if base_val is not None else None,
+                    expansions=expansions,
+                    general_form=general_form,
+                    k_condition=k_condition,
+                    k_value=k_value,
+                    summation_expression=summation_expression,
+                    summation_evaluated=summation_evaluated,
+                    final_expression=final_expression,
+                    dominant_term=rf"{branch_factor_latex}^n",
+                    theta=rf"{branch_factor_latex}^n",
+                    show_monotonicity_step=True,
+                    key_inequality=rf"T(n)\leq {branch_factor_latex}T(n-1)+{g_n_value}",
+                    summation_partial=False,
+                    asymptotic_partial=False,
+                    missing_base_case=missing_base,
                 )
-                final_expression = f"T(n)=T({base_for_formula})+{g_n_value}\\cdot {k_value}"
+                step_bundle = build_iteration_step_bundle(context)
+                iteration = {
+                    "method": "iteration",
+                    "g_function": g_n_value,
+                    "expansions": expansions,
+                    "general_form": general_form,
+                    "base_case": {"condition": k_condition, "k": k_value},
+                    "summation": {"expression": summation_expression, "evaluated": summation_evaluated},
+                    "theta": rf"{branch_factor_latex}^n",
+                    "step_by_step": step_bundle,
+                    "branch_factor": branch_factor,
+                }
+                self.proof_steps.append(
+                    {
+                        "id": "iteration_upper_bound_linear_shift",
+                        "text": f"\\text{{Cota superior por iteración (linear_shift): uso de monotonicidad para acotar a {branch_factor_latex}^n}}",
+                    }
+                )
+                return {"success": True, "iteration": iteration}
 
-            k_condition = f"\\frac{{n}}{{{b_display}^k}}={base_for_formula}"
-            if base_for_formula == 1:
-                k_value = f"\\log_{{{b_display}}} n"
-            else:
-                k_value = f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+            # Si la recurrencia contiene términos multi-b (divide_conquer_multi), usarlos
+            terms = None
+            try:
+                terms = self.recurrence.get("terms") or None
+            except Exception:
+                terms = None
 
+            if terms:
+                # terms es una lista de tuplas (count, b_val)
+                try:
+                    a_total = sum(int(cnt) for cnt, _ in terms)
+                except Exception:
+                    a_total = int(self.recurrence.get("a", 2) or 2)
+
+                try:
+                    b_values = [int(bv) for _, bv in terms if bv and float(bv) > 1]
+                except Exception:
+                    b_values = []
+
+                if b_values:
+                    b_max = max(b_values)
+                else:
+                    b_max = int(self.recurrence.get("b", 2) or 2)
+                if b_values:
+                    b_min = min(b_values)
+                else:
+                    b_min = int(self.recurrence.get("b", 2) or 2)
+
+                # Exponente: log_{b_max} (a_total)
+                try:
+                    exp_val = math.log(a_total, b_max) if (a_total > 0 and b_max > 1) else None
+                except Exception:
+                    exp_val = None
+
+                # Formatear la cota en LaTeX
+                if exp_val is not None and abs(round(exp_val) - exp_val) < 1e-9:
+                    # entero
+                    exp_int = int(round(exp_val))
+                    upper_theta = rf"n^{{{exp_int}}}"
+                elif exp_val is not None and exp_val > 0:
+                    # racional/real: mostrar como n^{log_b a}
+                    upper_theta = rf"n^{{\log_{{{b_max}}} {a_total}}}"
+                else:
+                    # fallback conservador
+                    branch_factor = max(2, int(a_total or 2))
+                    branch_factor_latex = self._simplify_number_latex(branch_factor)
+                    upper_theta = f"{branch_factor_latex}^n"
+
+                branch_factor_latex = self._simplify_number_latex(a_total)
+
+                expansions = [
+                    recurrence_form,
+                    rf"T(n)\leq {a_total}T\left(\frac{{n}}{{{b_max}}}\right)+{g_n_value}",
+                    rf"T(n)\leq {a_total}^2T\left(\frac{{n}}{{{b_max}^2}}\right)+({a_total}+1){g_n_value}",
+                ]
+                general_form = rf"T(n)\leq {a_total}^kT\left(\frac{{n}}{{{b_max}^k}}\right)+\sum_{{j=0}}^{{k-1}} {a_total}^j {g_n_value}"
+                k_condition = f"\frac{{n}}{{{b_max}^k}}={base_for_formula}"
+                k_value = f"\log_{{{b_max}}} n" if base_for_formula in (0, 1) else f"\log_{{{b_max}}}\left(\frac{{n}}{{{base_for_formula}}}\right)"
+                summation_expression = general_form
+                summation_evaluated = rf"\sum_{{j=0}}^{{k-1}} {a_total}^j {g_n_value}"
+                final_expression = rf"T(n)\leq {a_total}^{{{k_value}}}T({base_for_formula})+({a_total}^{{{k_value}}}-1)\cdot {g_n_value}"
+
+                context = IterationStepContext(
+                    locale=self.locale,
+                    recurrence_form=recurrence_form,
+                    g_n=g_n_value,
+                    is_supported=True,
+                    generic_walkthrough=True,
+                    upper_bound_walkthrough=True,
+                    bound_kind="upper",
+                    support_code=support_code,
+                    base_case_index=base_for_formula,
+                    base_case_value=str(base_val) if base_val is not None else None,
+                    expansions=expansions,
+                    general_form=general_form,
+                    k_condition=k_condition,
+                    k_value=k_value,
+                    summation_expression=summation_expression,
+                    summation_evaluated=summation_evaluated,
+                    final_expression=final_expression,
+                    dominant_term=upper_theta,
+                    theta=upper_theta,
+                    show_monotonicity_step=True,
+                    key_inequality=rf"T(n)\leq {a_total}T\left(\frac{{n}}{{{b_min}}}\right)+{g_n_value}",
+                    summation_partial=True,
+                    asymptotic_partial=False,
+                    missing_base_case=missing_base,
+                )
+                step_bundle = build_iteration_step_bundle(context)
+                iteration = {
+                    "method": "iteration",
+                    "g_function": g_n_value,
+                    "expansions": expansions,
+                    "general_form": general_form,
+                    "base_case": {"condition": k_condition, "k": k_value},
+                    "summation": {"expression": summation_expression, "evaluated": summation_evaluated},
+                    "theta": upper_theta,
+                    "step_by_step": step_bundle,
+                    "branch_factor": a_total,
+                }
+                self.proof_steps.append(
+                    {
+                        "id": "iteration_upper_bound_result",
+                        "text": f"\\text{{Se construyó una cota superior por iteración con }}a={a_total}, b_{{max}}={b_max}, \text{{ dando }}{upper_theta}",
+                    }
+                )
+                return {"success": True, "iteration": iteration}
+
+            # Fallback original (no terms detectados): usar ramificación por desplazamientos
+            coeffs_raw = self.recurrence.get("coefficients", []) or []
+            branch_factor = 0
+            if isinstance(coeffs_raw, dict):
+                for value in coeffs_raw.values():
+                    try:
+                        branch_factor += max(0, int(value))
+                    except Exception:
+                        continue
+            elif isinstance(coeffs_raw, list):
+                for value in coeffs_raw:
+                    try:
+                        branch_factor += max(0, int(value))
+                    except Exception:
+                        continue
+            if branch_factor <= 1:
+                branch_factor = max(2, len(self.recurrence.get("shifts", []) or []))
+            branch_factor_latex = self._simplify_number_latex(branch_factor)
+            upper_theta = f"{branch_factor_latex}^n"
             expansions = [
-                f"T(n)=T\\left(\\frac{{n}}{{{b_display}}}\\right)+{g_n_value}",
-                f"T(n)=T\\left(\\frac{{n}}{{{b_display}^2}}\\right)+2\\cdot {g_n_value}",
-                f"T(n)=T\\left(\\frac{{n}}{{{b_display}^3}}\\right)+3\\cdot {g_n_value}",
+                recurrence_form,
+                rf"T(n)\leq {branch_factor_latex}T(n-1)+{g_n_value}",
+                rf"T(n)\leq {branch_factor_latex}^2T(n-2)+({branch_factor_latex}+1){g_n_value}",
             ]
-            general_form = f"T(n)=T\\left(\\frac{{n}}{{{b_display}^k}}\\right)+k\\cdot {g_n_value}"
-            summation_expression = f"T(n)=T({base_for_formula})+\\sum_{{j=0}}^{{k-1}} {g_n_value}"
+            general_form = rf"T(n)\leq {branch_factor_latex}^kT(n-k)+\sum_{{j=0}}^{{k-1}} {branch_factor_latex}^j"
+            k_condition = f"n-k={base_for_formula}"
+            k_value = f"n-{base_for_formula}" if base_for_formula > 0 else "n"
+            summation_expression = rf"T(n)\leq {branch_factor_latex}^kT(n-k)+\sum_{{j=0}}^{{k-1}} {branch_factor_latex}^j"
+            summation_evaluated = rf"T(n)\leq {branch_factor_latex}^kT(n-k)+({branch_factor_latex}^k-1)"
+            final_expression = (
+                rf"T(n)\leq {branch_factor_latex}^{{{k_value}}}T({base_for_formula})+({branch_factor_latex}^{{{k_value}}}-1)"
+                if base_val is None
+                else rf"T(n)\leq {branch_factor_latex}^{{{k_value}}}{base_val}+({branch_factor_latex}^{{{k_value}}}-1)"
+            )
 
             context = IterationStepContext(
                 locale=self.locale,
                 recurrence_form=recurrence_form,
                 g_n=g_n_value,
                 is_supported=True,
-                support_code=None,
+                generic_walkthrough=True,
+                upper_bound_walkthrough=True,
+                bound_kind="upper",
+                support_code=support_code,
                 base_case_index=base_for_formula,
                 base_case_value=str(base_val) if base_val is not None else None,
                 expansions=expansions,
@@ -7800,37 +8185,139 @@ FIN FUNCIÓN"""
                 summation_expression=summation_expression,
                 summation_evaluated=summation_evaluated,
                 final_expression=final_expression,
-                dominant_term=dominant_term,
-                theta=theta,
-                summation_partial=False,
+                dominant_term=upper_theta,
+                theta=upper_theta,
+                show_monotonicity_step=True,
+                key_inequality=rf"T(n)\leq {branch_factor_latex}T(n-1)+{g_n_value}",
+                summation_partial=True,
                 asymptotic_partial=False,
                 missing_base_case=missing_base,
             )
             step_bundle = build_iteration_step_bundle(context)
-
             iteration = {
                 "method": "iteration",
                 "g_function": g_n_value,
                 "expansions": expansions,
                 "general_form": general_form,
-                "base_case": {
-                    "condition": k_condition,
-                    "k": k_value,
-                },
+                "base_case": {"condition": k_condition, "k": k_value},
                 "summation": {
                     "expression": summation_expression,
                     "evaluated": summation_evaluated,
                 },
-                "theta": theta,
+                "theta": upper_theta,
                 "step_by_step": step_bundle,
+                "branch_factor": branch_factor,
             }
             self.proof_steps.append(
                 {
-                    "id": "iteration_result",
-                    "text": f"\\text{{Resultado por iteración geométrica: }} T(n) = {theta}",
+                    "id": "iteration_upper_bound_result",
+                    "text": f"\\text{{Se construyó una cota superior por iteración con factor de ramificación }} {branch_factor_latex} \\text{{ al no existir cierre exacto.}}",
                 }
             )
             return {"success": True, "iteration": iteration}
+
+        if recurrence_type == "divide_conquer":
+            # Primero verificar si es rama única (a=1): casos T(n)=T(n/b)+f(n)
+            if self._is_single_branch_geometric_divide_conquer_recurrence(self.recurrence):
+                # Flujo original para rama única
+                base_idx, base_val, missing_base = _base_case_info()
+                base_for_formula = base_idx if isinstance(base_idx, int) and base_idx > 0 else 1
+
+                try:
+                    b_value = float(self.recurrence.get("b", 2))
+                except Exception:
+                    b_value = 2.0
+                b_display = self._simplify_number_latex(b_value if b_value > 1 else 2.0)
+
+                g_n_value = _normalize_g(str(self.recurrence.get("f", "1")))
+                if g_n_value == "0":
+                    theta = "\\Theta(1)"
+                    dominant_term = "1"
+                    summation_evaluated = "0"
+                    final_expression = f"T(n)=T({base_for_formula})"
+                else:
+                    theta = "\\Theta(\\log n)"
+                    dominant_term = "\\log n"
+                    if base_for_formula == 1:
+                        k_value = f"\\log_{{{b_display}}} n"
+                    else:
+                        k_value = (
+                            f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+                        )
+                    summation_evaluated = (
+                        f"\\sum_{{j=0}}^{{k-1}} {g_n_value}={g_n_value}\\cdot {k_value}"
+                    )
+                    final_expression = f"T(n)=T({base_for_formula})+{g_n_value}\\cdot {k_value}"
+
+                k_condition = f"\\frac{{n}}{{{b_display}^k}}={base_for_formula}"
+                if base_for_formula == 1:
+                    k_value = f"\\log_{{{b_display}}} n"
+                else:
+                    k_value = f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+
+                expansions = [
+                    f"T(n)=T\\left(\\frac{{n}}{{{b_display}}}\\right)+{g_n_value}",
+                    f"T(n)=T\\left(\\frac{{n}}{{{b_display}^2}}\\right)+2\\cdot {g_n_value}",
+                    f"T(n)=T\\left(\\frac{{n}}{{{b_display}^3}}\\right)+3\\cdot {g_n_value}",
+                ]
+                general_form = f"T(n)=T\\left(\\frac{{n}}{{{b_display}^k}}\\right)+k\\cdot {g_n_value}"
+                summation_expression = f"T(n)=T({base_for_formula})+\\sum_{{j=0}}^{{k-1}} {g_n_value}"
+
+                context = IterationStepContext(
+                    locale=self.locale,
+                    recurrence_form=recurrence_form,
+                    g_n=g_n_value,
+                    is_supported=True,
+                    bound_kind=self._get_method_bound_kind("iteration"),
+                    support_code=None,
+                    base_case_index=base_for_formula,
+                    base_case_value=str(base_val) if base_val is not None else None,
+                    expansions=expansions,
+                    general_form=general_form,
+                    k_condition=k_condition,
+                    k_value=k_value,
+                    summation_expression=summation_expression,
+                    summation_evaluated=summation_evaluated,
+                    final_expression=final_expression,
+                    dominant_term=dominant_term,
+                    theta=theta,
+                    missing_base_case=missing_base,
+                )
+                step_bundle = build_iteration_step_bundle(context)
+                iteration = {
+                    "method": "iteration",
+                    "g_function": g_n_value,
+                    "expansions": expansions,
+                    "general_form": general_form,
+                    "base_case": {"condition": k_condition, "k": k_value},
+                    "summation": {
+                        "expression": summation_expression,
+                        "evaluated": summation_evaluated,
+                    },
+                    "theta": theta,
+                    "step_by_step": step_bundle,
+                }
+                self.proof_steps.append(
+                    {
+                        "id": "iteration_geometric_single_branch",
+                        "text": "\\text{Método de iteración para rama única: }T(n)=T(n/b)+f(n)",
+                    }
+                )
+                return {"success": True, "iteration": iteration}
+            
+            # Si NO es rama única pero SÍ es un divide-and-conquer regular (a>1, b>1),
+            # usar el método genérico de cota superior
+            elif self._can_use_iteration_for_divide_conquer(self.recurrence):
+                return _build_generic_upper_bound_result(
+                    support_code="ITER_GENERIC_DIVIDE_CONQUER",
+                    g_n_value=str(self.recurrence.get("f", "1")),
+                )
+            else:
+                # No soportado
+                return _build_unsupported_result(
+                    support_code="ITER_UNSUPPORTED_NON_LINEAR_FORM",
+                    g_n_value=str(self.recurrence.get("f", "1")),
+                )
 
         if recurrence_type != "linear_shift":
             return _build_unsupported_result(
@@ -7890,6 +8377,11 @@ FIN FUNCIÓN"""
         is_first_order_unit_decrement = order == 1 and sorted(shifts_as_int) == [1]
         coeff_n_minus_1 = coeff_by_shift.get(1, 1)
         if not is_first_order_unit_decrement:
+            if len(shifts_as_int) >= 2:
+                return _build_generic_upper_bound_result(
+                    support_code="ITER_GENERIC_UPPER_BOUND",
+                    g_n_value=g_n_value,
+                )
             return _build_unsupported_result(
                 support_code="ITER_UNSUPPORTED_NON_UNIT_SHIFT",
                 g_n_value=g_n_value,
@@ -7956,6 +8448,7 @@ FIN FUNCIÓN"""
                 recurrence_form=recurrence_form,
                 g_n=g_n_value,
                 is_supported=True,
+                bound_kind=self._get_method_bound_kind("iteration"),
                 support_code=None,
                 base_case_index=base_idx,
                 base_case_value=str(base_val) if base_val is not None else None,
@@ -8108,6 +8601,7 @@ FIN FUNCIÓN"""
             recurrence_form=recurrence_form,
             g_n=g_n_value,
             is_supported=True,
+            bound_kind=self._get_method_bound_kind("iteration"),
             support_code=None,
             base_case_index=base_idx,
             base_case_value=str(base_val) if base_val is not None else None,
@@ -8601,7 +9095,10 @@ FIN FUNCIÓN"""
                 n0_value = 1
 
             if support_code is None:
-                if recurrence_type != "divide_conquer":
+                linear_shift_shifts = self.recurrence.get("shifts", []) or []
+                if recurrence_type == "linear_shift" and len(linear_shift_shifts) >= 2:
+                    support_code = "RT_LINEAR_SHIFT_BALANCED"
+                elif recurrence_type != "divide_conquer":
                     support_code = "RT_UNSUPPORTED_FORM"
                 elif a_value is None or b_value is None or a_value < 1 or b_value <= 1:
                     support_code = "RT_INVALID_PARAMETERS"
@@ -8638,6 +9135,22 @@ FIN FUNCIÓN"""
             )
             leaf_count = f"L={a_display}^h=n^{{\\log_{{{b_display}}} {a_display}}}"
             leaf_cost = f"C_{{\\text{{hojas}}}}=L\\cdot T({n0_display})"
+            linear_shifts = []
+            linear_coefficients = []
+            linear_branch_factor = None
+            if recurrence_type == "linear_shift":
+                raw_shifts = self.recurrence.get("shifts", []) or []
+                raw_coeffs = self.recurrence.get("coefficients", []) or []
+                try:
+                    linear_shifts = [int(s) for s in raw_shifts]
+                except Exception:
+                    linear_shifts = []
+                try:
+                    linear_coefficients = [max(0, int(c)) for c in raw_coeffs]
+                except Exception:
+                    linear_coefficients = []
+                coeff_sum = sum(linear_coefficients)
+                linear_branch_factor = coeff_sum if coeff_sum > 0 else None
 
             step_ctx = RecursionTreeStepContext(
                 locale=self.locale,
@@ -8646,6 +9159,7 @@ FIN FUNCIÓN"""
                 a=a_value,
                 b=b_value,
                 f_n=f_n,
+                bound_kind=self._get_method_bound_kind("recursion_tree"),
                 n0=n0_value,
                 is_supported=is_supported,
                 support_code=support_code,
@@ -8659,6 +9173,9 @@ FIN FUNCIÓN"""
                 dominant_level=(str(dominant_level) if dominant_level is not None else None),
                 dominant_reason_latex=dominant_reason if is_supported else None,
                 theta_latex=theta_latex if is_supported else None,
+                linear_shifts=linear_shifts,
+                linear_coefficients=linear_coefficients,
+                linear_branch_factor=linear_branch_factor,
                 summation_partial=summation_partial,
                 tree_inconsistent=tree_inconsistent,
                 asymptotic_partial=asymptotic_partial,
@@ -8789,25 +9306,33 @@ FIN FUNCIÓN"""
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Suma aritmética } n + (n-1) + \\ldots + 1 = \\Theta(n^2)"
+                        "reason": "\\text{Cota superior por árbol balanceado: } O(n^2)"
                     },
                     "table_by_levels": [],
-                    "theta": f"\\Theta({theta})",
+                    "theta": theta,
                 }
-                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
-                    support_code="RT_UNSUPPORTED_FORM",
-                    asymptotic_partial=True,
+                    asymptotic_partial=False,
                 )
                 return {"success": True, "recursion_tree": recursion_tree}
 
             # Fibonacci-type: T(n) = c1*T(n-k1) + c2*T(n-k2) + ... (múltiples términos)
             # Árbol con subproblemas superpuestos; no usar estructura divide-and-conquer
             shifts = self.recurrence.get("shifts", [])
-            self.recurrence.get("coefficients", [])
+            coefficients = self.recurrence.get("coefficients", []) or []
             if len(shifts) >= 2:
                 recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + T(n-2) + 1")
+                coeff_ints = []
+                for c in coefficients:
+                    try:
+                        coeff_ints.append(max(0, int(c)))
+                    except Exception:
+                        continue
+                branch_factor = sum(coeff_ints) if coeff_ints else len(shifts)
+                if branch_factor < 2:
+                    branch_factor = 2
                 self.proof_steps.append(
                     {
                         "id": "tree_extract",
@@ -8817,10 +9342,10 @@ FIN FUNCIÓN"""
                 self.proof_steps.append(
                     {
                         "id": "step1_note",
-                        "text": "\\text{Árbol con subproblemas superpuestos: el mismo T(k) se calcula varias veces. Crecimiento exponencial } \\Theta(\\varphi^n)",
+                        "text": f"\\text{{Árbol no simétrico: se balancea con factor de ramificación }} B={branch_factor}\\text{{ para obtener una cota superior.}}",
                     }
                 )
-                theta = "\\varphi^n"
+                theta = f"{branch_factor}^n"
                 recursion_tree = {
                     "method": "recursion_tree",
                     "recurrence_type": "linear_shift",
@@ -8834,39 +9359,38 @@ FIN FUNCIÓN"""
                         },
                         {
                             "level": 1,
-                            "num_nodes_latex": "2",
-                            "subproblem_size_latex": "n-1, n-2",
+                            "num_nodes_latex": str(branch_factor),
+                            "subproblem_size_latex": ", ".join([f"n-{int(s)}" for s in shifts]),
                             "cost_per_node_latex": "1",
-                            "total_cost_latex": "2",
+                            "total_cost_latex": str(branch_factor),
                         },
                         {
                             "level": 2,
-                            "num_nodes_latex": "4",
-                            "subproblem_size_latex": "n-2, n-3, n-4",
+                            "num_nodes_latex": f"{branch_factor}^2",
+                            "subproblem_size_latex": "\\text{mezcla de desplazamientos acumulados}",
                             "cost_per_node_latex": "1",
-                            "total_cost_latex": "4",
+                            "total_cost_latex": f"{branch_factor}^2",
                         },
                     ],
                     "height": "n",
                     "summation": {
-                        "expression": "\\sum_{i=0}^{n} \\text{(nodos nivel } i) \\approx \\Theta(\\varphi^n)",
+                        "expression": f"\\sum_{{i=0}}^{{n}} {branch_factor}^i = \\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}",
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Subproblemas superpuestos: crecimiento exponencial } \\Theta(\\varphi^n)"
+                        "reason": f"\\text{{Cota superior por árbol balanceado: }} O({branch_factor}^n)"
                     },
                     "table_by_levels": [],
-                    "theta": f"\\Theta({theta})",
+                    "theta": theta,
                 }
-                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
-                    support_code="RT_UNSUPPORTED_FORM",
-                    asymptotic_partial=True,
+                    asymptotic_partial=False,
                 )
                 return {"success": True, "recursion_tree": recursion_tree}
 
-            # Recursión dentro de FOR (generación de subconjuntos): ramificación → Θ(2^n)
+            # Recursión dentro de FOR (generación de subconjuntos): cota superior por árbol balanceado.
             if self.recurrence.get("branching_subset"):
                 recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + \\Theta(1)")
                 self.proof_steps.append(
@@ -8878,31 +9402,31 @@ FIN FUNCIÓN"""
                 self.proof_steps.append(
                     {
                         "id": "step1_note",
-                        "text": "\\text{Nota: Recursión dentro de FOR (generación de subconjuntos). En cada nivel hay múltiples ramas; el árbol tiene } O(2^n) \\text{ nodos.}",
+                        "text": "\\text{Nota: se usa una cota superior balanceada. En cada nivel hay múltiples ramas; el árbol tiene } O(2^n) \\text{ nodos.}",
                     }
                 )
                 self.proof_steps.append(
                     {
                         "id": "step2",
-                        "text": "\\text{Paso 2: Análisis del árbol de recursión} \\\\ \\text{En cada llamada el FOR genera varias ramas recursivas}",
+                        "text": "\\text{Paso 2: Aproximación por árbol balanceado} \\\\ \\text{Tomamos la rama más larga para obtener una cota superior}",
                     }
                 )
                 self.proof_steps.append(
                     {
                         "id": "step3",
-                        "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{En el nivel } i \\text{, hay en el orden de } 2^i \\text{ nodos}",
+                        "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{Si el árbol se balancea por ramas, el nivel } i \\text{ queda acotado por } 2^i \\text{ nodos}",
                     }
                 )
                 self.proof_steps.append(
                     {
                         "id": "step4",
-                        "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura es } \\Theta(n)",
+                        "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura se acota por } O(n)",
                     }
                 )
                 self.proof_steps.append(
                     {
                         "id": "step5",
-                        "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = \\Theta(2^n)",
+                        "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = O(2^n)",
                     }
                 )
                 theta = "2^n"
@@ -8931,16 +9455,15 @@ FIN FUNCIÓN"""
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Ramificación: número de nodos } \\Theta(2^n)"
+                        "reason": "\\text{Cota superior por árbol balanceado: } O(2^n)"
                     },
                     "table_by_levels": [],
-                    "theta": f"\\Theta({theta})",
+                    "theta": theta,
                 }
-                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
-                    support_code="RT_UNSUPPORTED_FORM",
-                    asymptotic_partial=True,
+                    asymptotic_partial=False,
                 )
                 return {"success": True, "recursion_tree": recursion_tree}
 

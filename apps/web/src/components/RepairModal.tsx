@@ -6,7 +6,13 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { AAProgressLoader } from "@/components/AAProgressLoader";
+import { getApiKey } from "@/hooks/useApiKey";
 import { translateLlmError } from "@/lib/llm-error-translator";
+import {
+  getNormalizedLlmStructured,
+  getNormalizedLlmText,
+  parseJsonFromText,
+} from "@/lib/llm-response";
 
 interface RepairModalProps {
   open: boolean;
@@ -14,6 +20,173 @@ interface RepairModalProps {
   onAccept: (repairedCode: string) => void;
   originalCode: string;
   parseErrors?: ParseError[];
+}
+
+function normalizeLineNumbers(values: unknown, maxLine: number): number[] {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  const normalized = values
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value))
+    .map((value) => Math.trunc(value))
+    .filter((value) => value >= 1 && value <= maxLine);
+
+  return Array.from(new Set(normalized)).sort((a, b) => a - b);
+}
+
+function normalizeLineTextForMatch(value: string): string {
+  return value.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function resolveLineReferences(references: unknown, lines: string[]): number[] {
+  if (!Array.isArray(references) || references.length === 0) {
+    return [];
+  }
+
+  const numericLines = normalizeLineNumbers(references, lines.length);
+  if (numericLines.length > 0) {
+    return numericLines;
+  }
+
+  const textRefs = references
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => normalizeLineTextForMatch(value))
+    .filter((value) => value.length > 0);
+
+  if (textRefs.length === 0) {
+    return [];
+  }
+
+  const normalizedLines = lines.map((line) => normalizeLineTextForMatch(line));
+  const usedIndices = new Set<number>();
+  const matches: number[] = [];
+
+  for (const ref of textRefs) {
+    let found = -1;
+
+    for (let i = 0; i < normalizedLines.length; i += 1) {
+      if (usedIndices.has(i)) continue;
+      if (normalizedLines[i] === ref) {
+        found = i;
+        break;
+      }
+    }
+
+    if (found === -1) {
+      for (let i = 0; i < normalizedLines.length; i += 1) {
+        if (usedIndices.has(i)) continue;
+        if (
+          normalizedLines[i].includes(ref) ||
+          ref.includes(normalizedLines[i])
+        ) {
+          found = i;
+          break;
+        }
+      }
+    }
+
+    if (found !== -1) {
+      usedIndices.add(found);
+      matches.push(found + 1);
+    }
+  }
+
+  return Array.from(new Set(matches)).sort((a, b) => a - b);
+}
+
+function buildAutoLineDiff(
+  originalLines: string[],
+  repairedLines: string[],
+): { removedLines: number[]; addedLines: number[] } {
+  const removedLines: number[] = [];
+  const addedLines: number[] = [];
+  const commonLength = Math.min(originalLines.length, repairedLines.length);
+
+  for (let i = 0; i < commonLength; i += 1) {
+    if (originalLines[i] !== repairedLines[i]) {
+      removedLines.push(i + 1);
+      addedLines.push(i + 1);
+    }
+  }
+
+  for (let i = commonLength; i < originalLines.length; i += 1) {
+    removedLines.push(i + 1);
+  }
+
+  for (let i = commonLength; i < repairedLines.length; i += 1) {
+    addedLines.push(i + 1);
+  }
+
+  return {
+    removedLines,
+    addedLines,
+  };
+}
+
+function normalizeRepairedCodeText(code: string): string {
+  let normalized = code.trim();
+
+  // Algunos modelos devuelven saltos escapados ("\\n") en lugar de saltos reales.
+  if (!normalized.includes("\n") && normalized.includes("\\n")) {
+    normalized = normalized
+      .replace(/\\r\\n/g, "\n")
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "\t");
+  }
+
+  // Si el modelo devuelve todo en una sola linea, reconstruimos lineas para visualizacion y diff.
+  if (!normalized.includes("\n")) {
+    normalized = normalized
+      .replace(/\bBEGIN\s+/g, "BEGIN\n")
+      .replace(/;\s*/g, ";\n")
+      .replace(
+        /\bEND\s+(?=(ELSE|RETURN|IF|WHILE|FOR|REPEAT|CALL|[A-Za-z_]))/g,
+        "END\n",
+      );
+  }
+
+  return normalized
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function formatPseudocodeIndentation(code: string): string {
+  const INDENT = "    ";
+  const rawLines = code
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  let indentLevel = 0;
+  const formatted: string[] = [];
+
+  for (const line of rawLines) {
+    const upperLine = line.toUpperCase();
+
+    if (upperLine.startsWith("END")) {
+      indentLevel = Math.max(0, indentLevel - 1);
+    }
+
+    if (upperLine.startsWith("ELSE")) {
+      indentLevel = Math.max(0, indentLevel - 1);
+    }
+
+    formatted.push(`${INDENT.repeat(indentLevel)}${line}`);
+
+    if (upperLine.startsWith("ELSE") && upperLine.includes("BEGIN")) {
+      indentLevel += 1;
+      continue;
+    }
+
+    if (upperLine.includes("BEGIN") && !upperLine.startsWith("END")) {
+      indentLevel += 1;
+    }
+  }
+
+  return formatted.join("\n");
 }
 
 export default function RepairModal({
@@ -41,13 +214,15 @@ export default function RepairModal({
   const repairRequestIdRef = useRef(0);
 
   const normalizeToAnalyzerGrammar = (code: string): string => {
-    const cleaned = code.trim();
+    const cleaned = normalizeRepairedCodeText(code);
     // La gramática del analizador espera: nombreProcedimiento(args) BEGIN ... END
     // Si el LLM antepone palabras clave tipo PROCEDURE/FUNCTION, se eliminan.
-    return cleaned.replace(
+    const normalizedHeader = cleaned.replace(
       /^\s*(?:PROCEDURE|FUNCTION|FUNCION|PROCEDIMIENTO)\s+([A-Za-z_][\w]*)\s*\(/i,
       "$1(",
     );
+
+    return formatPseudocodeIndentation(normalizedHeader);
   };
 
   const clearRepairProgressAnimation = () => {
@@ -139,21 +314,27 @@ ${errorMessages}
 \`\`\`
 
 **SOLICITUD:**
-Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE el código corregido en un bloque \`\`\`pseudocode, sin explicaciones adicionales.`;
+Repara el código corrigiendo todos los errores de sintaxis y devuélvelo como JSON válido con este formato exacto:
+{
+  "code": "...",
+  "removedLines": [],
+  "addedLines": []
+}
+Sin texto extra, sin explicaciones, sin markdown.`;
 
       const strictGrammarRules = `
 
 **RESTRICCIONES DE GRAMÁTICA (OBLIGATORIAS):**
-1) NO uses prefijos como PROCEDURE, FUNCTION, FUNCION o PROCEDIMIENTO.
-2) La primera línea DEBE iniciar directamente con este formato: nombreProcedimiento(parametros) BEGIN
-3) Conserva el estilo de asignación con <-
-4) No agregues texto fuera del código.
+1) NO uses prefijos como ALGORITHM, PROCEDURE, FUNCTION, FUNCION o PROCEDIMIENTO.
+2) La primera línea DEBE iniciar con: nombreProcedimiento(parametros) BEGIN
+3) Para cerrar IF/WHILE/FOR usa solamente END. NO uses END IF, END WHILE ni END FOR.
+4) IF debe ser: IF (condicion) THEN BEGIN ... END (y ELSE BEGIN ... END si aplica).
+5) WHILE/FOR deben incluir DO antes del bloque: WHILE (...) DO BEGIN ... END / FOR ... DO BEGIN ... END.
+6) Conserva asignación con <- y termina sentencias internas con ;
+7) No agregues texto fuera del JSON solicitado.
 `;
 
       const finalPrompt = `${prompt}${strictGrammarRules}`;
-
-      // Obtener API_KEY
-      const { getApiKey } = await import("@/hooks/useApiKey");
       const apiKey = getApiKey();
 
       // Llamar al LLM
@@ -185,9 +366,14 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
         );
       }
 
-      // Extraer JSON de la respuesta
-      const content =
-        result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const structuredRepair =
+        getNormalizedLlmStructured<{
+          code?: string;
+          removedLines?: number[];
+          addedLines?: number[];
+        }>(result) || parseJsonFromText(getNormalizedLlmText(result));
+
+      const content = getNormalizedLlmText(result);
 
       if (
         abortController.signal.aborted ||
@@ -206,41 +392,93 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       // Intentar parsear como JSON
       let repairData: {
         code: string;
-        removedLines: number[];
-        addedLines: number[];
-      };
-      try {
-        repairData = JSON.parse(String(content).trim());
-      } catch {
-        // Si no es JSON válido, intentar extraer de un bloque de código
-        const codeBlockRegex = /```(?:json|pseudocode)?\s*([\s\S]*?)```/;
-        const match = String(content).match(codeBlockRegex);
-        if (match && match[1]) {
-          try {
-            repairData = JSON.parse(match[1].trim());
-          } catch {
-            // Si aún falla, usar el contenido como código sin diff
-            if (
-              abortController.signal.aborted ||
-              repairRequestIdRef.current !== requestId
-            ) {
-              if (repairRequestIdRef.current === requestId) {
-                clearRepairProgressAnimation();
-              }
-              return;
-            }
-            setRepairedCode(normalizeToAnalyzerGrammar(String(content)));
-            setRemovedLines([]);
-            setAddedLines([]);
-            setIsRepairing(false);
-            clearRepairProgressAnimation();
-            setRepairProgress(100);
-            setShowComparison(true);
-            return;
+        removedLines: unknown[];
+        addedLines: unknown[];
+      } | null =
+        structuredRepair && typeof structuredRepair === "object"
+          ? (() => {
+              const structuredObj = structuredRepair as Record<string, unknown>;
+              const code =
+                typeof structuredObj.code === "string"
+                  ? structuredObj.code
+                  : "";
+
+              return {
+                code,
+                removedLines: Array.isArray(structuredObj.removedLines)
+                  ? structuredObj.removedLines
+                  : Array.isArray(structuredObj.removed_lines)
+                    ? (structuredObj.removed_lines as unknown[])
+                    : Array.isArray(structuredObj.lineas_eliminadas)
+                      ? (structuredObj.lineas_eliminadas as unknown[])
+                      : [],
+                addedLines: Array.isArray(structuredObj.addedLines)
+                  ? structuredObj.addedLines
+                  : Array.isArray(structuredObj.added_lines)
+                    ? (structuredObj.added_lines as unknown[])
+                    : Array.isArray(structuredObj.lineas_agregadas)
+                      ? (structuredObj.lineas_agregadas as unknown[])
+                      : [],
+              };
+            })()
+          : null;
+
+      if (!repairData || !repairData.code) {
+        try {
+          const parsedFromText = parseJsonFromText<{
+            code?: string;
+            removedLines?: number[];
+            addedLines?: number[];
+            codigo_corregido?: string;
+          }>(content);
+
+          const codeFromText =
+            parsedFromText?.code || parsedFromText?.codigo_corregido || "";
+
+          if (codeFromText) {
+            const parsedObj =
+              (parsedFromText as Record<string, unknown>) || null;
+            repairData = {
+              code: codeFromText,
+              removedLines: Array.isArray(parsedObj?.removedLines)
+                ? (parsedObj.removedLines as unknown[])
+                : Array.isArray(parsedObj?.removed_lines)
+                  ? (parsedObj.removed_lines as unknown[])
+                  : Array.isArray(parsedObj?.lineas_eliminadas)
+                    ? (parsedObj.lineas_eliminadas as unknown[])
+                    : [],
+              addedLines: Array.isArray(parsedObj?.addedLines)
+                ? (parsedObj.addedLines as unknown[])
+                : Array.isArray(parsedObj?.added_lines)
+                  ? (parsedObj.added_lines as unknown[])
+                  : Array.isArray(parsedObj?.lineas_agregadas)
+                    ? (parsedObj.lineas_agregadas as unknown[])
+                    : [],
+            };
           }
-        } else {
-          throw new Error(t("parseJsonError"));
+        } catch {
+          repairData = null;
         }
+      }
+
+      if (!repairData || !repairData.code) {
+        if (
+          abortController.signal.aborted ||
+          repairRequestIdRef.current !== requestId
+        ) {
+          if (repairRequestIdRef.current === requestId) {
+            clearRepairProgressAnimation();
+          }
+          return;
+        }
+        setRepairedCode(normalizeToAnalyzerGrammar(content));
+        setRemovedLines([]);
+        setAddedLines([]);
+        setIsRepairing(false);
+        clearRepairProgressAnimation();
+        setRepairProgress(100);
+        setShowComparison(true);
+        return;
       }
 
       // Validar estructura
@@ -258,13 +496,35 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
         return;
       }
 
-      setRepairedCode(normalizeToAnalyzerGrammar(repairData.code));
-      setRemovedLines(
-        Array.isArray(repairData.removedLines) ? repairData.removedLines : [],
+      const normalizedRepairedCode = normalizeToAnalyzerGrammar(
+        repairData.code,
       );
-      setAddedLines(
-        Array.isArray(repairData.addedLines) ? repairData.addedLines : [],
+      const originalLinesList = originalCode.split("\n");
+      const repairedLinesList = normalizedRepairedCode.split("\n");
+      const normalizedRemovedLines = resolveLineReferences(
+        repairData.removedLines,
+        originalLinesList,
       );
+      const normalizedAddedLines = resolveLineReferences(
+        repairData.addedLines,
+        repairedLinesList,
+      );
+
+      if (
+        normalizedRemovedLines.length === 0 &&
+        normalizedAddedLines.length === 0
+      ) {
+        const autoDiff = buildAutoLineDiff(
+          originalLinesList,
+          repairedLinesList,
+        );
+        setRemovedLines(autoDiff.removedLines);
+        setAddedLines(autoDiff.addedLines);
+      } else {
+        setRemovedLines(normalizedRemovedLines);
+        setAddedLines(normalizedAddedLines);
+      }
+      setRepairedCode(normalizedRepairedCode);
 
       setIsRepairing(false);
       clearRepairProgressAnimation();

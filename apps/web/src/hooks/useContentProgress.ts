@@ -141,6 +141,7 @@ export function useSectionCompletionTracking({
   module,
   sections,
 }: UseSectionCompletionTrackingOptions) {
+  const MIN_VISIBLE_PIXELS_TO_COMPLETE = 120;
   const [activeSectionId, setActiveSectionId] = useState<string | undefined>(
     sections[0]?.sectionId,
   );
@@ -169,7 +170,9 @@ export function useSectionCompletionTracking({
     }
 
     const ratios = new Map<string, number>();
-    const timers = new Map<string, number>();
+    const attemptedSectionIds = new Set(
+      getCompletedSectionIds(spaceId, module.moduleId),
+    );
     const sectionById = new Map(
       sections.map((section) => [section.sectionId, section]),
     );
@@ -202,19 +205,15 @@ export function useSectionCompletionTracking({
           ratios.set(sectionId, entry.intersectionRatio);
           const section = sectionById.get(sectionId);
 
-          if (section?.trackProgress && entry.intersectionRatio >= 0.5) {
-            if (!timers.has(sectionId)) {
-              const timeoutId = globalThis.window.setTimeout(() => {
-                markSectionCompleted(spaceId, module.moduleId, sectionId);
-                timers.delete(sectionId);
-              }, 1000);
-              timers.set(sectionId, timeoutId);
-            }
-          } else {
-            const timeoutId = timers.get(sectionId);
-            if (timeoutId) {
-              globalThis.window.clearTimeout(timeoutId);
-              timers.delete(sectionId);
+          if (
+            section?.trackProgress &&
+            entry.isIntersecting &&
+            (entry.intersectionRatio >= 0.15 ||
+              entry.intersectionRect.height >= MIN_VISIBLE_PIXELS_TO_COMPLETE)
+          ) {
+            if (!attemptedSectionIds.has(sectionId)) {
+              attemptedSectionIds.add(sectionId);
+              markSectionCompleted(spaceId, module.moduleId, sectionId);
             }
           }
         }
@@ -222,7 +221,10 @@ export function useSectionCompletionTracking({
         syncActiveSection();
       },
       {
-        threshold: [0, 0.25, 0.5, 0.75, 1],
+        threshold: [
+          0, 0.01, 0.02, 0.03, 0.05, 0.08, 0.1, 0.12, 0.15, 0.2, 0.25, 0.5,
+          0.75, 1,
+        ],
         rootMargin: "-12% 0px -45% 0px",
       },
     );
@@ -233,16 +235,12 @@ export function useSectionCompletionTracking({
 
     return () => {
       observer.disconnect();
-      for (const timeoutId of timers.values()) {
-        globalThis.window.clearTimeout(timeoutId);
-      }
     };
-  }, [module.moduleId, sections, spaceId]);
+  }, [module.moduleId, module.totalTrackableSections, sections, spaceId]);
   const percentage = useMemo(
     () => computeModuleProgress(module, completedSectionIds),
     [completedSectionIds, module],
   );
-
   return {
     activeSectionId,
     completedSectionIds,

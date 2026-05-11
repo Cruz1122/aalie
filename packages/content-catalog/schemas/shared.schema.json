@@ -45,7 +45,15 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["module", "chapter", "section", "block", "term", "resource", "external"]
+          "enum": [
+            "module",
+            "chapter",
+            "section",
+            "block",
+            "term",
+            "resource",
+            "external"
+          ]
         },
         "ref": {
           "$ref": "#/$defs/nonEmptyString"
@@ -94,6 +102,42 @@
         },
         "text": {
           "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "quizRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quizId"],
+      "properties": {
+        "quizId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "label": {
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/targetRef"
+        }
+      }
+    },
+    "contentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["refId", "label", "target"],
+      "properties": {
+        "refId": {
+          "$ref": "#/$defs/idSlug"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "target": {
+          "$ref": "#/$defs/targetRef"
+        },
+        "tone": {
+          "type": "string",
+          "enum": ["default", "primary", "success", "warning"]
         }
       }
     },
@@ -208,9 +252,13 @@
       "required": ["termId", "label", "definition"],
       "properties": {
         "termId": {
-          "$ref": "#/$defs/idSlug"
+          "type": "string",
+          "pattern": "^term-[a-z0-9]+(?:-[a-z0-9]+)*$"
         },
         "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "definition": {
           "$ref": "#/$defs/nonEmptyString"
         },
         "aliases": {
@@ -219,8 +267,27 @@
             "$ref": "#/$defs/nonEmptyString"
           }
         },
-        "definition": {
-          "$ref": "#/$defs/nonEmptyString"
+        "autoLink": {
+          "type": "boolean"
+        },
+        "match": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "caseSensitive": { "type": "boolean" },
+            "accentInsensitive": { "type": "boolean" },
+            "wholeWord": { "type": "boolean" },
+            "maxOccurrencesPerSection": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "primarySectionRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["moduleId", "sectionId"],
+          "properties": {
+            "moduleId": { "type": "string", "pattern": "^mod-[a-z0-9]+(?:-[a-z0-9]+)*$" },
+            "sectionId": { "type": "string", "pattern": "^sec-[a-z0-9]+(?:-[a-z0-9]+)*$" }
+          }
         }
       }
     }

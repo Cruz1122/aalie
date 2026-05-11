@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from .recursive_steps_core import (
     StepStatus,
     compute_overall_status,
+    get_asymptotic_notation,
     locale_key,
     make_recursive_step,
 )
@@ -13,17 +14,28 @@ from .recursive_steps_core import (
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
         "tree.recurrence_detected.standard": "Se detectó una recurrencia de familia Divide y Vencerás para analizar por árbol de recursión.",
+        "tree.recurrence_detected.linear_shift": "Se detectó una recurrencia lineal por desplazamientos y se construye un árbol balanceado como cota superior pedagógica.",
         "tree.applicability.supported": "La recurrencia cumple la forma base del método: $T(n)=aT(n/b)+f(n)$ con parámetros válidos.",
+        "tree.applicability.linear_shift": "La recurrencia no sigue la forma $T(n)=aT(n/b)+f(n)$, así que el árbol se usa como aproximación balanceada para obtener una cota superior.",
         "tree.applicability.unsupported": "La recurrencia detectada queda fuera de la cobertura formal actual del árbol de recursión simbólico.",
+        "tree.parameters.linear_shift": "Se extraen los desplazamientos y coeficientes de la recurrencia para modelar un árbol balanceado aproximado.",
         "tree.parameters.extracted": "Se extrajeron los parámetros estructurales del árbol: ramificación, reducción de tamaño y costo externo.",
+        "tree.level_model.linear_shift": "Se modeló el nivel $i$ con duplicación balanceada de ramas: el árbol aproximado crece por capas y cada capa recoge las llamadas activas.",
         "tree.level_model.built": "Se modeló el nivel $i$ con número de nodos, tamaño de subproblema y costo por nodo.",
+        "tree.level_cost.linear_shift": "El costo del nivel se obtuvo como número de nodos balanceados por costo local constante.",
         "tree.level_cost.computed": "El costo total del nivel se obtuvo como número de nodos por costo de cada nodo.",
+        "tree.height.linear_shift": "La altura se acota por el avance lineal del índice de la recurrencia hasta el caso base.",
         "tree.height.determined": "Se determinó la altura imponiendo llegada al caso base.",
+        "tree.leaf_cost.linear_shift": "Las hojas del árbol balanceado agrupan las llamadas terminales y su contribución queda acotada por la expansión total.",
         "tree.leaf_cost.computed": "Se calculó el número de hojas y su contribución al costo total.",
+        "tree.total_sum.linear_shift": "La complejidad total se obtiene sumando las capas del árbol balanceado aproximado.",
         "tree.total_sum.built": "Se construyó la sumatoria total del árbol con niveles internos y contribución terminal.",
+        "tree.total_sum.linear_shift_simplified": "La sumatoria balanceada se simplifica a una cota superior cerrada.",
         "tree.total_sum.simplified.complete": "La sumatoria total se simplificó a una forma cerrada utilizable para concluir complejidad.",
+        "tree.dominant_term.linear_shift": "El término dominante se interpreta como la cota superior del árbol balanceado, dominada por el crecimiento exponencial de la ramificación.",
         "tree.total_sum.simplified.partial": "La simplificación de la sumatoria quedó parcial; se conserva una forma simbólica válida.",
         "tree.dominant_term.identified.complete": "Se identificó el término dominante según la distribución de costo entre niveles.",
+        "tree.asymptotic_conclusion.linear_shift": "Se concluye una cota superior asintótica a partir del árbol balanceado aproximado.",
         "tree.dominant_term.identified.partial": "La dominancia se identificó parcialmente con la mejor evidencia simbólica disponible.",
         "tree.asymptotic_conclusion.complete": "Se concluyó la complejidad asintótica final del método de árbol de recursión.",
         "tree.asymptotic_conclusion.partial": "La conclusión asintótica se reporta como parcial por limitaciones previas en el cierre simbólico.",
@@ -49,17 +61,28 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     },
     "en": {
         "tree.recurrence_detected.standard": "A Divide y Vencerás recurrence was detected for recursion-tree analysis.",
+        "tree.recurrence_detected.linear_shift": "A linear-shift recurrence was detected and a balanced tree is built as a pedagogical upper bound.",
         "tree.applicability.supported": "The recurrence matches the base method form: $T(n)=aT(n/b)+f(n)$ with valid parameters.",
+        "tree.applicability.linear_shift": "The recurrence does not follow $T(n)=aT(n/b)+f(n), so the tree is used as a balanced approximation to obtain an upper bound.",
         "tree.applicability.unsupported": "Detected recurrence falls outside formal current coverage of symbolic recursion-tree walkthrough.",
+        "tree.parameters.linear_shift": "The recurrence shifts and coefficients are extracted to model a balanced approximate tree.",
         "tree.parameters.extracted": "Structural parameters were extracted: branching factor, size reduction, and external work.",
+        "tree.level_model.linear_shift": "Level-$i$ is modeled with balanced branching: the approximate tree grows by layers and each layer gathers the active calls.",
         "tree.level_model.built": "Level $i$ model was built with node count, subproblem size, and per-node cost.",
+        "tree.level_cost.linear_shift": "Level cost was obtained as the number of balanced nodes times the constant local cost.",
         "tree.level_cost.computed": "Total level cost was computed as node count times per-node cost.",
+        "tree.height.linear_shift": "The height is bounded by the linear advance of the recurrence index until the base case.",
         "tree.height.determined": "Tree height was determined by enforcing base-case reach condition.",
+        "tree.leaf_cost.linear_shift": "Leaves of the balanced tree group terminal calls and their contribution stays bounded by the full expansion.",
         "tree.leaf_cost.computed": "Leaf count and leaf contribution to total cost were computed.",
+        "tree.total_sum.linear_shift": "Total complexity is obtained by summing the layers of the balanced approximate tree.",
         "tree.total_sum.built": "Total tree summation was built with internal levels and terminal contribution.",
+        "tree.total_sum.linear_shift_simplified": "The balanced summation simplifies to a closed upper bound.",
         "tree.total_sum.simplified.complete": "Total summation was simplified to a closed form suitable for complexity conclusion.",
+        "tree.dominant_term.linear_shift": "The dominant term is interpreted as the balanced tree upper bound, driven by exponential branching growth.",
         "tree.total_sum.simplified.partial": "Summation simplification is partial; a valid symbolic form is preserved.",
         "tree.dominant_term.identified.complete": "Dominant term was identified from cost distribution across levels.",
+        "tree.asymptotic_conclusion.linear_shift": "An asymptotic upper bound is concluded from the balanced approximate tree.",
         "tree.dominant_term.identified.partial": "Dominance was identified partially with best available symbolic evidence.",
         "tree.asymptotic_conclusion.complete": "Final asymptotic complexity was concluded for recursion-tree method.",
         "tree.asymptotic_conclusion.partial": "Asymptotic conclusion is partial due to previous symbolic closure limitations.",
@@ -94,6 +117,7 @@ class RecursionTreeStepContext:
     a: Optional[int]
     b: Optional[float]
     f_n: str
+    bound_kind: str  # "equivalent" | "upper" | "lower" | "partial"
     n0: Optional[int]
     is_supported: bool
     support_code: Optional[str]
@@ -107,6 +131,9 @@ class RecursionTreeStepContext:
     dominant_level: Optional[str]
     dominant_reason_latex: Optional[str]
     theta_latex: Optional[str]
+    linear_shifts: Optional[List[int]] = None
+    linear_coefficients: Optional[List[int]] = None
+    linear_branch_factor: Optional[int] = None
     summation_partial: bool = False
     tree_inconsistent: bool = False
     asymptotic_partial: bool = False
@@ -139,6 +166,206 @@ def _unsupported_warning_for(code: Optional[str]) -> str:
 
 def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str, Any]:
     steps: List[Dict[str, Any]] = []
+
+    if ctx.support_code == "RT_LINEAR_SHIFT_BALANCED":
+        shifts = [int(x) for x in (ctx.linear_shifts or [])]
+        coeffs = [int(x) for x in (ctx.linear_coefficients or [])]
+        coeff_sum = sum(max(0, c) for c in coeffs)
+        branch_factor = int(ctx.linear_branch_factor or coeff_sum or 2)
+        shift_latex = ",\\;".join(f"k_{i+1}={s}" for i, s in enumerate(shifts)) or "k_1=1"
+        coeff_latex = ",\\;".join(f"c_{i+1}={c}" for i, c in enumerate(coeffs)) or "c_1=1"
+
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=1,
+                step_id="rt_s1",
+                kind="recurrence_detected",
+                title=_title(ctx.locale, "Recurrencia detectada", "Detected recurrence"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.recurrence_detected.linear_shift",
+                concept_key="concept.tree.recurrence_detected",
+                primary_latex=ctx.recurrence_form,
+                payload={"sourceExpression": ctx.recurrence_form, "recurrenceType": ctx.recurrence_type},
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=2,
+                step_id="rt_s2",
+                kind="recursion_tree_applicability_check",
+                title=_title(ctx.locale, "Aplicabilidad del método", "Method applicability"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.applicability.linear_shift",
+                concept_key="concept.tree.recursion_tree_applicability_check",
+                primary_latex=ctx.recurrence_form,
+                payload={"supportReason": "balanced_linear_shift_upper_bound"},
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=3,
+                step_id="rt_s3",
+                kind="tree_parameters_extracted",
+                title=_title(ctx.locale, "Parámetros del árbol", "Tree parameters"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.parameters.linear_shift",
+                concept_key="concept.tree.tree_parameters_extracted",
+                primary_latex=f"{shift_latex},\\;{coeff_latex},\\;n_0={ctx.n0 or 1},\\;B={branch_factor}",
+                payload={
+                    "shifts": shifts,
+                    "coefficients": coeffs,
+                    "n0": ctx.n0 or 1,
+                    "branchFactor": branch_factor,
+                },
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=4,
+                step_id="rt_s4",
+                kind="level_model_built",
+                title=_title(ctx.locale, "Modelo del nivel i", "Level-i model"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.level_model.linear_shift",
+                concept_key="concept.tree.level_model_built",
+                primary_latex=f"N_i\\approx {branch_factor}^i,\\;n_i\\approx n-i,\\;c_i=1",
+                payload={"derivedExpression": f"N_i\\approx {branch_factor}^i,\\;n_i\\approx n-i,\\;c_i=1"},
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=5,
+                step_id="rt_s5",
+                kind="level_cost_computed",
+                title=_title(ctx.locale, "Costo por nivel", "Level cost"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.level_cost.linear_shift",
+                concept_key="concept.tree.level_cost_computed",
+                primary_latex=f"C_i\\approx {branch_factor}^i",
+                payload={"levelCost": f"C_i\\approx {branch_factor}^i"},
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=6,
+                step_id="rt_s6",
+                kind="tree_height_determined",
+                title=_title(ctx.locale, "Altura del árbol", "Tree height"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.height.linear_shift",
+                concept_key="concept.tree.tree_height_determined",
+                primary_latex=r"h=n",
+                payload={"height": r"h=n"},
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=7,
+                step_id="rt_s7",
+                kind="leaf_cost_computed",
+                title=_title(ctx.locale, "Costo de hojas", "Leaf cost"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.leaf_cost.linear_shift",
+                concept_key="concept.tree.leaf_cost_computed",
+                primary_latex=f"L\\approx {branch_factor}^n,\\;C_{{\\text{{hojas}}}}\\approx {branch_factor}^n",
+                payload={"leafCount": f"{branch_factor}^n", "leafCost": f"{branch_factor}^n"},
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=8,
+                step_id="rt_s8",
+                kind="total_tree_sum_built",
+                title=_title(ctx.locale, "Suma total del árbol", "Total tree sum"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.total_sum.linear_shift",
+                concept_key="concept.tree.total_tree_sum_built",
+                primary_latex=f"\\sum_{{i=0}}^{{n}} {branch_factor}^i = \\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}",
+                payload={
+                    "totalExpression": f"\\sum_{{i=0}}^{{n}} {branch_factor}^i = \\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}"
+                },
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=9,
+                step_id="rt_s9",
+                kind="total_tree_sum_simplified",
+                title=_title(ctx.locale, "Simplificación de suma", "Sum simplification"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.total_sum.linear_shift_simplified",
+                concept_key="concept.tree.total_tree_sum_simplified",
+                primary_latex=f"\\sum_{{i=0}}^{{n}} {branch_factor}^i = \\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}",
+                payload={"simplifiedExpression": f"\\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}"},
+            )
+        )
+        upper_latex = get_asymptotic_notation("upper", f"{branch_factor}^n")
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=10,
+                step_id="rt_s10",
+                kind="dominant_term_identified",
+                title=_title(ctx.locale, "Término dominante", "Dominant term"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.dominant_term.linear_shift",
+                concept_key="concept.tree.dominant_term_identified",
+                primary_latex=upper_latex,
+                payload={"dominantLevel": "leaves", "derivedExpression": upper_latex},
+            )
+        )
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=11,
+                step_id="rt_s11",
+                kind="asymptotic_conclusion",
+                title=_title(ctx.locale, "Conclusión asintótica", "Asymptotic conclusion"),
+                status="complete",
+                confidence="high",
+                summary_key="tree.asymptotic_conclusion.linear_shift",
+                concept_key="concept.tree.asymptotic_conclusion",
+                primary_latex=upper_latex,
+                payload={"asymptoticResult": upper_latex},
+            )
+        )
+
+        return {
+            "method": "recursion_tree",
+            "version": "rt_steps_v1",
+            "overallStatus": compute_overall_status(steps),
+            "steps": steps,
+        }
 
     steps.append(
         make_recursive_step(
@@ -426,6 +653,12 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
         else "tree.asymptotic_conclusion.complete"
     )
     step11_warning = "warning.tree.asymptotic_partial" if step11_status == "partial" else None
+    
+    # Convertir a notación correcta basada en bound_kind
+    theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta_latex) if ctx.theta_latex else ctx.theta_latex
+    primary_display = theta_with_notation
+    if primary_display and not str(primary_display).lstrip().lower().startswith("t(n)"):
+        primary_display = f"T(n) = {theta_with_notation}"
 
     steps.append(
         make_recursive_step(
@@ -440,8 +673,8 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             summary_key=step11_summary,
             concept_key="concept.tree.asymptotic_conclusion",
             warning_key=step11_warning,
-            primary_latex=ctx.theta_latex,
-            payload={"asymptoticResult": ctx.theta_latex},
+            primary_latex=primary_display,
+            payload={"asymptoticResult": primary_display},
             codes=["RT_ASYMPTOTIC_HEURISTIC"] if step11_status == "partial" else [],
         )
     )
