@@ -326,6 +326,7 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 payload={"simplifiedExpression": f"\\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}"},
             )
         )
+        upper_latex = get_asymptotic_notation("upper", f"{branch_factor}^n")
         steps.append(
             make_recursive_step(
                 template_strings=_TEMPLATE_STRINGS,
@@ -338,8 +339,8 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 confidence="high",
                 summary_key="tree.dominant_term.linear_shift",
                 concept_key="concept.tree.dominant_term_identified",
-                primary_latex=f"O({branch_factor}^n)",
-                payload={"dominantLevel": "leaves", "derivedExpression": f"O({branch_factor}^n)"},
+                primary_latex=upper_latex,
+                payload={"dominantLevel": "leaves", "derivedExpression": upper_latex},
             )
         )
         steps.append(
@@ -354,8 +355,8 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 confidence="high",
                 summary_key="tree.asymptotic_conclusion.linear_shift",
                 concept_key="concept.tree.asymptotic_conclusion",
-                primary_latex=f"O({branch_factor}^n)",
-                payload={"asymptoticResult": f"O({branch_factor}^n)"},
+                primary_latex=upper_latex,
+                payload={"asymptoticResult": upper_latex},
             )
         )
 

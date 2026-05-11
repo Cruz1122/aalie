@@ -886,13 +886,19 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         if not self.recurrence:
             return "partial"
-        
-        return self._infer_method_bound_kind(
-            method,
-            self.recurrence,
-            # Para este cálculo, asumimos que si llegamos aquí, el método es aplicable
-            [method]
-        )
+
+        recurrence = self.recurrence
+        recurrence_type = str(recurrence.get("type") or "").strip()
+        effective: Dict[str, Any] = dict(recurrence)
+        if not recurrence_type:
+            if method == "characteristic_equation":
+                effective["type"] = "linear_shift"
+            elif isinstance(recurrence.get("terms"), list) and recurrence.get("terms"):
+                effective["type"] = "divide_conquer_multi"
+            elif recurrence.get("b") is not None:
+                effective["type"] = "divide_conquer"
+
+        return self._infer_method_bound_kind(method, effective, [method])
 
     def _has_object_field_access_in_recursive_calls(
         self, recursive_calls: List[Dict[str, Any]]
