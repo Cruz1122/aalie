@@ -4,10 +4,12 @@ import { useLocale, useTranslations } from "next-intl";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import AALIEIcon from "@/components/AALIEIcon";
 import { useAssistantAvailability } from "@/hooks/useAssistantAvailability";
@@ -35,6 +37,7 @@ export function EmbeddedAssistantLauncher({
   const [isOpen, setIsOpen] = useState(false);
   const [hasMountedFrame, setHasMountedFrame] = useState(false);
   const [frameReady, setFrameReady] = useState(false);
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
   const targetOrigin =
     typeof window === "undefined" ? "" : globalThis.window.location.origin;
 
@@ -107,12 +110,16 @@ export function EmbeddedAssistantLauncher({
     }
   }, [availability.hasAny, isOpen]);
 
+  useLayoutEffect(() => {
+    setPortalEl(document.body);
+  }, []);
+
   if (!availability.hasAny && !isOpen) {
     return null;
   }
 
-  return (
-    <div className="pointer-events-none fixed bottom-16 left-4 right-4 z-[10020] flex flex-col items-end gap-3 sm:bottom-20 sm:left-auto sm:right-6">
+  const shell = (
+    <div className="pointer-events-none fixed bottom-16 left-4 right-4 z-[110000] flex flex-col items-end gap-3 sm:bottom-20 sm:left-auto sm:right-6">
       {hasMountedFrame && (
         <div
           hidden={!isOpen}
@@ -153,4 +160,6 @@ export function EmbeddedAssistantLauncher({
       )}
     </div>
   );
+
+  return portalEl ? createPortal(shell, portalEl) : shell;
 }

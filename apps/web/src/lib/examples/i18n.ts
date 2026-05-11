@@ -11,17 +11,29 @@ export interface LocalizedExampleCatalogItem {
 }
 
 export const CATEGORY_LABEL_KEYS: Record<ExampleCategory, string> = {
-  iterativos: "examples.categories.iterativos.label",
-  "divide-y-venceras": "examples.categories.divide-y-venceras.label",
-  "resta-y-venceras": "examples.categories.resta-y-venceras.label",
-  "resta-y-seras-vencido": "examples.categories.resta-y-seras-vencido.label",
+  iterative: "examples.categories.iterative.title",
+  divide_and_conquer: "examples.categories.divideAndConquer.title",
+  decrease_and_conquer: "examples.categories.decreaseAndConquer.title",
+  decrease_and_get_conquered:
+    "examples.categories.decreaseAndGetConquered.title",
+  dp_top_down: "examples.categories.dpTopDown.title",
+  dp_bottom_up: "examples.categories.dpBottomUp.title",
+  greedy: "examples.categories.greedy.title",
+  backtracking: "examples.categories.backtracking.title",
+  branch_and_bound: "examples.categories.branchAndBound.title",
 };
 
 export const CATEGORY_OFFTEXT_KEYS: Record<ExampleCategory, string> = {
-  iterativos: "examples.categories.iterativos.offText",
-  "divide-y-venceras": "examples.categories.divide-y-venceras.offText",
-  "resta-y-venceras": "examples.categories.resta-y-venceras.offText",
-  "resta-y-seras-vencido": "examples.categories.resta-y-seras-vencido.offText",
+  iterative: "examples.categories.iterative.summary",
+  divide_and_conquer: "examples.categories.divideAndConquer.summary",
+  decrease_and_conquer: "examples.categories.decreaseAndConquer.summary",
+  decrease_and_get_conquered:
+    "examples.categories.decreaseAndGetConquered.summary",
+  dp_top_down: "examples.categories.dpTopDown.summary",
+  dp_bottom_up: "examples.categories.dpBottomUp.summary",
+  greedy: "examples.categories.greedy.summary",
+  backtracking: "examples.categories.backtracking.summary",
+  branch_and_bound: "examples.categories.branchAndBound.summary",
 };
 
 export const FAMILY_LABEL_KEYS: Record<ExampleFamily, string> = {

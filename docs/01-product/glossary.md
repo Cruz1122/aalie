@@ -27,6 +27,7 @@ Incluye términos de análisis, trazas, snapshot, export y asistencia LLM.
 | `loopInvariant` | artefacto determinista asociado al ciclo más significativo encontrado en el AST |
 | `trace` | rastro de ejecución paso a paso con pasos, resumen y diagnósticos |
 | `structuredTrace` | representación estructurada derivada del trace para diagrama y clasificación |
+| `seguimiento manual guiado` | modo pedagógico donde la UI avanza por pasos o niveles usando el mismo trace contractual sin reinterpretarlo |
 | `callTreeSource` | árbol de llamadas recursivas usado por UI y export |
 | `snapshot` | objeto versionado que concentra input, metadatos, resultados, trazas y advertencias |
 | `contentHash` | hash estable del snapshot normalizado |

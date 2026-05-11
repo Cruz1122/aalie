@@ -79,7 +79,7 @@ export default function AIModeView({
   const t = useTranslations("home");
   if (chatOpen) {
     return (
-      <div className="w-full flex flex-col items-center justify-center animate-in fade-in-0 slide-in-from-bottom-4 duration-500 flex-1 min-h-0">
+      <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
         <ChatBot
           isOpen={chatOpen}
           onClose={onClose}
@@ -101,7 +101,7 @@ export default function AIModeView({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[calc(100vh-16rem)] text-center transition-all duration-500 ${animClass}`}
+      className={`flex min-h-0 flex-1 flex-col items-center justify-center text-center transition-all duration-500 ${animClass}`}
     >
       {/* Icono del robot */}
       <div

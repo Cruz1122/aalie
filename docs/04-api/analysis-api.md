@@ -73,7 +73,15 @@ Cubre `/analyze/open`, `/analyze/detect-methods` y sus proxies Next.
   "ok": true,
   "applicable_methods": ["master", "recursion_tree"],
   "default_method": "master",
-  "recurrence_info": {}
+  "recurrence_info": {
+    "method_outcomes": {
+      "master": {
+        "applicable": true,
+        "recommended": true,
+        "bound_kind": "equivalent"
+      }
+    }
+  }
 }
 ```
 
@@ -81,6 +89,7 @@ Cubre `/analyze/open`, `/analyze/detect-methods` y sus proxies Next.
 
 - `mergeSort` puede devolver `master`, `recursion_tree` y `iteration` con `default_method=master`.
 - `factorial` puede priorizar `characteristic_equation` o `iteration` según forma detectada.
+- `method_outcomes` permite explicar si cada método da una cota equivalente, superior, inferior o parcial sin confundir aplicabilidad con fuerza del resultado.
 
 ## Limites conocidos
 

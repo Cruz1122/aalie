@@ -5,8 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRef, useEffect, useMemo, useState } from "react";
 
 import { getApiKey } from "@/hooks/useApiKey";
-import { getNormalizedLlmText } from "@/lib/llm-response";
 import { translateLlmError } from "@/lib/llm-error-translator";
+import { getNormalizedLlmText } from "@/lib/llm-response";
 import type {
   CaseType,
   TraceApiResponse,
@@ -700,6 +700,7 @@ export default function StructuredTraceContent({
                     onRegenerate={handleRegenerate}
                     onExpand={() => setIsDiagramExpanded(true)}
                     traceConfig={traceConfig}
+                    traceDiagnostics={trace?.trace?.diagnostics ?? null}
                     fetchCompleted={fetchCompleted}
                     frameStyle="border"
                   />
@@ -721,6 +722,7 @@ export default function StructuredTraceContent({
                     onRegenerate={handleRegenerate}
                     onExpand={() => setIsDiagramExpanded(true)}
                     traceConfig={traceConfig}
+                    traceDiagnostics={trace?.trace?.diagnostics ?? null}
                     fetchCompleted={fetchCompleted}
                     frameStyle="border"
                   />

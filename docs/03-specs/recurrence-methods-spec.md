@@ -45,6 +45,27 @@ Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
 - `step_by_step` con `method`, `version`, `overallStatus`, `steps`
 - advertencias o razones de soporte parcial cuando la cobertura sea incompleta
 
+### Procedimiento general del método de iteración
+
+El contrato de iteración debe poder describir el siguiente flujo, incluso cuando el cierre exacto no sea posible:
+
+1. normalizar la recurrencia para aislar la dependencia recursiva y el costo local;
+2. expandir la recurrencia durante varias iteraciones hasta observar un patrón estable;
+3. generalizar la forma tras `k` pasos, separando término residual y acumulación;
+4. resolver `k` imponiendo el caso base cuando exista cierre exacto;
+5. si no hay cierre exacto, comparar la recurrencia con una auxiliar más simple que la domine o quede por debajo de ella para derivar una cota defendible;
+6. convertir la expansión en una sumatoria o expresión simbólica equivalente;
+7. simplificar la sumatoria cuando sea posible, o conservarla como forma parcial válida;
+8. concluir con `theta`, `O` o `Omega` según la fuerza del resultado obtenido y registrar el `bound_kind` correspondiente.
+
+Este procedimiento no exige que la recurrencia tenga una forma exacta del tipo `T(n)=T(n-a)+b`; lo esencial es que la expansión y la comparación sean matemáticamente defendibles.
+
+### Alcance matemático por método
+
+- el contrato debe poder distinguir si un método aporta una `equivalent` result, una `upper` bound, una `lower` bound o una salida `partial`;
+- `applicable_methods` indica que el método puede seleccionarse, no que garantice la misma fuerza de conclusión que el método por defecto;
+- cuando un método sea aplicable pero solo produzca una cota parcial o una cota de un solo lado, el sistema debe explicitarlo en la metadata y en la explicación pedagógica.
+
 ## Inputs
 
 - AST recursivo válido;
@@ -58,6 +79,18 @@ Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
 - `default_method`
 - `recurrence_info`
 - detalle del método seleccionado dentro de `totals`
+
+### `method_outcomes` (metadata del selector)
+
+Cuando el analizador la materialice, `recurrence_info` puede incluir `method_outcomes`: un mapa con claves fijas `characteristic_equation`, `iteration`, `recursion_tree` y `master`. Cada entrada describe cómo se debe presentar ese método para la recurrencia actual:
+
+- `applicable` (bool): el usuario puede seleccionarlo.
+- `recommended` (bool): coincide con `default_method`.
+- `bound_kind`: `equivalent` | `upper` | `lower` | `partial` — fuerza de la conclusión asintótica que aporta ese método para esta forma (no confundir con “mismo Θ que el default”).
+- `bound_strength`: `strong` solo cuando `bound_kind` es `equivalent`; en otro caso `partial`.
+- `bound_symbol`: `theta` | `big_o` | `big_omega` | `partial` — guía de notación en UI y pasos.
+
+En flujos que serializan una sola instancia de método aplicado, puede aparecer `method_outcome` (singular) con la misma semántica de cotas para ese método concreto.
 
 ## Invariantes
 
@@ -92,6 +125,7 @@ Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
 
 - algunos bundles pueden terminar en `partial` o `unsupported` y aun así ser la salida correcta del sistema;
 - la metadata de PD es auxiliar y no reemplaza el método principal de complejidad.
+- el selector puede ofrecer métodos no recomendados siempre que su alcance matemático quede señalado como `equivalent`, `upper`, `lower` o `partial`.
 
 ## Archivos relacionados
 

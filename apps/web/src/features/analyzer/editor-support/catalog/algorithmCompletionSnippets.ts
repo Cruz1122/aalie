@@ -77,7 +77,7 @@ function buildAliases(
 function inferAlgorithmKind(
   example: ExampleCatalogItem,
 ): SnippetDefinition["exampleAlgorithmKind"] {
-  return example.category === "iterativos" ? "iterative" : "recursive";
+  return example.category === "iterative" ? "iterative" : "recursive";
 }
 
 function buildAlgorithmSnippet(

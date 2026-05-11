@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { PaginationControls } from "@/components/PaginationControls";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import { useRouter } from "@/i18n/navigation";
@@ -15,11 +16,12 @@ import {
   buildAssistantExampleSectionsContext,
 } from "@/lib/examples/assistant-context";
 import {
+  EXAMPLE_CATEGORY_PAGE_COUNT,
+  getCategoryMeta,
   getEnabledExamples,
-  getMethodTranslationKey,
+  getExampleCategoriesByPage,
   isRecursiveCategory,
   type ExampleLocale,
-  type RecursiveMethodBadge,
   examplesCatalog,
 } from "@/lib/examples/catalog";
 import {
@@ -31,14 +33,11 @@ import {
 
 import { ExamplesTypeSelector } from "./ExamplesTypeSelector";
 
-const METHOD_BADGE_CLASSNAMES: Record<RecursiveMethodBadge, string> = {
-  TM: "border-orange-500/40 bg-orange-500/15 text-orange-200",
-  IT: "border-emerald-500/40 bg-emerald-500/15 text-emerald-200",
-  AR: "border-cyan-500/40 bg-cyan-500/15 text-cyan-200",
-  EC: "border-blue-500/40 bg-blue-500/15 text-blue-200",
-};
+interface ExamplesHomeViewProps {
+  page: number;
+}
 
-export function ExamplesHomeView() {
+export function ExamplesHomeView({ page }: ExamplesHomeViewProps) {
   const locale = useLocale() as ExampleLocale;
   const t = useTranslations("examples");
   const tGlobal = useTranslations();
@@ -54,6 +53,9 @@ export function ExamplesHomeView() {
   useEffect(() => {
     finishNavigation();
   }, [finishNavigation]);
+
+  const safePage = page >= 1 && page <= EXAMPLE_CATEGORY_PAGE_COUNT ? page : 1;
+  const visibleCategories = getExampleCategoriesByPage(safePage);
 
   const topMatches = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -167,8 +169,10 @@ export function ExamplesHomeView() {
         title: t("title"),
         description: t("subtitle"),
         query: query.trim() || undefined,
-        notes:
-          topMatches.length > 0
+        notes: [
+          `page=${safePage}`,
+          `visibleCategories=${visibleCategories.join(",")}`,
+          ...(topMatches.length > 0
             ? [
                 `matchedExamples=${topMatches.length}`,
                 ...topMatches.map(
@@ -177,7 +181,8 @@ export function ExamplesHomeView() {
                       .title,
                 ),
               ]
-            : undefined,
+            : []),
+        ],
       },
       exampleSections: buildAssistantExampleSectionsContext(
         catalogItems,
@@ -195,102 +200,116 @@ export function ExamplesHomeView() {
             )
           : undefined,
     }),
-    [catalogItems, locale, query, t, tGlobal, topMatches],
+    [
+      catalogItems,
+      locale,
+      query,
+      safePage,
+      t,
+      tGlobal,
+      topMatches,
+      visibleCategories,
+    ],
   );
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex w-full min-h-screen flex-col overflow-x-hidden">
       <Header />
-      <main className="z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6">
-        <section className="space-y-4">
-          <div className="relative">
-            <label className="glass-card flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3">
-              <span className="material-symbols-outlined text-slate-400">
-                search
-              </span>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && topMatches.length > 0) {
-                    const first = topMatches[0];
-                    handleSelectMatch(first.slug, first.category);
-                  }
-                }}
-                placeholder={t("searchPlaceholder")}
-                aria-label={t("searchAriaLabel")}
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-              />
-            </label>
-            {query.trim() && (
-              <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#182431] shadow-xl">
-                {topMatches.length > 0 ? (
-                  <ul className="divide-y divide-white/10">
-                    {topMatches.map((item) => {
-                      const copy = getLocalizedExampleContent(
-                        item,
-                        catalogItems,
-                        locale,
+      <main className="z-10 flex min-h-0 flex-1 flex-col p-6">
+        <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6">
+          <section className="shrink-0 space-y-4">
+            <div className="relative">
+              <label className="glass-card flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3">
+                <span className="material-symbols-outlined text-slate-400">
+                  search
+                </span>
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && topMatches.length > 0) {
+                      const first = topMatches[0];
+                      handleSelectMatch(
+                        first.slug,
+                        getCategoryMeta(first.category).slug,
                       );
-                      const recursive = isRecursiveCategory(item.category);
-                      const kindLabel = t("kind.recursive");
-                      const iterativeLabel = t("kind.iterative");
-                      return (
-                        <li key={item.id}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleSelectMatch(item.slug, item.category)
-                            }
-                            className="w-full px-4 py-3 text-left transition-colors hover:bg-white/5"
-                          >
-                            <div className="text-sm font-semibold text-white">
-                              {copy.title}
-                            </div>
-                            <div className="mt-1 text-xs text-neutral-300">
-                              {tGlobal(CATEGORY_LABEL_KEYS[item.category])}
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
-                                {tGlobal(FAMILY_LABEL_KEYS[item.family])}
-                              </span>
-                              <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
-                                {recursive ? kindLabel : iterativeLabel}
-                              </span>
-                              {recursive &&
-                                item.verifiedMethods.map((method) => (
-                                  <span
-                                    key={method}
-                                    title={tGlobal(
-                                      getMethodTranslationKey(method),
-                                    )}
-                                    aria-label={tGlobal(
-                                      getMethodTranslationKey(method),
-                                    )}
-                                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${METHOD_BADGE_CLASSNAMES[method]}`}
-                                  >
-                                    {method}
-                                  </span>
-                                ))}
-                            </div>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <div className="px-4 py-3 text-sm text-neutral-300">
-                    {t("emptyTitle")}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
+                    }
+                  }}
+                  placeholder={t("searchPlaceholder")}
+                  aria-label={t("searchAriaLabel")}
+                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                />
+              </label>
+              {query.trim() && (
+                <div className="absolute left-0 top-full z-30 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#182431] shadow-xl">
+                  {topMatches.length > 0 ? (
+                    <ul className="divide-y divide-white/10">
+                      {topMatches.map((item) => {
+                        const copy = getLocalizedExampleContent(
+                          item,
+                          catalogItems,
+                          locale,
+                        );
+                        const recursive = isRecursiveCategory(item.category);
+                        const kindLabel = t("kind.recursive");
+                        const iterativeLabel = t("kind.iterative");
+                        return (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleSelectMatch(
+                                  item.slug,
+                                  getCategoryMeta(item.category).slug,
+                                )
+                              }
+                              className="w-full px-4 py-3 text-left transition-colors hover:bg-white/5"
+                            >
+                              <div className="text-sm font-semibold text-white">
+                                {copy.title}
+                              </div>
+                              <div className="mt-1 text-xs text-neutral-300">
+                                {tGlobal(CATEGORY_LABEL_KEYS[item.category])}
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
+                                  {tGlobal(FAMILY_LABEL_KEYS[item.family])}
+                                </span>
+                                <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
+                                  {recursive ? kindLabel : iterativeLabel}
+                                </span>
+                              </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-neutral-300">
+                      {t("emptyTitle")}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
 
-        <section>
-          <ExamplesTypeSelector ctaLabel={t("viewFamily")} />
-        </section>
+          <section className="flex min-h-0 flex-1 flex-col gap-4">
+            <ExamplesTypeSelector
+              ctaLabel={t("viewFamily")}
+              categories={visibleCategories}
+            />
+          </section>
+          <div className="sticky z-20 mt-0 mb-0 flex shrink-0 justify-center pt-0">
+            <PaginationControls
+              currentPage={safePage}
+              totalPages={EXAMPLE_CATEGORY_PAGE_COUNT}
+              onPageChange={(nextPage) =>
+                router.push(`/examples?page=${nextPage}`)
+              }
+            />
+          </div>
+        </div>
       </main>
       <EmbeddedAssistantLauncher
         surface="examples"

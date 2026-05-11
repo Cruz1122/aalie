@@ -7,11 +7,13 @@ import ReactDOM from "react-dom";
 
 import { useTraceController } from "@/hooks/trace/useTraceController";
 import { useTraceRefreshOnAnalysis } from "@/hooks/trace/useTraceRefreshOnAnalysis";
+import { useRecursionStepper } from "@/hooks/useRecursionStepper";
 import { buildTraceFocusedPanelContext } from "@/lib/assistant/trace-focused-panel";
 import type { AssistantFocusedPanelContext } from "@/lib/assistant/types";
 import type { CaseType } from "@/types/trace";
 
 import ExecutionGraphView from "./ExecutionGraphView";
+import RecursionSteppingControls from "./trace/RecursionSteppingControls";
 import StructuredTraceContent from "./trace/StructuredTraceContent";
 import TraceChatPanel from "./trace/TraceChatPanel";
 import TraceStatusBanner from "./trace/TraceStatusBanner";
@@ -142,6 +144,11 @@ export default function TraceDedicatedView({
   const isRecursiveOrHybrid =
     algorithmKind === "recursive" || algorithmKind === "hybrid";
 
+  const [recursionStepState, recursionStepActions] = useRecursionStepper(
+    structuredDiagram?.graph.nodes ?? [],
+    structuredDiagram?.graph.edges ?? [],
+  );
+
   const stepsToUse = trace?.ok && trace?.trace?.steps ? trace.trace.steps : [];
   const currentStepData =
     stepsToUse.length > 0 && currentStep < stepsToUse.length
@@ -228,12 +235,12 @@ export default function TraceDedicatedView({
   );
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       {/* Content - misma estructura de grid y cards que la pantalla de análisis; sin loader al cambiar de vista */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid min-h-0 flex-1 basis-0 grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Columna izquierda: pseudocódigo - misma estructura que análisis (glass-card) */}
-        <section className="lg:col-span-4 h-full">
-          <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col">
+        <section className="flex h-full min-h-0 flex-col lg:col-span-4">
+          <div className="glass-card flex h-full min-h-0 flex-1 flex-col rounded-lg !shadow-none p-4">
             <TraceChatPanel
               source={source}
               currentLine={isRecursiveOrHybrid ? undefined : currentLine}
@@ -245,8 +252,8 @@ export default function TraceDedicatedView({
         </section>
 
         {/* Columna derecha: contenido principal - misma estructura que análisis */}
-        <section className="lg:col-span-8 h-full min-h-[420px]">
-          <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col min-h-0 overflow-hidden">
+        <section className="flex h-full min-h-0 flex-col max-md:min-h-[240px] lg:col-span-8">
+          <div className="glass-card flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg !shadow-none p-4">
             <TraceStatusBanner
               loading={loading}
               error={error}
@@ -323,7 +330,7 @@ export default function TraceDedicatedView({
               tabIndex={0}
               aria-label={t("closeExpandedDiagram")}
             />
-            <div className="relative z-10 w-[96vw] max-w-[96vw] h-[96vh] max-h-[96dvh] rounded-xl glass-modal-container !shadow-none flex flex-col overflow-hidden">
+            <div className="relative z-10 flex h-[96dvh] max-h-[96dvh] w-[96vw] max-w-[96vw] flex-col overflow-hidden rounded-xl glass-modal-container !shadow-none">
               <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 glass-modal-header !shadow-none rounded-t-xl">
                 <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
                   <span className="material-symbols-outlined text-sky-400 text-lg">
@@ -345,8 +352,26 @@ export default function TraceDedicatedView({
                   ✕
                 </button>
               </div>
-              <div className="flex-1 min-h-0 p-3 bg-slate-900/80">
-                <ExecutionGraphView graph={structuredDiagram.graph} />
+              <div className="flex-1 min-h-0 p-3 bg-slate-900/80 flex flex-col gap-3">
+                <div className="flex-1 min-h-0">
+                  <ExecutionGraphView
+                    graph={structuredDiagram.graph}
+                    visibleNodeIds={recursionStepState.visibleNodeIds}
+                    visibleEdgeIds={recursionStepState.visibleEdgeIds}
+                    currentNodeId={recursionStepState.currentNodeId}
+                  />
+                </div>
+                {isRecursiveOrHybrid &&
+                structuredDiagram?.graph?.nodes?.length ? (
+                  <RecursionSteppingControls
+                    state={recursionStepState}
+                    actions={recursionStepActions}
+                    currentNode={structuredDiagram.graph.nodes.find(
+                      (node) => node.id === recursionStepState.currentNodeId,
+                    )}
+                    className="w-full"
+                  />
+                ) : null}
               </div>
             </div>
           </div>,

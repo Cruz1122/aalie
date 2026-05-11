@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from .recursive_steps_core import (
     StepStatus,
     compute_overall_status,
+    get_asymptotic_notation,
     locale_key,
     make_recursive_step,
 )
@@ -14,8 +15,18 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
         "iteration.recurrence_detected.linear_shift": "Se detectó una recurrencia de la familia Resta y Vencerás: en cada paso, $T(n)$ depende de $T(n-1)$ y de un término adicional $g(n)$.",
         "iteration.recurrence_detected.generic": "Se detectó una recurrencia recursiva candidata para análisis por iteración.",
+        "iteration.recurrence_detected.generic_upper": "Se detectó una recurrencia recursiva que no cierra de forma exacta, así que se construirá una cota superior por iteración.",
         "iteration.applicability_validated.supported": "La recurrencia sí entra en la cobertura actual del método: forma $T(n)=T(n-1)+g(n)$ con paso unitario.",
+        "iteration.applicability_validated.partial": "La recurrencia admite un recorrido por iteración, pero el cierre exacto no está garantizado; se mostrará una derivación parcial o una cota defendible.",
+        "iteration.applicability_validated.upper": "La recurrencia no cierra exactamente, pero sí permite construir una cota superior por iteración.",
         "iteration.applicability_validated.unsupported": "La forma detectada queda fuera de la cobertura actual del método de iteración.",
+        "iteration.upper_bound_simplified.standard": "Se simplificó la recurrencia para dominarla con una desigualdad más fuerte y manejable.",
+        "iteration.upper_bound_monotonicity.standard": "Como $T(n)$ es creciente, se acota el término desplazado y se obtiene la desigualdad clave antes de generalizar.",
+        "iteration.upper_bound_iterated.standard": "Se iteró la desigualdad superior para observar cómo crece el término dominante.",
+        "iteration.upper_bound_generalized.standard": "Se generalizó la desigualdad tras $k$ pasos para obtener una expresión cerrable por cota.",
+        "iteration.upper_bound_resolved.standard": "Se resolvió la desigualdad hasta el caso base y se obtuvo una cota superior explícita.",
+        "iteration.upper_bound_no_exact_closure.standard": "No se obtuvo una forma cerrada exacta; el análisis continúa con una cota superior defendible.",
+        "iteration.upper_bound_decision.standard": "La cota superior obtenida permite decidir el comportamiento asintótico.",
         "iteration.base_case_identified.found": "Se identificó el caso base y la condición de cierre para detener el despliegue en un índice concreto.",
         "iteration.base_case_identified.partial": "Se detectó la condición de cierre, pero faltan datos para fijar completamente el valor base de referencia.",
         "iteration.initial_unrolling_built.standard": "Se expandieron las primeras iteraciones para observar cómo se acumulan términos de $g(\\cdot)$ sin perder la dependencia recursiva.",
@@ -31,8 +42,15 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "iteration.asymptotic_concluded.complete": "Se concluyó la complejidad asintótica a partir de la forma final obtenida.",
         "iteration.asymptotic_concluded.partial": "La conclusión asintótica es parcial porque depende de una aproximación controlada.",
         "iteration.step_blocked.unsupported": "Este paso queda bloqueado porque la recurrencia no cumple la cobertura necesaria del método de iteración.",
-        "concept.iteration.recurrence_detected": "Este método describe muy bien Resta y Vencerás: reducimos poco el tamaño (n, n-1, n-2, ...) y acumulamos trabajo externo $g(n)$ en cada paso. Por eso primero se separa claramente la dependencia recursiva de ese costo adicional.",
-        "concept.iteration.applicability_validated": "Para evitar errores de método, aquí solo cubrimos la versión canónica de Resta y Vencerás con decremento unitario. Si la forma se comporta como Divide y Vencerás (n/b) o mezcla múltiples ramas costosas (Resta y Serás Vencido), se marca como fuera de dominio.",
+        "concept.iteration.recurrence_detected": "Este método parte de una recurrencia recursiva y la expande paso a paso para separar la dependencia residual del costo acumulado. Si el cierre exacto no aparece, el mismo proceso sirve para justificar una cota superior o inferior defendible.",
+        "concept.iteration.applicability_validated": "La cobertura prioriza formas que puedan iterarse con evidencia algebraica. Si la expansión exacta no cierra, el walkthrough puede terminar en una cota equivalente, superior, inferior o parcial, siempre que la recurrencia auxiliar sea defendible.",
+        "concept.iteration.upper_bound_simplified": "Cuando la recurrencia no cierra de forma exacta, se la compara con una desigualdad más fuerte que sí permita iterar. Esa simplificación no busca igualdad, sino una cota superior válida.",
+        "concept.iteration.upper_bound_monotonicity": "Antes de iterar la recurrencia, se justifica la desigualdad usando la monotonía de $T(n)$. Ese paso evita que la cota parezca inventada y deja claro de dónde sale la estimación.",
+        "concept.iteration.upper_bound_iterated": "Iterar la desigualdad permite ver cómo se acumula la sobreestimación en cada nivel. La idea es conservar una forma controlable del crecimiento, no una solución exacta.",
+        "concept.iteration.upper_bound_generalized": "La forma con $k$ pasos resume el efecto acumulado de la desigualdad. Esa generalización permite reemplazar la recurrencia original por una cota manejable.",
+        "concept.iteration.upper_bound_resolved": "Al llevar la generalización hasta el caso base, se obtiene una cota superior explícita. Esa cota es suficiente para clasificar el crecimiento aunque no exista cierre exacto.",
+        "concept.iteration.upper_bound_no_exact_closure": "Cuando no aparece una forma cerrada, el método no se detiene: pasa a una desigualdad superior que sí pueda iterarse de manera válida.",
+        "concept.iteration.upper_bound_decision": "La decisión asintótica se toma sobre la cota superior obtenida, no sobre una solución exacta inexistente.",
         "concept.iteration.base_case_identified": "El despliegue iterativo necesita un punto de cierre. El caso base define dónde se detiene la expansión y desde qué valor conocido se reconstruye la solución completa.",
         "concept.iteration.initial_unrolling_built": "Desenrollar las primeras iteraciones permite observar la estructura acumulativa real y evita proponer un patrón general sin evidencia algebraica.",
         "concept.iteration.k_pattern_generalized": "Tras observar varias expansiones, se abstrae una forma con $k$ pasos: una parte recursiva residual y una suma de aportes de $g(\\cdot)$. Esta generalización es la base del cierre.",
@@ -52,8 +70,18 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "en": {
         "iteration.recurrence_detected.linear_shift": "A Resta y Vencerás recurrence was detected: at each step, $T(n)$ depends on $T(n-1)$ plus an additional term $g(n)$.",
         "iteration.recurrence_detected.generic": "A recursive recurrence candidate was detected for iteration-method analysis.",
+        "iteration.recurrence_detected.generic_upper": "A recursive recurrence was detected that does not close exactly, so an upper bound will be constructed by iteration.",
         "iteration.applicability_validated.supported": "The recurrence is within current method coverage: shape $T(n)=T(n-1)+g(n)$ with unit decrement.",
+        "iteration.applicability_validated.partial": "The recurrence can still be unfolded iteratively, but no exact closed form is guaranteed; a partial derivation or defensible bound will be shown.",
+        "iteration.applicability_validated.upper": "The recurrence does not close exactly, but it does allow an upper bound to be constructed by iteration.",
         "iteration.applicability_validated.unsupported": "The detected shape is outside current coverage of the iteration method.",
+        "iteration.upper_bound_simplified.standard": "The recurrence was simplified into a stronger and more manageable inequality.",
+        "iteration.upper_bound_monotonicity.standard": "Since $T(n)$ is increasing, the shifted term is bounded first and the key inequality is obtained before generalization.",
+        "iteration.upper_bound_iterated.standard": "The upper inequality was iterated to expose how the dominant term grows.",
+        "iteration.upper_bound_generalized.standard": "The inequality was generalized after $k$ steps into a form that can be closed by bounding.",
+        "iteration.upper_bound_resolved.standard": "The inequality was resolved down to the base case and produced an explicit upper bound.",
+        "iteration.upper_bound_no_exact_closure.standard": "No exact closed form was obtained; the analysis continues with a defensible upper bound.",
+        "iteration.upper_bound_decision.standard": "The resulting upper bound is enough to decide the asymptotic behavior.",
         "iteration.base_case_identified.found": "A base case and stopping condition were identified to terminate expansion at a concrete index.",
         "iteration.base_case_identified.partial": "A stopping condition was detected, but base-value data is incomplete for a fully closed solution.",
         "iteration.initial_unrolling_built.standard": "Initial expansions were built to expose how $g(\\cdot)$ accumulates while preserving recursive dependence.",
@@ -69,8 +97,15 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "iteration.asymptotic_concluded.complete": "Asymptotic complexity was concluded from the final expression.",
         "iteration.asymptotic_concluded.partial": "Asymptotic conclusion is partial because it relies on a controlled approximation.",
         "iteration.step_blocked.unsupported": "This step is blocked because the recurrence does not meet current iteration-method coverage.",
-        "concept.iteration.recurrence_detected": "This method is a natural fit for Resta y Vencerás: we reduce slowly (n, n-1, n-2, ...) and accumulate external work $g(n)$ at each step. We therefore separate recursive dependence from added work explicitly.",
-        "concept.iteration.applicability_validated": "To avoid method mismatch, this walkthrough covers only canonical Resta y Vencerás with unit decrement. If the shape behaves like Divide y Vencerás (n/b) or costly multi-branch decrease (Resta y Serás Vencido), it is marked out of scope.",
+        "concept.iteration.recurrence_detected": "This method starts from a recursive recurrence and expands it step by step to separate the residual dependence from accumulated work. If an exact closed form does not appear, the same process can justify a defensible upper or lower bound.",
+        "concept.iteration.applicability_validated": "The walkthrough prioritizes shapes that can be iterated with algebraic evidence. If the exact expansion does not close, it may end in an equivalent, upper, lower, or partial bound, provided the auxiliary recurrence is defensible.",
+        "concept.iteration.upper_bound_simplified": "When the recurrence does not close exactly, it is compared with a stronger inequality that is still iterable. The goal is not equality; it is a valid upper bound.",
+        "concept.iteration.upper_bound_monotonicity": "Before iterating the recurrence, the inequality is justified using the monotonicity of $T(n)$. That step makes the bound explicit instead of looking invented.",
+        "concept.iteration.upper_bound_iterated": "Iterating the inequality shows how the overestimate accumulates at each level. The objective is a controllable growth expression, not an exact solution.",
+        "concept.iteration.upper_bound_generalized": "The $k$-step form summarizes the accumulated effect of the inequality. It lets us replace the original recurrence with a manageable bound.",
+        "concept.iteration.upper_bound_resolved": "Once the generalized form reaches the base case, we obtain an explicit upper bound. That bound is enough to classify growth even without an exact closed form.",
+        "concept.iteration.upper_bound_no_exact_closure": "When no closed form appears, the method does not stop: it moves to a valid upper inequality that can still be iterated.",
+        "concept.iteration.upper_bound_decision": "The asymptotic decision is made from the upper bound obtained, not from a nonexistent exact solution.",
         "concept.iteration.base_case_identified": "Iterative unfolding needs a closure point. The base case tells where expansion stops and from which known value reconstruction begins.",
         "concept.iteration.initial_unrolling_built": "Unrolling the first iterations reveals the actual accumulation structure and prevents guessing a general pattern without algebraic evidence.",
         "concept.iteration.k_pattern_generalized": "After a few expansions, we generalize a $k$-step form: one residual recursive term and one accumulated summation term.",
@@ -96,6 +131,7 @@ class IterationStepContext:
     recurrence_form: str
     g_n: str
     is_supported: bool
+    bound_kind: str  # "equivalent" | "upper" | "lower" | "partial"
     support_code: Optional[str]
     base_case_index: Optional[int]
     base_case_value: Optional[str]
@@ -111,6 +147,10 @@ class IterationStepContext:
     summation_partial: bool = False
     asymptotic_partial: bool = False
     missing_base_case: bool = False
+    generic_walkthrough: bool = False
+    upper_bound_walkthrough: bool = False
+    show_monotonicity_step: bool = False
+    key_inequality: Optional[str] = None
 
 
 _ITERATION_STEP_DEFS: List[Dict[str, str]] = [
@@ -143,9 +183,174 @@ def _warning_for_support_code(support_code: Optional[str]) -> Optional[str]:
 def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
     steps: List[Dict[str, Any]] = []
 
+    if ctx.generic_walkthrough and ctx.upper_bound_walkthrough:
+        step1_summary = "iteration.recurrence_detected.generic_upper"
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=1,
+                step_id="iter_u1",
+                kind="recurrence_detected",
+                title=_title(ctx.locale, "Recurrencia detectada", "Detected recurrence"),
+                status="complete",
+                confidence="high",
+                summary_key=step1_summary,
+                concept_key="concept.iteration.recurrence_detected",
+                primary_latex=ctx.recurrence_form,
+                payload={
+                    "sourceExpression": ctx.recurrence_form,
+                    "g_n": ctx.g_n,
+                },
+            )
+        )
+
+        applicability_status: StepStatus = "partial"
+        if not ctx.asymptotic_partial and not ctx.summation_partial:
+            applicability_status = "complete"
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=2,
+                step_id="iter_u2",
+                kind="applicability_validated",
+                title=_title(ctx.locale, "Cota superior por iteración", "Upper bound by iteration"),
+                status=applicability_status,
+                confidence="high" if applicability_status == "complete" else "medium",
+                summary_key="iteration.applicability_validated.upper",
+                concept_key="concept.iteration.applicability_validated",
+                primary_latex=ctx.recurrence_form,
+                payload={"supportReason": ctx.support_code or "ITER_GENERIC_UPPER_BOUND"},
+            )
+        )
+
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=3,
+                step_id="iter_u3",
+                kind="base_case_identified",
+                title=_title(ctx.locale, "Caso base", "Base case"),
+                status="partial" if ctx.missing_base_case else "complete",
+                confidence="medium" if ctx.missing_base_case else "high",
+                summary_key=(
+                    "iteration.base_case_identified.partial"
+                    if ctx.missing_base_case
+                    else "iteration.base_case_identified.found"
+                ),
+                concept_key="concept.iteration.base_case_identified",
+                warning_key=("warning.iteration.missing_base_case" if ctx.missing_base_case else None),
+                primary_latex=(
+                    f"T({ctx.base_case_index})={ctx.base_case_value}"
+                    if ctx.base_case_index is not None and ctx.base_case_value is not None
+                    else (f"T({ctx.base_case_index})" if ctx.base_case_index is not None else None)
+                ),
+                payload={
+                    "baseCase": {
+                        "index": ctx.base_case_index,
+                        "value": ctx.base_case_value,
+                    }
+                },
+            )
+        )
+
+        if ctx.show_monotonicity_step:
+            steps.append(
+                make_recursive_step(
+                    template_strings=_TEMPLATE_STRINGS,
+                    locale=ctx.locale,
+                    index=4,
+                    step_id="iter_u4",
+                    kind="upper_bound_simplified",
+                    title=_title(ctx.locale, "Desigualdad clave", "Key inequality"),
+                    status="complete",
+                    confidence="high",
+                    summary_key="iteration.upper_bound_monotonicity.standard",
+                    concept_key="concept.iteration.upper_bound_monotonicity",
+                    primary_latex=ctx.key_inequality or ctx.general_form,
+                    payload={
+                        "monotonicityJustification": ctx.expansions[1] if len(ctx.expansions) > 1 else None,
+                        "derivedExpression": ctx.key_inequality or ctx.general_form,
+                    },
+                )
+            )
+
+        offset = 1 if ctx.show_monotonicity_step else 0
+        for index, title_es, title_en, summary_key, concept_key, kind, default_status in [
+            (4 + offset, "Simplificación para análisis asintótico", "Asymptotic simplification", "iteration.upper_bound_simplified.standard", "concept.iteration.upper_bound_simplified", "summation_simplified", "complete"),
+            (5 + offset, "Primeras expansiones", "Initial unrolling", "iteration.upper_bound_iterated.standard", "concept.iteration.upper_bound_iterated", "initial_unrolling_built", "complete"),
+            (6 + offset, "No hay cierre exacto", "No exact closure", "iteration.upper_bound_no_exact_closure.standard", "concept.iteration.upper_bound_no_exact_closure", "k_pattern_generalized", "partial"),
+            (7 + offset, "Construcción de cota superior", "Upper bound construction", "iteration.upper_bound_generalized.standard", "concept.iteration.upper_bound_generalized", "k_value_solved", "complete"),
+        ]:
+            # if index==6 (No exact closure) but asymptotic info is solid, mark complete
+            status = default_status
+            if index == 6 + offset and not ctx.asymptotic_partial and not ctx.summation_partial:
+                status = "complete"
+            if ctx.show_monotonicity_step and index == 5:
+                primary_latex = ctx.key_inequality or ctx.general_form
+                payload_expr = ctx.key_inequality or ctx.general_form
+            else:
+                primary_latex = (
+                    ctx.general_form if index == 4 + offset else
+                    ctx.expansions[0] if (index == 5 + offset and ctx.expansions) else
+                    ctx.general_form if index == 6 + offset else
+                    f"{ctx.k_condition}\\Rightarrow k={ctx.k_value}"
+                )
+                payload_expr = (
+                    ctx.general_form if index == 4 + offset else
+                    ctx.expansions[0] if (index == 5 + offset and ctx.expansions) else
+                    ctx.general_form if index == 6 + offset else
+                    f"k={ctx.k_value}"
+                )
+            steps.append(
+                make_recursive_step(
+                    template_strings=_TEMPLATE_STRINGS,
+                    locale=ctx.locale,
+                    index=index,
+                    step_id=f"iter_u{index}",
+                    kind=kind,
+                    title=_title(ctx.locale, title_es, title_en),
+                    status=status,
+                    confidence="high" if status == "complete" else "medium",
+                    summary_key=summary_key,
+                    concept_key=concept_key,
+                    primary_latex=primary_latex,
+                    payload={"derivedExpression": payload_expr},
+                )
+            )
+
+        asymp_status = "partial" if ctx.asymptotic_partial or ctx.summation_partial else "complete"
+        steps.append(
+            make_recursive_step(
+                template_strings=_TEMPLATE_STRINGS,
+                locale=ctx.locale,
+                index=8,
+                step_id="iter_u8",
+                kind="asymptotic_concluded",
+                title=_title(ctx.locale, "Conclusión asintótica", "Asymptotic conclusion"),
+                status=asymp_status,
+                confidence="high" if asymp_status == "complete" else "medium",
+                summary_key="iteration.upper_bound_decision.standard",
+                concept_key="concept.iteration.upper_bound_decision",
+                warning_key=("warning.iteration.asymptotic_partial" if asymp_status == "partial" else None),
+                primary_latex=get_asymptotic_notation(ctx.bound_kind, ctx.theta),
+                payload={"boundKind": ctx.bound_kind, "theta": ctx.theta},
+                codes=["ITER_GENERIC_UPPER_BOUND"],
+            )
+        )
+
+        return {
+            "method": "iteration",
+            "version": "iter_steps_upper_v1",
+            "overallStatus": compute_overall_status(steps),
+            "steps": steps,
+        }
+
     step1_summary = (
         "iteration.recurrence_detected.linear_shift"
-        if ctx.is_supported
+        if ctx.is_supported and not ctx.generic_walkthrough
         else "iteration.recurrence_detected.generic"
     )
     steps.append(
@@ -168,7 +373,7 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
         )
     )
 
-    if not ctx.is_supported:
+    if not ctx.is_supported and not ctx.generic_walkthrough:
         warning_key = _warning_for_support_code(ctx.support_code)
         support_code = ctx.support_code or "ITER_UNSUPPORTED_NON_LINEAR_FORM"
         steps.append(
@@ -247,7 +452,17 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             "steps": steps,
         }
 
-    step3_status: StepStatus = "partial" if ctx.missing_base_case else "complete"
+    applicability_status: StepStatus = (
+        "partial" if ctx.generic_walkthrough else "complete"
+    )
+    applicability_summary_key = (
+        "iteration.applicability_validated.partial"
+        if ctx.generic_walkthrough
+        else "iteration.applicability_validated.supported"
+    )
+    step3_status: StepStatus = (
+        "partial" if (ctx.missing_base_case or ctx.generic_walkthrough) else "complete"
+    )
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
@@ -256,12 +471,12 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             step_id="iter_s2",
             kind="applicability_validated",
             title=_title(ctx.locale, "Validación de aplicabilidad", "Applicability validation"),
-            status="complete",
-            confidence="high",
-            summary_key="iteration.applicability_validated.supported",
+            status=applicability_status,
+            confidence="medium" if ctx.generic_walkthrough else "high",
+            summary_key=applicability_summary_key,
             concept_key="concept.iteration.applicability_validated",
             primary_latex=ctx.recurrence_form,
-            payload={"supportReason": "supported_unit_shift_v1"},
+            payload={"supportReason": ctx.support_code or "supported_iteration_walkthrough"},
         )
     )
     steps.append(
@@ -500,6 +715,10 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
         else None
     )
     step11_codes = ["ITER_ASYMPTOTIC_HEURISTIC"] if ctx.asymptotic_partial else []
+    
+    # Convertir a notación correcta basada en bound_kind
+    theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta)
+    
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
@@ -517,15 +736,15 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             ),
             concept_key="concept.iteration.asymptotic_concluded",
             warning_key=step11_warning_key,
-            primary_latex=f"T(n) = {ctx.theta}",
+            primary_latex=f"T(n) = {theta_with_notation}",
             payload={
-                "asymptoticResult": ctx.theta,
+                "asymptoticResult": theta_with_notation,
                 "supportReason": (
                     "ITER_ASYMPTOTIC_HEURISTIC" if ctx.asymptotic_partial else "complete"
                 ),
             },
             derivation={
-                "asymptoticResult": ctx.theta,
+                "asymptoticResult": theta_with_notation,
             },
             codes=step11_codes,
         )

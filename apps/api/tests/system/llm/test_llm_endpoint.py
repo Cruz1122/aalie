@@ -48,6 +48,27 @@ class RepairAliasProvider:
         }
 
 
+class CaptureKeyProvider:
+    def __init__(self):
+        self.last_api_key = None
+
+    def generate_content(self, payload):
+        self.last_api_key = payload.api_key
+        return {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "text": "respuesta con key capturada",
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+
+
 def test_llm_endpoint_requires_key(monkeypatch):
     monkeypatch.delenv("API_KEY", raising=False)
 
@@ -125,3 +146,23 @@ def test_llm_repair_normalizes_codigo_corregido_alias(monkeypatch):
     assert payload["data"]["structured"]["code"].startswith("f(n) BEGIN")
     assert payload["data"]["structured"]["removedLines"] == []
     assert payload["data"]["structured"]["addedLines"] == []
+
+
+def test_llm_endpoint_prefers_request_api_key_over_server_key(monkeypatch):
+    provider = CaptureKeyProvider()
+    monkeypatch.setenv("API_KEY", "AIzaBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+    monkeypatch.setattr(service, "create_provider", lambda: provider)
+
+    res = client.post(
+        "/llm",
+        json={
+            "job": "general",
+            "prompt": "hola",
+            "apiKey": "AIzaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        },
+    )
+
+    assert res.status_code == 200
+    payload = res.json()
+    assert payload["ok"] is True
+    assert provider.last_api_key == "AIzaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"

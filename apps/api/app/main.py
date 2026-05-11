@@ -20,6 +20,7 @@ from .modules.classification.router import router as classify_router
 from .modules.export.router import router as export_router
 from .modules.llm.router import router as llm_router
 from .modules.parsing.router import router as parse_router
+from .modules.quizzes.router import router as quizzes_router
 
 # Cargar variables de entorno desde .env
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(classify_router)
     app.include_router(llm_router)
     app.include_router(export_router)
+    app.include_router(quizzes_router)
 
     return app
 

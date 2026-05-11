@@ -9,11 +9,11 @@ import { useLocale } from "next-intl";
 import { useEffect, useMemo } from "react";
 
 import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
-import { ContentBlockRenderer } from "@/components/content/ContentBlockRenderer";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { NavigationFooter } from "@/components/NavigationFooter";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { ContentBlockRenderer } from "@/features/content-rendering";
 import { useSectionCompletionTracking } from "@/hooks/useContentProgress";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import type { AssistantContext } from "@/lib/assistant/types";

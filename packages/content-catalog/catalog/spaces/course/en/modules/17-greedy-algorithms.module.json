@@ -1,0 +1,2530 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-algoritmos-voraces",
+  "slug": "greedy-algorithms",
+  "title": "Greedy Algorithms",
+  "order": 17,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Algorithmic design technique that builds a solution in stages, taking the best available local decision at each step, without reconsidering past decisions. It includes formal components, greedy model, correctness proof, coin change, counterexample, Warnsdorff heuristic, activity selection and comparison with Dynamic Programming.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 85,
+  "tags": [
+    "greedy-algorithms",
+    "greedy",
+    "avid",
+    "misers",
+    "gluttons",
+    "myopic",
+    "optimal-local",
+    "optimal-global",
+    "greedy-property",
+    "optimal-substructure",
+    "feasibility",
+    "objective-function",
+    "currency-change",
+    "warnsdorff",
+    "selection-of-activities",
+    "dynamic-programming"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "greedy algorithms",
+      "greedy",
+      "greedy algorithms",
+      "greedy algorithms",
+      "gluttonous algorithms",
+      "myopic algorithms",
+      "greedy strategy",
+      "local selection",
+      "local optimum without backtracking",
+      "greedy property"
+    ],
+    "keywords": [
+      "set of candidates",
+      "selection function",
+      "feasibility function",
+      "solution set",
+      "objective function",
+      "promising subset",
+      "local optimum",
+      "global optimum",
+      "without reconsidering",
+      "coin change",
+      "Warnsdorff",
+      "chess knight",
+      "selection of activities",
+      "greedy counterexample",
+      "dynamic vs greedy programming"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-complejidad-temporal-espacial",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-programacion-dinamica",
+        "kind": "recommended"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-complejidad-temporal",
+        "kind": "required"
+      },
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-requisitos-programacion-dinamica",
+        "kind": "recommended"
+      },
+      {
+        "id": "sec-comparacion-top-down-bottom-up",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-complejidad-temporal-espacial",
+    "mod-notaciones-asintoticas",
+    "mod-programacion-dinamica",
+    "mod-algoritmos-recursivos"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "definir-algoritmo-voraz",
+      "text": "Deende what a greedy algorithm is and why it makes local decisions without backtracking."
+    },
+    {
+      "objectiveId": "identificar-componentes-voraces",
+      "text": "Identify candidates, selection function, feasibility function, objective function, solution set and solution verification."
+    },
+    {
+      "objectiveId": "modelar-problema-voraz",
+      "text": "Formally model a greedy problem before writing the algorithm."
+    },
+    {
+      "objectiveId": "distinguir-optimo-local-global",
+      "text": "Distinguish between a locally good decision and a globally optimal solution."
+    },
+    {
+      "objectiveId": "demostrar-propiedad-voraz",
+      "text": "Understand that a greedy algorithm is only correct if the greedy property is proven for the specific problem."
+    },
+    {
+      "objectiveId": "usar-contraejemplos",
+      "text": "Use counterexamples to show that a greedy strategy fails."
+    },
+    {
+      "objectiveId": "analizar-cambio-monedas",
+      "text": "Apply the greedy technique to the problem of coin change and recognize when it fails."
+    },
+    {
+      "objectiveId": "analizar-warnsdorff",
+      "text": "Interpret Warnsdorff's heuristic as a greedy strategy for the knight's tour."
+    },
+    {
+      "objectiveId": "analizar-seleccion-actividades",
+      "text": "Solving activity selection as a classic example where the greedy strategy does have proof of correctness."
+    },
+    {
+      "objectiveId": "comparar-voraz-pd",
+      "text": "Compare greedy algorithms with Dynamic Programming in guarantee of optimality, reconsideration, memory and speed."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-algoritmo-voraz",
+      "label": "Greedy algorithm",
+      "definition": "Algorithm that builds a solution in stages, taking the best available local decision at each step, without reconsidering previous decisions."
+    },
+    {
+      "termId": "term-candidato-voraz",
+      "label": "Candidate",
+      "definition": "Available element that can be considered to build the solution."
+    },
+    {
+      "termId": "term-funcion-seleccion",
+      "label": "selection function",
+      "definition": "Criterion that chooses the most locally suitable candidate at the current stage."
+    },
+    {
+      "termId": "term-funcion-factibilidad",
+      "label": "feasibility function",
+      "definition": "Test that determines whether a candidate can be added to the partial solution without violating constraints."
+    },
+    {
+      "termId": "term-conjunto-solucion",
+      "label": "Solution set",
+      "definition": "Set of candidates accepted during the construction of the solution."
+    },
+    {
+      "termId": "term-funcion-objetivo",
+      "label": "objective function",
+      "definition": "Function that you want to maximize or minimize."
+    },
+    {
+      "termId": "term-subconjunto-prometedor",
+      "label": "Promising subset",
+      "definition": "Partial solution that can still be extended without violating constraints."
+    },
+    {
+      "termId": "term-propiedad-voraz",
+      "label": "Greedy property",
+      "definition": "Property that allows us to show that a locally optimal choice can be part of some globally optimal solution."
+    },
+    {
+      "termId": "term-optimo-local",
+      "label": "Local optimum",
+      "definition": "Best decision available at a specific stage based on current information."
+    },
+    {
+      "termId": "term-optimo-global",
+      "label": "Global optimum",
+      "definition": "Best possible solution for the whole problem."
+    },
+    {
+      "termId": "term-heuristica-voraz",
+      "label": "Greedy heuristic",
+      "definition": "Fast local selection rule that may work well in practice, but does not necessarily guarantee optimality."
+    },
+    {
+      "termId": "term-warnsdorff",
+      "label": "Warnsdorff's rule",
+      "definition": "Heuristic for the knight's tour that chooses the reachable square with the smallest number of future moves available."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-algoritmos-voraces",
+      "slug": "greedy-algorithms",
+      "title": "Greedy Algorithms",
+      "order": 1,
+      "summary": "Deendition, components, modeling, demonstration, classic examples and comparison with Dynamic Programming.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-algoritmos-voraces",
+          "slug": "introduccion-algoritmos-voraces",
+          "title": "Greedy Algorithms: central idea",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-seleccion-local",
+              "text": "Understand that the greedy person makes local decisions without backing down."
+            },
+            {
+              "objectiveId": "entender-riesgo-voraz",
+              "text": "Understand that a good local decision does not always produce an optimal global solution."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-complejidad-temporal",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-voraces-intro-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A greedy algorithm builds a solution step by step. At each stage it looks at the available candidates, chooses the one that seems best according to local criteria and, if feasible, adds it to the solution set."
+                }
+              ]
+            },
+            {
+              "id": "blk-voraces-intro-sin-retroceso",
+              "type": "note",
+              "variant": "warning",
+              "title": "The decision is irrevocable",
+              "blocks": [
+                {
+                  "id": "blk-voraces-intro-sin-retroceso-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The dangerous characteristic of the greedy algorithm is that he does not reconsider. Once you accept a candidate, that candidate remains in the solution. If the local choice was bad for the global optimum, the algorithm does not correct itself."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-voraces-intro-intuicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "That's why greedy ones are fast and simple, but mathematically delicate. It is not enough for the strategy to seem reasonable: we must demonstrate that this local rule always leads to an optimal solution, or accept that it is just a heuristic."
+                }
+              ]
+            },
+            {
+              "id": "blk-voraces-rapidez-vs-garantia",
+              "type": "table",
+              "title": "The central tension of the greedy algorithm",
+              "columns": [
+                {
+                  "key": "ventaja",
+                  "label": "Advantage"
+                },
+                {
+                  "key": "riesgo",
+                  "label": "Risk"
+                },
+                {
+                  "key": "exigencia",
+                  "label": "Demand"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "They are usually quick and easy to implement."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "They may be left with a bad solution because of an early choice."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Demonstrate greedy property or show counterexample."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-componentes-algoritmo-voraz",
+          "slug": "componentes-algoritmo-voraz",
+          "title": "Components of a greedy algorithm",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "identificar-candidatos",
+              "text": "Identify the candidate set of a greedy problem."
+            },
+            {
+              "objectiveId": "identificar-seleccion-factibilidad",
+              "text": "Distinguish selection function and feasibility function."
+            },
+            {
+              "objectiveId": "identificar-funcion-objetivo",
+              "text": "Identify which objective function you want to optimize."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-complejidad-temporal",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-componentes-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A greedy algorithm is not correctly described by saying “I choose the best.” It is necessary to specify what is chosen, with what criteria, under what restrictions and when the solution is considered endished."
+                }
+              ]
+            },
+            {
+              "id": "blk-componentes-table",
+              "type": "table",
+              "title": "Formal components of a greedy algorithm",
+              "columns": [
+                {
+                  "key": "componente",
+                  "label": "Component"
+                },
+                {
+                  "key": "pregunta",
+                  "label": "Question that answers"
+                },
+                {
+                  "key": "ejemploCambio",
+                  "label": "Example in coin change"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Candidate Set"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "What elements can I choose?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Denominations available."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "selection function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Which candidate looks better now?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The largest coin available."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "feasibility function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Can I add this candidate without violating restrictions?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The coin must be less than or equal to the remainder."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Solution set"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Which candidates have I already accepted?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Accumulated coins."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "objective function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "What do I want to optimize?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Minimize the number of coins."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "voucher function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Is the solution already complete?"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The remainder reached zero."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-factibilidad-no-seleccion",
+              "type": "note",
+              "variant": "danger",
+              "title": "Selection and feasibility are not the same",
+              "blocks": [
+                {
+                  "id": "blk-factibilidad-no-seleccion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The selection function tells which candidate looks best. The feasibility function tells whether that candidate can be accepted. A candidate can be the most attractive and still be invalid."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-modelo-general-voraz",
+          "slug": "modelo-general-voraz",
+          "title": "General model of a greedy algorithm",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "formalizar-modelo-voraz",
+              "text": "Formalize the selection, feasibility and update cycle of the solution set."
+            },
+            {
+              "objectiveId": "leer-esquema-general-voraz",
+              "text": "Read the general outline of a greedy algorithm as a reusable template."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-componentes-algoritmo-voraz",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-modelo-general-voraz-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The greedy model has three repeated moves: selecting a candidate, checking if it is promising, and updating the partial solution. The exact shape changes by issue, but the skeleton is the same."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-seleccion",
+              "type": "equationBlock",
+              "title": "Greedy selection model",
+              "latex": "x_t=\\operatorname*{arg\\,opt}_{x\\in C_t}\\ criterion(x)"
+            },
+            {
+              "id": "blk-expl-modelo-general-seleccion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In this expression, xt represents the candidate chosen at step t. The 'arg opt' symbol indicates that we are looking for the element x, within the candidate set Ct, that maximizes or minimizes the local criterion deended by the problem."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-actualizacion",
+              "type": "equationBlock",
+              "title": "Solution set update model",
+              "latex": "CS_t=\\begin{cases}CS_{t-1}\\cup\\{x_t\\},& feasible(x_t,CS_{t-1})\\\\CS_{t-1},& \\text{otherwise}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-general-actualizacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "CSt is the accumulated solution set. If the candidate xt is feasible (does not break the rules), it is joined to the previous set using the ampersand (U). Otherwise, the solution remains the same."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-candidatos",
+              "type": "equationBlock",
+              "title": "Candidate update model",
+              "latex": "C_{t+1}=\\begin{cases}C_t-\\{x_t\\},& x_t\\ \\text{has already been evaluated}\\\\C_t,& \\text{if the problem allows reuse}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-general-candidatos",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ct+1 deendes the new set of candidates for the next stage. Depending on the problem, the candidate xt is discarded (set subtraction) or remains available for reuse."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Ravenous general scheme",
+              "code": "greedyAlgorithm(candidates) BEGIN\n  CS <- {};\n  found <- F;\n\n  WHILE (NOT empty(candidates) AND NOT found) DO BEGIN\n    x <- select(candidates);\n\n    IF (feasible(x, CS)) THEN BEGIN\n      CS <- include(x, CS);\n    END\n\n    candidates <- remove(x, candidates);\n\n    IF (isSolution(CS)) THEN BEGIN\n      found <- T;\n    END\n  END\n\n  RETURN CS;\nEND"
+            },
+            {
+              "id": "blk-modelo-general-trampa",
+              "type": "note",
+              "variant": "warning",
+              "title": "The scheme does not prove correctness",
+              "blocks": [
+                {
+                  "id": "blk-modelo-general-trampa-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "This outline only describes how the solution is built. It does not prove that it is optimal. Correctness depends on proving that the selection function is valid for the specific problem."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-correctitud-algoritmos-voraces",
+          "slug": "correctitud-algoritmos-voraces",
+          "title": "Correctness: greedy property and optimal substructure",
+          "order": 4,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "probar-propiedad-voraz",
+              "text": "Understand what must be tested to trust a greedy strategy."
+            },
+            {
+              "objectiveId": "usar-contraejemplo-como-prueba-negativa",
+              "text": "Use counterexamples to invalidate greedy strategies."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-componentes-algoritmo-voraz",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-correctitud-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The weak point of the greedy algorithm is correctness. Implementing local selection is usually easy; Demonstrating that this local selection always leads to the global optimum is what is difficult."
+                }
+              ]
+            },
+            {
+              "id": "blk-condiciones-correctitud-table",
+              "type": "table",
+              "title": "Conditions to trust a greedy",
+              "columns": [
+                {
+                  "key": "condicion",
+                  "label": "Condition"
+                },
+                {
+                  "key": "significado",
+                  "label": "Meaning"
+                },
+                {
+                  "key": "pregunta",
+                  "label": "control question"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Greedy property"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "There exists an optimal solution that contains the local choice made by the algorithm."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Can I show that choosing this candidate now does not destroy the optimal one?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Optimal substructure"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "After making the greedy decision, what remains is still a subproblem of the same type."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Is the remaining problem solved with the same logic?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Cumulative feasibility"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Each decision maintains a promising partial solution."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Does adding the candidate preserve the restrictions?"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-demostracion-voraz",
+              "type": "latexSteps",
+              "title": "Ravenous Demo Template",
+              "steps": [
+                {
+                  "stepId": "step-dem-opt",
+                  "title": "Deende an optimal solution",
+                  "latex": "OPT=\\{o_1,o_2,\\ldots,o_k\\}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It starts from any optimal solution."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-dem-greedy",
+                  "title": "Identify greedy choice",
+                  "latex": "g=select(C)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The candidate"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g"
+                    },
+                    {
+                      "type": "text",
+                      "text": "is the local choice of the algorithm."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-dem-swap",
+                  "title": "Exchange",
+                  "latex": "OPT'=(OPT-\\{o_i\\})\\cup\\{g\\}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "An attempt is made to replace some element of the optimal solution with greedy choice without making the solution worse."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-dem-check",
+                  "title": "It doesn't get worse",
+                  "latex": "value(OPT')\\le value(OPT)\\quad \\text{o}\\quad value(OPT')\\ge value(OPT)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Depending on whether it is minimization or maximization, it is proven that the exchange preserves optimality."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-dem-red",
+                  "title": "Reduce to subproblem",
+                  "latex": "P\\rightarrow P'",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "After fixing the greedy choice, the remaining problem should have the same structure."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-correctitud-contraejemplo",
+              "type": "note",
+              "variant": "danger",
+              "title": "A counterexample kills a greedy strategy",
+              "blocks": [
+                {
+                  "id": "blk-correctitud-contraejemplo-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If you endd a single entry where the greedy rule produces a solution worse than another possible one, the strategy is not correct in general. It may still be a heuristic, but not an exact algorithm."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-cambio-monedas-voraz",
+          "slug": "cambio-monedas-voraz",
+          "title": "Example 1 — Coin change",
+          "order": 5,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "learningObjectives": [
+            {
+              "objectiveId": "modelar-cambio-monedas",
+              "text": "Model the coin change problem with greedy components."
+            },
+            {
+              "objectiveId": "ejecutar-cambio-voraz",
+              "text": "Run the greedy algorithm step by step for a target amount."
+            },
+            {
+              "objectiveId": "entender-fallo-cambio",
+              "text": "Understand why coin change is not always optimally resolved with greedy."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-voraces",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-componentes-algoritmo-voraz",
+                "kind": "required"
+              },
+              {
+                "id": "sec-correctitud-algoritmos-voraces",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-cambio-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The problem asks to give exact change for a target amount using the smallest possible number of coins. The natural greedy rule is to take at each step the largest coin that does not exceed the remaining one."
+                }
+              ]
+            },
+            {
+              "id": "blk-cambio-componentes-table",
+              "type": "table",
+              "title": "Components of the greedy algorithm coin changer",
+              "columns": [
+                {
+                  "key": "componente",
+                  "label": "Component"
+                },
+                {
+                  "key": "definicion",
+                  "label": "Deendition in the problem"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Candidates"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Denominations available."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "selection function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Choose the largest denomination."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Feasibility"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The coin must be less than or equal to the remainder."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "objective function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Minimize the total number of coins."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Check"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The remainder must reach zero."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-cambio-modelo-seleccion",
+              "type": "equationBlock",
+              "title": "Selection model",
+              "latex": "d_t=\\max\\{d\\in D\\mid d\\le r_t\\}"
+            },
+            {
+              "id": "blk-expl-cambio-modelo-seleccion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "dt is the value of the chosen currency. We look for the maximum value (max) in the set of denominations D that does not exceed the remaining money rt."
+                }
+              ]
+            },
+            {
+              "id": "blk-cambio-modelo-restante",
+              "type": "equationBlock",
+              "title": "Update model",
+              "latex": "r_{t+1}=\\begin{cases}r_t-d_t,& \\exists d_t\\le r_t\\\\r_t,& \\text{if no feasible coin exists}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-cambio-modelo-restante",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "rt+1 is the new amount of money that remains to be delivered. It is calculated by subtracting the value of the currency delivered dt from the previous amount."
+                }
+              ]
+            },
+            {
+              "id": "blk-cambio-modelo-solucion",
+              "type": "equationBlock",
+              "title": "Solution set model",
+              "latex": "CS_{t+1}=\\begin{cases}CS_t\\cup\\{d_t\\},& d_t\\le r_t\\\\CS_t,& \\text{if there is no feasible candidate}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-cambio-modelo-solucion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The solution set is updated by adding the currency dt if it meets the condition of being less than or equal to the remainder."
+                }
+              ]
+            },
+            {
+              "id": "blk-cambio-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Greedy coin change",
+              "code": "greedyChange(D[n], target) BEGIN\n  remaining <- target;\n  CS <- {};\n\n  WHILE (remaining > 0) DO BEGIN\n    coin <- selectLargestFeasible(D, remaining);\n\n    IF (coin = -1) THEN BEGIN\n      RETURN -1;\n    END\n\n    CS <- include(coin, CS);\n    remaining <- remaining - coin;\n  END\n\n  RETURN CS;\nEND"
+            },
+            {
+              "id": "blk-cambio-ejecucion-table",
+              "type": "table",
+              "title": "Execution for objective 17 and denominations {10, 4, 2, 1}",
+              "columns": [
+                {
+                  "key": "etapa",
+                  "label": "Stage"
+                },
+                {
+                  "key": "candidato",
+                  "label": "Chosen candidate"
+                },
+                {
+                  "key": "factible",
+                  "label": "Feasible?"
+                },
+                {
+                  "key": "restante",
+                  "label": "Remaining"
+                },
+                {
+                  "key": "cs",
+                  "label": "Cumulative CS"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "10"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes, 10 ≤ 17"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "17 - 10 = 7"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "{10}"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes, 4 ≤ 7"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "7 - 4 = 3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "{10, 4}"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes, 2 ≤ 3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3 - 2 = 1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "{10, 4, 2}"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes, 1 ≤ 1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 - 1 = 0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "{10, 4, 2, 1}"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-cambio-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Example result",
+              "blocks": [
+                {
+                  "id": "blk-cambio-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The algorithm returns 4 coins:"
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "{10, 4, 2, 1}"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". The sum is 17."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-cambio-contraejemplo",
+              "type": "note",
+              "variant": "danger",
+              "title": "Counterexample: the greedy can fail",
+              "blocks": [
+                {
+                  "id": "blk-cambio-contraejemplo-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "With denominations"
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "{11, 5, 3, 2}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and objective 15, the greedy takes 11, 4 remains and then takes 3 and 1 if it exists, or fails if there is no coin of value 1. But the optimal solution is"
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "{5, 5, 5}"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", with only 3 coins."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-cambio-diagnostico",
+              "type": "note",
+              "variant": "warning",
+              "title": "Honest diagnosis",
+              "blocks": [
+                {
+                  "id": "blk-cambio-diagnostico-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Coin change is only greedyly accurate for certain monetary systems. If the naming system does not have the right property, the algorithm can be fast and still incorrect."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-warnsdorff-caballo",
+          "slug": "warnsdorff-caballo",
+          "title": "Example 2 — Knight in chess: Warnsdorff rule",
+          "order": 6,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "modelar-warnsdorff",
+              "text": "Model the Warnsdorff heuristic as a greedy algorithm."
+            },
+            {
+              "objectiveId": "distinguir-heuristica-de-garantia",
+              "text": "Distinguishing a greedy heuristic from an exact algorithm with optimality proof."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-voraces",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-componentes-algoritmo-voraz",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-warnsdorff-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The problem consists of going around a chess board with a knight passing through each square only once. At each stage, the candidates are the squares reachable by the movement of the knight."
+                }
+              ]
+            },
+            {
+              "id": "blk-warnsdorff-componentes-table",
+              "type": "table",
+              "title": "Greedy components in Warnsdorff",
+              "columns": [
+                {
+                  "key": "componente",
+                  "label": "Component"
+                },
+                {
+                  "key": "definicion",
+                  "label": "Deendition"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Candidates"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Squares to which the knight can move from the current position."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Feasibility"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The box must not have been visited."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "selection function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Choose the box with the smallest number of future moves available."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solution set"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sequence of squares visited by the horse."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Check"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "All cells were visited exactly once."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-warnsdorff-modelo",
+              "type": "equationBlock",
+              "title": "Warnsdorff selection model",
+              "latex": "next(v)=\\operatorname*{arg\\,min}_{u\\in Mov(v),\\ noVisitada(u)} availableDegree(u)"
+            },
+            {
+              "id": "blk-expl-warnsdorff-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The function next(v) chooses the next box u that minimizes the 'available degree', that is, the one with the fewest exit options to unvisited boxes."
+                }
+              ]
+            },
+            {
+              "id": "blk-warnsdorff-actualizacion",
+              "type": "equationBlock",
+              "title": "Update model",
+              "latex": "Route_{t+1}=\\begin{cases}Route_t\\cup\\{next(v_t)\\},& \\exists\\ move\\ feasible\\\\Route_t,& \\text{if there is no feasible move}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-warnsdorff-actualizacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The knight's path is extended with the chosen square only if there is at least one feasible move from the current position."
+                }
+              ]
+            },
+            {
+              "id": "blk-warnsdorff-mermaid",
+              "type": "mermaid",
+              "title": "Greedy decision in Warnsdorff",
+              "code": "flowchart TD\n  A[\"Current knight position\"] --> B[\"Generate possible moves\"]\n  B --> C[\"Filter unvisited squares\"]\n  C --> D[\"Compute available degree of each square\"]\n  D --> E[\"Choose the square with the smallest degree\"]\n  E --> F[\"Add to route\"]\n  F --> G{\"Have all squares been visited?\"}\n  G -- \"No\" --> A\n  G -- \"Yes\" --> H[\"Complete route\"]"
+            },
+            {
+              "id": "blk-warnsdorff-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Warnsdorff scheme",
+              "code": "warnsdorff(board[n][n], start) BEGIN\n  current <- start;\n  route <- {current};\n  markVisited(current);\n\n  WHILE (length(route) < n * n) DO BEGIN\n    candidates <- feasibleMoves(current, board);\n\n    IF (empty(candidates)) THEN BEGIN\n      RETURN -1;\n    END\n\n    next <- smallestDegreeCandidate(candidates, board);\n    route <- include(next, route);\n    markVisited(next);\n    current <- next;\n  END\n\n  RETURN route;\nEND"
+            },
+            {
+              "id": "blk-warnsdorff-advertencia",
+              "type": "note",
+              "variant": "warning",
+              "title": "Warnsdorff is a heuristic",
+              "blocks": [
+                {
+                  "id": "blk-warnsdorff-advertencia-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Warnsdorff's rule is greedy because it chooses the locally most restrictive box. It can work very well, but it should not be sold as an automatic demonstration of optimal solution for any variant of the problem. If there is no proof, it is heuristic."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-seleccion-actividades-voraz",
+          "slug": "seleccion-actividades-voraz",
+          "title": "Example 3 — Activity selection",
+          "order": 7,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "learningObjectives": [
+            {
+              "objectiveId": "modelar-seleccion-actividades",
+              "text": "Modeling activity selection as a greedy problem."
+            },
+            {
+              "objectiveId": "demostrar-seleccion-actividades",
+              "text": "Understanding why choosing the activity that endishes first is a correct greedy rule."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-voraces",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-correctitud-algoritmos-voraces",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-actividades-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Given a set of activities with a start and end time, the aim is to select the maximum number of compatible activities, that is, activities that do not overlap."
+                }
+              ]
+            },
+            {
+              "id": "blk-actividades-componentes-table",
+              "type": "table",
+              "title": "Greedy components in activity selection",
+              "columns": [
+                {
+                  "key": "componente",
+                  "label": "Component"
+                },
+                {
+                  "key": "definicion",
+                  "label": "Deendition"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Candidates"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Activities available."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "selection function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Choose the activity that ends earliest."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Feasibility"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The activity must start after or just when the last selected activity endishes."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "objective function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Maximize the number of selected activities."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-actividades-modelo-seleccion",
+              "type": "equationBlock",
+              "title": "Selection model",
+              "latex": "a_t=\\operatorname*{arg\\,min}_{a\\in C_t,\\ start(a)\\ge end(ultimo)} end(a)"
+            },
+            {
+              "id": "blk-expl-actividades-modelo-seleccion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "at represents the chosen activity. The one that has the earliest completion time (end(a)) is sought among all those that start after the last activity already accepted ends."
+                }
+              ]
+            },
+            {
+              "id": "blk-actividades-modelo-actualizacion",
+              "type": "equationBlock",
+              "title": "Update model",
+              "latex": "CS_{t+1}=\\begin{cases}CS_t\\cup\\{a_t\\},& start(a_t)\\ge end(ultimo(CS_t))\\\\CS_t,& \\text{if }a_t\\text{ no es compatible}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-actividades-modelo-actualizacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The set of selected activities CS grows only if the new activity at is compatible with the schedule of the last activity in the set."
+                }
+              ]
+            },
+            {
+              "id": "blk-actividades-ejemplo-table",
+              "type": "table",
+              "title": "Activity selection example",
+              "columns": [
+                {
+                  "key": "actividad",
+                  "label": "Activity"
+                },
+                {
+                  "key": "inicio",
+                  "label": "Home"
+                },
+                {
+                  "key": "fin",
+                  "label": "End"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "6"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "7"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "8"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "9"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "A6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "9"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-actividades-ejecucion",
+              "type": "latexSteps",
+              "title": "Ravenous execution",
+              "steps": [
+                {
+                  "stepId": "step-act-sort",
+                  "title": "Order endally",
+                  "latex": "A1(1,4),A2(3,5),A3(0,6),A4(5,7),A5(8,9),A6(5,9)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The greedy rule works with the activity that endishes earliest."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-act-a1",
+                  "title": "Select A1",
+                  "latex": "CS=\\{A1\\},\\quad end(ultimo)=4",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It is the first activity that ends."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-act-disc",
+                  "title": "Discard incompatible",
+                  "latex": "start(A2)=3<4,\\quad start(A3)=0<4",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Both overlap with A1."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-act-a4",
+                  "title": "Select A4",
+                  "latex": "start(A4)=5\\ge4\\Rightarrow CS=\\{A1,A4\\}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "A4 is supported and endishes before the other supported ones."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-act-a5",
+                  "title": "Select A5",
+                  "latex": "start(A5)=8\\ge7\\Rightarrow CS=\\{A1,A4,A5\\}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "A5 is compatible with the last selected one."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-act-ans",
+                  "title": "Result",
+                  "latex": "|CS|=3",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Three compatible activities are selected."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-actividades-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Greedy selection of activities",
+              "code": "selectActivities(start[n], end[n]) BEGIN\n  sortByEnd(start, end);\n  CS <- {};\n  lastEnd <- 0;\n\n  FOR i <- 1 TO n DO BEGIN\n    IF (start[i] >= lastEnd) THEN BEGIN\n      CS <- include(i, CS);\n      lastEnd <- end[i];\n    END\n  END\n\n  RETURN CS;\nEND"
+            },
+            {
+              "id": "blk-actividades-demostracion",
+              "type": "note",
+              "variant": "success",
+              "title": "Why this rule works",
+              "blocks": [
+                {
+                  "id": "blk-actividades-demostracion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Choosing the activity that ends earliest leaves as much room as possible for the remaining activities. Using a trade-off argument, if an optimal solution starts with another compatible activity that endishes later, it can be replaced by the one that endishes earlier without reducing the total number of activities."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-voraces-vs-programacion-dinamica",
+          "slug": "voraces-vs-programacion-dinamica",
+          "title": "When to use Greedy vs Dynamic Programming",
+          "order": 8,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "comparar-voraz-pd-garantia",
+              "text": "Compare the optimal guarantee in Greedy and Dynamic Programming."
+            },
+            {
+              "objectiveId": "decidir-voraz-o-pd",
+              "text": "Decide whether a problem requires evaluation of alternatives or whether a demonstrable local choice is sufficient."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-programacion-dinamica",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-requisitos-programacion-dinamica",
+                "kind": "recommended"
+              },
+              {
+                "id": "sec-correctitud-algoritmos-voraces",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-voraz-pd-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Greedy and Dynamic Programming may appear in optimization problems, but they do not reason the same. The greedy person commits to a local decision. DP evaluates alternatives and saves subproblems."
+                }
+              ]
+            },
+            {
+              "id": "blk-voraz-pd-table",
+              "type": "table",
+              "title": "Greedy Algorithm vs Dynamic Programming",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterion"
+                },
+                {
+                  "key": "voraz",
+                  "label": "Greedy Algorithm"
+                },
+                {
+                  "key": "pd",
+                  "label": "Dynamic Programming"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Optimal guarantee"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Only if greedy ownership is demonstrated."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes, if the model complies with the optimality principle and the necessary states are evaluated."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Reconsideration"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Does not reconsider accepted decisions."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Evaluate alternatives and retain better values."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Speed"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Generally faster."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It can be slower because it fills tables or memory."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Memory"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "to"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n^2)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "or more, according to the table."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Applicability"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Problems with demonstrable greedy property."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Problems with overlapping subproblems and decisions between alternatives."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-decision-voraz-pd",
+              "type": "mermaid",
+              "title": "Decision between Greedy and Dynamic Programming",
+              "code": "flowchart TD\n  A[\"Optimization problem\"] --> B{\"Is there optimal substructure?\"}\n  B -- \"No\" --> X[\"Do not use Greedy or DP without reformulating\"]\n  B -- \"Yes\" --> C{\"Can the local choice be proven safe?\"}\n  C -- \"Yes\" --> D[\"Greedy algorithm\"]\n  C -- \"No\" --> E{\"Are there overlapping subproblems?\"}\n  E -- \"Yes\" --> F[\"Dynamic Programming\"]\n  E -- \"No\" --> G[\"Backtracking, Branch and Bound, or search\"]\n  D --> H[\"Prove the greedy property\"]\n  F --> I[\"Model state, base case, and transition\"]"
+            },
+            {
+              "id": "blk-voraz-pd-diagnostico",
+              "type": "note",
+              "variant": "danger",
+              "title": "Don't use greedy out of laziness",
+              "blocks": [
+                {
+                  "id": "blk-voraz-pd-diagnostico-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If you can't prove that the local choice is secure, you don't have a correct greedy algorithm. You have a guess. For class, that's not enough."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-errores-tipicos-voraces",
+          "slug": "errores-tipicos-voraces",
+          "title": "Typical errors in greedy algorithms",
+          "order": 9,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "detectar-errores-voraces",
+              "text": "Detect common errors when designing or justifying greedy algorithms."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-voraces",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-correctitud-algoritmos-voraces",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-errores-voraces-table",
+              "type": "table",
+              "title": "Common mistakes in greedy algorithms",
+              "columns": [
+                {
+                  "key": "error",
+                  "label": "Error"
+                },
+                {
+                  "key": "porQueEstaMal",
+                  "label": "Why is it wrong?"
+                },
+                {
+                  "key": "correccion",
+                  "label": "Correction"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Confusing local optimum with global optimum"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "A good decision now may block a better solution later."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Demonstrate greedy ownership or look for a counterexample."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Do not deende feasibility function"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The algorithm can add candidates that violate constraints."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Separate feasibility selection."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Saying it is correct because it seems intuitive"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Intuition does not prove optimality."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Use exchange, cut or induction depending on the problem."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Ignore small counterexamples"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "A single counterexample invalidates the general strategy."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Test with adverse input before asserting correctness."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Call any fast algorithm greedy"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Speed does not deende technique."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "There must be irrevocable local selection in stages."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Use greedy where reconsideration is required"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "If the problem requires comparing complete combinations, DP or search may be necessary."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Compare against Dynamic Programming, Backtracking or Branch and Bound."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-voraces",
+          "slug": "resumen-operativo-voraces",
+          "title": "Operational summary",
+          "order": 10,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-receta-voraz",
+              "text": "Consult the minimum recipe for designing and validating a greedy algorithm."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-voraces",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-componentes-algoritmo-voraz",
+                "kind": "required"
+              },
+              {
+                "id": "sec-correctitud-algoritmos-voraces",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-resumen-voraces",
+              "type": "note",
+              "variant": "success",
+              "title": "Minimum recipe",
+              "blocks": [
+                {
+                  "id": "blk-resumen-voraces-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes the set of candidates."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deende the objective function: what you want to maximize or minimize."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes the local selection function."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes the feasibility function."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes how the solution set is updated."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes when the algorithm ends."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Prove the greedy property or endd a counterexample."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Analyzes temporal and spatial complexity."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-formulas-clave-voraces",
+              "type": "latexSteps",
+              "title": "Key formulas and models",
+              "steps": [
+                {
+                  "stepId": "step-mod-sel",
+                  "title": "Local selection",
+                  "latex": "x_t=\\operatorname*{arg\\,opt}_{x\\in C_t} criterion(x)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The choice depends only on the current stage."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-mod-fact",
+                  "title": "Feasible update",
+                  "latex": "CS_t=\\begin{cases}CS_{t-1}\\cup\\{x_t\\},& feasible(x_t,CS_{t-1})\\\\CS_{t-1},& \\text{otherwise}\\end{cases}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Only candidates who retain the restrictions are added."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-mod-cost",
+                  "title": "Typical cost",
+                  "latex": "T(n)=T_{sort}(n)+T_{scan}(n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Many greedy people order candidates and then make a linear path. That is why typical costs appear like"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O(n\\log n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-mod-corr",
+                  "title": "Correctness",
+                  "latex": "\\text{Correct greedy algorithm}\\Rightarrow \\text{greedy property}+\\text{optimal substructure}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Without these properties, the strategy can only be heuristic."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

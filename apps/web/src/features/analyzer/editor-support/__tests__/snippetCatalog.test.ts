@@ -1,3 +1,5 @@
+import { getEnabledExamples } from "@/lib/examples/catalog";
+
 import { resolveSnippetAlias } from "../catalog/snippetAliases";
 import {
   completionSnippetCatalog,
@@ -6,6 +8,7 @@ import {
   recommendedSnippetIds,
   snippetCatalog,
 } from "../catalog/snippetCatalog";
+import { snippetTemplates } from "../catalog/snippetTemplates";
 
 describe("snippet catalog", () => {
   it("keeps unique snippet ids", () => {
@@ -61,6 +64,7 @@ describe("snippet catalog", () => {
       "template-linear-traversal",
       "template-array-sum",
       "template-dp-table",
+      "template-greedy-selection",
     ]);
     expect(functionsSection?.snippets.map((snippet) => snippet.id)).toEqual([
       "algorithm-header",
@@ -73,10 +77,17 @@ describe("snippet catalog", () => {
       "template-factorial",
       "template-fibonacci",
       "template-memoization-simple",
+      "template-backtracking-choice",
+      "template-branch-bound-prune",
     ]);
-    expect(templatesSection?.snippets).toHaveLength(109);
+    expect(templatesSection?.snippets).toHaveLength(
+      snippetTemplates.length +
+        completionSnippetCatalog.filter((snippet) =>
+          snippet.id.startsWith("catalog-"),
+        ).length,
+    );
     expect(
-      templatesSection?.snippets.slice(0, 9).map((snippet) => snippet.id),
+      templatesSection?.snippets.slice(0, 12).map((snippet) => snippet.id),
     ).toEqual([
       "template-binary-search",
       "template-factorial",
@@ -87,6 +98,9 @@ describe("snippet catalog", () => {
       "template-array-sum",
       "template-memoization-simple",
       "template-dp-table",
+      "template-greedy-selection",
+      "template-backtracking-choice",
+      "template-branch-bound-prune",
     ]);
     expect(
       templatesSection?.snippets.some((snippet) =>
@@ -109,7 +123,7 @@ describe("snippet catalog", () => {
       snippet.id.startsWith("catalog-"),
     );
 
-    expect(catalogAlgorithms).toHaveLength(100);
+    expect(catalogAlgorithms).toHaveLength(getEnabledExamples().length);
   });
 
   it("localizes insert text when using english snippets", () => {

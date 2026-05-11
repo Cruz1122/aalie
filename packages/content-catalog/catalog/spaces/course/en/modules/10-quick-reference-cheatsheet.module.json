@@ -1,0 +1,1396 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-cheatsheet-resumen-rapido",
+  "slug": "quick-reference-cheatsheet",
+  "title": "Cheatsheet — Quick Summary",
+  "order": 10,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Quick consolidation of modules 1 to 9: recipe for analyzing iterative algorithms, recipe for demonstrating asymptotic membership, limit techniques, elementary operations, typical warnings, course notation and most used summations.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 20,
+  "tags": [
+    "cheatsheet",
+    "quick-summary",
+    "review",
+    "iterative-analysis",
+    "asymptotic-notations",
+    "limits",
+    "elementary-operations",
+    "summations",
+    "partial",
+    "quick-reference"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "cheatsheet",
+      "quick summary",
+      "quick reference",
+      "review before the midterm",
+      "key formulas",
+      "OE table",
+      "most used sums",
+      "iterative analysis recipe",
+      "asymptotic proof recipe"
+    ],
+    "keywords": [
+      "T(n)",
+      "T_best(n)",
+      "T_worst(n)",
+      "A(n)",
+      "OE",
+      "n0",
+      "c1",
+      "c2",
+      "limits",
+      "L'Hopital",
+      "Taylor",
+      "dominant term",
+      "Bubble Sort",
+      "Theta",
+      "summations",
+      "elementary operations"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-complejidad-temporal-espacial",
+        "kind": "required"
+      },
+      {
+        "id": "mod-loop-invariant",
+        "kind": "required"
+      },
+      {
+        "id": "mod-algoritmos-iterativos-patrones-costos",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-maestra-notaciones-convenciones",
+        "kind": "required"
+      },
+      {
+        "id": "mod-relaciones-notaciones",
+        "kind": "required"
+      },
+      {
+        "id": "mod-demostraciones-completas-teorema-limites",
+        "kind": "required"
+      },
+      {
+        "id": "mod-matriz-comparaciones-notaciones",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-sumatorias-comunes",
+        "kind": "required"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-complejidad-temporal",
+        "kind": "required"
+      },
+      {
+        "id": "sec-patrones-tipicos-ciclos",
+        "kind": "required"
+      },
+      {
+        "id": "sec-introduccion-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "sec-tabla-maestra-notaciones-convenciones",
+        "kind": "required"
+      },
+      {
+        "id": "sec-teorema-general-limites",
+        "kind": "required"
+      },
+      {
+        "id": "sec-sumatorias-simples",
+        "kind": "required"
+      },
+      {
+        "id": "sec-sumatorias-dobles",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-complejidad-temporal-espacial",
+    "mod-algoritmos-iterativos-patrones-costos",
+    "mod-notaciones-asintoticas",
+    "mod-tabla-maestra-notaciones-convenciones",
+    "mod-demostraciones-completas-teorema-limites",
+    "mod-tabla-sumatorias-comunes"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "repasar-modulos-1-9",
+      "text": "Review in a compact way the central concepts of modules 1 to 9."
+    },
+    {
+      "objectiveId": "aplicar-receta-analisis-iterativo",
+      "text": "Apply a short recipe to analyze an iterative algorithm line by line."
+    },
+    {
+      "objectiveId": "aplicar-receta-pertenencia-asintotica",
+      "text": "Apply a short recipe to demonstrate belonging to an asymptotic family."
+    },
+    {
+      "objectiveId": "seleccionar-tecnica-limite",
+      "text": "Select an appropriate technique to calculate limits: dominant term, L'Hôpital, logarithms or Taylor."
+    },
+    {
+      "objectiveId": "consultar-oe-lineas",
+      "text": "Quickly consult elementary operations by line type."
+    },
+    {
+      "objectiveId": "evitar-mejoras-falsas",
+      "text": "Recognize when it makes no sense to saying that an algorithm has been improved if the asymptotic order does not change."
+    },
+    {
+      "objectiveId": "recordar-notacion-curso",
+      "text": "Remember the symbols used in class and their operational meaning."
+    },
+    {
+      "objectiveId": "consultar-sumatorias-frecuentes",
+      "text": "Consult the sums that appear in most of the exercises in the course."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-cheatsheet",
+      "label": "Cheatsheet",
+      "definition": "Quick reference summary to consult formulas, steps and patterns without re-reading the entire theoretical development."
+    },
+    {
+      "termId": "term-oe",
+      "label": "OE",
+      "definition": "Elementary Operation."
+    },
+    {
+      "termId": "term-t-n",
+      "label": "T(n)",
+      "definition": "Time efficiency function."
+    },
+    {
+      "termId": "term-t-best",
+      "label": "T_best(n)",
+      "definition": "Efficiency function in the best case."
+    },
+    {
+      "termId": "term-t-worst",
+      "label": "T_worst(n)",
+      "definition": "Worst case efficiency function."
+    },
+    {
+      "termId": "term-a-n",
+      "label": "A(n)",
+      "definition": "Average case, from the English Average."
+    },
+    {
+      "termId": "term-n0",
+      "label": "n₀",
+      "definition": "Value of n from which an asymptotic bound is applied."
+    },
+    {
+      "termId": "term-lhopital",
+      "label": "L'Hôpital's rule",
+      "definition": "Technique for indeterminate limits of type ∞/∞ or 0/0, deriving numerator and denominator."
+    },
+    {
+      "termId": "term-termino-dominante",
+      "label": "Dominant term",
+      "definition": "Term of greatest growth that determines the asymptotic order."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-cheatsheet-resumen-rapido",
+      "slug": "quick-reference-cheatsheet",
+      "title": "Cheatsheet — Quick Summary",
+      "order": 1,
+      "summary": "Quick reference to solve iterative analysis exercises, limits, notations, OE and summations.",
+      "sections": [
+        {
+          "sectionId": "sec-cheatsheet-introduccion",
+          "slug": "cheatsheet-introduccion",
+          "title": "10. Cheatsheet — Quick Summary",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 2,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-funcion-cheatsheet",
+              "text": "Understand that this module functions as a quick reference and not as a complete theoretical development."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              },
+              {
+                "id": "mod-tabla-sumatorias-comunes",
+                "kind": "required"
+              }
+            ],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-cheatsheet-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This module consolidates modules 1 through 9 in a quick reference format. It is designed to review before midterms or to consult during exercises, not to replace the complete explanations of previous modules."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-receta-analizar-algoritmo-iterativo",
+          "slug": "receta-analizar-algoritmo-iterativo",
+          "title": "10.1 Recipe for analyzing an iterative algorithm",
+          "order": 2,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "learningObjectives": [
+            {
+              "objectiveId": "seguir-receta-iterativa",
+              "text": "Follow a minimal sequence of steps to analyze an iterative algorithm."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              },
+              {
+                "id": "mod-algoritmos-iterativos-patrones-costos",
+                "kind": "required"
+              }
+            ],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-receta-iterativo-lista",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Identify all the lines, without counting the"
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "end"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "For each line, determine how many times it is executed based on"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Add all the costs to obtain"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Identify the dominant term and apply asymptotic notation."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-receta-demostrar-pertenencia-asintotica",
+          "slug": "receta-demostrar-pertenencia-asintotica",
+          "title": "10.2 Recipe to demonstrate membership in an asymptotic family",
+          "order": 3,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "learningObjectives": [
+            {
+              "objectiveId": "seguir-receta-pertenencia",
+              "text": "Follow a minimal sequence to demonstrate membership in an asymptotic family using limits."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              },
+              {
+                "id": "mod-demostraciones-completas-teorema-limites",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-teorema-general-limites",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-receta-pertenencia-lista",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Calculate"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "L=\\lim_{n\\to\\infty}\\frac{f(n)}{g(n)}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "or"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "L=\\lim_{n\\to\\infty}\\frac{g(n)}{f(n)}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Apply the limits theorem to identify which notations apply."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Conclude explicitly with the corresponding notation."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-tecnicas-calcular-limites",
+          "slug": "tecnicas-calcular-limites",
+          "title": "10.3 Techniques for calculating limits",
+          "order": 4,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "learningObjectives": [
+            {
+              "objectiveId": "identificar-tecnicas-limites",
+              "text": "Identify common techniques to solve limits in asymptotic comparisons."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-demostraciones-completas-teorema-limites",
+                "kind": "required"
+              }
+            ],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-tecnicas-limites-lista",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Divide numerator and denominator by the dominant term of the denominator."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "L'Hôpital's rule: if the limit is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\infty/\\infty"
+                    },
+                    {
+                      "type": "text",
+                      "text": "or"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "0/0"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", derive numerator and denominator."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Logarithms: to compare exponential functions, apply log to both."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Taylor series: for finer approximations near the limit."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-oe-tipo-linea",
+          "slug": "resumen-oe-tipo-linea",
+          "title": "10.4 Summary of OE by line type",
+          "order": 5,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-oe",
+              "text": "Consult the basic cost associated with frequent instructions."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-complejidad-temporal-espacial",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-complejidad-temporal",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-resumen-oe-tabla",
+              "type": "table",
+              "title": "Summary of elementary operations by line type",
+              "columns": [
+                {
+                  "key": "tipoInstruccion",
+                  "label": "Instruction type"
+                },
+                {
+                  "key": "oe",
+                  "label": "OE"
+                },
+                {
+                  "key": "notas",
+                  "label": "Notes"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "x <- simple value"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 assignment"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "x <- a + b"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(or"
+                      },
+                      {
+                        "type": "inlineCode",
+                        "text": "-"
+                      },
+                      {
+                        "type": "text",
+                        "text": ","
+                      },
+                      {
+                        "type": "inlineCode",
+                        "text": "*"
+                      },
+                      {
+                        "type": "text",
+                        "text": ","
+                      },
+                      {
+                        "type": "inlineCode",
+                        "text": "/"
+                      },
+                      {
+                        "type": "text",
+                        "text": ")"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 arithmetic + 1 assignment"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "A[i] <- x"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 access + 1 assignment"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "if (a > b)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 comparison"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "for i <- 1 to n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3 per run"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "assignment + comparison + increment"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "while (cond)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "cond OE"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Condition Assessment Only"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "call(fun)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The body is analyzed separately"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-trampa-cuando-no-mejorar-algoritmo",
+          "slug": "trampa-cuando-no-mejorar-algoritmo",
+          "title": "10.5 Typical trap: when NOT to improve an algorithm",
+          "order": 6,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "learningObjectives": [
+            {
+              "objectiveId": "evitar-mejora-falsa",
+              "text": "Avoid calling a reduction of constants an algorithmic improvement when the order of growth does not change."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-loop-invariant",
+                "kind": "required"
+              },
+              {
+                "id": "mod-algoritmos-iterativos-patrones-costos",
+                "kind": "required"
+              }
+            ],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-trampa-no-mejorar-parrafo-1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When the analysis shows that the growth order is the same in the best and worst case, such as Bubble Sort with"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "O(n^2)"
+                },
+                {
+                  "type": "text",
+                  "text": "In both, there is no way to improve the behavior of the algorithm without fundamentally changing its design."
+                }
+              ]
+            },
+            {
+              "id": "blk-trampa-no-mejorar-parrafo-2",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "If you are asked to “improve” the efficiency function but cannot lower the order, you can try to reduce the constants, but this only helps to"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": "small. For"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": "large, asymptotic behavior dominates."
+                }
+              ]
+            },
+            {
+              "id": "blk-trampa-no-mejorar-callout",
+              "type": "note",
+              "variant": "warning",
+              "title": "Care",
+              "blocks": [
+                {
+                  "id": "blk-trampa-no-mejorar-callout-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Reducing constants may be useful in implementation, but it is not an asymptotic improvement. If the order remains the same, the growth family did not change."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-notacion-usada-curso",
+          "slug": "notacion-usada-curso",
+          "title": "10.6 Notation used in the course",
+          "order": 7,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-simbolos-curso",
+              "text": "Consult the symbols used in class and their meaning."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": []
+          },
+          "blocks": [
+            {
+              "id": "blk-notacion-usada-tabla",
+              "type": "table",
+              "title": "Notation used in the course",
+              "columns": [
+                {
+                  "key": "simbolo",
+                  "label": "Symbol"
+                },
+                {
+                  "key": "significado",
+                  "label": "Meaning in class"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "OE"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Elementary Operation"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Time efficiency function"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T_{best}(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Best case efficiency function"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T_{worst}(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Worst case efficiency function"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "A(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Average case (Average)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n_0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Value of n from which the bound applies"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "c,\\ c_1,\\ c_2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Positive constants in formal definitions"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\forall"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "For everything"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\exists"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "exists"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\mathbb{N}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Set of naturals"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\mathbb{R}^{+}-\\{0\\}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Positive reals excluding 0"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-sumatorias-mas-usadas-curso",
+          "slug": "sumatorias-mas-usadas-curso",
+          "title": "10.7 Summations — The most used in the course",
+          "order": 8,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-sumatorias-examen",
+              "text": "Consult the sums that appear in most of the exercises in the course."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-tabla-sumatorias-comunes",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-sumatorias-simples",
+                "kind": "required"
+              },
+              {
+                "id": "sec-sumatorias-dobles",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-sumatorias-mas-usadas-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This is the quick reference for the exam. The sums that appear in 99% of the course exercises:"
+                }
+              ]
+            },
+            {
+              "id": "blk-sumatorias-mas-usadas-tabla",
+              "type": "table",
+              "title": "Most used sums in the course",
+              "columns": [
+                {
+                  "key": "sumatoria",
+                  "label": "Summation"
+                },
+                {
+                  "key": "resultado",
+                  "label": "Result"
+                },
+                {
+                  "key": "orden",
+                  "label": "Order"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}c"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "c\\cdot n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=0}^{n}2^i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2^{n+1}-1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(2^n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}i^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)(2n+1)}{6}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\frac{1}{i}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sim \\ln(n)+0.5772"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(\\log n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\log(i)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sim n\\log(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)}{2}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i}i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)(2n+1)}{6}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{\\log n}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n\\log(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i}\\sum_{k=1}^{j}1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n(n+1)(n+2)}{6}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^3)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

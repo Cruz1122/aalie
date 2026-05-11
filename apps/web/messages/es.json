@@ -14,9 +14,367 @@
     "home": "Inicio",
     "analyzer": "Analizador",
     "examples": "Ejemplos",
+    "course": "Curso",
     "about": "Acerca de",
     "openMenu": "Abrir menú",
-    "howToUse": "Cómo usar"
+    "howToUse": "Cómo usar",
+    "quizzes": "Quizzes"
+  },
+  "quizzes": {
+    "title": "quiz ADA",
+    "subtitle": "Responde un quiz corto según tu progreso en el curso.",
+    "session": {
+      "moduleScope": "Quiz acotado al módulo: {title}"
+    },
+    "actions": {
+      "start": "Iniciar quiz",
+      "loadingSession": "Cargando...",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "finish": "Finalizar intento",
+      "finishEarly": "Finalizar ahora",
+      "evaluating": "Evaluando...",
+      "exit": "Salir"
+    },
+    "labels": {
+      "attemptId": "attemptId"
+    },
+    "validation": {
+      "incomplete": "Selecciona una respuesta antes de continuar."
+    },
+    "meta": {
+      "question": "Pregunta",
+      "questionNumber": "Pregunta #{current}",
+      "progress": "Pregunta {current} de {total}",
+      "topic": "Tema",
+      "type": "Tipo",
+      "difficulty": {
+        "basic": "Básica",
+        "intermediate": "Intermedia",
+        "advanced": "Avanzada"
+      }
+    },
+    "ordering": {
+      "up": "Subir",
+      "down": "Bajar"
+    },
+    "matching": {
+      "title": "Elige un par",
+      "selectOption": "Selecciona una opción",
+      "helperText": "Selecciona el concepto que mejor corresponde a este elemento."
+    },
+    "topics": {
+      "a_star": "A*",
+      "algorithm_analysis_fundamentals": "Fundamentos de Análisis",
+      "algorithm_correctness": "Corrección de Algoritmos",
+      "algorithm_formulation": "Formulación de Algoritmos",
+      "algorithm_specification": "Especificación de Algoritmos",
+      "alpha_beta_pruning": "Poda Alfa-Beta",
+      "asymptotic_notation": "Notación Asintótica",
+      "backtracking": "Backtracking",
+      "best_first_search": "Búsqueda Best-First",
+      "branch_and_bound": "Ramificación y Poda",
+      "characteristic_equation": "Ecuación Característica",
+      "cost_analysis": "Análisis de Costes",
+      "divide_and_conquer": "Divide y Vencerás",
+      "dynamic_programming": "Programación Dinámica",
+      "function_growth": "Crecimiento de Funciones",
+      "greedy_algorithms": "Algoritmos Voraces",
+      "heap_sort": "Heap Sort",
+      "heaps": "Montículos (Heaps)",
+      "heuristics": "Heurísticas",
+      "input_size": "Tamaño de Entrada",
+      "intelligent_substitution": "Sustitución Inteligente",
+      "iteration_method": "Método de Iteración",
+      "limits": "Límites",
+      "loop_invariant": "Invariante de Bucle",
+      "master_theorem": "Teorema Maestro",
+      "merge_sort": "Merge Sort",
+      "minimax": "Minimax",
+      "priority_queues": "Colas de Prioridad",
+      "recurrence_equations": "Ecuaciones de Recurrencia",
+      "recursion_tree_method": "Método del Árbol de Recurrencia",
+      "semantic_analysis": "Análisis Semántico",
+      "series": "Series",
+      "spatial_complexity": "Complejidad Espacial",
+      "temporal_complexity": "Complejidad Temporal",
+      "uniform_cost_search": "Búsqueda de Coste Uniforme",
+      "skill": {
+        "asymptotic": {
+          "big_o": {
+            "upper-bound-interpretation": "Interpretación de cota superior (Big-O)"
+          },
+          "theta": {
+            "identify-equivalent-order": "Identificación de orden equivalente (Theta)"
+          }
+        },
+        "elementary": {
+          "operations": {
+            "counting": "Conteo de operaciones"
+          }
+        },
+        "limits": {
+          "series": {
+            "growth-comparison": "Comparación de crecimiento de series"
+          }
+        },
+        "correctness": {
+          "distinguish-termination-from-correctness": "Distinguir terminación de corrección",
+          "loop-invariant": {
+            "three-moments": "Invariante de ciclo (Inicialización, Mantenimiento, Terminación)"
+          }
+        },
+        "analysis": {
+          "avoid-counting-structural-tokens": "Evitar contar tokens estructurales",
+          "avoid-superficial-loop-classification": "Evitar clasificación superficial de bucles",
+          "distinguish-algorithm-analysis-from-runtime-measurement": "Distinguir análisis algorítmico de medición de tiempo de ejecución",
+          "identify-dominant-operation-in-iterative-code": "Identificar la operación dominante en código iterativo",
+          "identify-elementary-operations": "Identificar operaciones elementales",
+          "identify-input-size": "Identificar el tamaño de entrada",
+          "identify-multiple-input-parameters": "Identificar múltiples parámetros de entrada",
+          "reason-about-constant-factors": "Razonar sobre factores constantes"
+        },
+        "formulation": {
+          "choose-control-structure-for-full-traversal": "Elegir estructura de control para recorrido completo",
+          "choose-control-structure-for-search": "Elegir estructura de control para búsqueda",
+          "extract-required-information-from-statement": "Extraer la información requerida del enunciado"
+        },
+        "invariant": {
+          "detect-bad-invariant": "Detectar un invariante incorrecto",
+          "explain-finalization": "Explicar la finalización",
+          "explain-initialization": "Explicar la inicialización",
+          "explain-maintenance": "Explicar el mantenimiento",
+          "formulate-invariant-for-maximum": "Formular invariante para máximo",
+          "formulate-invariant-for-sum": "Formular invariante para suma",
+          "interpret-before-iteration-state": "Interpretar el estado antes de la iteración"
+        },
+        "semantic": {
+          "classify-algorithm-purpose": "Clasificar el propósito del algoritmo",
+          "identify-algorithm-purpose": "Identificar el propósito del algoritmo",
+          "identify-state-variable": "Identificar la variable de estado"
+        },
+        "specification": {
+          "define-output-for-not-found-case": "Definir la salida para el caso no encontrado",
+          "distinguish-precondition-postcondition": "Distinguir precondición y poscondición",
+          "write-postcondition-from-code": "Escribir la poscondición a partir del código"
+        },
+        "recurrences": {
+          "method-selection": "Selección de método para resolver recurrencias",
+          "master": {
+            "case-selection": "Selección de caso del Teorema Maestro"
+          }
+        }
+      }
+    },
+    "empty": {
+      "title": "Sin preguntas",
+      "noQuestions": "No hay preguntas disponibles para este contenido todavía."
+    },
+    "error": {
+      "title": "Error",
+      "backend": "No se pudo cargar el quiz. Revisa la conexión con el backend e inténtalo de nuevo.",
+      "unsupportedQuestion": "Esta pregunta tiene un formato no soportado por la interfaz."
+    },
+    "result": {
+      "title": "Resultado del intento",
+      "score": "Puntaje: {score} / {maxScore}",
+      "accuracy": "Precisión: {percent}%",
+      "grade": "Nota",
+      "correct": "Correctas:",
+      "incorrect": "Incorrectas:",
+      "headlineExcellent": "¡Excelente trabajo! Dominas muy bien este tema.",
+      "headlineGreat": "¡Muy buen trabajo! Vas por muy buen camino.",
+      "headlineClose": "¡Muy cerca! Un repaso corto y la rompes.",
+      "headlineKeepGoing": "¡Sigue así! Cada intento te hace más fuerte.",
+      "areasIntro": "Conviene repasar este tema antes del siguiente intento:",
+      "areasIntroSingle": "Vas muy bien. Para el siguiente intento, te recomiendo repasar: {topics}.",
+      "areasIntroMany": "Vas muy bien. Para el siguiente intento, te recomiendo repasar estos temas: {topics}.",
+      "noAreasCongrats": "¡Excelente! No tienes tópicos pendientes por repasar. ¡Sigue así!",
+      "none": "Ninguno",
+      "correctLabel": "Correcta",
+      "incorrectLabel": "Incorrecta",
+      "feedback": "Retroalimentación de tu respuesta",
+      "explanation": "Explicación general",
+      "goToContent": "Ir al contenido ({chapterId})",
+      "goToContentNatural": "{prompt} {topic}",
+      "goToContentGood1": "Si quieres profundizar aún más, revisa:",
+      "goToContentGood2": "Buen trabajo. Si te interesa reforzarlo, mira:",
+      "goToContentGood3": "Vas muy bien. Puedes ampliar este tema en:",
+      "goToContentGood4": "Para consolidar lo que ya dominas, revisa:",
+      "goToContentRetry1": "Te conviene repasar este tema:",
+      "goToContentRetry2": "Antes del siguiente intento, mira:",
+      "goToContentRetry3": "Para afianzar esta parte, revisa:",
+      "goToContentRetry4": "Te puede ayudar volver a este contenido:"
+    },
+    "skill": {
+      "asymptotic": {
+        "big_o": {
+          "upper-bound-interpretation": "Interpretación de cota superior (Big-O)"
+        },
+        "theta": {
+          "identify-equivalent-order": "Identificación de orden equivalente (Theta)"
+        }
+      },
+      "elementary": {
+        "operations": {
+          "counting": "Conteo de operaciones"
+        }
+      },
+      "limits": {
+        "series": {
+          "growth-comparison": "Comparación de crecimiento de series"
+        }
+      },
+      "correctness": {
+        "distinguish-termination-from-correctness": "Distinguir terminación de corrección",
+        "loop-invariant": {
+          "three-moments": "Invariante de ciclo (Inicialización, Mantenimiento, Terminación)"
+        }
+      },
+      "analysis": {
+        "avoid-counting-structural-tokens": "Evitar contar tokens estructurales",
+        "avoid-superficial-loop-classification": "Evitar clasificación superficial de bucles",
+        "distinguish-algorithm-analysis-from-runtime-measurement": "Distinguir análisis algorítmico de medición de tiempo de ejecución",
+        "identify-dominant-operation-in-iterative-code": "Identificar la operación dominante en código iterativo",
+        "identify-elementary-operations": "Identificar operaciones elementales",
+        "identify-input-size": "Identificar el tamaño de entrada",
+        "identify-multiple-input-parameters": "Identificar múltiples parámetros de entrada",
+        "reason-about-constant-factors": "Razonar sobre factores constantes"
+      },
+      "formulation": {
+        "choose-control-structure-for-full-traversal": "Elegir estructura de control para recorrido completo",
+        "choose-control-structure-for-search": "Elegir estructura de control para búsqueda",
+        "extract-required-information-from-statement": "Extraer la información requerida del enunciado"
+      },
+      "invariant": {
+        "detect-bad-invariant": "Detectar un invariante incorrecto",
+        "explain-finalization": "Explicar la finalización",
+        "explain-initialization": "Explicar la inicialización",
+        "explain-maintenance": "Explicar el mantenimiento",
+        "formulate-invariant-for-maximum": "Formular invariante para máximo",
+        "formulate-invariant-for-sum": "Formular invariante para suma",
+        "interpret-before-iteration-state": "Interpretar el estado antes de la iteración"
+      },
+      "semantic": {
+        "classify-algorithm-purpose": "Clasificar el propósito del algoritmo",
+        "identify-algorithm-purpose": "Identificar el propósito del algoritmo",
+        "identify-state-variable": "Identificar la variable de estado"
+      },
+      "specification": {
+        "define-output-for-not-found-case": "Definir la salida para el caso no encontrado",
+        "distinguish-precondition-postcondition": "Distinguir precondición y poscondición",
+        "write-postcondition-from-code": "Escribir la poscondición a partir del código"
+      },
+      "recurrences": {
+        "method-selection": "Selección de método para resolver recurrencias",
+        "master": {
+          "case-selection": "Selección de caso del Teorema Maestro"
+        }
+      }
+    },
+    "dashboard": {
+      "title": "Mis quizzes",
+      "subtitle": "Revisa tu progreso, fortalezas y debilidades.",
+      "startNew": "Nuevo quiz",
+      "startFirst": "Hacer mi primer quiz",
+      "rouletteSideStart": "Iniciar quiz",
+      "rouletteSideClear": "Borrar progreso",
+      "rouletteClearConfirm": "¿Borrar todo el progreso e historial de quizzes en este navegador? Esta acción no se puede deshacer.",
+      "emptyTitle": "¡Empieza tu primer quiz!",
+      "emptySubtitle": "Completa al menos una sesión para ver tus estadísticas.",
+      "totalAttempts": "Intentos totales",
+      "avgAccuracy": "Precisión media",
+      "topStrength": "Fortaleza",
+      "topWeakness": "Área a mejorar",
+      "strengthsTitle": "Mis fortalezas",
+      "weakAreasTitle": "Áreas a reforzar",
+      "recentTitle": "Intentos recientes",
+      "noAttempts": "Aún no tienes intentos. ¡Anímate!",
+      "generalSession": "Sesión general",
+      "emptyCentered": {
+        "message": "Tu primer quiz te va a encantar. Comencemos ahora.",
+        "cta": "Hacer mi primer quiz"
+      },
+      "historyCard": {
+        "eyebrow": "Historial",
+        "completedWithScore": "quiz completado con {correct}/{total} respuestas correctas.",
+        "moduleLabel": "Módulo: {moduleId}.",
+        "generalSessionLabel": "Sesión general.",
+        "scoreTitle": "{score}/5.0",
+        "feedbackImprove": "Retroalimentación: refuerza {topic}.",
+        "feedbackStrength": "Retroalimentación: buena base en {topic}.",
+        "feedbackNeutral": "Retroalimentación: sigue practicando para consolidar dominio.",
+        "progressLabel": "Resultado",
+        "ctaLabel": "Repetir práctica"
+      },
+      "cards": {
+        "newTestEyebrow": "Nueva prueba",
+        "firstQuizTitle": "Empieza tu primer quiz",
+        "firstQuizDescription": "Aún no hay historial. Realiza una primera prueba para construir estadísticas y detectar áreas por mejorar.",
+        "noHistoryProgress": "Sin historial",
+        "firstQuizCta": "Hacer primer quiz",
+        "emptyStateEyebrow": "Estado",
+        "noStatsTitle": "Sin estadísticas todavía",
+        "noStatsDescription": "Las métricas aparecen cuando completes al menos un quiz. No se muestran promedios inventados.",
+        "pendingProgress": "Pendiente",
+        "diagnosticCta": "Crear prueba diagnóstica",
+        "recommendedPracticeEyebrow": "Práctica recomendada",
+        "practiceAreaTitle": "Practicar {area}",
+        "newQuizTitle": "Hacer nuevo quiz",
+        "recommendedPracticeDescription": "Esta es el área que más conviene reforzar según tus resultados recientes.",
+        "adaptiveDescription": "Crea una nueva prueba con selección adaptativa basada en tu progreso local.",
+        "currentAverageProgress": "Promedio actual",
+        "startQuizCta": "Hacer quiz",
+        "averageEyebrow": "Promedio",
+        "averageUnavailableTitle": "Promedio no disponible",
+        "averageTitle": "{score}/5.0",
+        "averageDescription": "Resumen de desempeño acumulado en quizzes completados en este navegador.",
+        "averageAccuracyProgress": "Precisión promedio",
+        "viewHistoryCta": "Ver historial",
+        "weaknessEyebrow": "Área a mejorar",
+        "noCriticalWeaknessTitle": "Sin debilidad crítica",
+        "weaknessDescription": "Aparece como prioridad porque tiene bajo desempeño o errores recientes.",
+        "noWeaknessDescription": "No hay errores recurrentes para marcar una debilidad fuerte.",
+        "masteryProgress": "Dominio",
+        "practiceAreaCta": "Practicar área",
+        "generalTestCta": "Prueba general",
+        "latestTestEyebrow": "Última prueba",
+        "latestTitle": "{percent}% en el último quiz",
+        "noLatestTitle": "Sin última prueba",
+        "latestDescription": "Respondiste {correct}/{total} de forma correcta.",
+        "noLatestDescription": "Cuando completes un quiz, aquí se mostrará el resultado más reciente.",
+        "resultProgress": "Resultado",
+        "retryCta": "Repetir práctica",
+        "strengthEyebrow": "Fortaleza",
+        "pendingStrengthTitle": "Fortaleza pendiente",
+        "strengthDescription": "Esta área muestra consistencia suficiente en tus resultados recientes.",
+        "noStrengthDescription": "Aún falta historial para identificar una fortaleza defendible.",
+        "keepPracticingCta": "Seguir practicando"
+      }
+    },
+    "modal": {
+      "title": "Nuevo quiz",
+      "modeLabel": "Modo de estudio",
+      "mode": {
+        "adaptive": "Adaptativo",
+        "weak": "Áreas débiles",
+        "free": "Libre"
+      },
+      "modeDesc": {
+        "adaptive": "Según tu progreso y dominio actual.",
+        "weak": "Foco en los temas donde más fallas.",
+        "free": "Selección aleatoria del banco completo."
+      },
+      "weakAreasLabel": "Tus áreas débiles",
+      "questionCountLabel": "Número de preguntas",
+      "questionCountOption": "{count} preguntas",
+      "recommendedEyebrow": "Recomendado",
+      "recommendedTitle": "Practicar áreas débiles",
+      "recommendedDescription": "AALIE seleccionará preguntas usando tu progreso local y resultados recientes.",
+      "cancel": "Cancelar",
+      "start": "Comenzar quiz",
+      "note": "Las preguntas se seleccionan automáticamente de un banco de más de 475 preguntas."
+    }
   },
   "footer": {
     "languageLabel": "Idioma",
@@ -115,7 +473,7 @@
     },
     "methodSelector": {
       "title": "Seleccionar Método de Análisis",
-      "subtitle": "Este algoritmo puede resolverse con múltiples métodos. Selecciona el que prefieras y revisa su nivel de precisión.",
+      "subtitle": "Este algoritmo puede resolverse con múltiples métodos. Selecciona el que prefieras y revisa si da una cota equivalente, superior, inferior o parcial.",
       "selectedMethodLabel": "Método seleccionado actualmente",
       "default": "Por defecto",
       "recommended": "Recomendado",
@@ -131,6 +489,12 @@
         "high": "Muy buena elección para este algoritmo: encaja muy bien y suele dar un resultado confiable.",
         "medium": "Puede funcionar bien en este caso, pero depende de algunos detalles de la forma de la recurrencia.",
         "low": "Es una opción menos adecuada aquí: puede funcionar, pero normalmente no es la forma más clara de resolverlo."
+      },
+      "boundKinds": {
+        "equivalent": "Resultado equivalente",
+        "upper": "Cota superior",
+        "lower": "Cota inferior",
+        "partial": "Cota parcial"
       },
       "reasons": {
         "fallback": "Este método no cumple las condiciones detectadas para este patrón de recurrencia."
@@ -200,6 +564,8 @@
       "viewExecutionTrace": "Ver seguimiento de ejecución",
       "viewLoopInvariant": "Ver loop invariant",
       "loopInvariantUnavailable": "No hay loop invariant disponible",
+      "viewRecursiveInvariant": "Ver invariante recursivo",
+      "recursiveInvariantUnavailable": "No hay invariante recursivo disponible",
       "noInfoToCompare": "No hay información para comparar",
       "compareWithLLM": "Comparar con LLM",
       "noAstAvailable": "No hay AST disponible",
@@ -386,6 +752,50 @@
         "summary": "Ejecuta un análisis para generar un loop invariant determinista."
       }
     },
+    "recursiveInvariant": {
+      "title": "Invariante Recursivo",
+      "subtitle": "Estructura inductiva pedagógica",
+      "status": {
+        "ok": "Bien soportado",
+        "low_confidence": "Parcialmente soportado",
+        "unavailable": "No disponible"
+      },
+      "reason": {
+        "no_recursive_calls": "No se detectaron llamadas recursivas en el algoritmo.",
+        "complex_recursion": "El patrón de recursión es demasiado complejo para analizar.",
+        "insufficient_evidence": "La evidencia local del AST no es suficiente para un análisis confiable."
+      },
+      "reasons": {
+        "no_recursive_calls": "No se detectaron llamadas recursivas en el algoritmo.",
+        "complex_recursion": "El patrón de recursión es demasiado complejo para analizar.",
+        "insufficient_evidence": "La evidencia local del AST no es suficiente para un análisis confiable."
+      },
+      "sections": {
+        "recursiveStructure": "Estructura Recursiva",
+        "baseProperty": "Propiedad del Caso Base",
+        "inductiveHypothesis": "Hipótesis Inductiva",
+        "recursiveStep": "Paso Recursivo",
+        "terminationGarantee": "Garantía de Terminación",
+        "summary": "Resumen del Invariante",
+        "evidence": "Evidencia",
+        "unavailable": "El invariante recursivo no está disponible"
+      },
+      "labels": {
+        "baseCondition": "Condición base",
+        "baseResult": "Resultado base",
+        "recursiveCalls": "Llamadas recursivas",
+        "recursionType": "Tipo de recursión",
+        "detectedCalls": "Llamadas detectadas",
+        "baseConditions": "Condiciones base",
+        "noRecursion": "No hay estructura recursiva para mostrar."
+      },
+      "recursionTypes": {
+        "linear": "Recursión Lineal",
+        "divideConquer": "Divide y Conquista",
+        "multiple": "Recursión Múltiple",
+        "unknown": "Desconocida"
+      }
+    },
     "executionTrace": {
       "title": "Seguimiento de Ejecución",
       "detectingAlgorithm": "Detectando tipo de algoritmo...",
@@ -402,6 +812,11 @@
       "executionDiagram": "Diagrama de seguimiento",
       "stepByStepTrace": "Seguimiento Paso a Paso",
       "executionDiagramSection": "Diagrama de Seguimiento",
+      "steppingTitle": "Seguimiento recursivo",
+      "steppingStep": "Paso",
+      "steppingSpeed": "Velocidad",
+      "steppingDepth": "Profundidad",
+      "steppingInfo": "El seguimiento muestra primero las llamadas y después los retornos, para que puedas ver la recursión completa paso a paso.",
       "controlsAndVariables": "Controles y Variables",
       "explanation": "Explicación",
       "explanationPrompt": "¿Quieres saber más sobre cómo funciona este algoritmo?",
@@ -418,6 +833,14 @@
       "explanationLabel": "Explicación:",
       "diagramNote": "Este diagrama muestra un ejemplo de ejecución para n = {n}; no corresponde necesariamente al peor caso, sino a un caso típico de tamaño n.",
       "diagramNoteVariables": "Este diagrama muestra un ejemplo de ejecución con variables iniciales: {vars}. No corresponde necesariamente al peor caso.",
+      "diagramLevelsAll": "Todos los niveles",
+      "diagramLevelsCurrent": "Hasta profundidad {depth}",
+      "diagramLevelsShowLess": "Mostrar menos niveles",
+      "diagramLevelsShowMore": "Mostrar más niveles",
+      "phase_expansion": "Expansión",
+      "phase_return": "Retorno",
+      "phase_construction": "Construcción",
+      "phase_analysis": "Análisis",
       "iterationBadge": "Iteración {id}",
       "loopEdgeStart": "inicio",
       "iterativeCaseNote": "El caso seleccionado (mejor/peor/promedio) se refleja en un input generado automáticamente; el arreglo mostrado es solo un ejemplo no editable.",
@@ -546,7 +969,7 @@
       "lineNotFound": "No se encontró información para la línea {line}",
       "lineAnalysis": "Análisis de Línea {line}",
       "operationType": "Tipo de operación:",
-      "elementalCost": "Costo elemental (Cₖ):",
+      "elementalCost": "Costo elemental (Cáµ¢):",
       "elementalCostDesc": "Costo computacional básico de esta operación",
       "expectedExecutions": "Esperanza de ejecuciones:",
       "numExecutions": "Número de ejecuciones:",
@@ -787,7 +1210,9 @@
       "duplicateSubproblems": "Subproblemas duplicados:",
       "zoomHint": "Usa el mouse para hacer zoom y arrastrar. Presiona Esc para cerrar.",
       "irregularTree": "Árbol con subproblemas duplicados (ej. Fibonacci)",
+      "balancedApproxLegend": "Aproximación balanceada",
       "duplicateSubproblem": "⚠ Subproblema duplicado ({count}x)",
+      "syntheticNode": "Agregado",
       "nodeCount": "{count} nodo{plural}",
       "returns": "Retorna"
     },
@@ -828,6 +1253,178 @@
       "viewAst": "Ver AST",
       "aiHelp": "Ayuda con IA",
       "defaultCode": "busquedaBinaria(A[n], x, inicio, fin) BEGIN\n  IF (inicio > fin) THEN BEGIN\n    RETURN -1;\n  END\n  mitad <- (inicio + fin) / 2;\n  IF (A[mitad] = x) THEN BEGIN\n    RETURN mitad;\n  END\n  ELSE BEGIN\n    IF (x < A[mitad]) THEN BEGIN\n      RETURN busquedaBinaria(A, x, inicio, mitad - 1);\n    END\n    ELSE BEGIN\n      RETURN busquedaBinaria(A, x, mitad + 1, fin);\n    END\n  END\nEND"
+    },
+    "techniques": {
+      "noAstForClassification": "No hay AST disponible para clasificar la técnica con seguridad.",
+      "insufficientPedagogicEvidence": "No hay una evidencia pedagógica suficientemente clara todavía.",
+      "openDetailsAriaLabel": "Ver explicación de esta técnica",
+      "modal": {
+        "evidenceTitle": "Fragmento que evidencia la forma",
+        "lineLabel": "Línea {start}{end}",
+        "omittedBody": "Se omitió parte del cuerpo para mostrar solo la estructura relevante.",
+        "noEvidence": "AALIE no encontró un fragmento suficientemente claro para mostrar como evidencia.",
+        "factsTitle": "Qué evidencia vio AALIE",
+        "diagnosticsTitle": "Diagnósticos y dudas"
+      },
+      "evidenceFacts": {
+        "additive_shrink": "La reducción se hace por resta o desplazamiento aditivo.",
+        "bound_like_comparison": "Se detectan comparaciones con forma de cota o umbral.",
+        "branching_recursion_tree": "La forma genera un árbol de recursión ramificado.",
+        "co_executed_recursive_calls": "El bloque contiene varias llamadas recursivas co-ejecutadas.",
+        "early_return_from_stored_state": "La ejecución puede retornar directamente un estado ya almacenado.",
+        "exclusive_interval_partition": "El intervalo se parte con un corte fraccional y luego la recursión continúa por una sola rama.",
+        "external_partition_call": "Una llamada no recursiva parte el problema mientras las auto-llamadas recursivas resuelven subproblemas.",
+        "indexed_read_before_recursion": "Se consulta una estructura indexada antes de recalcular.",
+        "indexed_write_after_recursive_computation": "El resultado se escribe en una estructura indexada después del cálculo recursivo.",
+        "indexed_writes_inside_loop": "Se llenan estados indexados dentro de ciclos.",
+        "kWayBranchCount": "La descomposición abre {branchCount} subproblemas en el mismo nivel.",
+        "multi_previous_state_transition": "La transición usa varios estados previos, no una sola acumulación simple.",
+        "multiple_co_executed_recursive_calls": "Se expanden varias ramas recursivas dentro del mismo camino de ejecución.",
+        "partition_like_split": "Aparece una partición estructural que separa el problema antes de recursar.",
+        "post_recursive_combine": "Después de resolver los subproblemas aparece una fase de combinación.",
+        "previous_state_dependency": "Los estados actuales dependen de valores anteriores.",
+        "prune_like_return": "Hay una poda estructural que corta ramas antes de seguir explorando.",
+        "recursive_argument_shrink": "La llamada recursiva reduce el tamaño del problema.",
+        "same_storage_read_write_shape": "La lectura y la escritura apuntan a la misma forma de estado almacenado.",
+        "single_branch_after_interval_split": "Después de dividir el intervalo, el algoritmo sigue solo por la rama que conserva el subproblema relevante.",
+        "single_dominant_recursive_call": "En cada camino domina una única llamada recursiva.",
+        "structural_decomposition": "La estructura muestra una descomposición real del problema en subproblemas.",
+        "subproblem_shrink": "Cada llamada trabaja sobre una expresión de subproblema más pequeña."
+      },
+      "divide_and_conquer": {
+        "title": "Divide y vencerás",
+        "shortMessage": "Divide el problema en partes más pequeñas y luego combina respuestas.",
+        "plainMeaning": "El algoritmo rompe un problema grande en subproblemas más pequeños, los resuelve por separado y después une los resultados.",
+        "howToRecognize": [
+          "Aparecen varias llamadas recursivas.",
+          "Los argumentos se reducen con división, punto medio o rangos partidos.",
+          "La forma típica es T(n) = aT(n/b) + f(n)."
+        ],
+        "whyItMatters": "Suele llevar a análisis con árbol de recursión o Teorema Maestro. Es la familia de algoritmos como Merge Sort.",
+        "commonMistake": "No toda recursión múltiple es Divide y Vencerás. Si reduce por resta y repite subproblemas, puede ser Resta y Serás Vencido."
+      },
+      "decrease_and_conquer": {
+        "title": "Resta y vencerás",
+        "shortMessage": "Reduces el problema paso a paso sin abrir demasiadas ramas.",
+        "plainMeaning": "El algoritmo resuelve el problema reduciéndolo a una versión apenas más pequeña, como n-1 o n-c.",
+        "howToRecognize": [
+          "Hay una sola llamada recursiva dominante.",
+          "El argumento baja por resta.",
+          "La forma típica es T(n) = T(n-b) + f(n)."
+        ],
+        "whyItMatters": "Suele producir árboles profundos, pero no explosivos. Es común en factorial o suma recursiva.",
+        "commonMistake": "Si aparecen dos o más llamadas reducidas por resta, ya no es este caso simple."
+      },
+      "decrease_and_be_conquered": {
+        "title": "Resta y serás vencido",
+        "shortMessage": "Hay ramas repetidas y eso puede explotar si no guardas resultados.",
+        "plainMeaning": "El algoritmo abre varias llamadas recursivas que reducen por resta. Muchas ramas pueden terminar calculando lo mismo otra vez.",
+        "howToRecognize": [
+          "Hay dos o más llamadas recursivas.",
+          "Los argumentos bajan como n-1, n-2 o n-c.",
+          "No se detecta una tabla que evite repetir estados.",
+          "La forma típica es T(n) = aT(n-b) + f(n), con a > 1."
+        ],
+        "whyItMatters": "Es la señal clásica de ineficiencia recursiva y suele anticipar crecimiento muy rápido.",
+        "commonMistake": "No lo confundas con Programación Dinámica. Si hay memoización, la historia cambia."
+      },
+      "dp_top_down": {
+        "title": "PD top-down",
+        "shortMessage": "Hay recursión con memoria para no repetir trabajo.",
+        "plainMeaning": "El algoritmo empieza desde el problema grande y baja recursivamente, pero antes de recalcular revisa si ese estado ya estaba guardado.",
+        "howToRecognize": [
+          "Hay recursión.",
+          "Antes de calcular, consulta una tabla indexada.",
+          "Después de calcular, guarda el resultado."
+        ],
+        "whyItMatters": "Convierte una recursión repetitiva en una solución mucho más eficiente, resolviendo cada subproblema una sola vez.",
+        "commonMistake": "Tener un arreglo no basta. Debe existir reutilización real de resultados."
+      },
+      "dp_bottom_up": {
+        "title": "PD bottom-up",
+        "shortMessage": "Construyes desde casos pequeños hasta resolver el problema completo.",
+        "plainMeaning": "El algoritmo llena una tabla de forma iterativa, empezando por casos base y avanzando hacia estados más grandes.",
+        "howToRecognize": [
+          "No necesita recursión.",
+          "Hay ciclos llenando una tabla.",
+          "Cada celda usa estados ya calculados."
+        ],
+        "whyItMatters": "Evita la pila de recursión y suele tener mejores constantes cuando la tabla se llena de forma regular.",
+        "commonMistake": "No todo arreglo llenado en un ciclo es PD. Debe representar estados del problema."
+      },
+      "greedy": {
+        "title": "Voraz",
+        "shortMessage": "Tomas decisiones locales. Es útil, pero hay que justificarlo.",
+        "plainMeaning": "El algoritmo elige en cada paso la mejor opción disponible y se queda con esa decisión.",
+        "howToRecognize": [
+          "Hay selección local repetida.",
+          "La decisión se agrega a la solución.",
+          "No hay retroceso ni reconsideración."
+        ],
+        "whyItMatters": "Puede ser muy rápido, pero solo es correcto si se demuestra propiedad voraz y subestructura óptima.",
+        "commonMistake": "Que algo parezca razonable localmente no significa que sea óptimo globalmente."
+      },
+      "backtracking": {
+        "title": "Backtracking",
+        "shortMessage": "Exploras opciones y retrocedes cuando una rama no sirve.",
+        "plainMeaning": "El algoritmo construye soluciones parciales, prueba si siguen siendo válidas y vuelve atrás cuando encuentra una contradicción.",
+        "howToRecognize": [
+          "Hay recursión.",
+          "Se modifica una solución parcial.",
+          "Después de recursar, se deshace la modificación.",
+          "Hay condiciones de factibilidad."
+        ],
+        "whyItMatters": "Es mejor que fuerza bruta porque no espera al final para descartar soluciones imposibles.",
+        "commonMistake": "Si además usa cotas de optimización, probablemente ya es Branch and Bound."
+      },
+      "branch_and_bound": {
+        "title": "Branch and Bound",
+        "shortMessage": "Exploras ramas, pero podas las que no pueden mejorar la mejor solución.",
+        "plainMeaning": "Es backtracking orientado a optimización. Usa cotas para decidir si vale la pena seguir explorando una rama.",
+        "howToRecognize": [
+          "Hay árbol de decisiones.",
+          "Hay poda.",
+          "Hay comparación contra una cota o mejor solución conocida."
+        ],
+        "whyItMatters": "Reduce búsqueda innecesaria y conserva garantía de optimalidad cuando las cotas están bien diseñadas.",
+        "commonMistake": "No basta con tener un if. Debe haber una cota que descarte ramas por no poder mejorar la solución."
+      },
+      "iterative": {
+        "title": "Iterativo",
+        "shortMessage": "Parece un algoritmo basado principalmente en ciclos.",
+        "plainMeaning": "El algoritmo repite instrucciones con ciclos, sin señales fuertes de recursión, memoización o búsqueda por ramas.",
+        "howToRecognize": [
+          "Aparecen FOR, WHILE o REPEAT.",
+          "No hay llamadas recursivas.",
+          "El costo se suele analizar contando cuántas veces se ejecuta cada línea."
+        ],
+        "whyItMatters": "Permite explicar costos por línea, sumatorias, casos mejor o peor e invariantes de ciclo.",
+        "commonMistake": "Un algoritmo iterativo también puede ser PD bottom-up o voraz. El detector solo dice lo más probable."
+      },
+      "unknown": {
+        "title": "Aún no concluyente",
+        "shortMessage": "Todavía no hay señales suficientes para clasificar la técnica.",
+        "plainMeaning": "El detector no encontró un patrón suficientemente claro en el AST.",
+        "howToRecognize": [
+          "Falta código.",
+          "El parse aún no produjo AST.",
+          "La estructura no coincide con una técnica cubierta."
+        ],
+        "whyItMatters": "Es mejor no clasificar que vender una técnica incorrecta.",
+        "commonMistake": "Forzar una etiqueta solo porque el algoritmo se parece superficialmente a un ejemplo conocido."
+      },
+      "explanations": {
+        "branch_and_bound": "Este fragmento explora ramas de forma recursiva, retrocede sobre decisiones previas y además poda usando comparaciones de cota. Por eso AALIE lo interpreta como Branch and Bound.",
+        "dp_top_down": "Este fragmento consulta una tabla antes de recalcular y luego guarda el resultado obtenido. Esa combinación de recursión con memoria es la señal típica de Programación Dinámica top-down.",
+        "dp_bottom_up": "Este fragmento llena una tabla con ciclos y cada estado depende de valores ya calculados. Por eso AALIE lo interpreta como Programación Dinámica bottom-up.",
+        "backtracking": "Este fragmento construye una solución parcial, explora recursivamente y luego deshace decisiones para probar otras opciones. Ese patrón es característico de Backtracking.",
+        "divide_and_conquer": "Este fragmento hace varias llamadas recursivas sobre subproblemas divididos por mitad, punto medio o partición de rango. Por eso AALIE lo interpreta como Divide y Vencerás.",
+        "decrease_and_be_conquered": "Este fragmento hace varias llamadas recursivas reduciendo el tamaño por resta. Como no aparece una tabla consultada antes de calcular, esos subproblemas pueden repetirse. Por eso AALIE lo interpreta como Resta y Serás Vencido.",
+        "decrease_and_conquer": "Este fragmento reduce el problema por resta y mantiene una llamada recursiva dominante. Por eso AALIE lo interpreta como Resta y Vencerás.",
+        "greedy": "Este fragmento toma decisiones locales que se mantienen sin retroceso ni reutilización de estados previos. Esa forma sugiere una estrategia voraz, aunque AALIE la reporta con cautela.",
+        "iterative": "Aquí predominan los ciclos y no aparecen señales claras de recursión, memoización o búsqueda por ramas. Por eso AALIE lo interpreta como un algoritmo iterativo.",
+        "unknown": "No hay señales suficientes en el AST para clasificar la técnica con seguridad."
+      }
     },
     "repairModal": {
       "repairing": "Reparando algoritmo...",
@@ -1530,21 +2127,41 @@
       }
     },
     "categories": {
-      "iterativos": {
-        "label": "Iterativos",
-        "offText": "Resuelven el problema con ciclos y actualizaciones paso a paso."
+      "iterative": {
+        "title": "Iterativos",
+        "summary": "Algoritmos con bucles, acumuladores, tablas simples o recorridos secuenciales."
       },
-      "divide-y-venceras": {
-        "label": "Divide y vencerás",
-        "offText": "Parten el problema en varias partes más pequeñas, las resuelven y luego combinan el resultado."
+      "divideAndConquer": {
+        "title": "Divide y vencerás",
+        "summary": "Algoritmos que dividen el problema en regiones, particiones o subproblemas."
       },
-      "resta-y-venceras": {
-        "label": "Resta y vencerás",
-        "offText": "Reducen el problema a una versión más pequeña del mismo y repiten hasta llegar al caso base."
+      "decreaseAndConquer": {
+        "title": "Resta y vencerás",
+        "summary": "Algoritmos con una llamada dominante y reducción aditiva del tamaño."
       },
-      "resta-y-seras-vencido": {
-        "label": "Resta y serás vencido",
-        "offText": "Avanzan restando una parte pequeña del problema en cada llamada, normalmente en recurrencias lineales."
+      "decreaseAndGetConquered": {
+        "title": "Resta y serás vencido",
+        "summary": "Algoritmos con varias llamadas recursivas co-ejecutadas, todas por reducción aditiva."
+      },
+      "dpTopDown": {
+        "title": "Programación dinámica top-down",
+        "summary": "Recursión con memoización explícita de subproblemas."
+      },
+      "dpBottomUp": {
+        "title": "Programación dinámica bottom-up",
+        "summary": "Construcción iterativa de estados desde casos base."
+      },
+      "greedy": {
+        "title": "Voraces",
+        "summary": "Algoritmos que toman decisiones locales irreversibles."
+      },
+      "backtracking": {
+        "title": "Backtracking",
+        "summary": "Exploración de decisiones con mutación, recursión y deshacer."
+      },
+      "branchAndBound": {
+        "title": "Branch and Bound",
+        "summary": "Búsqueda de optimización con cotas y poda de ramas."
       }
     },
     "families": {
@@ -1581,6 +2198,8 @@
     "completed": "Completado",
     "references": "Referencias",
     "viewSolution": "Ver solución",
-    "brokenLinkTooltip": "Contenido no disponible"
+    "brokenLinkTooltip": "Contenido no disponible",
+    "startQuiz": "Hacer quiz",
+    "quizLocked": "Quiz al {threshold}%"
   }
 }

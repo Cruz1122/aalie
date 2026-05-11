@@ -1,0 +1,1065 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-branch-and-bound",
+  "slug": "branch-and-bound",
+  "title": "Branch and Bound",
+  "order": 19,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Optimization technique that extends backtracking by using bounds to decide which branches of the search tree cannot improve the best known solution. Includes key concepts, traversal strategies, suboptimality pruning, 0/1 knapsack, fractional bounds, and comparison with backtracking and brute force.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 95,
+  "tags": [
+    "branch-and-bound",
+    "branching-and-pruning",
+    "branch-bound",
+    "optimization",
+    "bounds",
+    "upper-bound",
+    "lower-bound",
+    "incumbent",
+    "list-live-nodes",
+    "priority-queue",
+    "least-cost",
+    "max-benefit",
+    "0/1 knapsack",
+    "knapsack-01",
+    "pruning-for-suboptimality",
+    "backtracking"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "Branch and Bound",
+      "B&B",
+      "branching and pruning",
+      "branch bound",
+      "branch-and-bound",
+      "pruning by height",
+      "pruning for suboptimality",
+      "live nodes",
+      "incumbent",
+      "best bound"
+    ],
+    "keywords": [
+      "upper bound",
+      "lower bound",
+      "global level",
+      "best known solution",
+      "live node",
+      "dead node",
+      "priority queue",
+      "DFS",
+      "B.F.S.",
+      "Least Cost",
+      "Max Benefit",
+      "0/1 knapsack",
+      "fractional knapsack",
+      "value/weight",
+      "remaining capacity",
+      "pruning due to infeasibility",
+      "pruning for suboptimality"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-backtracking",
+        "kind": "required"
+      },
+      {
+        "id": "mod-algoritmos-voraces",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-programacion-dinamica",
+        "kind": "recommended"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-introduccion-backtracking",
+        "kind": "required"
+      },
+      {
+        "id": "sec-modelo-general-backtracking",
+        "kind": "required"
+      },
+      {
+        "id": "sec-componentes-algoritmo-voraz",
+        "kind": "required"
+      },
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-voraces-vs-programacion-dinamica",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-backtracking",
+    "mod-algoritmos-voraces",
+    "mod-programacion-dinamica",
+    "mod-notaciones-asintoticas"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "definir-branch-and-bound",
+      "text": "Deende Branch and Bound as an optimization technique based on branching, bounds and pruning."
+    },
+    {
+      "objectiveId": "distinguir-bb-backtracking",
+      "text": "Distinguishing Branch and Bound from backtracking: pruning for suboptimality vs. pruning for infeasibility."
+    },
+    {
+      "objectiveId": "identificar-cotas",
+      "text": "Identify lower bound, upper bound and global bound in a node of the search tree."
+    },
+    {
+      "objectiveId": "modelar-nodos-vivos",
+      "text": "Model the list of live nodes and understand how its structure deendes the traversal strategy."
+    },
+    {
+      "objectiveId": "aplicar-poda-max-min",
+      "text": "Apply the pruning rule according to the objective (maximization or minimization)."
+    },
+    {
+      "objectiveId": "resolver-mochila-bb",
+      "text": "Solve the 0/1 knapsack using Branch and Bound using fractional upper bound."
+    },
+    {
+      "objectiveId": "analizar-complejidad-bb",
+      "text": "Analyze complexity of Branch and Bound considering the size of the tree and the cost of maintaining the list of live nodes."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-branch-and-bound",
+      "label": "Branch and Bound",
+      "definition": "Optimization technique that explores a decision tree and uses bounds to prune branches that cannot improve the best known solution."
+    },
+    {
+      "termId": "term-ramificacion",
+      "label": "Branching",
+      "definition": "Process of generating children of a node, usually setting an additional decision."
+    },
+    {
+      "termId": "term-bound",
+      "label": "Bound",
+      "definition": "Mathematical estimate that limits the best possible value achievable from a node."
+    },
+    {
+      "termId": "term-cota-superior",
+      "label": "Upper bound",
+      "definition": "In maximization, an optimistic estimate of the maximum value that could be achieved from a node."
+    },
+    {
+      "termId": "term-cota-inferior",
+      "label": "Lower bound",
+      "definition": "Value guaranteed by a partial solution or by a known feasible solution."
+    },
+    {
+      "termId": "term-incumbente",
+      "label": "Incumbent",
+      "definition": "Best complete feasible solution known during the execution of the algorithm."
+    },
+    {
+      "termId": "term-lista-nodos-vivos",
+      "label": "List of Live Nodes",
+      "definition": "Set of nodes generated but not yet explored. Its structure determines the order of travel."
+    },
+    {
+      "termId": "term-poda-suboptimalidad",
+      "label": "Pruning for suboptimality",
+      "definition": "Pruning discards a branch even if it is feasible because its bound shows that it cannot improve the incumbent solution."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-branch-and-bound",
+      "slug": "branch-and-bound",
+      "title": "Branch and Bound",
+      "order": 1,
+      "summary": "Branching, bounds, pruning for suboptimality and complete example of an 0/1 knapsack.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-branch-and-bound",
+          "slug": "introduccion-branch-and-bound",
+          "title": "Branch and Bound: central idea",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "blocks": [
+            {
+              "id": "blk-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Branch and Bound is a technique for solving optimization problems by exploring a decision tree. At each node a bound is calculated that estimates how good the best solution within that branch could be."
+                }
+              ]
+            },
+            {
+              "id": "blk-bb-intro-ramificar-acotar",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The technique combines two actions: branching and delimiting. Branching means breaking down the problem into more specific decisions. Bounding means estimating whether a branch still has the possibility of improving the best solution found."
+                }
+              ]
+            },
+            {
+              "id": "blk-bb-idea-central",
+              "type": "note",
+              "variant": "info",
+              "title": "Essential idea",
+              "blocks": [
+                {
+                  "id": "blk-bb-idea-central-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Branch and Bound does not explore a branch just because it is valid. It explores it only if it can still improve the best known solution."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-bb-vs-backtracking-basico",
+              "type": "table",
+              "title": "Basic difference with backtracking",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterion"
+                },
+                {
+                  "key": "backtracking",
+                  "label": "Backtracking"
+                },
+                {
+                  "key": "branchBound",
+                  "label": "Branch and Bound"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Problem type"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Search for valid solutions."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Search for the best solution."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Main pruning"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Due to infeasibility."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Due to infeasibility and suboptimality."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Scan order"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usually depth."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Depth, width or priority queue."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-conceptos-clave-branch-and-bound",
+          "slug": "conceptos-clave-branch-and-bound",
+          "title": "Key concepts",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-conceptos-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The algorithm maintains a best known solution and a list of pending nodes. Each node is kept or discarded depending on its bounds."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-cota-maximizacion",
+              "type": "equationBlock",
+              "title": "Pruning model in maximization",
+              "latex": "prune(N)=\\begin{cases}\\text{true},& CS(N)\\le best\\\\\\text{false},& CS(N)>best\\end{cases}"
+            },
+            {
+              "id": "blk-expl-cota-maximizacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In a maximization problem,"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "CS(N)"
+                },
+                {
+                  "type": "text",
+                  "text": "is the upper bound (optimistic estimate) of the node"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "N"
+                },
+                {
+                  "type": "text",
+                  "text": ". If this maximum possible value does not even reach the best solution already found ("
+                },
+                {
+                  "type": "strong",
+                  "text": "better"
+                },
+                {
+                  "type": "text",
+                  "text": "), the branch is cut because there is no point in continuing to explore something that cannot surpass what we already have."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-cota-minimizacion",
+              "type": "equationBlock",
+              "title": "Pruning model in minimization",
+              "latex": "prune(N)=\\begin{cases}\\text{true},& CI(N)\\ge best\\\\\\text{false},& CI(N)<best\\end{cases}"
+            },
+            {
+              "id": "blk-expl-cota-minimizacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In minimization,"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "CI(N)"
+                },
+                {
+                  "type": "text",
+                  "text": "represents the lower bound (the minimum estimated cost). If the lowest cost we could achieve on this branch is greater than or equal to the best known cost, we discard the node."
+                }
+              ]
+            },
+            {
+              "id": "blk-conceptos-bb-table",
+              "type": "table",
+              "title": "Branch and Bound Technical Glossary",
+              "columns": [
+                {
+                  "key": "concepto",
+                  "label": "Concept"
+                },
+                {
+                  "key": "rol",
+                  "label": "Role in the algorithm"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Global level / Incumbent"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Reference of the best feasible value found so far."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "List of Live Nodes (LNV)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Structure that saves the generated but not expanded nodes."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-modelo-general-branch-and-bound",
+          "slug": "modelo-general-branch-and-bound",
+          "title": "General Branch and Bound Model",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-modelo-general-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Each node represents a partial solution. In addition to the decisions made, the node stores the accumulated value, the resources used, an optimistic bound and the next decision level."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-nodo-bb",
+              "type": "equationBlock",
+              "title": "node model",
+              "latex": "N=(X_k,value(N),resource(N),CI(N),CS(N),k)"
+            },
+            {
+              "id": "blk-expl-nodo-bb",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "a node"
+                },
+                {
+                  "type": "strong",
+                  "text": "N"
+                },
+                {
+                  "type": "text",
+                  "text": "is deended by the vector of partial decisions"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X_k"
+                },
+                {
+                  "type": "text",
+                  "text": ", the value and resource consumed so far, the lower bounds ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "CI"
+                },
+                {
+                  "type": "text",
+                  "text": ") and higher ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "CS"
+                },
+                {
+                  "type": "text",
+                  "text": "), and the level"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "k"
+                },
+                {
+                  "type": "text",
+                  "text": "in the decision tree."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-ramificacion-bb",
+              "type": "equationBlock",
+              "title": "Binary branch model",
+              "latex": "children(N)=\\begin{cases}N_{include}:x_{k+1}=1\\\\N_{exclude}:x_{k+1}=0\\end{cases}"
+            },
+            {
+              "id": "blk-expl-ramificacion-bb",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Branching consists of dividing the current problem into two or more subproblems. In the binary case, this usually means making a decision (value 1) or ignoring it (value 0) for the next element of the problem."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-actualizacion-mejor",
+              "type": "equationBlock",
+              "title": "Best solution update",
+              "latex": "best_{t+1}=\\begin{cases}value(N),& isFeasible(N)\\ \\land\\ isComplete(N)\\ \\land\\ value(N)>best_t\\\\best_t,& \\text{otherwise}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-actualizacion-mejor",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The variable"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "best"
+                },
+                {
+                  "type": "text",
+                  "text": "It is updated only when we endd a solution that is feasible (meets constraints), complete (all decisions made) and that also exceeds the previous value."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-poda-completa-bb",
+              "type": "equationBlock",
+              "title": "Complete node decision model",
+              "latex": "state(N)=\\begin{cases}\\text{pruned by infeasibility},& resource(N)>limit\\\\\\text{complete solution},& isComplete(N)\\ \\land\\ isFeasible(N)\\\\\\text{pruned by suboptimality},& CS(N)\\le best\\\\\\text{live},& \\text{otherwise}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-poda-completa-bb",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This model summarizes the fate of a node. It can die because it exceeds resources, because it is a leaf on the tree, or because it is suboptimal (its upper bound does not exceed the best). If none of this is done, the node remains"
+                },
+                {
+                  "type": "strong",
+                  "text": "alive"
+                },
+                {
+                  "type": "text",
+                  "text": "to be explored later."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-bb-flujo",
+              "type": "mermaid",
+              "title": "General Flow of Branch and Bound",
+              "code": "flowchart TD\n  A[\"Create root node\"] --> B[\"Compute bounds\"]\n  B --> C[\"Insert into Live Node List\"]\n  C --> D{\"Is LNL empty?\"}\n  D -- \"Yes\" --> E[\"Return best solution\"]\n  D -- \"No\" --> F[\"Extract node according to strategy\"]\n  F --> G{\"Prune?\"}\n  G -- \"Yes\" --> D\n  G -- \"No\" --> H{\"Complete solution?\"}\n  H -- \"Yes\" --> I[\"Update best if improved\"]\n  I --> D\n  H -- \"No\" --> J[\"Branch\"]\n  J --> K[\"Compute child bounds\"]\n  K --> L[\"Insert live children\"]\n  L --> D"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-mochila-entera-planteamiento-bb",
+          "slug": "mochila-entera-planteamiento-bb",
+          "title": "Complete example: Entire 0/1 knapsack",
+          "order": 4,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-mochila-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The entire 0/1 knapsack contains objects with value and weight. The goal is to maximize total value without exceeding capacity."
+                }
+              ]
+            },
+            {
+              "id": "blk-mochila-bb-modelo-decision",
+              "type": "equationBlock",
+              "title": "Decision model",
+              "latex": "x_i=\\begin{cases}1,& \\text{if item }i\\text{ is included}\\\\0,& \\text{if item }i\\text{ is excluded}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-mochila-decision",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The decision variable"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "x_i"
+                },
+                {
+                  "type": "text",
+                  "text": "It is binary. A value of 1 indicates that the object is part of the knapsack, and a 0 indicates that it is left outside."
+                }
+              ]
+            },
+            {
+              "id": "blk-mochila-bb-modelo-objetivo",
+              "type": "equationBlock",
+              "title": "Optimization model",
+              "latex": "\\max\\sum_{i=1}^{n}v_ix_i\\quad \\text{sujeto a}\\quad \\sum_{i=1}^{n}w_ix_i\\le W,\\quad x_i\\in\\{0,1\\}"
+            },
+            {
+              "id": "blk-expl-mochila-objetivo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "We seek to maximize the sum of the values ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "v_i"
+                },
+                {
+                  "type": "text",
+                  "text": ") of the chosen objects, with the restriction that the sum of their weights ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "w_i"
+                },
+                {
+                  "type": "text",
+                  "text": ") does not exceed the total capacity"
+                },
+                {
+                  "type": "strong",
+                  "text": "W"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-arbol-mochila-mermaid",
+              "type": "mermaid",
+              "title": "Branch and Bound Exploration Tree — Knapsack 0/1",
+              "code": "flowchart TD\n  R[\"Root<br/>CI = 0<br/>CS = 10.25\"]\n\n  R -->|\"I: include item1\"| A[\"A<br/>Incl. item1<br/>CI = 2<br/>CS = 10.25\"]\n  R -->|\"N: exclude item1\"| B[\"B [Pruned]<br/>Exclude item1<br/>CS = 9.50<br/>PRUNED\"]\n\n  A -->|\"I: include item2\"| C[\"C<br/>Incl. item2<br/>CI = 5<br/>CS = 10.25\"]\n  A -->|\"N: exclude item2\"| D[\"D [Pruned]<br/>Exclude item2<br/>CS = 9.75<br/>PRUNED\"]\n\n  C -->|\"I: include item3\"| E[\"E<br/>Incl. item3<br/>CI = 9<br/>CS = 10.25\"]\n  C -->|\"N: exclude item3\"| F[\"F<br/>Exclude item3<br/>CI = 5<br/>CS = 10.00\"]\n\n  E -->|\"I: include item4\"| G[\"G [Pruned]<br/>Incl. item4<br/>p = 10 greater than 7<br/>INFEASIBLE\"]\n  E -->|\"N: exclude item4\"| H[\"H<br/>Exclude item4<br/>{1,2,3}<br/>val = 9\"]\n\n  F -->|\"I: include item4\"| I[\"I [Optimum]<br/>Incl. item4<br/>{1,2,4}<br/>val = 10<br/>OPTIMUM\"]\n  F -->|\"N: exclude item4\"| J[\"J<br/>Exclude item4<br/>{1,2}<br/>val = 5\"]\n\n  classDef normal fill:#1e293b,stroke:#60a5fa,color:#e2e8f0,stroke-width:1px;\n  classDef pruned fill:#3f1212,stroke:#ef4444,color:#fee2e2,stroke-width:1px,stroke-dasharray:5 5;\n  classDef solution fill:#12351f,stroke:#22c55e,color:#dcfce7,stroke-width:2px;\n\n  class R,A,C,E,F,J normal;\n  class B,D,G pruned;\n  class H,I solution;"
+            },
+            {
+              "id": "blk-arbol-mochila-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Optimal solution",
+              "blocks": [
+                {
+                  "id": "blk-arbol-mochila-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The optimal solution is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "X=(1,1,0,1)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", that is, take objects 1, 2 and 4. The total weight is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "1+2+4=7"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and the total value is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "2+3+5=10"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-cota-superior-mochila-fraccionaria",
+          "slug": "cota-superior-mochila-fraccionaria",
+          "title": "Upper bound for fractional knapsack",
+          "order": 5,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-cota-fraccionaria-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "To estimate an upper bound on 0/1 knapsack, we allow taking fractions of objects. That fractional solution is always greater than or equal to any integer solution."
+                }
+              ]
+            },
+            {
+              "id": "blk-cota-fraccionaria-modelo",
+              "type": "equationBlock",
+              "title": "Upper bound model",
+              "latex": "CS(N)=value(N)+fractional\\_value(remaining\\_items,remaining\\_capacity)"
+            },
+            {
+              "id": "blk-expl-cota-fraccionaria-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The upper bound of the node"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "N"
+                },
+                {
+                  "type": "text",
+                  "text": "It is the sum of the value already accumulated plus the value we would obtain if we could fill the rest of the capacity optimally using fractions of the leftover objects."
+                }
+              ]
+            },
+            {
+              "id": "blk-cota-fraccionaria-pieza",
+              "type": "equationBlock",
+              "title": "Value of a fraction",
+              "latex": "fractional\\_value=value_i\\cdot\\frac{remaining\\_capacity}{weight_i}"
+            },
+            {
+              "id": "blk-expl-cota-fraccionaria-pieza",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When an object no longer fits completely, we take only the proportional part that completes the capacity"
+                },
+                {
+                  "type": "strong",
+                  "text": "W"
+                },
+                {
+                  "type": "text",
+                  "text": ". Its value is calculated by multiplying the total value of the object by the fraction of weight that we are taking advantage of."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-complejidad-branch-and-bound",
+          "slug": "complejidad-branch-and-bound",
+          "title": "Branch and Bound Complexity",
+          "order": 6,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-complejidad-bb-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Branch and Bound may be fast in practice, but its worst case is still exponential."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bb-general",
+              "type": "equationBlock",
+              "title": "General cost model",
+              "latex": "T(n)=\\Theta(N_{visited}\\cdot(C_{branch}+C_{bound}+C_{LNV}))"
+            },
+            {
+              "id": "blk-expl-complejidad-bb-general",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The total time"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "depends on the number of nodes visited multiplied by the cost of operations per node: generate children ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "C_{branch}"
+                },
+                {
+                  "type": "text",
+                  "text": "), calculate the elevation ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "C_{bound}"
+                },
+                {
+                  "type": "text",
+                  "text": ") and manage the list of live nodes ("
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "C_{LNV}"
+                },
+                {
+                  "type": "text",
+                  "text": ")."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bb-peor-caso",
+              "type": "equationBlock",
+              "title": "binary worst case",
+              "latex": "N_{visited}=\\begin{cases}O(2^n),& \\text{if there is almost no pruning}\\\\\\ll 2^n,& \\text{if bounds prune many branches}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-complejidad-bb-peor-caso",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In the worst case, the bound does not discard any branches and we visit the entire binary tree of size"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "2^n"
+                },
+                {
+                  "type": "text",
+                  "text": ". However, a good bound can make the current number of nodes orders of magnitude smaller."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bb-mochila",
+              "type": "equationBlock",
+              "title": "0/1 knapsack with fractional dimension",
+              "latex": "T(n)=O(2^n\\cdot n)\\quad \\text{if computing each bound costs }O(n)"
+            },
+            {
+              "id": "blk-expl-complejidad-bb-mochila",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Since the calculation of the fractional dimension requires a linear traversal through the remaining objects, the cost per node is"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "O(n)"
+                },
+                {
+                  "type": "text",
+                  "text": ", which multiplies the total cost of the tree."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bb-prioridad",
+              "type": "equationBlock",
+              "title": "Additional priority queue cost",
+              "latex": "C_{LNV}=O(\\log |LNV|)"
+            },
+            {
+              "id": "blk-expl-complejidad-bb-prioridad",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "If we use a priority queue for Max Benefit or Least Cost, inserting and extracting nodes has a logarithmic cost with respect to the number of nodes alive at that moment."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-branch-and-bound",
+          "slug": "resumen-operativo-branch-and-bound",
+          "title": "Operational summary",
+          "order": 10,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "blocks": [
+            {
+              "id": "blk-resumen-bb",
+              "type": "note",
+              "variant": "success",
+              "title": "Minimum recipe",
+              "blocks": [
+                {
+                  "id": "blk-resumen-bb-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes the objective function."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Represent each solution as a sequence of decisions."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Deendes branching and safe limits."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Maintain the best feasible solution (relevant)."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Choose route strategy (Max Benefit recommended)."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Expand and prune until the LNV is emptied."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-formulas-clave-bb",
+              "type": "latexSteps",
+              "title": "Key models",
+              "steps": [
+                {
+                  "stepId": "step-formula-nodo-bb",
+                  "title": "Node",
+                  "latex": "N=(X_k,value(N),resource(N),CI(N),CS(N),k)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "A node saves the state of the search at a given point."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-poda-max",
+                  "title": "Pruning in maximization",
+                  "latex": "CS(N)\\le best\\Rightarrow prune(N)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The branch is discarded if its maximum potential does not exceed what has already been achieved."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-costo-bb",
+                  "title": "Overall cost",
+                  "latex": "T(n)=\\Theta(N_{visited}\\cdot(C_{branch}+C_{bound}+C_{LNV}))",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Cost is measured in nodes multiplied by the work on each one."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

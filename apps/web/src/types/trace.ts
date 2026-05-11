@@ -194,6 +194,16 @@ export interface GraphNodeData {
   iterationPath?: string;
   loopVar?: string;
   loopValue?: number;
+  depth?: number;
+  phase?: string;
+  nodeType?: string;
+  callId?: string;
+  parentCallId?: string | null;
+  branchCount?: number;
+  isBaseCase?: boolean;
+  returnValue?: unknown;
+  executionOrder?: number;
+  returnOrder?: number;
 }
 
 export interface GraphNode {

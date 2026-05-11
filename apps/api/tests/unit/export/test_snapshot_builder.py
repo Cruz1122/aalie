@@ -174,3 +174,65 @@ def test_build_snapshot_copies_while_blocks_into_iterative_and_global_case():
     assert while_blocks
     assert while_blocks[0].get("patternUsed") == "binary_search_interval"
     assert (global_case.get("whileBlocks") or [])[0].get("id") == "while_L4"
+
+
+def test_build_snapshot_preserves_structured_trace_in_recursive_call_trace():
+    state = build_export_state(_base_payload())
+    snapshot_input = dict(state["snapshotInput"])
+    analyze_payload = dict(snapshot_input.get("analyze") or {})
+    worst_case = dict(analyze_payload.get("worst") or {})
+    worst_totals = dict(worst_case.get("totals") or {})
+    worst_totals["recurrence"] = {
+        "type": "divide_conquer",
+        "form": "T(n)=2T(n/2)+n",
+        "a": 2,
+        "b": 2,
+        "f": "n",
+        "n0": 1,
+        "method": "recursion_tree",
+    }
+    worst_case["totals"] = worst_totals
+    analyze_payload["worst"] = worst_case
+    snapshot_input["analyze"] = analyze_payload
+    snapshot_input["traceByCase"] = {
+        "worst": {
+            "ok": True,
+            "trace": {
+                "kind": "recursive",
+                "steps": [],
+                "summary": {"totalSteps": 0, "totalCalls": 2, "maxRecursionDepth": 1},
+                "diagnostics": {"truncated": False, "warnings": []},
+                "callTreeSource": {
+                    "calls": [
+                        {"id": "c1", "children": ["c2"], "params": {"n": 3}},
+                        {
+                            "id": "c2",
+                            "children": [],
+                            "params": {"n": 1},
+                            "is_base_case": True,
+                        },
+                    ],
+                    "root_calls": ["c1"],
+                },
+            },
+            "derived": {
+                "structuredTrace": {
+                    "patternKind": "generic_recursive",
+                    "graph": {"nodes": [], "edges": []},
+                    "classification": {
+                        "patternKind": "generic_recursive",
+                        "confidence": "low",
+                        "evidence": ["fallback"],
+                    },
+                }
+            },
+        }
+    }
+
+    snapshot = build_snapshot(snapshot_input, state["options"])
+
+    recursive_data = ((snapshot.get("recursive") or {}).get("data") or {}).get("callTrace") or {}
+    worst_case = (recursive_data.get("data") or {}).get("worst") or {}
+
+    assert worst_case.get("structuredTrace", {}).get("patternKind") == "generic_recursive"
+    assert worst_case.get("callTreeSource", {}).get("calls")

@@ -7,6 +7,7 @@ from .recursive_steps_core import (
     StepConfidence,
     StepStatus,
     compute_overall_status,
+    get_asymptotic_notation,
     locale_key,
     make_recursive_step,
 )
@@ -113,6 +114,7 @@ class StepContext:
     order: int
     is_linear: bool
     g_n: str
+    bound_kind: str  # "equivalent" | "upper" | "lower" | "partial"
     is_homogeneous: bool
     homogeneous_form: str
     equation: str
@@ -509,6 +511,10 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
 
     prior_partial = any(s.get("status") in ("partial", "unsupported", "error") for s in steps)
     step12_status: StepStatus = "partial" if prior_partial else "complete"
+    
+    # Convertir a notación correcta basada en bound_kind
+    theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta)
+    
     steps.append(
         _make_step(
             ctx=ctx,
@@ -528,9 +534,9 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
                 else "dominant_term_concluded.exponential"
             ),
             concept_key="concept.dominant_term_concluded",
-            primary_latex=f"T(n) = {ctx.theta}",
+            primary_latex=f"T(n) = {theta_with_notation}",
             payload={
-                "theta": ctx.theta,
+                "theta": theta_with_notation,
                 "dominant_root": ctx.roots[0].get("root") if ctx.roots else None,
             },
         )

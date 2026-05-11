@@ -31,22 +31,8 @@ interface IterativeAnalysisViewProps {
   onViewGeneralProcedure: (caseType: CaseType) => void;
 }
 
-/**
- * Obtiene las clases CSS para el badge de un tipo de caso.
- * @param caseType - Tipo de caso (worst, best, average)
- * @returns String con las clases CSS para el badge
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const getCaseBadgeStyle = (caseType: CaseType): string => {
-  switch (caseType) {
-    case "worst":
-      return "bg-red-500/20 text-red-300 border-red-500/30";
-    case "best":
-      return "bg-green-500/20 text-green-300 border-green-500/30";
-    case "average":
-      return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
-  }
-};
+/** Longitud máxima de notación para mostrar la bolita; si es mayor, se oculta para evitar desborde. */
+const NOTATION_LENGTH_FOR_CIRCLE = 16;
 
 /**
  * Obtiene las clases CSS para el botón selector de caso.
@@ -55,9 +41,6 @@ const getCaseBadgeStyle = (caseType: CaseType): string => {
  * @returns String con las clases CSS para el botón
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-/** Longitud máxima de notación para mostrar la bolita; si es mayor, se oculta para evitar desborde. */
-const NOTATION_LENGTH_FOR_CIRCLE = 16;
-
 const getSelectorButtonStyle = (
   caseType: CaseType,
   isSelected: boolean,
@@ -126,9 +109,9 @@ export default function IterativeAnalysisView({
   const renderLineCostContent = () => {
     if (!data || (!data.worst && !data.best && !data.avg)) {
       return (
-        <div className="flex-1 flex items-center justify-center text-slate-400">
+        <div className="flex w-full min-w-0 flex-col items-center justify-center px-2 py-6 text-slate-400 max-lg:min-h-[285px] lg:flex-1 lg:min-h-0">
           <div className="text-center">
-            <span className="material-symbols-outlined text-4xl mb-2 block">
+            <span className="material-symbols-outlined mb-2 block text-4xl">
               table_chart
             </span>
             <p>{tView("runAnalysisToSeeCosts")}</p>
@@ -155,9 +138,9 @@ export default function IterativeAnalysisView({
 
     if (!currentData || !currentData.ok) {
       return (
-        <div className="flex-1 flex items-center justify-center text-slate-400">
+        <div className="flex w-full min-w-0 flex-col items-center justify-center px-2 py-6 text-slate-400 max-lg:min-h-[285px] lg:flex-1 lg:min-h-0">
           <div className="text-center">
-            <span className="material-symbols-outlined text-4xl mb-2 block">
+            <span className="material-symbols-outlined mb-2 block text-4xl">
               hourglass_empty
             </span>
             <p>
@@ -169,10 +152,7 @@ export default function IterativeAnalysisView({
     }
 
     return (
-      <div
-        className="overflow-auto scrollbar-custom"
-        style={{ height: "285px" }}
-      >
+      <div className="h-[285px] shrink-0 overflow-auto scrollbar-custom lg:h-auto lg:min-h-0 lg:flex-1 lg:shrink">
         <LineTable
           rows={currentData.byLine}
           onViewProcedure={(line) => onViewLineProcedure(line, selectedCase)}
@@ -182,20 +162,15 @@ export default function IterativeAnalysisView({
   };
 
   return (
-    <div className="flex flex-col gap-4 min-w-0">
+    <div className="flex flex-col gap-4 min-w-0 lg:h-full lg:min-h-0">
       {/* Card de costos por línea */}
-      <div className="glass-card p-4 rounded-lg h-full flex flex-col min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 min-w-0">
+      <div className="glass-card flex min-h-0 flex-col rounded-lg p-4 min-w-0 lg:flex-1 lg:basis-0">
+        <div className="flex shrink-0 flex-col gap-2 mb-3 min-w-0 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-white font-semibold flex items-center gap-2 flex-wrap min-w-0">
             <span className="material-symbols-outlined text-amber-400 flex-shrink-0">
               table_chart
             </span>
             <span className="truncate">{tView("costsPerLine")}</span>
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide flex-shrink-0 ${getCaseBadgeStyle(selectedCase)}`}
-            >
-              {getCaseLabel(selectedCase)}
-            </span>
           </h2>
           <div className="flex items-center justify-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1 flex-shrink-0">
             <button
@@ -218,13 +193,13 @@ export default function IterativeAnalysisView({
             </button>
           </div>
         </div>
-        <div className="flex flex-col" style={{ height: "285px" }}>
+        <div className="flex min-h-[285px] min-w-0 flex-col overflow-hidden lg:flex-1 lg:basis-0 lg:min-h-0">
           {renderLineCostContent()}
         </div>
       </div>
 
       {/* Card de ecuaciones matemáticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0">
+      <div className="grid shrink-0 grid-cols-1 gap-4 md:grid-cols-3 min-w-0">
         <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)] min-w-0">
           <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
             {(() => {

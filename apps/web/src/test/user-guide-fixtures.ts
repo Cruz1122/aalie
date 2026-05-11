@@ -1,4 +1,4 @@
-import { getSpaceBundle } from "@aa/content-catalog";
+import { getSpaceBundle } from "@aa/content-catalog/server";
 
 import {
   buildUserGuideLandingDataFromBundle,

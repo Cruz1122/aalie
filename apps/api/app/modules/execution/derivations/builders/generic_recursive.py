@@ -17,7 +17,7 @@ from ..structured_trace_models import (
     StructuredTraceRenderConfig,
     StructuredTraceView,
 )
-from ._call_utils import _format_param_value, call_to_label
+from ._call_utils import _format_param_value, build_recursive_node_data, call_depth, call_to_label
 
 
 def _build_from_call_tree(
@@ -44,8 +44,9 @@ def _build_from_call_tree(
 
     nodes: List[StructuredTraceNode] = []
     edges: List[StructuredTraceEdge] = []
+    execution_order_counter = [0]  # Mutable counter for nested function
 
-    def add_call(call_id: str) -> None:
+    def add_call(call_id: str, fallback_depth: int = 0) -> None:
         if len(nodes) >= max_nodes:
             return
         call = calls_by_id.get(call_id)
@@ -59,15 +60,20 @@ def _build_from_call_tree(
             bc.get("detected", False) and bc.get("matched", False)
         )
         role = "base_return" if is_base else "call"
+        phase = "return" if is_base else "expansion"
+        current_depth = call_depth(call, fallback_depth)
 
         cost = cost_by_call.get(call_id, {})
-        data: Dict[str, Any] = {}
-        if cost.get("tokens") is not None:
-            data["tokens"] = cost["tokens"]
-        if cost.get("aggregateTokens") is not None:
-            data["aggregateTokens"] = cost["aggregateTokens"]
-        if cost.get("microseconds") is not None:
-            data["microseconds"] = cost["microseconds"]
+        data = build_recursive_node_data(
+            call,
+            node_type=role,
+            phase=phase,
+            is_base_case=is_base,
+            cost=cost,
+            depth=current_depth,
+            execution_order=execution_order_counter[0],
+        )
+        execution_order_counter[0] += 1
 
         nodes.append(
             StructuredTraceNode(
@@ -89,10 +95,26 @@ def _build_from_call_tree(
                     label="call",
                 )
             )
-            add_call(child_id)
+            add_call(child_id, current_depth + 1)
+
+        # Mark when this call has fully returned so the UI can reveal the back edge later.
+        if data is not None:
+            data["returnOrder"] = execution_order_counter[0]
+
+        if call.get("parent_id") or call.get("parentCallId"):
+            parent_id = call.get("parent_id") or call.get("parentCallId")
+            parent_node_id = f"call_{parent_id}"
+            edges.append(
+                StructuredTraceEdge(
+                    id=f"e_ret_{call_id}_{parent_id}",
+                    source=node_id,
+                    target=parent_node_id,
+                    label="return",
+                )
+            )
 
     for rid in root_ids:
-        add_call(rid)
+        add_call(rid, 0)
 
     # Nodo final basado en retorno real de la llamada raíz.
     if root_ids:
@@ -109,9 +131,18 @@ def _build_from_call_tree(
                     role="result",
                     title=title,
                     lines=result_label.split("\n"),
-                    data={"nodeType": "output"},
+                    data=build_recursive_node_data(
+                        root_call,
+                        node_type="output",
+                        phase="return",
+                        extra={"returnValue": ret},
+                        depth=call_depth(root_call, 0) + 1,
+                        execution_order=execution_order_counter[0],
+                        return_order=execution_order_counter[0],
+                    ),
                 )
             )
+            execution_order_counter[0] += 1
             edges.append(
                 StructuredTraceEdge(
                     id=f"e_call_{root_ids[0]}_{result_id}",

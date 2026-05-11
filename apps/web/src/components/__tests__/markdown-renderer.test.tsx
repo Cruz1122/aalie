@@ -13,6 +13,14 @@ describe("MarkdownRenderer", () => {
     expect(container.textContent).toContain("Cx");
   });
 
+  it("renders numeric-base powers as inline math", () => {
+    const { container } = render(<MarkdownRenderer content={"`2^n`"} />);
+
+    expect(container.querySelector("code")).not.toBeNull();
+    expect(container.querySelector("sup")).not.toBeNull();
+    expect(container.textContent).toContain("2n");
+  });
+
   it("renders inline markdown math as a code-styled token", () => {
     const { container } = render(<MarkdownRenderer content={"$C_x$"} />);
 

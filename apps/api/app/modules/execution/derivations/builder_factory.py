@@ -101,16 +101,7 @@ def _apply_layout_linear(
                 label = "\n".join(n.lines[:3])
         data_dict: Dict[str, Any] = {"label": label}
         if n.data:
-            if "tokens" in n.data:
-                data_dict["tokens"] = n.data["tokens"]
-            if "microseconds" in n.data:
-                data_dict["microseconds"] = n.data["microseconds"]
-            if "iterationPath" in n.data:
-                data_dict["iterationPath"] = n.data["iterationPath"]
-            if "loopVar" in n.data:
-                data_dict["loopVar"] = n.data["loopVar"]
-            if "loopValue" in n.data:
-                data_dict["loopValue"] = n.data["loopValue"]
+            data_dict.update(n.data)
         node_type = "default"
         if n.data and isinstance(n.data, dict):
             node_type = n.data.get("nodeType", "default") or "default"
@@ -174,16 +165,7 @@ def _apply_layout_tree(
                 label = "\n".join(n.lines[:3])
         data_dict: Dict[str, Any] = {"label": label}
         if n.data:
-            if "tokens" in n.data:
-                data_dict["tokens"] = n.data["tokens"]
-            if "microseconds" in n.data:
-                data_dict["microseconds"] = n.data["microseconds"]
-            if "iterationPath" in n.data:
-                data_dict["iterationPath"] = n.data["iterationPath"]
-            if "loopVar" in n.data:
-                data_dict["loopVar"] = n.data["loopVar"]
-            if "loopValue" in n.data:
-                data_dict["loopValue"] = n.data["loopValue"]
+            data_dict.update(n.data)
         node_type = "default"
         if n.data and isinstance(n.data, dict):
             node_type = n.data.get("nodeType", "default") or "default"

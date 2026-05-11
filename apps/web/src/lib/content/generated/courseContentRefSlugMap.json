@@ -1,0 +1,123 @@
+{
+  "mod-complejidad-temporal-espacial": {
+    "moduleSlug": "time-and-space-complexity",
+    "chapters": {
+      "cap-complejidad-temporal-espacial": "time-and-space-complexity"
+    }
+  },
+  "mod-loop-invariant": {
+    "moduleSlug": "loop-invariant",
+    "chapters": {
+      "cap-loop-invariant": "loop-invariant"
+    }
+  },
+  "mod-algoritmos-iterativos-patrones-costos": {
+    "moduleSlug": "iterative-algorithms-cost-patterns",
+    "chapters": {
+      "cap-algoritmos-iterativos-patrones-costos": "iterative-algorithms-cost-patterns"
+    }
+  },
+  "mod-notaciones-asintoticas": {
+    "moduleSlug": "asymptotic-notation",
+    "chapters": {
+      "cap-notaciones-asintoticas": "asymptotic-notation"
+    }
+  },
+  "mod-tabla-maestra-notaciones-convenciones": {
+    "moduleSlug": "master-notation-conventions-table",
+    "chapters": {
+      "cap-tabla-maestra-notaciones-convenciones": "master-notation-conventions-table"
+    }
+  },
+  "mod-relaciones-notaciones": {
+    "moduleSlug": "notation-implications",
+    "chapters": {
+      "cap-relaciones-notaciones": "notation-implications"
+    }
+  },
+  "mod-demostraciones-completas-teorema-limites": {
+    "moduleSlug": "limit-theorem-complete-proofs",
+    "chapters": {
+      "cap-demostraciones-completas-teorema-limites": "limit-theorem-complete-proofs"
+    }
+  },
+  "mod-matriz-comparaciones-notaciones": {
+    "moduleSlug": "notation-comparison-matrix",
+    "chapters": {
+      "cap-matriz-comparaciones-notaciones": "notation-comparison-matrix"
+    }
+  },
+  "mod-tabla-sumatorias-comunes": {
+    "moduleSlug": "common-summations-table",
+    "chapters": {
+      "cap-tabla-sumatorias-comunes": "common-summations-table"
+    }
+  },
+  "mod-cheatsheet-resumen-rapido": {
+    "moduleSlug": "quick-reference-cheatsheet",
+    "chapters": {
+      "cap-cheatsheet-resumen-rapido": "quick-reference-cheatsheet"
+    }
+  },
+  "mod-algoritmos-recursivos": {
+    "moduleSlug": "recursive-algorithms",
+    "chapters": {
+      "cap-algoritmos-recursivos": "recursive-algorithms"
+    }
+  },
+  "mod-teorema-maestro": {
+    "moduleSlug": "master-theorem",
+    "chapters": {
+      "cap-teorema-maestro": "master-theorem"
+    }
+  },
+  "mod-arbol-recursion": {
+    "moduleSlug": "recursion-tree",
+    "chapters": {
+      "cap-arbol-recursion": "recursion-tree"
+    }
+  },
+  "mod-ecuacion-caracteristica": {
+    "moduleSlug": "characteristic-equation",
+    "chapters": {
+      "cap-ecuacion-caracteristica": "characteristic-equation"
+    }
+  },
+  "mod-suposiciones-inteligentes": {
+    "moduleSlug": "substitution-method",
+    "chapters": {
+      "cap-suposiciones-inteligentes": "substitution-method"
+    }
+  },
+  "mod-programacion-dinamica": {
+    "moduleSlug": "dynamic-programming",
+    "chapters": {
+      "cap-programacion-dinamica-parte-1": "dynamic-programming-part-1",
+      "cap-programacion-dinamica-parte-2": "dynamic-programming-part-2"
+    }
+  },
+  "mod-algoritmos-voraces": {
+    "moduleSlug": "greedy-algorithms",
+    "chapters": {
+      "cap-algoritmos-voraces": "greedy-algorithms"
+    }
+  },
+  "mod-backtracking": {
+    "moduleSlug": "backtracking",
+    "chapters": {
+      "cap-backtracking": "backtracking"
+    }
+  },
+  "mod-branch-and-bound": {
+    "moduleSlug": "branch-and-bound",
+    "chapters": {
+      "cap-branch-and-bound": "branch-and-bound"
+    }
+  },
+  "mod-comparacion-tecnicas-algoritmicas": {
+    "moduleSlug": "algorithmic-techniques-comparison",
+    "chapters": {
+      "cap-comparacion-tecnicas-algoritmicas": "algorithmic-techniques-comparison"
+    }
+  }
+}

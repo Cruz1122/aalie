@@ -24,10 +24,13 @@ export function getNormalizedLlmText(result: unknown): string {
   return typeof text === "string" ? text.trim() : "";
 }
 
-export function getNormalizedLlmStructured<TStructured = Record<string, unknown>>(
-  result: unknown,
-): TStructured | null {
-  const payload = result as NormalizedLlmResponse<TStructured> | null | undefined;
+export function getNormalizedLlmStructured<
+  TStructured = Record<string, unknown>,
+>(result: unknown): TStructured | null {
+  const payload = result as
+    | NormalizedLlmResponse<TStructured>
+    | null
+    | undefined;
   const structured = payload?.data?.structured;
   if (!structured || typeof structured !== "object") {
     return null;
@@ -47,7 +50,9 @@ export function parseJsonFromText<TStructured = Record<string, unknown>>(
     const parsed = JSON.parse(trimmed) as TStructured;
     return parsed;
   } catch {
-    const codeBlockMatch = trimmed.match(/```(?:json|pseudocode)?\s*([\s\S]*?)```/i);
+    const codeBlockMatch = trimmed.match(
+      /```(?:json|pseudocode)?\s*([\s\S]*?)```/i,
+    );
     if (codeBlockMatch?.[1]) {
       try {
         return JSON.parse(codeBlockMatch[1].trim()) as TStructured;

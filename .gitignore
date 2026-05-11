@@ -12,8 +12,9 @@ packages/report-export-engine/build/
 # Reports
 reports/
 
-# Catálogo: snapshot JSON grande (regenerable con pnpm validate:catalog-complexity en apps/web)
+# Catálogo: snapshot JSON grande (artefacto regenerable)
 apps/web/scripts/output/catalog-complexity-snapshot.json
+apps/web/scripts/output/
 
 # Builds
 dist/
@@ -26,6 +27,9 @@ out/
 # Logs
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 
 # Editors / OS
 .vscode/
@@ -50,6 +54,26 @@ coverage/
 *.coverage
 htmlcov/
 coverage.xml
+playwright-report/
+test-results/
+
+# Temp
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+*.rej
+
+# Local script caches
+scripts/.cache/
+
+# LaTeX auxiliary files
+*.aux
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
 
 # Docker (local data)
 docker-data/

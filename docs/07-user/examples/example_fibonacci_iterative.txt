@@ -1,0 +1,21 @@
+"""
+Fibonacci Iterativo
+"""
+
+FUNCTION fib_iterative(n)
+BEGIN
+  IF n <= 1 THEN
+    RETURN 1
+  END
+  
+  prev = 1
+  curr = 1
+  
+  FOR i = 2 TO n DO
+    next = prev + curr
+    prev = curr
+    curr = next
+  END
+  
+  RETURN curr
+END

@@ -1,4 +1,4 @@
-import { deriveModuleRoute } from "./load.js";
+import { deriveModuleRoute } from "./utils.js";
 import type {
   CatalogModule,
   CatalogSpace,
@@ -8,42 +8,14 @@ import type {
   RichText,
   SearchIndexEntry,
 } from "./types.js";
+import { flattenInlineText } from "./utils.js";
 
 function unique(values: string[]): string[] {
   return Array.from(
-    new Set(values.map((value) => value.trim()).filter((value) => value.length > 0)),
+    new Set(
+      values.map((value) => value.trim()).filter((value) => value.length > 0),
+    ),
   );
-}
-
-export function flattenInlineText(content: RichText | undefined): string {
-  if (!content) {
-    return "";
-  }
-
-  return content
-    .map((span: InlineSpan) => {
-      switch (span.type) {
-        case "text":
-        case "strong":
-        case "emphasis":
-        case "underline":
-        case "highlight":
-        case "inlineCode":
-        case "link":
-        case "term":
-        case "color":
-          return span.text;
-        case "inlineMath":
-          return span.latex;
-        case "tooltip":
-          return `${span.text} ${span.tooltip}`;
-        default:
-          return "";
-      }
-    })
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function collectBlockSearchText(block: ContentBlock): string[] {
@@ -86,6 +58,8 @@ function collectBlockSearchText(block: ContentBlock): string[] {
     case "code":
       return [block.title ?? "", block.caption ?? ""];
     case "table":
+    case "complexityTable":
+    case "formulaComparisonTable":
       return [
         block.title ?? "",
         ...block.columns.map((column) => column.label),
@@ -94,12 +68,77 @@ function collectBlockSearchText(block: ContentBlock): string[] {
     case "image":
     case "figure":
       return [];
+    case "latex":
     case "equationBlock":
       return [block.latex];
+    case "latexSteps":
+      return [
+        block.title ?? "",
+        ...block.steps.flatMap((step) => [
+          step.title ?? "",
+          flattenInlineText(step.explanation),
+          step.latex,
+        ]),
+      ];
+    case "mermaid":
+      return [block.title ?? "", block.code, block.caption ?? ""];
+    case "recursionTree":
+      return [
+        block.title ?? "",
+        ...block.nodes.flatMap((node) => [node.label, node.edgeLabel ?? ""]),
+        block.caption ?? "",
+      ];
+    case "graph":
+      return [
+        block.title ?? "",
+        ...block.nodes.map((node) => node.label),
+        ...block.edges.map((edge) => edge.label ?? ""),
+        block.caption ?? "",
+      ];
+    case "methodCard":
+      return [
+        block.title,
+        flattenInlineText(block.summary),
+        ...(block.whenToUse ?? []).map(flattenInlineText),
+        ...(block.steps ?? []).map(flattenInlineText),
+        ...(block.pitfalls ?? []).map(flattenInlineText),
+      ];
+    case "stepByStepMethod":
+    case "proofSteps":
+      return [
+        block.title,
+        ...block.steps.flatMap((step) => [
+          step.title,
+          ...step.blocks.flatMap(collectBlockSearchText),
+        ]),
+      ];
+    case "warningTrap":
+      return [
+        block.title,
+        flattenInlineText(block.misconception),
+        flattenInlineText(block.whyItFails),
+        flattenInlineText(block.fix),
+      ];
+    case "exampleSolved":
+      return [
+        block.title,
+        flattenInlineText(block.problem),
+        ...block.steps.flatMap((step) => [
+          step.title,
+          flattenInlineText(step.explanation),
+          step.latex ?? "",
+        ]),
+        flattenInlineText(block.answer),
+      ];
+    case "quizCheckpoint":
+      return [block.title ?? "", flattenInlineText(block.prompt), block.quizId];
     case "cheatsheet":
       return [
         block.title ?? "",
-        ...block.items.flatMap((item) => [item.label, flattenInlineText(item.value)]),
+        ...block.items.flatMap((item) => [
+          item.label,
+          flattenInlineText(item.value),
+        ]),
       ];
     case "referenceList":
       return block.references;
@@ -120,8 +159,12 @@ export function buildModuleSearchIndex(
   const moduleTerms = module.terms ?? [];
   const moduleReferences = module.resources?.references ?? [];
   const mediaCaptions = [
-    ...(module.resources?.images ?? []).map((resource) => resource.caption ?? ""),
-    ...(module.resources?.figures ?? []).map((resource) => resource.caption ?? ""),
+    ...(module.resources?.images ?? []).map(
+      (resource) => resource.caption ?? "",
+    ),
+    ...(module.resources?.figures ?? []).map(
+      (resource) => resource.caption ?? "",
+    ),
   ];
 
   const entries: SearchIndexEntry[] = [
@@ -135,7 +178,11 @@ export function buildModuleSearchIndex(
       title: module.title,
       text: unique([
         module.summary ?? "",
-        ...moduleTerms.flatMap((term) => [term.label, term.definition, ...(term.aliases ?? [])]),
+        ...moduleTerms.flatMap((term) => [
+          term.label,
+          term.definition,
+          ...(term.aliases ?? []),
+        ]),
         ...moduleReferences.flatMap((reference) => [
           reference.label,
           ...(reference.authors ?? []),

@@ -1,0 +1,3551 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-complejidad-temporal-espacial",
+  "slug": "time-and-space-complexity",
+  "title": "Complejidad Temporal y Espacial",
+  "summary": "Operaciones elementales, modelo RAM, conteo línea por línea, función de eficiencia T(n), ciclos simples, ciclos anidados, ciclos mixtos for + while y complejidad espacial.",
+  "order": 1,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "draft",
+  "difficulty": "foundational",
+  "estimatedMinutes": 55,
+  "tags": [
+    "complejidad",
+    "tiempo",
+    "espacio",
+    "operaciones-elementales",
+    "modelo-ram",
+    "costos",
+    "ciclos",
+    "for",
+    "while",
+    "sumatorias"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "complejidad temporal y espacial"
+    ],
+    "keywords": [
+      "T(n)",
+      "modelo RAM",
+      "OE",
+      "n log n"
+    ]
+  },
+  "learningObjectives": [
+    {
+      "objectiveId": "comprender-recursos",
+      "text": "Comprender que recursos mide el análisis de algoritmos."
+    },
+    {
+      "objectiveId": "distinguir-algoritmo-implementacion",
+      "text": "Distinguir entre analizar un algoritmo y analizar una implementacion."
+    },
+    {
+      "objectiveId": "contar-oe",
+      "text": "Contar operaciones elementales línea por línea."
+    },
+    {
+      "objectiveId": "construir-tn",
+      "text": "Construir la función de eficiencia T(n)."
+    },
+    {
+      "objectiveId": "analizar-ciclos",
+      "text": "Analizar ciclos for simples, ciclos anidados y ciclos con while interno."
+    },
+    {
+      "objectiveId": "reconocer-crecimientos",
+      "text": "Reconocer crecimiento lineal, cuadrático y lineal-logarítmico."
+    },
+    {
+      "objectiveId": "identificar-espacio",
+      "text": "Identificar complejidad espacial constante, lineal, cuadrática y logarítmica."
+    }
+  ],
+  "prerequisites": {
+    "modules": [],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-loop-invariant"
+  ],
+  "terms": [
+    {
+      "termId": "term-analisis-algoritmos",
+      "label": "Análisis de algoritmos",
+      "definition": "Estudio de cómo se comportan los algoritmos en términos de recursos consumidos, principalmente tiempo y espacio."
+    },
+    {
+      "termId": "term-complejidad-temporal",
+      "label": "Complejidad temporal",
+      "definition": "Cantidad de operaciones que ejecuta un algoritmo en función del tamaño de la entrada n."
+    },
+    {
+      "termId": "term-complejidad-espacial",
+      "label": "Complejidad espacial",
+      "definition": "Memoria adicional que requiere un algoritmo, considerando variables locales, parametros y estructuras de datos."
+    },
+    {
+      "termId": "term-oe",
+      "label": "OE",
+      "definition": "Operacion elemental. Operacion cuyo costo se considera constante dentro del modelo RAM."
+    },
+    {
+      "termId": "term-modelo-ram",
+      "label": "Modelo RAM",
+      "definition": "Random Access Machine. Modelo abstracto usado para contar operaciones elementales de forma independiente de una máquina concreta."
+    },
+    {
+      "termId": "term-tn",
+      "label": "T(n)",
+      "definition": "Función de eficiencia temporal del algoritmo en función del tamaño de la entrada n."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-complejidad-temporal-espacial",
+      "slug": "time-and-space-complexity",
+      "title": "Complejidad Temporal y Espacial",
+      "summary": "Módulo inicial del curso: introduce el análisis de recursos, el conteo de operaciones elementales y la construcción de T(n).",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-complejidad",
+          "slug": "introduccion-complejidad",
+          "title": "1. Complejidad Temporal y Espacial",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-proposito",
+              "text": "Entender el propósito general del análisis de algoritmos."
+            },
+            {
+              "objectiveId": "reconocer-recursos",
+              "text": "Reconocer que tiempo y espacio son los recursos principales."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "blk-introduccion-complejidad-parrafo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El análisis de algoritmos estudia cómo se comportan los algoritmos en términos de los recursos que consumen: principalmente tiempo (velocidad de ejecución) y espacio (memoria utilizada). El objetivo es poder comparar algoritmos de forma independiente a la máquina o al programador que los implemente."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-principio-fundamental",
+          "slug": "principio-fundamental",
+          "title": "1.1 Principio fundamental",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "learningObjectives": [
+            {
+              "objectiveId": "distinguir-implementacion",
+              "text": "Distinguir algoritmo de implementacion."
+            },
+            {
+              "objectiveId": "comprender-constantes",
+              "text": "Comprender por que las constantes multiplicativas no definen el orden de crecimiento."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "blk-principio-fundamental-implementaciones",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Si dos programadores N y D implementan el mismo algoritmo de forma diferente, ambas implementaciones tendran el mismo orden de crecimiento. La diferencia entre ellas sera, a lo sumo, una constante multiplicativa:"
+                }
+              ]
+            },
+            {
+              "id": "blk-principio-fundamental-equation",
+              "type": "equationBlock",
+              "latex": "T_N(n) \\le C \\cdot T_D(n)"
+            },
+            {
+              "id": "blk-principio-fundamental-factor",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Esto significa que dos implementaciones del mismo algoritmo solo difieren por un factor constante. Por eso, cuando hablamos de eficiencia, desligamos el algoritmo de su implementacion."
+                }
+              ]
+            },
+            {
+              "id": "blk-principio-fundamental-nota",
+              "type": "note",
+              "variant": "warning",
+              "title": "Nota",
+              "blocks": [
+                {
+                  "id": "blk-principio-fundamental-nota-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Siempre hay que analizar el algoritmo, no el programa. El lenguaje de programacion y el estilo del programador afectan las constantes, pero no el orden de crecimiento."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-complejidad-temporal",
+          "slug": "complejidad-temporal",
+          "title": "1.2 Complejidad Temporal",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "definir-complejidad-temporal",
+              "text": "Definir complejidad temporal."
+            },
+            {
+              "objectiveId": "reconocer-oe-ram",
+              "text": "Reconocer operaciones elementales segun el modelo RAM."
+            },
+            {
+              "objectiveId": "comprender-pseudocodigo",
+              "text": "Comprender la estructura básica de pseudocódigo usada en el curso."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "blk-complejidad-temporal-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La complejidad temporal mide cuántas operaciones ejecuta un algoritmo en función del tamaño de la entrada n. Se calcula contando, línea por línea, cuántas veces se ejecuta cada instrucción y a que costo."
+                }
+              ]
+            },
+            {
+              "id": "blk-operaciones-elementales-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Qué son las operaciones elementales (OE)?"
+                }
+              ]
+            },
+            {
+              "id": "blk-operaciones-elementales-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Son operaciones cuyo costo se considera proporcionalmente estable para el análisis. El modelo RAM (Random Access Machine) define cuáles son:"
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-operaciones-elementales",
+              "type": "table",
+              "title": "Operaciones elementales segun el modelo RAM",
+              "columns": [
+                {
+                  "key": "tipo",
+                  "label": "Tipo de OE"
+                },
+                {
+                  "key": "ejemplos",
+                  "label": "Ejemplos"
+                },
+                {
+                  "key": "costo",
+                  "label": "Costo"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Aritmeticas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "+, -, *, /"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 OE"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Asignacion / Acceso"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "x <- 5, A[i]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 OE"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Comparaciones"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "<, >, =, <=, >=, <>"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 OE"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Booleanas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "and, or, not"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 OE"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Llamado a subrutina"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "llamar(funcion)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 OE (el cuerpo se analiza aparte)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-nota-end-no-cuentan",
+              "type": "note",
+              "variant": "warning",
+              "title": "Nota",
+              "blocks": [
+                {
+                  "id": "blk-nota-end-no-cuentan-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Los end (endfor, endwhile, endif) no se cuentan cómo operaciones. El cuerpo de un ciclo siempre se ejecuta una vez menos que la cabecera."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-estructura-pseudocodigo-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Estructura de un algoritmo (pseudocódigo)"
+                }
+              ]
+            },
+            {
+              "id": "blk-estructura-pseudocodigo-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Un algoritmo en pseudocódigo tiene la siguiente estructura:"
+                }
+              ]
+            },
+            {
+              "id": "blk-estructura-pseudocodigo-code",
+              "type": "code",
+              "language": "text",
+              "title": "Estructura general",
+              "code": "# Variables globales (si las hay)\ntipo NombreAlgoritmo (E tipo param1, E/S tipo param2) {\n  # Área de variables locales\n  tipo var1, var2\n  # Cuerpo del algoritmo\n  instrucciones...\n  return valor\n  # Si retorna algo: es FUNCIÓN\n  # Si no retorna: es PROCEDIMIENTO\n}"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-for-simple",
+          "slug": "ejemplo-for-simple",
+          "title": "1.3 Ejemplo 1 - Algoritmo con un ciclo for (AlgoritmoSinMente)",
+          "order": 4,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 9,
+          "learningObjectives": [
+            {
+              "objectiveId": "contar-ciclo-simple",
+              "text": "Contar el costo de un ciclo for simple."
+            },
+            {
+              "objectiveId": "verificar-lineal",
+              "text": "Verificar empíricamente el crecimiento lineal."
+            },
+            {
+              "objectiveId": "sumar-costos-lineales",
+              "text": "Construir T(n) sumando costos por linea."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "blk-ejemplo1-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Determinar la función de eficiencia T(n) del siguiente algoritmo."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-pseudocodigo-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Pseudocódigo"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-pseudocodigo",
+              "type": "algorithm",
+              "language": "text",
+              "title": "AlgoritmoSM",
+              "code": "int AlgoritmoSM (E int n) {\n  int i, suma\n  suma <- 0                    # 1 vez --> 1 * C1\n  for i <- 1 to n do           # n+1 veces --> (n+1) * C2\n    suma <- suma+i             # n veces --> n * C3\n  endfor\n  return suma                  # 1 vez --> 1 * C4\n}"
+            },
+            {
+              "id": "blk-ejemplo1-seguimiento-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 Seguimiento línea por línea"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-tabla-costos",
+              "type": "table",
+              "title": "Seguimiento línea por línea del algoritmo con un ciclo for",
+              "columns": [
+                {
+                  "key": "linea",
+                  "label": "Línea de código"
+                },
+                {
+                  "key": "veces",
+                  "label": "Veces que se ejecuta"
+                },
+                {
+                  "key": "oe",
+                  "label": "OE por ejecución"
+                },
+                {
+                  "key": "costo",
+                  "label": "Costo total"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "suma <- 0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 * C1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "for i <- 1 to n do"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n + 1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "(n+1) * C2"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "suma <- suma + i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n * C3"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "return suma"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1 * C4"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-porque-for-3-oe",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Por qué el for tiene 3 OE? Porque en cada pasada ocurren tres cosas: se evalúa la comparación i <= n, al terminar el cuerpo se incrementa i <- i+1 y la primera vez se hace la asignación i <- 1. Por eso la cabecera cuesta 3 OE por pasada."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-regla-clave-for",
+              "type": "note",
+              "variant": "warning",
+              "title": "Regla clave",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo1-regla-clave-for-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "El cuerpo de un ciclo for se ejecuta siempre una vez menos que la cabecera: si la cabecera va n+1 veces, el cuerpo va n veces. La ultima pasada de la cabecera es la que falla la condicion y no ejecuta el cuerpo."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-analisis-tabulando-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 Análisis tabulando (verificación empírica)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-analisis-tabulando-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Corremos el algoritmo mentalmente para valores pequeños de n y contamos cuántas OE ocurren. Esto nos da una idea de cómo crece T(n) antes de calcularla formalmente."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-tabla-verificacion",
+              "type": "table",
+              "title": "Verificación empírica para valores pequeños de n",
+              "columns": [
+                {
+                  "key": "n",
+                  "label": "n"
+                },
+                {
+                  "key": "suma0",
+                  "label": "suma<-0 (1 vez)"
+                },
+                {
+                  "key": "forCabecera",
+                  "label": "for cabecera (n+1) veces * 3"
+                },
+                {
+                  "key": "sumaI",
+                  "label": "suma<-suma+i (n veces) * 2"
+                },
+                {
+                  "key": "return",
+                  "label": "return (1 vez)"
+                },
+                {
+                  "key": "total",
+                  "label": "T(n) total"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2*3 = 6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1*2 = 2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "10"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3*3 = 9"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2*2 = 4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "15"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4*3 = 12"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3*2 = 6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "20"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5*3 = 15"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4*2 = 8"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "25"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "6*3 = 18"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5*2 = 10"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "30"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "(n+1)*3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n*2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5n + 5"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-observacion-lineal",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Observa que cuando n aumenta en 1, T(n) siempre aumenta en 5. Eso confirma que el crecimiento es lineal: cada unidad adicional de n cuesta siempre lo mismo."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-clave-diferencias",
+              "type": "note",
+              "variant": "info",
+              "title": "Clave",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo1-clave-diferencias-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si la diferencia entre filas consecutivas de T(n) es constante, la función es lineal. Si la diferencia crece linealmente, es cuadrática. Si crece exponencialmente, es exponencial."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-sumatorias-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "3 Tecnica de sumatorias para obtener T(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-sumatorias-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este algoritmo no requiere sumatorias complejas porque cada línea se ejecuta un número fijo de veces. Simplemente sumamos los costos de todas las líneas:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-formulas-tn",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "suma-costos",
+                  "title": "Suma de costos",
+                  "latex": "T(n) = 1 \\cdot C_1 + (n+1) \\cdot C_2 + n \\cdot C_3 + 1 \\cdot C_4"
+                },
+                {
+                  "stepId": "expansion",
+                  "title": "Expansion",
+                  "latex": "T(n) = C_1 + C_2 n + C_2 + C_3 n + C_4"
+                },
+                {
+                  "stepId": "agrupacion",
+                  "title": "Agrupacion",
+                  "latex": "T(n) = (C_2 + C_3)n + (C_1 + C_2 + C_4)"
+                },
+                {
+                  "stepId": "forma-lineal",
+                  "title": "Forma lineal",
+                  "latex": "T(n) = a n + b"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-constantes",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Donde a = C2 + C3 y b = C1 + C2 + C4 son constantes positivas. El resultado es una función lineal en n."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-ver-seccion9",
+              "type": "note",
+              "variant": "info",
+              "title": "Ver sección 9 - Tabla de Sumatorias Comunes",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo1-ver-seccion9-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Para ver propiedades de sumatorias simples y cómo resolver"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum_{i=1}^{n} 1 = n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "o"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum c = c\\, n"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", consulta la sección 9 de este documento."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Resultado",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo1-resultado-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n) = a n + b"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> orden"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> crecimiento lineal."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-ciclos-anidados-fijos",
+          "slug": "ejemplo-ciclos-anidados-fijos",
+          "title": "1.4 Ejemplo 2 - Ciclos anidados (AlgoritmoSM2)",
+          "order": 5,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "analizar-for-anidados",
+              "text": "Analizar dos ciclos for anidados con límite fijo."
+            },
+            {
+              "objectiveId": "reconocer-cuadratico",
+              "text": "Reconocer el crecimiento cuadrático."
+            },
+            {
+              "objectiveId": "construir-tn-cuadratica",
+              "text": "Construir T(n) para un anidamiento n por n."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "blk-ejemplo2-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Determinar la función de eficiencia de dos ciclos for anidados donde ambos van de 1 a n (límite fijo)."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-pseudocodigo-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Pseudocódigo"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-pseudocodigo",
+              "type": "algorithm",
+              "language": "text",
+              "title": "AlgoritmoSM2 con límites fijos",
+              "code": "AlgoritmoSM2 (E int A[n]) {\n  x <- 1                       # 1 vez --> 1*1\n  for i <- 1 to n do           # n+1 veces --> (n+1)*3\n    for j <- 1 to n do         # n(n+1) veces --> n(n+1)*3\n      x <- x + i               # n*n veces --> n^2 * 2\n    endfor\n  endfor\n}"
+            },
+            {
+              "id": "blk-ejemplo2-seguimiento-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 Seguimiento línea por línea"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-tabla-costos",
+              "type": "table",
+              "title": "Costos por línea en ciclos anidados con límite fijo",
+              "columns": [
+                {
+                  "key": "linea",
+                  "label": "Línea de código"
+                },
+                {
+                  "key": "veces",
+                  "label": "Veces que se ejecuta"
+                },
+                {
+                  "key": "oe",
+                  "label": "OE por ejecución"
+                },
+                {
+                  "key": "costo",
+                  "label": "Costo total"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "x <- 1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "for i <- 1 to n do"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n+1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "(n+1) * 3"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "for j <- 1 to n do"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n*(n+1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n*(n+1) * 3"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "x <- x + i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n*n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^2 \\cdot 2"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-porque-for-interno",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Por qué el for interno se ejecuta n*(n+1) veces? El for externo tiene n+1 pasadas de cabecera. Para cada una de esas pasadas, el for interno también tiene n+1 pasadas propias. Pero el cuerpo externo solo ocurre n veces, así que el for interno se lanza n veces, y cada lanzamiento tiene n+1 pasadas de cabecera. Total: n * (n+1)."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-analisis-tabulando-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 Análisis tabulando (verificación empírica)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-analisis-tabulando-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Contamos cuántas veces se ejecuta la línea más interna x <- x + i para cada n:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-tabla-verificacion",
+              "type": "table",
+              "title": "Verificación empírica para ciclos anidados con límite fijo",
+              "columns": [
+                {
+                  "key": "n",
+                  "label": "n"
+                },
+                {
+                  "key": "externo",
+                  "label": "Iteraciones (for externo)"
+                },
+                {
+                  "key": "interno",
+                  "label": "Iteraciones (for interno por cada externo)"
+                },
+                {
+                  "key": "totalCuerpo",
+                  "label": "Total x<-x+i (n * n)"
+                },
+                {
+                  "key": "tn",
+                  "label": "T(n) aprox."
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+6+6+2 = 15"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+9+18+8 = 36"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "9"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+12+36+18 = 67"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "16"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+15+60+32 = 108"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "25"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+18+90+50 = 159"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "5n^2 + 6n + 4"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-diferencias",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La diferencia entre filas crece: 21, 31, 41, 51... (aumenta en 10 cada vez). Diferencia de la diferencia = 10 = constante, función cuadrática confirmada."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-sumatorias-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "3 Tecnica de sumatorias"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-sumatorias-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Como ambos límites son fijos (no dependen del otro índice), no necesitamos sumatorias anidadas complejas. El cuerpo se ejecuta exactamente"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n \\cdot n = n^2"
+                },
+                {
+                  "type": "text",
+                  "text": "veces:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-cuerpo-interno",
+              "type": "equationBlock",
+              "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n} 1 = n \\cdot n = n^2"
+            },
+            {
+              "id": "blk-ejemplo2-armamos-tn",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Y armamos T(n) sumando todos los costos:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-formulas-tn",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "suma-costos",
+                  "title": "Suma de costos",
+                  "latex": "T(n) = 1 + 3(n+1) + 3n(n+1) + 2n^2"
+                },
+                {
+                  "stepId": "expansion",
+                  "title": "Expansion",
+                  "latex": "T(n) = 1 + 3n + 3 + 3n^2 + 3n + 2n^2"
+                },
+                {
+                  "stepId": "forma-cerrada",
+                  "title": "Forma cerrada",
+                  "latex": "T(n) = 5n^2 + 6n + 4"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-ver-seccion9",
+              "type": "note",
+              "variant": "info",
+              "title": "Ver sección 9 - Tabla de Sumatorias Comunes",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo2-ver-seccion9-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La formula"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{n} 1 = n^2"
+                    },
+                    {
+                      "type": "text",
+                      "text": "se explica en la sección 9, tabla de Sumatorias Dobles con límites fijos."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Resultado",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo2-resultado-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n) = 5n^2 + 6n + 4"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> orden"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(n^2)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> crecimiento cuadrático."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-for-limite-variable",
+          "slug": "ejemplo-for-limite-variable",
+          "title": "1.5 Ejemplo 3 - For anidado con límite variable",
+          "order": 6,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "analizar-limite-variable",
+              "text": "Analizar un ciclo anidado cuyo límite interno depende del índice externo."
+            },
+            {
+              "objectiveId": "reconocer-nn1-2",
+              "text": "Reconocer el patrón n(n+1)/2."
+            },
+            {
+              "objectiveId": "usar-linealidad",
+              "text": "Usar linealidad de sumatorias."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "blk-ejemplo3-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ahora el ciclo interno va de 1 a i (límite variable que depende del externo). Este es el caso más frecuente en el análisis de algoritmos de ordenamiento."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-pseudocodigo-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Pseudocódigo"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-pseudocodigo",
+              "type": "algorithm",
+              "language": "text",
+              "title": "AlgoritmoSM2 con límite variable",
+              "code": "AlgoritmoSM2 (E int A[n]) {\n  x <- 1                       # 1 vez\n  for i <- 1 to n do           # n+1 veces\n    for j <- 1 to i do         # LÍMITE VARIABLE: depende de i\n      x <- x + i\n    endfor\n  endfor\n}"
+            },
+            {
+              "id": "blk-ejemplo3-seguimiento-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 Seguimiento detallado (prueba de escritorio con n=5)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-seguimiento-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Rastreamos manualmente que valores toma j para cada valor de i, y contamos ejecuciones:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-tabla-seguimiento",
+              "type": "table",
+              "title": "Prueba de escritorio con n=5",
+              "columns": [
+                {
+                  "key": "i",
+                  "label": "i"
+                },
+                {
+                  "key": "j",
+                  "label": "j recorre valores"
+                },
+                {
+                  "key": "cabecera",
+                  "label": "Ejecuciones cabecera for j (i+1 veces)"
+                },
+                {
+                  "key": "cuerpo",
+                  "label": "Ejecuciones cuerpo x<-x+i (i veces)"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j = 1, 2 (sale en 2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j = 1, 2, 3 (sale en 3)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j = 1, 2, 3, 4 (sale en 4)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j = 1, 2, 3, 4, 5 (sale en 5)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j = 1, 2, 3, 4, 5, 6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "TOTAL (n=5)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "-"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2+3+4+5+6 = 20"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+2+3+4+5 = 15"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-observacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Observacion: Cuando i=1, j recorre 1 y 2 (la cabecera se ejecuta 2 veces = i+1, el cuerpo 1 vez = i). La cabecera siempre se ejecuta una vez mas que el cuerpo."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-analisis-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 Análisis tabulando — verificar el patrón cuadrático"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-tabla-patron-cuadratico",
+              "type": "table",
+              "title": "Verificación del patrón cuadrático",
+              "columns": [
+                {
+                  "key": "n",
+                  "label": "n"
+                },
+                {
+                  "key": "cabecera",
+                  "label": "Ejecuciones cabecera for j SUM(i+1)"
+                },
+                {
+                  "key": "cuerpo",
+                  "label": "Ejecuciones cuerpo x<-x+i SUM(i)"
+                },
+                {
+                  "key": "tn",
+                  "label": "T(n) aprox."
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "pequena"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2+3=5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+2=3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mayor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2+3+4=9"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+2+3=6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mayor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2+3+4+5=14"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1+2+3+4=10"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mayor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "20"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "15"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mayor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n(n+1)/2 + n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n(n+1)/2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\sim a n^2"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-confirmacion-cuadratica",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Las columnas del centro crecen como n(n+1)/2, una expresión cuadrática. Eso confirma que el algoritmo es cuadrático."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-resolucion-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "3 Resolucion formal con sumatorias"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-sumatoria-cabecera-texto",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Sumatoria de la cabecera del for interno: el for j <- 1 to i tiene su cabecera ejecutandose i+1 veces (i pasadas que cumplen + 1 que falla)."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-sumatoria-cabecera-formulas",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "cabecera-for-interno",
+                  "title": "Cabecera del for interno",
+                  "latex": "\\sum_{i=1}^{n}(i+1)"
+                },
+                {
+                  "stepId": "linealidad",
+                  "title": "Linealidad",
+                  "latex": "\\sum_{i=1}^{n} i + \\sum_{i=1}^{n} 1"
+                },
+                {
+                  "stepId": "formulas-conocidas",
+                  "title": "Formulas conocidas",
+                  "latex": "\\frac{n(n+1)}{2} + n"
+                },
+                {
+                  "stepId": "forma-cerrada",
+                  "title": "Forma cerrada",
+                  "latex": "\\frac{n^2+n}{2} + n = \\frac{n^2+3n}{2}"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-sumatoria-cuerpo-texto",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Sumatoria del cuerpo x <- x + i:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-sumatoria-cuerpo-formula",
+              "type": "equationBlock",
+              "latex": "\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2} = \\frac{n^2+n}{2}"
+            },
+            {
+              "id": "blk-ejemplo3-truco-suma-doble",
+              "type": "note",
+              "variant": "info",
+              "title": "Como se resuelve SUM(i=1..n) de i - el truco de la suma doble",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo3-truco-suma-doble-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Este es el truco mas usado en el curso. Escribimos la suma dos veces, una normal y otra invertida, y las sumamos:"
+                    }
+                  ]
+                },
+                {
+                  "id": "blk-ejemplo3-truco-suma-doble-formulas",
+                  "type": "latexSteps",
+                  "steps": [
+                    {
+                      "stepId": "suma-normal",
+                      "title": "Suma normal",
+                      "latex": "S = 1 + 2 + 3 + \\cdots + (n-1) + n"
+                    },
+                    {
+                      "stepId": "suma-invertida",
+                      "title": "Suma invertida",
+                      "latex": "S = n + (n-1) + (n-2) + \\cdots + 2 + 1"
+                    },
+                    {
+                      "stepId": "suma-ambas",
+                      "title": "Suma de ambas",
+                      "latex": "2S = (n+1) + (n+1) + (n+1) + \\cdots + (n+1)"
+                    },
+                    {
+                      "stepId": "n-veces",
+                      "title": "n veces",
+                      "latex": "2S = n(n+1)"
+                    },
+                    {
+                      "stepId": "resultado",
+                      "title": "Resultado",
+                      "latex": "S = \\frac{n(n+1)}{2}"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-ver-seccion9",
+              "type": "note",
+              "variant": "info",
+              "title": "Ver sección 9 - Tabla de Sumatorias Comunes",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo3-ver-seccion9-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Las formulas"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "y"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum_{i=1}^{n}\\sum_{j=1}^{i} 1 = \\frac{n(n+1)}{2}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "están en la sección 9. También la propiedad de linealidad"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum [f(i)+g(i)] = \\sum f(i) + \\sum g(i)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-construccion-tn-texto",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Construccion de T(n): sumamos los costos de cada linea:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-construccion-tn",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "suma-costos",
+                  "title": "Suma de costos",
+                  "latex": "T(n) = 1 + 3(n+1) + 3\\left(\\frac{n^2+3n}{2}\\right) + 2\\left(\\frac{n^2+n}{2}\\right)"
+                },
+                {
+                  "stepId": "expansion",
+                  "title": "Expansion",
+                  "latex": "T(n) = 1 + 3n + 3 + \\frac{3n^2+9n}{2} + \\frac{2n^2+2n}{2}"
+                },
+                {
+                  "stepId": "agrupacion",
+                  "title": "Agrupacion",
+                  "latex": "T(n) = 1 + 3n + 3 + \\frac{3n^2+9n+2n^2+2n}{2}"
+                },
+                {
+                  "stepId": "simplificacion",
+                  "title": "Simplificacion",
+                  "latex": "T(n) = 4 + 3n + \\frac{5n^2+11n}{2}"
+                },
+                {
+                  "stepId": "forma-general",
+                  "title": "Forma general",
+                  "latex": "T(n) = a n^2 + b n + c"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo3-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Resultado",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo3-resultado-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n) = a n^2 + b n + c"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> orden"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(n^2)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> crecimiento cuadrático."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-for-while-logaritmico",
+          "slug": "ejemplo-for-while-logaritmico",
+          "title": "1.6 Ejemplo 4 - For con while interno (crecimiento logarítmico)",
+          "order": 7,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "analizar-for-while",
+              "text": "Analizar un ciclo for con while interno."
+            },
+            {
+              "objectiveId": "entender-logaritmos",
+              "text": "Entender por que una actualizacion multiplicativa produce logaritmos."
+            },
+            {
+              "objectiveId": "reconocer-nlogn",
+              "text": "Reconocer el crecimiento Theta(n log n)."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "blk-ejemplo4-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este es el caso más rico: el ciclo interno es un while que duplica j, lo que produce un comportamiento logarítmico. Es el patrón que explica por qué algoritmos como búsqueda binaria o Merge Sort son tan eficientes."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-pseudocodigo-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Pseudocódigo"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-pseudocodigo",
+              "type": "algorithm",
+              "language": "text",
+              "title": "AlgoritmoXXX",
+              "code": "AlgoritmoXXX (E int n) {\n  x <- 1                       # 1 vez --> 1*1\n  for i <- 1 to n do           # n+1 veces --> (n+1)*3\n    j <- 1                     # n veces --> n*1\n    while (j <= n) do          # n*(log2(n)+2) veces --> n*(log2(n)+2)*1\n      j <- j*2                 # n*(log2(n)+1) veces --> n*(log2(n)+1)*2\n    endwhile\n  endfor\n}"
+            },
+            {
+              "id": "blk-ejemplo4-seguimiento-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 Seguimiento detallado — ¿cuántas veces se ejecuta el while?"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-clave-j",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La clave es entender que hace j <- j*2. Cada vez que pasa el while, j se duplica:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-valores-j",
+              "type": "equationBlock",
+              "latex": "j = 1, 2, 4, 8, 16, \\ldots, 2^k"
+            },
+            {
+              "id": "blk-ejemplo4-condicion-parada",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El while termina cuando j > n, es decir cuando 2^k > n. ¿Cuántas veces se duplica antes de superar n?"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-log-formula",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "igualamos",
+                  "title": "Igualamos",
+                  "latex": "2^k = n"
+                },
+                {
+                  "stepId": "despejamos",
+                  "title": "Despejamos",
+                  "latex": "k = \\log_2(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-dos-pasos-extra",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "+1 porque j empieza en 1 (= 2^0), no en 2 (= 2^1). La primera iteración no avanza hacia n, solo establece la posición inicial."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "+1 porque la cabecera del while se evalúa una vez más al final: es la evaluación que falla la condición y causa la salida."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-cabecera-cuerpo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Por tanto, la cabecera del while se ejecuta"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\log_2(n) + 2"
+                },
+                {
+                  "type": "text",
+                  "text": "veces por cada iteracion de i, y el cuerpo"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\log_2(n) + 1"
+                },
+                {
+                  "type": "text",
+                  "text": "veces."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-tabla-while",
+              "type": "table",
+              "title": "Conteo de cabecera y cuerpo del while",
+              "columns": [
+                {
+                  "key": "n",
+                  "label": "n"
+                },
+                {
+                  "key": "valores",
+                  "label": "Valores que toma j (para un i fijo)"
+                },
+                {
+                  "key": "cabecera",
+                  "label": "Veces cabecera while (log2(n)+2)"
+                },
+                {
+                  "key": "cuerpo",
+                  "label": "Veces cuerpo j<-j*2 (log2(n)+1)"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j=1 -> sale"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j=1, 2 -> sale en j=4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j=1, 2, 4 -> sale en j=8"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "8"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j=1, 2, 4, 8 -> sale en j=16"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "16"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j=1, 2, 4, 8, 16 -> sale en j=32"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "32"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "j=1, 2, 4, 8, 16, 32 -> sale en j=64"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "7"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "6"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\log_2(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "valores"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\log_2(n)+2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\log_2(n)+1"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-piso-techo",
+              "type": "note",
+              "variant": "info",
+              "title": "Funciones piso y techo",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo4-piso-techo-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Como"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\log_2(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "no siempre es entero (ej:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\log_2(5) = 2.32\\ldots"
+                    },
+                    {
+                      "type": "text",
+                      "text": "), usamos la función piso:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\lfloor \\log_2(n) \\rfloor"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". El piso de 2.32 es 2. Esto garantiza que contamos un número entero de iteraciones. Para el análisis asintótico,"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\lfloor \\log_2(n) \\rfloor"
+                    },
+                    {
+                      "type": "text",
+                      "text": "y"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\log_2(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "son del mismo orden."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-analisis-tabulando-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 Análisis tabulando — verificar el crecimiento n*log(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-tabla-nlogn-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Como el while tiene"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\log_2(n)+2"
+                },
+                {
+                  "type": "text",
+                  "text": "iteraciones por cada uno de los"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": "valores de i:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-tabla-nlogn",
+              "type": "table",
+              "title": "Verificación del crecimiento n log n",
+              "columns": [
+                {
+                  "key": "n",
+                  "label": "n"
+                },
+                {
+                  "key": "log",
+                  "label": "log2(n) (aprox.)"
+                },
+                {
+                  "key": "whilePorI",
+                  "label": "While por cada i"
+                },
+                {
+                  "key": "totalWhile",
+                  "label": "Total while (n * pasos)"
+                },
+                {
+                  "key": "tn",
+                  "label": "T(n) aprox."
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1*2 = 2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "pequena"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2*3 = 6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mediana"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4*4 = 16"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mayor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "8"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "8*5 = 40"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mayor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "16"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "16*6 = 96"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mayor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "32"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "7"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "32*7 = 224"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "mayor"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "log n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "log n + 2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "n*(log n+2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "~ n*log(n)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-explicacion-duplicar",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cada vez que n se duplica, el while agrega un paso mas y el for el doble de iteraciones. El resultado: el costo crece cómo"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n\\log(n)"
+                },
+                {
+                  "type": "text",
+                  "text": ", no cómo"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n^2"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-resolucion-title",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "3 Resolucion formal con sumatorias"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-patron-clave",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El patrón clave: para una j que empieza en 1 y se duplica, el número de iteraciones del while es"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\log_2(n)+2"
+                },
+                {
+                  "type": "text",
+                  "text": ". Como i recorre"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": "valores, la línea del while se ejecuta en total:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-sumatoria-while",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "linea-while",
+                  "title": "Linea del while",
+                  "latex": "\\sum_{i=1}^{n}(\\log_2(n)+2)"
+                },
+                {
+                  "stepId": "constante-respecto-i",
+                  "title": "Constante respecto a i",
+                  "latex": "(\\log_2(n)+2)\\sum_{i=1}^{n}1"
+                },
+                {
+                  "stepId": "resultado",
+                  "title": "Resultado",
+                  "latex": "(\\log_2(n)+2)n"
+                },
+                {
+                  "stepId": "expansion",
+                  "title": "Expansion",
+                  "latex": "n\\log_2(n)+2n"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-cuerpo-while-texto",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El cuerpo del while j <- j*2:"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-sumatoria-cuerpo-while",
+              "type": "equationBlock",
+              "latex": "\\sum_{i=1}^{n}(\\log_2(n)+1) = (\\log_2(n)+1)n = n\\log_2(n)+n"
+            },
+            {
+              "id": "blk-ejemplo4-construccion-tn-texto",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Construccion de T(n):"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-construccion-tn",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "suma-costos",
+                  "title": "Suma de costos",
+                  "latex": "T(n) = 1 + 3(n+1) + n + (n\\log_2(n)+2n)C_{while} + (n\\log_2(n)+n)2"
+                },
+                {
+                  "stepId": "expansion",
+                  "title": "Expansion",
+                  "latex": "T(n) = 1 + 3n+3 + n + Cn\\log_2(n) + 2Cn + 2n\\log_2(n) + 2n"
+                },
+                {
+                  "stepId": "agrupando",
+                  "title": "Agrupando términos",
+                  "latex": "T(n) = a \\cdot n\\log_2(n) + b n + c"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-si-j-por-5",
+              "type": "note",
+              "variant": "info",
+              "title": "Y si j <- j*5 en lugar de j*2?",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo4-si-j-por-5-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La unica diferencia seria la base del logaritmo: se convertiria en"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\log_5(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Como todos los logaritmos son del mismo orden, el orden asintótico sigue siendo"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(n \\log n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-ver-seccion9",
+              "type": "note",
+              "variant": "info",
+              "title": "Ver sección 9 - Tabla de Sumatorias Comunes",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo4-ver-seccion9-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La sumatoria"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sum_{i=1}^{n}(\\log n + c) = n\\log(n) + c n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "está en la sección 9, tabla de Sumatorias Dobles con ciclos logarítmicos."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo4-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Resultado",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo4-resultado-texto",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n) = a n\\log_2(n) + b n + c"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> orden"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(n\\log n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "-> crecimiento linealitmico."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-complejidad-espacial",
+          "slug": "complejidad-espacial",
+          "title": "1.7 Complejidad Espacial",
+          "order": 8,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "learningObjectives": [
+            {
+              "objectiveId": "definir-complejidad-espacial",
+              "text": "Definir complejidad espacial."
+            },
+            {
+              "objectiveId": "identificar-casos-espaciales",
+              "text": "Identificar los casos O(1), O(n), O(n^2) y O(log n)."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "blk-complejidad-espacial-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La complejidad espacial mide cuanta memoria adicional requiere un algoritmo. Se cuentan las variables locales, parametros y estructuras de datos utilizadas."
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-complejidad-espacial",
+              "type": "table",
+              "title": "Casos frecuentes de complejidad espacial",
+              "columns": [
+                {
+                  "key": "caso",
+                  "label": "Caso"
+                },
+                {
+                  "key": "descripcion",
+                  "label": "Descripcion"
+                },
+                {
+                  "key": "ejemplo",
+                  "label": "Ejemplo"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "- Constante"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usa un número fijo de variables, sin importar n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Variables simples: i, suma, x"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "- Lineal"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usa un arreglo o estructura de tamaño proporcional a n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Arreglo A[n]"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n^2)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "- Cuadratica"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usa una matriz n x n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Matriz A[n][n]"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(\\log n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "- Logaritmica"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Pila de recursion en divide y venceras"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Busqueda binaria recursiva"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

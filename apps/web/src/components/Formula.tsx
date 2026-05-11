@@ -36,10 +36,10 @@ export default function Formula({ latex, display = false, className }: Props) {
     () => renderLatexToHtml(latex, { displayMode: display }),
     [latex, display],
   );
-  const baseClassName = display ? "block w-full" : "inline";
+  const baseClassName = display ? "block w-full" : "inline mx-0.5";
   return (
     <span
-      className={`${baseClassName} ${className || ""}`}
+      className={`${baseClassName} ${className || ""}`.trim()}
       // El HTML viene de KaTeX (determinista). No meter HTML del usuario aquí.
       dangerouslySetInnerHTML={{ __html: html }}
     />
