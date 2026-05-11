@@ -1045,7 +1045,7 @@ export default function AnalyzerPage() {
         avg: analyzeRes.avg, // Puede ser undefined si falló, pero el frontend lo maneja
         has_case_variability: analyzeRes.has_case_variability, // Incluir variabilidad de casos
         loopInvariant: analyzeRes.loopInvariant || null,
-        recursiveInvariant: (analyzeRes as any).recursiveInvariant || null,
+        recursiveInvariant: analyzeRes.recursiveInvariant ?? null,
       });
 
       // Asegurar que algorithmType se mantenga usando la variable local 'kind'
