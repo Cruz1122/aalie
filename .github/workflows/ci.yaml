@@ -326,12 +326,45 @@ jobs:
       - name: Validate docs contracts
         run: python3 scripts/check_docs_contracts.py
 
+  quizzes-quality:
+    name: "Quizzes quality (dataset + coverage + tests)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "apps/api/requirements*.txt"
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Validate quiz bank
+        run: python apps/api/scripts/validate_quiz_bank.py
+
+      - name: Quiz bank coverage report (critical gate)
+        run: python apps/api/scripts/report_quiz_bank_coverage.py --fail-on-critical
+
+      - name: Quizzes backend tests
+        working-directory: apps/api
+        run: python -m pytest tests/unit/quizzes -q
+
   # Job de Docker: Verifica que las imágenes construyen
   docker-integration:
     name: "Docker integration (build + compose config)"
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts]  # Solo corre si build, PR gate, lint y docs pasan
+    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, quizzes-quality]  # Solo corre si build, PR gate, lint, docs y quizzes pasan
 
     steps:
       - name: Checkout

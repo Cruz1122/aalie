@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { PaginationControls } from "@/components/PaginationControls";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import { useRouter } from "@/i18n/navigation";
@@ -15,7 +16,10 @@ import {
   buildAssistantExampleSectionsContext,
 } from "@/lib/examples/assistant-context";
 import {
+  EXAMPLE_CATEGORY_PAGE_COUNT,
+  getCategoryMeta,
   getEnabledExamples,
+  getExampleCategoriesByPage,
   getMethodTranslationKey,
   isRecursiveCategory,
   type ExampleLocale,
@@ -38,7 +42,18 @@ const METHOD_BADGE_CLASSNAMES: Record<RecursiveMethodBadge, string> = {
   EC: "border-blue-500/40 bg-blue-500/15 text-blue-200",
 };
 
-export function ExamplesHomeView() {
+const METHOD_BADGE_LABELS: Record<RecursiveMethodBadge, string> = {
+  TM: "M-TM",
+  IT: "M-IT",
+  AR: "M-AR",
+  EC: "M-EC",
+};
+
+interface ExamplesHomeViewProps {
+  page: number;
+}
+
+export function ExamplesHomeView({ page }: ExamplesHomeViewProps) {
   const locale = useLocale() as ExampleLocale;
   const t = useTranslations("examples");
   const tGlobal = useTranslations();
@@ -54,6 +69,9 @@ export function ExamplesHomeView() {
   useEffect(() => {
     finishNavigation();
   }, [finishNavigation]);
+
+  const safePage = page >= 1 && page <= EXAMPLE_CATEGORY_PAGE_COUNT ? page : 1;
+  const visibleCategories = getExampleCategoriesByPage(safePage);
 
   const topMatches = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -167,8 +185,10 @@ export function ExamplesHomeView() {
         title: t("title"),
         description: t("subtitle"),
         query: query.trim() || undefined,
-        notes:
-          topMatches.length > 0
+        notes: [
+          `page=${safePage}`,
+          `visibleCategories=${visibleCategories.join(",")}`,
+          ...(topMatches.length > 0
             ? [
                 `matchedExamples=${topMatches.length}`,
                 ...topMatches.map(
@@ -177,7 +197,8 @@ export function ExamplesHomeView() {
                       .title,
                 ),
               ]
-            : undefined,
+            : []),
+        ],
       },
       exampleSections: buildAssistantExampleSectionsContext(
         catalogItems,
@@ -195,15 +216,25 @@ export function ExamplesHomeView() {
             )
           : undefined,
     }),
-    [catalogItems, locale, query, t, tGlobal, topMatches],
+    [
+      catalogItems,
+      locale,
+      query,
+      safePage,
+      t,
+      tGlobal,
+      topMatches,
+      visibleCategories,
+    ],
   );
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex w-full min-h-screen flex-col overflow-x-hidden">
       <Header />
-      <main className="z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6">
-        <section className="space-y-4">
-          <div className="relative">
+      <main className="z-10 flex min-h-0 flex-1 flex-col p-6">
+        <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6">
+          <section className="shrink-0 space-y-4">
+            <div className="relative">
             <label className="glass-card flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3">
               <span className="material-symbols-outlined text-slate-400">
                 search
@@ -214,7 +245,10 @@ export function ExamplesHomeView() {
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && topMatches.length > 0) {
                     const first = topMatches[0];
-                    handleSelectMatch(first.slug, first.category);
+                    handleSelectMatch(
+                      first.slug,
+                      getCategoryMeta(first.category).slug,
+                    );
                   }
                 }}
                 placeholder={t("searchPlaceholder")}
@@ -240,7 +274,10 @@ export function ExamplesHomeView() {
                           <button
                             type="button"
                             onClick={() =>
-                              handleSelectMatch(item.slug, item.category)
+                              handleSelectMatch(
+                                item.slug,
+                                getCategoryMeta(item.category).slug,
+                              )
                             }
                             className="w-full px-4 py-3 text-left transition-colors hover:bg-white/5"
                           >
@@ -257,21 +294,20 @@ export function ExamplesHomeView() {
                               <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
                                 {recursive ? kindLabel : iterativeLabel}
                               </span>
-                              {recursive &&
-                                item.verifiedMethods.map((method) => (
-                                  <span
-                                    key={method}
-                                    title={tGlobal(
-                                      getMethodTranslationKey(method),
-                                    )}
-                                    aria-label={tGlobal(
-                                      getMethodTranslationKey(method),
-                                    )}
-                                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${METHOD_BADGE_CLASSNAMES[method]}`}
-                                  >
-                                    {method}
-                                  </span>
-                                ))}
+                              {item.verifiedMethods.map((method) => (
+                                <span
+                                  key={method}
+                                  title={tGlobal(
+                                    getMethodTranslationKey(method),
+                                  )}
+                                  aria-label={tGlobal(
+                                    getMethodTranslationKey(method),
+                                  )}
+                                  className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${METHOD_BADGE_CLASSNAMES[method]}`}
+                                >
+                                  {METHOD_BADGE_LABELS[method]}
+                                </span>
+                              ))}
                             </div>
                           </button>
                         </li>
@@ -285,12 +321,25 @@ export function ExamplesHomeView() {
                 )}
               </div>
             )}
-          </div>
-        </section>
+            </div>
+          </section>
 
-        <section>
-          <ExamplesTypeSelector ctaLabel={t("viewFamily")} />
-        </section>
+          <section className="flex min-h-0 flex-1 flex-col gap-4">
+            <ExamplesTypeSelector
+              ctaLabel={t("viewFamily")}
+              categories={visibleCategories}
+            />
+          </section>
+          <div className="sticky z-20 mt-0 mb-0 flex shrink-0 justify-center pt-0">
+            <PaginationControls
+              currentPage={safePage}
+              totalPages={EXAMPLE_CATEGORY_PAGE_COUNT}
+              onPageChange={(nextPage) =>
+                router.push(`/examples?page=${nextPage}`)
+              }
+            />
+          </div>
+        </div>
       </main>
       <EmbeddedAssistantLauncher
         surface="examples"

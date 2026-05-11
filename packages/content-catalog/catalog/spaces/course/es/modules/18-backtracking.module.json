@@ -1,0 +1,3180 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-backtracking",
+  "slug": "backtracking",
+  "title": "Backtracking",
+  "order": 18,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Técnica de búsqueda sistemática que construye soluciones paso a paso, explora en profundidad y retrocede cuando una solución parcial no puede extenderse hacia una solución válida. Incluye modelado como n-tupla, árbol de decisiones, poda por factibilidad, esquema general, N-Reinas 4×4, análisis de complejidad y comparación con fuerza bruta y algoritmos voraces.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 90,
+  "tags": [
+    "backtracking",
+    "vuelta-atras",
+    "busqueda-en-profundidad",
+    "dfs",
+    "arbol-de-decisiones",
+    "poda",
+    "factibilidad",
+    "solucion-parcial",
+    "espacio-de-soluciones",
+    "n-tupla",
+    "n-reinas",
+    "subconjuntos",
+    "coloreo-de-grafos",
+    "fuerza-bruta"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "backtracking",
+      "vuelta atrás",
+      "búsqueda con retroceso",
+      "búsqueda en profundidad con poda",
+      "árbol de decisiones",
+      "N-Reinas",
+      "N Queens",
+      "poda por factibilidad"
+    ],
+    "keywords": [
+      "DFS",
+      "pila",
+      "LIFO",
+      "solución parcial",
+      "x0 x1 xn",
+      "n-tupla",
+      "candidatos",
+      "restricciones",
+      "poda",
+      "factibilidad",
+      "esSolucion",
+      "N-Reinas",
+      "misma columna",
+      "diagonal",
+      "fuerza bruta",
+      "árbol de búsqueda"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-algoritmos-recursivos",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-algoritmos-voraces",
+        "kind": "recommended"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-ambientes-ejecucion-pila",
+        "kind": "required"
+      },
+      {
+        "id": "sec-estructura-algoritmo-recursivo",
+        "kind": "required"
+      },
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-voraces-vs-programacion-dinamica",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-algoritmos-recursivos",
+    "mod-notaciones-asintoticas",
+    "mod-algoritmos-voraces",
+    "mod-programacion-dinamica"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "definir-backtracking",
+      "text": "Definir backtracking como exploración sistemática en profundidad con retroceso y poda."
+    },
+    {
+      "objectiveId": "modelar-solucion-como-tupla",
+      "text": "Modelar una solución como una n-tupla donde cada componente se elige desde un conjunto finito de candidatos."
+    },
+    {
+      "objectiveId": "construir-arbol-de-decisiones",
+      "text": "Construir el árbol de decisiones asociado a un problema de backtracking."
+    },
+    {
+      "objectiveId": "identificar-solucion-parcial",
+      "text": "Identificar el significado de una solución parcial y de un estado del árbol."
+    },
+    {
+      "objectiveId": "aplicar-poda-factibilidad",
+      "text": "Aplicar poda cuando una solución parcial no puede extenderse hacia una solución válida."
+    },
+    {
+      "objectiveId": "distinguir-backtracking-fuerza-bruta",
+      "text": "Distinguir backtracking de fuerza bruta por el momento en que se descartan ramas inválidas."
+    },
+    {
+      "objectiveId": "distinguir-backtracking-voraz",
+      "text": "Distinguir backtracking de algoritmos voraces por la reversibilidad de las decisiones."
+    },
+    {
+      "objectiveId": "resolver-n-reinas-cuatro",
+      "text": "Resolver N-Reinas 4×4 mediante construcción incremental y poda por columnas y diagonales."
+    },
+    {
+      "objectiveId": "analizar-complejidad-backtracking",
+      "text": "Analizar complejidad de backtracking en función del tamaño del árbol de búsqueda y del costo de validar candidatos."
+    },
+    {
+      "objectiveId": "reconocer-problemas-backtracking",
+      "text": "Reconocer problemas clásicos resolubles con backtracking: N-Reinas, suma de subconjuntos, coloreo de grafos, Sudoku y permutaciones restringidas."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-backtracking",
+      "label": "Backtracking",
+      "definition": "Técnica de búsqueda que construye soluciones incrementales y retrocede cuando detecta que la solución parcial no puede llevar a una solución válida."
+    },
+    {
+      "termId": "term-arbol-de-decisiones",
+      "label": "Árbol de decisiones",
+      "definition": "Árbol donde cada nivel representa una etapa del problema y cada rama representa una elección posible."
+    },
+    {
+      "termId": "term-solucion-parcial",
+      "label": "Solución parcial",
+      "definition": "Asignación incompleta de decisiones, por ejemplo (x0, x1, ..., xk, ?, ..., ?)."
+    },
+    {
+      "termId": "term-espacio-de-soluciones",
+      "label": "Espacio de soluciones",
+      "definition": "Conjunto de todas las combinaciones posibles antes de aplicar restricciones o poda."
+    },
+    {
+      "termId": "term-candidato-backtracking",
+      "label": "Candidato",
+      "definition": "Valor posible para completar la siguiente posición de la solución parcial."
+    },
+    {
+      "termId": "term-factibilidad-backtracking",
+      "label": "Factibilidad",
+      "definition": "Condición que determina si una solución parcial sigue respetando las restricciones del problema."
+    },
+    {
+      "termId": "term-poda",
+      "label": "Poda",
+      "definition": "Eliminación de una rama del árbol de búsqueda porque no puede conducir a una solución válida."
+    },
+    {
+      "termId": "term-retroceso",
+      "label": "Retroceso",
+      "definition": "Acción de deshacer una decisión y volver al estado anterior para probar otro candidato."
+    },
+    {
+      "termId": "term-dfs",
+      "label": "DFS",
+      "definition": "Depth-First Search o búsqueda en profundidad. Backtracking explora una rama hasta el fondo antes de volver atrás."
+    },
+    {
+      "termId": "term-nodo-vivo",
+      "label": "Nodo vivo",
+      "definition": "Nodo del árbol que todavía puede explorarse."
+    },
+    {
+      "termId": "term-nodo-muerto",
+      "label": "Nodo muerto",
+      "definition": "Nodo que ya no se explora porque es inválido, ya fue completado o ya no puede producir solución."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-backtracking",
+      "slug": "backtracking",
+      "title": "Backtracking",
+      "order": 1,
+      "summary": "Modelado de soluciones como n-tuplas, exploración DFS, poda por factibilidad y ejemplo completo de N-Reinas.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-backtracking",
+          "slug": "introduccion-backtracking",
+          "title": "Backtracking: idea central",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-retroceso",
+              "text": "Entender la idea de avanzar, detectar bloqueo y retroceder."
+            },
+            {
+              "objectiveId": "entender-poda-temprana",
+              "text": "Entender que backtracking evita explorar ramas imposibles antes de completarlas."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ambientes-ejecucion-pila",
+                "kind": "required"
+              },
+              {
+                "id": "sec-estructura-algoritmo-recursivo",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-backtracking-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Backtracking es una técnica de búsqueda sistemática. Construye una solución paso a paso, prueba candidatos y retrocede tan pronto detecta que la solución parcial ya no puede convertirse en una solución válida."
+                }
+              ]
+            },
+            {
+              "id": "blk-backtracking-profundidad",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La exploración se hace en profundidad. Primero se intenta completar una rama del árbol de decisiones. Si la rama falla, se vuelve al nivel anterior y se prueba el siguiente candidato."
+                }
+              ]
+            },
+            {
+              "id": "blk-backtracking-idea",
+              "type": "note",
+              "variant": "info",
+              "title": "Idea esencial",
+              "blocks": [
+                {
+                  "id": "blk-backtracking-idea-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Backtracking no evita que el problema sea combinatorio. Lo que hace es no perder tiempo completando combinaciones que ya son imposibles desde una etapa intermedia."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-backtracking-vs-fuerza-bruta-intro",
+              "type": "table",
+              "title": "Backtracking vs fuerza bruta",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterio"
+                },
+                {
+                  "key": "fuerzaBruta",
+                  "label": "Fuerza bruta"
+                },
+                {
+                  "key": "backtracking",
+                  "label": "Backtracking"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Construcción"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Genera combinaciones completas."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Construye soluciones parciales."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Momento de descarte"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Filtra después de generar."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Poda antes de completar la rama."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Estructura típica"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Bucles anidados o generación completa."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recursión + validación + retroceso."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-caracterizacion-backtracking",
+          "slug": "caracterizacion-backtracking",
+          "title": "Caracterización de problemas resolubles por backtracking",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "modelar-como-n-tupla",
+              "text": "Representar la solución como una n-tupla de decisiones."
+            },
+            {
+              "objectiveId": "identificar-conjuntos-finitos",
+              "text": "Identificar el conjunto finito de valores posibles para cada decisión."
+            },
+            {
+              "objectiveId": "definir-predicado-validez",
+              "text": "Definir el predicado que decide si una solución parcial sigue siendo válida."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-introduccion-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-caracterizacion-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Un problema encaja bien con backtracking cuando puede expresarse como una secuencia de decisiones. Cada decisión llena una posición de un vector solución."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-solucion-tupla",
+              "type": "equationBlock",
+              "title": "Modelo de solución",
+              "latex": "X=(x_0,x_1,\\ldots,x_{n-1}),\\qquad x_i\\in S_i"
+            },
+            {
+              "id": "blk-expl-modelo-solucion-tupla",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "X representa el vector solución final de tamaño n. Cada xi es la decisión tomada en la etapa i (por ejemplo, el número de columna), y Si es el conjunto de valores posibles para esa decisión."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-solucion-parcial",
+              "type": "equationBlock",
+              "title": "Modelo de solución parcial",
+              "latex": "X_k=(x_0,x_1,\\ldots,x_k,?,\\ldots,?)"
+            },
+            {
+              "id": "blk-expl-modelo-solucion-parcial",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Xk es una solución incompleta que ya tiene valores asignados hasta la posición k. Los signos de interrogación (?) indican las decisiones que aún no se han tomado."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-espacio-soluciones",
+              "type": "equationBlock",
+              "title": "Tamaño del espacio de soluciones",
+              "latex": "|E|=\\prod_{i=0}^{n-1}|S_i|"
+            },
+            {
+              "id": "blk-expl-modelo-espacio-soluciones",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El tamaño total del espacio de búsqueda |E| es el producto del número de opciones disponibles en cada nivel. Esto explica por qué el costo crece tan rápido al aumentar n."
+                }
+              ]
+            },
+            {
+              "id": "blk-caracterizacion-table",
+              "type": "table",
+              "title": "Condiciones para aplicar backtracking",
+              "columns": [
+                {
+                  "key": "condicion",
+                  "label": "Condición"
+                },
+                {
+                  "key": "significado",
+                  "label": "Significado"
+                },
+                {
+                  "key": "pregunta",
+                  "label": "Pregunta de control"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Solución como n-tupla"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La solución se puede escribir como una secuencia de decisiones."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Puedo representar una solución como "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(x_0,x_1,\\ldots,x_{n-1})"
+                      },
+                      {
+                        "type": "text",
+                        "text": "?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Conjuntos finitos de candidatos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cada decisión toma valores desde un conjunto acotado."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Cada "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "x_i"
+                      },
+                      {
+                        "type": "text",
+                        "text": " sale de un conjunto finito "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "S_i"
+                      },
+                      {
+                        "type": "text",
+                        "text": "?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Restricciones parciales"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Se puede detectar invalidez antes de completar toda la solución."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Puedo podar una rama apenas viola una regla?"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "strong",
+                        "text": "Árbol de decisiones"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cada nivel representa una posición o etapa del vector solución."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "¿Los hijos de un nodo son los candidatos para la siguiente decisión?"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-caracterizacion-cuidado",
+              "type": "note",
+              "variant": "warning",
+              "title": "Decidir no es lo mismo que optimizar",
+              "blocks": [
+                {
+                  "id": "blk-caracterizacion-cuidado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Backtracking puede buscar una solución válida, todas las soluciones válidas o la mejor solución bajo un criterio. El modelo debe decir cuál de esas tres metas se persigue."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-modelo-general-backtracking",
+          "slug": "modelo-general-backtracking",
+          "title": "Modelo general de backtracking",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "definir-estado-backtracking",
+              "text": "Definir estado, candidatos, predicado de poda y condición de solución."
+            },
+            {
+              "objectiveId": "leer-modelo-formal-backtracking",
+              "text": "Leer el modelo formal de actualización de una solución parcial."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-caracterizacion-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-modelo-general-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En el nivel "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "k"
+                },
+                {
+                  "type": "text",
+                  "text": " del árbol se intenta asignar un valor a "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "x_k"
+                },
+                {
+                  "type": "text",
+                  "text": ". Si el candidato mantiene válida la solución parcial, se avanza al nivel "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "k+1"
+                },
+                {
+                  "type": "text",
+                  "text": ". Si no, se descarta esa rama."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-candidatos-bt",
+              "type": "equationBlock",
+              "title": "Modelo de candidatos",
+              "latex": "C_k(X_{k-1})=\\{v\\in S_k\\mid candidato(v,k,X_{k-1})\\}"
+            },
+            {
+              "id": "blk-expl-modelo-candidatos-bt",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ck es el conjunto de valores válidos para la posición k, condicionados por la solución parcial previa Xk-1."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-poda-bt",
+              "type": "equationBlock",
+              "title": "Modelo de poda por factibilidad",
+              "latex": "B_k(X_{k-1},v)=\\begin{cases}\\text{verdadero},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{puede extenderse a una solución}\\\\\\text{falso},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{viola restricciones}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-poda-bt",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Bk es el predicado de poda o factibilidad. Si es falso, la rama se corta inmediatamente porque se ha detectado que esa combinación no puede llevar a una solución válida."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-avance-bt",
+              "type": "equationBlock",
+              "title": "Modelo de avance y retroceso",
+              "latex": "X_k=\\begin{cases}X_{k-1}\\cup\\{x_k=v\\},& B_k(X_{k-1},v)=\\text{verdadero}\\\\X_{k-1},& B_k(X_{k-1},v)=\\text{falso}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-avance-bt",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este modelo muestra cómo el vector solución avanza si el candidato es factible (unión de estados) o se mantiene en el estado previo si el candidato debe ser descartado."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-solucion-completa-bt",
+              "type": "equationBlock",
+              "title": "Modelo de solución completa",
+              "latex": "esSolucion(X_k)=\\begin{cases}\\text{verdadero},& k=n-1\\ \\text{y}\\ X_k\\ \\text{satisface todas las restricciones}\\\\\\text{falso},& \\text{en otro caso}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-modelo-solucion-completa-bt",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "esSolucion indica que el proceso termina con éxito solo cuando llegamos al último nivel (n-1) y todas las restricciones del problema se cumplen."
+                }
+              ]
+            },
+            {
+              "id": "blk-modelo-general-bt-table",
+              "type": "table",
+              "title": "Elements del modelo",
+              "columns": [
+                {
+                  "key": "elemento",
+                  "label": "Elemento"
+                },
+                {
+                  "key": "rol",
+                  "label": "Rol"
+                },
+                {
+                  "key": "ejemploNReinas",
+                  "label": "Ejemplo en N-Reinas"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Nivel o etapa de decisión."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Fila actual del tablero."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "x_k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Valor elegido en la etapa k."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Columna elegida para la reina de la fila k."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "S_k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Conjunto de candidatos."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\{1,2,\\ldots,n\\}"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "B_k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Predicado de factibilidad o poda."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No compartir columna ni diagonal."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-esquema-algoritmico-backtracking",
+          "slug": "esquema-algoritmico-backtracking",
+          "title": "Esquema algorítmico",
+          "order": 4,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-pseudocodigo-backtracking",
+              "text": "Leer el esquema recursivo general de backtracking."
+            },
+            {
+              "objectiveId": "diferenciar-avance-y-retroceso",
+              "text": "Diferenciar las operaciones de elegir, validar, avanzar y deshacer."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelo-general-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-esquema-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El patrón básico es recursivo: si la solución está completa, se reporta; si no, se prueban candidatos para la siguiente posición. Cada candidato válido abre una llamada recursiva. Al volver, se deshace la decisión."
+                }
+              ]
+            },
+            {
+              "id": "blk-esquema-bt-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Backtracking general",
+              "code": "backtracking(k, X[n]) BEGIN\n IF (esSolucion(k, X)) THEN BEGIN\n reportar(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR cada candidato v EN candidatos(k, X) DO BEGIN\n IF (factible(k, v, X)) THEN BEGIN\n X[k] <- v;\n total <- total + backtracking(k + 1, X);\n X[k] <- NULL;\n END\n END\n\n RETURN total;\nEND"
+            },
+            {
+              "id": "blk-esquema-bt-flujo",
+              "type": "mermaid",
+              "title": "Flujo de una llamada de backtracking",
+              "code": "flowchart TD\n A[\"Entrar a backtracking(k)\"] --> B{\"¿La solución está completa?\"}\n B -- \"Sí\" --> C[\"Reportar solución\"]\n B -- \"No\" --> D[\"Generar candidatos para x_k\"]\n D --> E[\"Tomar siguiente candidato\"]\n E --> F{\"¿Es factible?\"}\n F -- \"No\" --> G[\"Podar candidato\"]\n G --> H{\"¿Quedan candidatos?\"}\n F -- \"Sí\" --> I[\"Asignar x_k\"]\n I --> J[\"Llamar backtracking(k+1)\"]\n J --> K[\"Deshacer x_k\"]\n K --> H\n H -- \"Sí\" --> E\n H -- \"No\" --> L[\"Retornar al nivel anterior\"]"
+            },
+            {
+              "id": "blk-esquema-bt-nota-deshacer",
+              "type": "note",
+              "variant": "warning",
+              "title": "Deshacer es obligatorio",
+              "blocks": [
+                {
+                  "id": "blk-esquema-bt-nota-deshacer-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si no se deshace la decisión al volver de la llamada recursiva, el siguiente candidato se evalúa sobre un estado contaminado. Ese error rompe el algoritmo."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-n-reinas-planteamiento",
+          "slug": "ejemplo-n-reinas-planteamiento",
+          "title": "Ejemplo: N-Reinas — planteamiento",
+          "order": 5,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "modelar-n-reinas",
+              "text": "Modelar N-Reinas como vector de columnas por fila."
+            },
+            {
+              "objectiveId": "reducir-espacio-n-reinas",
+              "text": "Reducir el espacio de búsqueda usando una reina por fila."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelo-general-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-nreinas-planteamiento",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El problema de las N-Reinas consiste en ubicar "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": " reinas en un tablero "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n\\times n"
+                },
+                {
+                  "type": "text",
+                  "text": " sin que dos reinas se ataquen. Dos reinas se atacan si comparten fila, columna o diagonal."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-reduccion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Como no puede haber dos reinas en la misma fila, se coloca exactamente una reina por fila. Entonces la decisión de cada nivel ya no es escoger una casilla cualquiera del tablero, sino escoger la columna para la fila actual."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-modelo-solucion",
+              "type": "equationBlock",
+              "title": "Modelo de solución",
+              "latex": "X=(x_1,x_2,\\ldots,x_n),\\qquad x_i=\\text{columna de la reina en la fila }i"
+            },
+            {
+              "id": "blk-expl-nreinas-modelo-solucion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En este vector X, el índice i representa la fila del tablero y el valor xi representa la columna donde ubicamos la reina de esa fila."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-candidatos",
+              "type": "equationBlock",
+              "title": "Modelo de candidatos",
+              "latex": "S_i=\\{1,2,\\ldots,n\\}"
+            },
+            {
+              "id": "blk-expl-nreinas-candidatos",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Para cada fila, los candidatos Si son simplemente los números de columna del 1 al n."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-factibilidad",
+              "type": "equationBlock",
+              "title": "Modelo de factibilidad",
+              "latex": "valido(i,c)=\\begin{cases}\\text{verdadero},& \\forall r<i:\\ c\\ne x_r\\ \\land\\ |i-r|\\ne |c-x_r|\\\\\\text{falso},& \\text{en otro caso}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-nreinas-factibilidad",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La función revisa que la columna c no se repita y que no haya ataques en diagonal. La fórmula |i-r| != |c-xr| asegura que la distancia en filas no sea igual a la distancia en columnas, lo cual caracteriza a las diagonales."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-solucion-completa",
+              "type": "equationBlock",
+              "title": "Modelo de solución completa",
+              "latex": "esSolucion(i,X)=\\begin{cases}\\text{verdadero},& i=n+1\\\\\\text{falso},& i\\le n\\end{cases}"
+            },
+            {
+              "id": "blk-expl-nreinas-solucion-completa",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La condición i=n+1 significa que ya hemos logrado colocar una reina en cada una de las n filas del tablero."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-reduccion-espacio",
+              "type": "table",
+              "title": "Reducción del espacio de búsqueda",
+              "columns": [
+                {
+                  "key": "modelo",
+                  "label": "Modelo"
+                },
+                {
+                  "key": "espacio",
+                  "label": "Espacio aproximado"
+                },
+                {
+                  "key": "comentario",
+                  "label": "Comentario"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Elegir cualquier casilla para cada reina"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "(n^2)^n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Demasiado grande y con muchas combinaciones obviamente inválidas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Una reina por fila"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cada nivel decide una columna."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Una reina por fila y sin repetir columnas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "n!"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La poda por columna reduce drásticamente el árbol."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-n-reinas-cuatro",
+          "slug": "ejemplo-n-reinas-cuatro",
+          "title": "N-Reinas 4×4 — seguimiento paso a paso",
+          "order": 6,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "learningObjectives": [
+            {
+              "objectiveId": "seguir-n-reinas-cuatro",
+              "text": "Seguir una ejecución de backtracking para N-Reinas 4×4."
+            },
+            {
+              "objectiveId": "interpretar-poda-columnas-diagonales",
+              "text": "Interpretar podas por columna y diagonal en N-Reinas."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-n-reinas-planteamiento",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-nreinas-cuatro-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Para "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n=4"
+                },
+                {
+                  "type": "text",
+                  "text": " una solución puede representarse como "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "X=(2,4,1,3)"
+                },
+                {
+                  "type": "text",
+                  "text": ". Esto significa: fila 1 columna 2, fila 2 columna 4, fila 3 columna 1 y fila 4 columna 3."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-cuatro-tablero",
+              "type": "table",
+              "title": "Tablero solución para X = (2,4,1,3)",
+              "columns": [
+                {
+                  "key": "fila",
+                  "label": "Fila"
+                },
+                {
+                  "key": "c1",
+                  "label": "Col 1"
+                },
+                {
+                  "key": "c2",
+                  "label": "Col 2"
+                },
+                {
+                  "key": "c3",
+                  "label": "Col 3"
+                },
+                {
+                  "key": "c4",
+                  "label": "Col 4"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Q"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Q"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Q"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Q"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "·"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-cuatro-traza",
+              "type": "table",
+              "title": "Seguimiento hasta encontrar X = (2,4,1,3)",
+              "columns": [
+                {
+                  "key": "paso",
+                  "label": "Paso"
+                },
+                {
+                  "key": "fila",
+                  "label": "Fila"
+                },
+                {
+                  "key": "columna",
+                  "label": "Columna probada"
+                },
+                {
+                  "key": "valida",
+                  "label": "¿Válida?"
+                },
+                {
+                  "key": "accion",
+                  "label": "Acción"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Colocar reina y avanzar."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Misma columna. Probar siguiente."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Diagonal. Probar siguiente."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Colocar reina y avanzar."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "5"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,2,3,4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Todas fallan por columna o diagonal. Retroceder."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "6"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Reemplazar columna 3 por 4 y avanzar."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "7"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1,2,3,4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Todas fallan. Retroceder a fila 1."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "8"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Nueva rama: colocar en fila 1 columna 2."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "9"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Colocar y avanzar."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "10"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Colocar y avanzar."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "11"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solución encontrada."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-cuatro-arbol",
+              "type": "mermaid",
+              "title": "Fragmento del árbol de decisiones",
+              "code": "flowchart TD\n A[\"Inicio\"] --> B[\"F1:C1\"]\n B --> C[\"F2:C1 podada\"]\n B --> D[\"F2:C2 podada\"]\n B --> E[\"F2:C3\"]\n E --> F[\"Fila 3 sin candidato válido\"]\n B --> G[\"F2:C4\"]\n G --> H[\"Fila 3 sin candidato válido\"]\n A --> I[\"F1:C2\"]\n I --> J[\"F2:C4\"]\n J --> K[\"F3:C1\"]\n K --> L[\"F4:C3 solución\"]"
+            },
+            {
+              "id": "blk-nreinas-cuatro-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Resultado",
+              "blocks": [
+                {
+                  "id": "blk-nreinas-cuatro-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Una solución válida para el tablero 4×4 es "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "X=(2,4,1,3)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Ninguna pareja de reinas comparte columna ni diagonal."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-n-reinas-pseudocodigo",
+          "slug": "n-reinas-pseudocodigo",
+          "title": "N-Reinas — algoritmo",
+          "order": 7,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-algoritmo-n-reinas",
+              "text": "Leer el pseudocódigo de N-Reinas con backtracking."
+            },
+            {
+              "objectiveId": "entender-validacion-n-reinas",
+              "text": "Entender la validación por columnas y diagonales."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-n-reinas-planteamiento",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-nreinas-valido-modelo",
+              "type": "equationBlock",
+              "title": "Condición de validez",
+              "latex": "valido(fila,col)=\\begin{cases}\\text{verdadero},& \\forall r<fila:\\ col\\ne X[r]\\ \\land\\ |fila-r|\\ne |col-X[r]|\\\\\\text{falso},& \\text{en otro caso}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-nreinas-valido-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este modelo unifica las restricciones: la reina actual no debe compartir columna (col != X[r]) ni diagonal (distancia absoluta de filas != distancia absoluta de columnas) con ninguna reina colocada previamente."
+                }
+              ]
+            },
+            {
+              "id": "blk-nreinas-pseudocodigo-principal",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "N-Reinas con backtracking",
+              "code": "nReinas(n) BEGIN\n X[1..n] <- NULL;\n RETURN ubicarReina(1, n, X);\nEND\n\nubicarReina(fila, n, X[n]) BEGIN\n IF (fila = n + 1) THEN BEGIN\n reportar(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR col <- 1 TO n DO BEGIN\n IF (esValida(fila, col, X)) THEN BEGIN\n X[fila] <- col;\n total <- total + ubicarReina(fila + 1, n, X);\n X[fila] <- NULL;\n END\n END\n\n RETURN total;\nEND"
+            },
+            {
+              "id": "blk-nreinas-pseudocodigo-validez",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Validación de una posición",
+              "code": "esValida(fila, col, X[n]) BEGIN\n FOR r <- 1 TO fila - 1 DO BEGIN\n IF (X[r] = col) THEN BEGIN\n RETURN F;\n END\n\n IF (abs(fila - r) = abs(col - X[r])) THEN BEGIN\n RETURN F;\n END\n END\n\n RETURN T;\nEND"
+            },
+            {
+              "id": "blk-nreinas-validacion-explicacion",
+              "type": "table",
+              "title": "Reglas de validación",
+              "columns": [
+                {
+                  "key": "regla",
+                  "label": "Regla"
+                },
+                {
+                  "key": "modelo",
+                  "label": "Modelo"
+                },
+                {
+                  "key": "significado",
+                  "label": "Significado"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "No misma columna"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "col\\ne X[r]"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Dos reinas en la misma columna se atacan."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "No misma diagonal"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "|fila-r|\\ne |col-X[r]|"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "En una diagonal, la diferencia de filas coincide con la diferencia de columnas."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-complejidad-backtracking",
+          "slug": "complejidad-backtracking",
+          "title": "Complejidad de backtracking",
+          "order": 8,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "analizar-arbol-busqueda",
+              "text": "Analizar el costo de backtracking como tamaño del árbol de búsqueda."
+            },
+            {
+              "objectiveId": "distinguir-peor-caso-practica",
+              "text": "Distinguir la cota de peor caso de la mejora práctica por poda."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-big-o",
+                "kind": "required"
+              },
+              {
+                "id": "sec-ejemplo-n-reinas-planteamiento",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-complejidad-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La complejidad de backtracking depende del número de nodos visitados en el árbol de búsqueda y del costo de validar cada candidato. La poda puede reducir mucho el trabajo real, pero el peor caso sigue siendo combinatorio."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bt-general",
+              "type": "equationBlock",
+              "title": "Modelo general de costo",
+              "latex": "T(n)=\\sum_{k=0}^{d}N_k\\cdot C_{validar}(k)"
+            },
+            {
+              "id": "blk-expl-complejidad-bt-general",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Nk es el número de nodos visitados en el nivel k del árbol y Cvalidar es el costo de ejecutar la función de factibilidad en ese nivel."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bt-exponencial",
+              "type": "equationBlock",
+              "title": "Peor caso con factor de ramificación uniforme",
+              "latex": "T(d)=\\begin{cases}\\Theta(b^d\\cdot C_{validar}),& \\text{si se visitan casi todas las ramas}\\\\\\Theta(N_{visitados}\\cdot C_{validar}),& \\text{si la poda reduce el árbol}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-complejidad-bt-exponencial",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En el peor caso, b es el factor de ramificación (promedio de hijos por nodo) y d es la profundidad del árbol. La poda busca que los nodos visitados sean mucho menos que el total teórico bd."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-nreinas",
+              "type": "equationBlock",
+              "title": "Cota típica para N-Reinas",
+              "latex": "T(n)=\\begin{cases}O(n^n\\cdot n),& \\text{si se permite repetir columnas y validar cuesta }O(n)\\\\O(n!\\cdot n),& \\text{si se evita repetir columnas y validar cuesta }O(n)\\\\O(n!),& \\text{si columnas y diagonales se validan en }O(1)\\end{cases}"
+            },
+            {
+              "id": "blk-expl-complejidad-nreinas",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El costo n! aparece cuando evitamos repetir columnas. Si también validamos en tiempo constante O(1), el costo se reduce simplemente al número de nodos del árbol factorial."
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bt-table",
+              "type": "table",
+              "title": "Factores que afectan el costo",
+              "columns": [
+                {
+                  "key": "factor",
+                  "label": "Factor"
+                },
+                {
+                  "key": "efecto",
+                  "label": "Efecto"
+                },
+                {
+                  "key": "ejemplo",
+                  "label": "Ejemplo"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Profundidad"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Número de decisiones que deben tomarse."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "En N-Reinas, profundidad "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Ramificación"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Número de candidatos por decisión."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Columnas posibles por fila."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Poda"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Reduce ramas exploradas."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Descartar columnas y diagonales atacadas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Costo de validar"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Multiplica cada nodo visitado."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " con escaneo, "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "O(1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " con arreglos auxiliares."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-complejidad-bt-advertencia",
+              "type": "note",
+              "variant": "warning",
+              "title": "La poda no cambia automáticamente el peor caso",
+              "blocks": [
+                {
+                  "id": "blk-complejidad-bt-advertencia-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Que el algoritmo pode muchas ramas en ejemplos pequeños no significa que el peor caso deje de ser exponencial o factorial. Para cambiar la cota hay que justificar formalmente cuántos nodos se eliminan."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-optimizaciones-backtracking",
+          "slug": "optimizaciones-backtracking",
+          "title": "Optimización de validación y poda",
+          "order": 9,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "optimizar-validacion-nreinas",
+              "text": "Optimizar la validación de N-Reinas usando estructuras auxiliares."
+            },
+            {
+              "objectiveId": "entender-poda-orden-candidatos",
+              "text": "Entender cómo el orden de candidatos puede afectar el tiempo real."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-complejidad-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-optimizacion-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Aunque el árbol de búsqueda siga siendo grande, se puede mejorar mucho el tiempo real reduciendo el costo de validar candidatos y ordenando los candidatos de forma más útil."
+                }
+              ]
+            },
+            {
+              "id": "blk-optimizacion-nreinas-modelo",
+              "type": "equationBlock",
+              "title": "Validación O(1) en N-Reinas",
+              "latex": "valido(fila,col)=\\begin{cases}\\text{verdadero},& \\neg colUsada[col]\\ \\land\\ \\neg diagA[fila-col]\\ \\land\\ \\neg diagB[fila+col]\\\\\\text{falso},& \\text{en otro caso}\\end{cases}"
+            },
+            {
+              "id": "blk-expl-optimizacion-nreinas-modelo",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Mediante arreglos booleanos para columnas y diagonales (identificadas por fila+col y fila-col), podemos saber si una casilla está amenazada en tiempo constante O(1), sin necesidad de recorrer las reinas anteriores."
+                }
+              ]
+            },
+            {
+              "id": "blk-optimizaciones-bt-table",
+              "type": "table",
+              "title": "Optimizaciones frecuentes",
+              "columns": [
+                {
+                  "key": "optimizacion",
+                  "label": "Optimización"
+                },
+                {
+                  "key": "idea",
+                  "label": "Idea"
+                },
+                {
+                  "key": "efecto",
+                  "label": "Efecto"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Arreglos de columnas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Guardar qué columnas ya están ocupadas."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Evita escanear reinas previas para columnas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Arreglos de diagonales"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Guardar diagonales ocupadas por índices "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "fila-col"
+                      },
+                      {
+                        "type": "text",
+                        "text": " y "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "fila+col"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Validación de diagonales en tiempo constante."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Orden de candidatos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Probar primero candidatos más prometedores."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Puede encontrar una solución antes, aunque no mejora necesariamente el peor caso."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Poda por límite"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Detectar que ni completando todos los pasos restantes se alcanza la meta."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Útil en suma de subconjuntos y problemas de selección."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-optimizacion-nreinas-pseudocodigo",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "N-Reinas con validación O(1)",
+              "code": "ubicarReinaRapido(fila, n, X[n], colUsada[n], diagA[2*n], diagB[2*n]) BEGIN\n IF (fila = n + 1) THEN BEGIN\n reportar(X);\n RETURN 1;\n END\n\n total <- 0;\n\n FOR col <- 1 TO n DO BEGIN\n dA <- fila - col + n;\n dB <- fila + col;\n\n IF (NOT colUsada[col] AND NOT diagA[dA] AND NOT diagB[dB]) THEN BEGIN\n X[fila] <- col;\n colUsada[col] <- T;\n diagA[dA] <- T;\n diagB[dB] <- T;\n\n total <- total + ubicarReinaRapido(fila + 1, n, X, colUsada, diagA, diagB);\n\n X[fila] <- NULL;\n colUsada[col] <- F;\n diagA[dA] <- F;\n diagB[dB] <- F;\n END\n END\n\n RETURN total;\nEND"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-problemas-clasicos-backtracking",
+          "slug": "problemas-clasicos-backtracking",
+          "title": "Problemas clásicos de backtracking",
+          "order": 10,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "reconocer-familias-backtracking",
+              "text": "Reconocer familias de problemas que suelen resolverse con backtracking."
+            },
+            {
+              "objectiveId": "identificar-modelo-por-problema",
+              "text": "Identificar el vector solución y la poda principal de cada familia."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-caracterizacion-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-problemas-clasicos-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Backtracking aparece cuando hay que tomar una secuencia de decisiones bajo restricciones. La forma cambia, pero el patrón de solución parcial y poda se repite."
+                }
+              ]
+            },
+            {
+              "id": "blk-problemas-clasicos-table",
+              "type": "table",
+              "title": "Familias típicas",
+              "columns": [
+                {
+                  "key": "problema",
+                  "label": "Problema"
+                },
+                {
+                  "key": "vectorSolucion",
+                  "label": "Vector solución"
+                },
+                {
+                  "key": "candidatos",
+                  "label": "Candidatos"
+                },
+                {
+                  "key": "poda",
+                  "label": "Poda principal"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "N-Reinas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]=\\text{columna de la reina en fila }i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Columnas del tablero."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No misma columna ni diagonal."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Suma de subconjuntos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]\\in\\{0,1\\}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Tomar o no tomar cada elemento."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La suma parcial no debe exceder el objetivo si todos los números son positivos."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Coloreo de grafos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[v]=\\text{color del vértice }v"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Colores disponibles."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Vértices adyacentes no pueden compartir color."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sudoku"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]=\\text{valor de la celda vacía }i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Dígitos posibles."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No repetir en fila, columna ni subcuadro."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Permutaciones restringidas"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "X[i]=\\text{elemento en posición }i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Elementos no usados."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Restricciones específicas del problema."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-backtracking-vs-otras-tecnicas",
+          "slug": "backtracking-vs-otras-tecnicas",
+          "title": "Backtracking vs fuerza bruta vs voraces",
+          "order": 11,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "comparar-backtracking-fuerza-bruta",
+              "text": "Comparar backtracking con fuerza bruta."
+            },
+            {
+              "objectiveId": "comparar-backtracking-voraces",
+              "text": "Comparar backtracking con algoritmos voraces."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-voraces",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-introduccion-algoritmos-voraces",
+                "kind": "recommended"
+              },
+              {
+                "id": "sec-introduccion-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-comparacion-bt-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Backtracking está entre dos extremos: no es tan ciego como fuerza bruta, pero tampoco se compromete irrevocablemente como un voraz."
+                }
+              ]
+            },
+            {
+              "id": "blk-comparacion-bt-table",
+              "type": "table",
+              "title": "Comparación de técnicas",
+              "columns": [
+                {
+                  "key": "criterio",
+                  "label": "Criterio"
+                },
+                {
+                  "key": "fuerzaBruta",
+                  "label": "Fuerza bruta"
+                },
+                {
+                  "key": "backtracking",
+                  "label": "Backtracking"
+                },
+                {
+                  "key": "voraz",
+                  "label": "Voraz"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Construcción"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Genera todo."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Construye y poda."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Elige localmente."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Retroceso"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No aplica."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Poda temprana"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sí, por factibilidad."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No explora alternativas descartadas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Garantía"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Completa si enumera todo."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Completa si la poda es correcta."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solo si se demuestra propiedad voraz."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Costo típico"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Combinatorio completo."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Combinatorio con poda."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usualmente polinómico."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-decision-bt-tecnica",
+              "type": "mermaid",
+              "title": "Selección de técnica",
+              "code": "flowchart TD\n A[\"Problema con decisiones\"] --> B{\"¿Hay regla local demostrable?\"}\n B -- \"Sí\" --> C[\"Voraz\"]\n B -- \"No\" --> D{\"¿Se pueden podar soluciones parciales inválidas?\"}\n D -- \"Sí\" --> E[\"Backtracking\"]\n D -- \"No\" --> F[\"Fuerza bruta o búsqueda exhaustiva\"]\n E --> G{\"¿Se busca optimizar con cotas?\"}\n G -- \"Sí\" --> H[\"Ramificación y poda\"]\n G -- \"No\" --> I[\"Backtracking clásico\"]"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-errores-tipicos-backtracking",
+          "slug": "errores-tipicos-backtracking",
+          "title": "Errores típicos",
+          "order": 12,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "evitar-errores-backtracking",
+              "text": "Evitar errores frecuentes al implementar o analizar backtracking."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-esquema-algoritmico-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-errores-bt-table",
+              "type": "table",
+              "title": "Errores frecuentes en backtracking",
+              "columns": [
+                {
+                  "key": "error",
+                  "label": "Error"
+                },
+                {
+                  "key": "porQueEstaMal",
+                  "label": "Por qué está mal"
+                },
+                {
+                  "key": "correccion",
+                  "label": "Corrección"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "No deshacer la decisión"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El siguiente candidato hereda un estado que no le corresponde."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Después de la llamada recursiva, restaurar la posición o estructura modificada."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Validar solo al final"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Eso convierte el algoritmo en fuerza bruta."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Validar cada solución parcial antes de avanzar."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Podar una rama que sí podía llegar a solución"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La poda incorrecta vuelve incompleto el algoritmo."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La poda debe ser una condición necesaria de invalidez, no una intuición."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Confundir backtracking con voraz"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El voraz no reconsidera; backtracking sí retrocede."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Si hay deshacer y explorar alternativas, es backtracking."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analizar solo el camino exitoso"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El costo incluye candidatos fallidos y ramas podadas visitadas."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analizar nodos visitados del árbol completo, no solo la solución final."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Decir que la poda hace el algoritmo polinómico"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "La poda mejora casos reales, pero no necesariamente cambia el peor caso."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Justificar formalmente cualquier mejora de cota."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-backtracking",
+          "slug": "resumen-operativo-backtracking",
+          "title": "Resumen operativo",
+          "order": 13,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-receta-backtracking",
+              "text": "Consultar la receta mínima para modelar e implementar backtracking."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-backtracking",
+                "kind": "recommended"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-modelo-general-backtracking",
+                "kind": "required"
+              },
+              {
+                "id": "sec-esquema-algoritmico-backtracking",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-resumen-bt",
+              "type": "note",
+              "variant": "success",
+              "title": "Receta mínima",
+              "blocks": [
+                {
+                  "id": "blk-resumen-bt-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define la solución como una n-tupla."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define qué representa cada posición de la tupla."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define los candidatos de cada nivel."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define el predicado de factibilidad."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Define cuándo una solución está completa."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Explora en profundidad usando recursión."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Antes de avanzar, valida la solución parcial."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Después de volver de la recursión, deshaz la decisión."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Analiza el costo como nodos visitados por costo de validación."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-formulas-clave-bt",
+              "type": "latexSteps",
+              "title": "Modelos clave",
+              "steps": [
+                {
+                  "stepId": "step-formula-tupla",
+                  "title": "Solución como tupla",
+                  "latex": "X=(x_0,x_1,\\ldots,x_{n-1}),\\qquad x_i\\in S_i",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Cada posición del vector representa una decisión."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-parcial",
+                  "title": "Solución parcial",
+                  "latex": "X_k=(x_0,x_1,\\ldots,x_k,?,\\ldots,?)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "La solución todavía no está completa, pero ya puede validarse parcialmente."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-poda",
+                  "title": "Poda por factibilidad",
+                  "latex": "B_k(X_{k-1},v)=\\begin{cases}\\text{verdadero},& X_{k-1}\\cup\\{x_k=v\\}\\ \\text{respeta restricciones}\\\\\\text{falso},& \\text{viola alguna restricción}\\end{cases}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Si el predicado es falso, la rama se corta."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-costo-gen",
+                  "title": "Costo general",
+                  "latex": "T(n)=\\sum_{k=0}^{d}N_k\\cdot C_{validar}(k)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El costo depende de cuántos nodos se visitan en cada nivel y cuánto cuesta validarlos."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

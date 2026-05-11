@@ -80,6 +80,10 @@ REQUIRED_FILES = [
     "09-decisions/adr-008-unified-content-spaces.md",
 ]
 
+REQUIRED_NON_MD_FILES = [
+    "08-content/examples/quiz-bank.sample.json",
+]
+
 REMOVED_LEGACY_PATHS = [
     "api",
     "app",
@@ -232,6 +236,10 @@ def main() -> int:
     errors: list[str] = []
 
     for rel_path in REQUIRED_FILES:
+        if not (DOCS / rel_path).exists():
+            error(f"Falta archivo requerido: docs/{rel_path}", errors)
+
+    for rel_path in REQUIRED_NON_MD_FILES:
         if not (DOCS / rel_path).exists():
             error(f"Falta archivo requerido: docs/{rel_path}", errors)
 

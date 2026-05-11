@@ -261,10 +261,10 @@ const getMethodIconName = (
   isIterationMethod: boolean,
   isRecursionTreeMethod: boolean,
 ): string => {
-  if (isCharacteristicMethod) return "calculate";
-  if (isIterationMethod) return "unfold_more";
-  if (isRecursionTreeMethod) return "account_tree";
-  return "science";
+  if (isCharacteristicMethod) return "function";
+  if (isIterationMethod) return "repeat";
+  if (isRecursionTreeMethod) return "schema";
+  return "gavel";
 };
 
 /**

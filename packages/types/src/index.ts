@@ -998,4 +998,6 @@ export interface DocumentationSection {
   };
 }
 
+export * from "./content";
+export * from "./quiz";
 export * from "./export-snapshot";

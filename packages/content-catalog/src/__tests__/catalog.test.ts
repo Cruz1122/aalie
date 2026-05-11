@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 
 import {
   buildSpaceSearchIndex,
@@ -7,12 +9,14 @@ import {
   computeModuleProgress,
   deriveModuleRoute,
   deriveSpaceRoute,
+  resolveTarget,
+} from "../index.js";
+import {
   discoverSpaces,
   getModuleBySlug,
   getSpaceBundle,
-  resolveTarget,
   validateCatalog,
-} from "../index.js";
+} from "../server.js";
 
 test("discoverSpaces loads published spaces and modules from filesystem", () => {
   const spaces = discoverSpaces();
@@ -20,24 +24,20 @@ test("discoverSpaces loads published spaces and modules from filesystem", () => 
     (bundle) => `${bundle.space.spaceId}:${bundle.space.locale}`,
   );
 
-  assert.equal(spaces.length, 3);
-  assert.deepEqual(spaceKeys, [
-    "theory:es",
-    "user-guide:en",
-    "user-guide:es",
-  ]);
+  assert.equal(spaces.length, 4);
+  assert.deepEqual(spaceKeys.sort(), ["course:en", "course:es", "user-guide:en", "user-guide:es"]);
   assert.equal(getSpaceBundle("user-guide", "es").modules.length, 7);
   assert.equal(getSpaceBundle("user-guide", "en").modules.length, 7);
 });
 
 test("routes are derived from space and module slugs without manual mapping", () => {
-  const theoryBundle = getSpaceBundle("theory", "es");
+  const theoryBundle = getSpaceBundle("course", "es");
   const guideBundle = getSpaceBundle("user-guide", "es");
 
   assert.equal(deriveSpaceRoute(theoryBundle.space), "/course");
   assert.equal(
     deriveModuleRoute(theoryBundle.space, theoryBundle.modules[0].module),
-    "/course/complejidad-temporal-y-espacial",
+    "/course/complejidad-temporal-espacial",
   );
   assert.equal(deriveSpaceRoute(guideBundle.space), "/user-guide");
   assert.equal(
@@ -47,17 +47,22 @@ test("routes are derived from space and module slugs without manual mapping", ()
 });
 
 test("module progress is computed from trackable sections only", () => {
-  const [theoryBundle] = discoverSpaces();
-  const module = theoryBundle.modules[0].module;
+  const courseBundle = getSpaceBundle("course", "es");
+  const module = getModuleBySlug(
+    courseBundle,
+    "complejidad-temporal-espacial",
+  )?.module;
+
+  assert.ok(module);
 
   const progress = computeModuleProgress(module, [
-    "sec-analizar-algoritmo-no-programa",
-    "sec-operacion-elemental-y-modelo-de-costo",
+    "sec-introduccion-complejidad",
+    "sec-principio-fundamental",
   ]);
 
-  assert.equal(progress.totalTrackableSections, 4);
+  assert.equal(progress.totalTrackableSections, 8);
   assert.equal(progress.completedTrackableSections, 2);
-  assert.equal(progress.percentage, 50);
+  assert.equal(progress.percentage, 25);
 });
 
 test("resolveTarget finds internal sections, terms and blocks by neutral target refs", () => {
@@ -73,10 +78,13 @@ test("resolveTarget finds internal sections, terms and blocks by neutral target 
   });
   const block = resolveTarget(guideBundle, {
     kind: "block",
-    ref: "blk-m1-s1-intro",
+    ref: "blk-m1-s2-p1",
   });
 
-  assert.equal(section?.title, "Operaciones y crecimiento con n");
+  assert.equal(
+    section?.title,
+    "Iteraciones, suma de costos y ejemplo en el analizador",
+  );
   assert.equal(term?.title, "tamaño de entrada");
   assert.equal(block?.kind, "block");
 });
@@ -98,20 +106,24 @@ test("space helpers resolve bundles, module slugs, and aggregate search across m
 });
 
 test("search index is generated from JSON content, metadata, terms and captions", () => {
-  const [theoryBundle] = discoverSpaces();
-  const module = theoryBundle.modules[0].module;
-  const entries = buildModuleSearchIndex(theoryBundle.space, module);
+  const courseBundle = getSpaceBundle("course", "es");
+  const module = getModuleBySlug(
+    courseBundle,
+    "complejidad-temporal-espacial",
+  )?.module;
+  assert.ok(module);
+  const entries = buildModuleSearchIndex(courseBundle.space, module);
   const moduleEntry = entries.find((entry) => entry.kind === "module");
   const sectionEntry = entries.find(
-    (entry) => entry.sectionId === "sec-notaciones-y-comparacion",
+    (entry) => entry.sectionId === "sec-ejemplo-for-while-logaritmico",
   );
 
   assert.ok(moduleEntry);
+  assert.match(moduleEntry.text, /Modelo RAM/);
   assert.match(moduleEntry.text, /Operacion elemental/);
-  assert.match(moduleEntry.text, /Comparacion cualitativa/);
   assert.ok(sectionEntry);
-  assert.match(sectionEntry.text, /Dominancia eventual/);
-  assert.match(sectionEntry.text, /2\^n/);
+  assert.match(sectionEntry.text, /j <- j\*2/);
+  assert.match(sectionEntry.text, /n\\log_2\(n\)/);
 });
 
 test("seed catalog validates against schemas and semantic rules", () => {
@@ -119,4 +131,22 @@ test("seed catalog validates against schemas and semantic rules", () => {
 
   assert.equal(report.valid, true);
   assert.deepEqual(report.errors, []);
+});
+
+test("course catalog does not allow latex trees or forest engine", () => {
+  const courseBundle = getSpaceBundle("course", "es");
+
+  for (const loadedModule of courseBundle.modules) {
+    const rawFile = fs.readFileSync(loadedModule.filePath, "utf-8");
+    assert.equal(
+      /"type"\s*:\s*"latexDiagram"/.test(rawFile),
+      false,
+      `latexDiagram is forbidden in ${path.basename(loadedModule.filePath)}`,
+    );
+    assert.equal(
+      /"engine"\s*:\s*"forest"/.test(rawFile),
+      false,
+      `forest engine is forbidden in ${path.basename(loadedModule.filePath)}`,
+    );
+  }
 });

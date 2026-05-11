@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { EmbeddedAssistantStaticPage } from "@/components/assistant/EmbeddedAssistantStaticPage";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { PageHeader } from "@/components/PageHeader";
@@ -20,7 +21,7 @@ export default async function PrivacyPage({ params }: Props) {
   const t = await getTranslations({ locale, namespace: "privacy" });
 
   return (
-    <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex w-full min-h-screen flex-col overflow-x-hidden">
       <Header />
 
       {/* Contenido Principal */}
@@ -234,6 +235,13 @@ export default async function PrivacyPage({ params }: Props) {
           </div>
         </div>
       </main>
+
+      <EmbeddedAssistantStaticPage
+        surface="privacy"
+        route={`/${locale}/privacy`}
+        title={t("heroTitle")}
+        description={t("heroDesc")}
+      />
 
       <Footer />
     </div>

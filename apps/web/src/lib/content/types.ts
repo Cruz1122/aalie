@@ -1,4 +1,8 @@
-import type { CatalogModule, SearchIndexEntry } from "@aa/content-catalog";
+import type {
+  CatalogModule,
+  SearchIndexEntry,
+  TermIndexEntry,
+} from "@aa/content-catalog";
 
 export interface ContentSpaceSummary {
   spaceId: string;
@@ -37,6 +41,14 @@ export interface ContentSectionSummary {
   summary: string;
 }
 
+export interface ContentChapterSummary {
+  chapterId: string;
+  slug: string;
+  title: string;
+  order: number;
+  summary?: string;
+}
+
 export interface ContentTargetMapEntry {
   href: string;
   title?: string;
@@ -44,24 +56,35 @@ export interface ContentTargetMapEntry {
 
 export type ContentTargetMap = Record<string, ContentTargetMapEntry>;
 
-export interface UserGuideLandingData {
+export interface ContentLandingData {
   space: ContentSpaceSummary;
   modules: ContentModuleSummary[];
   searchIndex: SearchIndexEntry[];
   targetMap: ContentTargetMap;
 }
 
-export interface UserGuideModuleData {
+export interface ContentModuleData {
   space: ContentSpaceSummary;
   module: CatalogModule;
   moduleSummary: ContentModuleSummary;
   allModules: ContentModuleSummary[];
+  courseTermsIndex: TermIndexEntry[];
   previousModule?: ContentModuleSummary;
   nextModule?: ContentModuleSummary;
+  chapters: ContentChapterSummary[];
   sectionSummaries: ContentSectionSummary[];
   searchIndex: SearchIndexEntry[];
   targetMap: ContentTargetMap;
 }
+
+export interface ContentChapterData extends ContentModuleData {
+  chapter: CatalogModule["chapters"][number];
+  chapterSummary: ContentChapterSummary;
+}
+
+export type UserGuideLandingData = ContentLandingData;
+
+export type UserGuideModuleData = ContentModuleData;
 
 export interface ContentSearchMatch {
   entry: SearchIndexEntry;

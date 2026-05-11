@@ -2,39 +2,31 @@
 
 ## Arquitectura y Organización
 
-**Toda la gestión de modelos de lenguaje (LLM) está CENTRALIZADA:**
+**El frontend NO llama al proveedor LLM directamente.**
 
-- La lógica de selección de modelo, prompts, endpoints y helpers vive en `llm-config.ts`.
-- Los endpoints consumen exclusivamente esta configuración, asegurando consistencia y mantenibilidad.
-- El status global de todos los jobs se expone vía `/api/llm/status`.
-- Los jobs ahora son homogéneos: `parser_assist`, `general`, `repair`, `compare` (puedes agregar más fácilmente).
-- Los modelos y endpoint se controlan por variables `LLM_MODEL_*` y `GEMINI_ENDPOINT_BASE`.
+- `/api/llm` y `/api/llm/status` en Next funcionan como proxy interno.
+- El backend FastAPI (`/llm`, `/llm/status`) es el unico punto autorizado para ejecutar requests al proveedor.
+- Configuracion de provider, modelos, timeouts y API keys vive en `apps/api/app/modules/llm`.
+- El frontend conserva soporte opcional para API key en localStorage, pero solo la reenvia al backend cuando no hay `API_KEY` de servidor.
 
 ### Archivos principales
 
-- `llm-config.ts`: fuente única de verdad para config de jobs/modelos/prompts.
-- `route.ts`: endpoint general para asistencia/consulta de LLM (todos los jobs).
-- `classify/route.ts`: endpoint específico para clasificación de código (usa backend Python y, opcionalmente, LLM).
-- `status/route.ts`: endpoint **único** de status global LLM.
-- README.md (este archivo): documentación de uso y buenas prácticas.
+- `route.ts`: proxy de `POST /api/llm` -> backend `POST /llm`.
+- `status/route.ts`: proxy de `GET /api/llm/status` -> backend `GET /llm/status`.
+- `classify/route.ts`: clasificación AST (sin dependencia de proveedor LLM).
+- README.md: documentación de integración en capa web.
 
 ## ¿Cómo funciona?
 
 ### Selección de modelo/job
 
-- Cualquier endpoint o función que requiera modelo, prompt o configuración usa exclusivamente helpers de `llm-config.ts`, por ejemplo:
-  ```ts
-  import { getJobConfig } from "./llm-config";
-  // ...
-  const config = getJobConfig("parser_assist", "es");
-  const model = config.model;
-  ```
-- Los endpoints nunca almacenan lógica de modelo o prompt localmente.
-- `POST /api/llm` acepta `assistantContext` opcional para serializar contexto curado de `/analyzer`, `/examples` y `/user-guide` sin duplicar prompts por superficie.
+- La seleccion de modelo/job se resuelve en backend FastAPI.
+- `POST /api/llm` mantiene el contrato de entrada (`job`, `prompt`, `chatHistory`, `assistantContext`, `apiKey`) para no romper la UI.
+- El proxy no contiene detalles de proveedor ni prompts.
 
 ### Consumo de status/modelos activos
 
-- El status de todos los jobs está en una única ruta:
+- El status de todos los jobs está en una única ruta (proxy web):
   ```
   GET /api/llm/status
   ```
@@ -55,38 +47,21 @@
   }
   ```
 
-### Fallback por defecto
+### Configuracion
 
-```ts
-export const DEFAULT_GEMINI_ENDPOINT_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+- Variables LLM ahora residen en `apps/api/.env`.
+- Variables clave: `API_KEY`, `GEMINI_ENDPOINT_BASE`, `LLM_MODEL_CLASSIFY`, `LLM_MODEL_PARSER_ASSIST`, `LLM_MODEL_GENERAL`, `LLM_MODEL_REPAIR`, `LLM_MODEL_COMPARE`, `LLM_MODEL_RECURSION_DIAGRAM`, `LLM_MODEL_GENERATE_DIAGRAM`.
 
-export const DEFAULT_GEMINI_MODELS = {
-  parser_assist: "gemini-2.5-flash",
-  general: "gemini-3-flash-preview",
-  repair: "gemini-2.5-flash",
-  compare: "gemini-2.5-flash",
-} as const;
+### ¿Como agregar o modificar un job/modelo?
 
-export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
-  recursion_diagram: "gemini-3-flash-preview",
-  generate_diagram: "gemini-3-flash-preview",
-} as const;
-```
-
-- El frontend puede mostrar siempre el modelo real activo por job leyendo sólo de aquí.
-
-### ¿Cómo agregar o modificar un job/modelo?
-
-1. Edita `llm-config.ts`:
-   - Agrega/modifica el modelo, el prompt o los parámetros para el nuevo job.
-   - Asegúrate de incluirlo en el mapeo de jobs/export.
-2. No es necesario tocar ningún endpoint.
-3. El status reflejará automáticamente el nuevo modelo/job.
+1. Edita la configuracion en backend (`apps/api/app/modules/llm/config.py`).
+2. Si aplica, ajusta orquestacion del proveedor en backend (`service.py` / `providers.py`).
+3. Mantén el contrato proxy web estable para no romper frontend.
 
 ### Buenas prácticas
 
-- **Nunca** mantengas prompts/modelos/payloads en endpoints individuales.
-- Siempre importa y usa los helpers del config central.
+- **Nunca** agregues llamadas directas a proveedor LLM en frontend.
+- Mantén al backend como unica capa con secretos y politicas de uso.
 - Si cambias los modelos o agregas endpoints, solo actualiza la config central y todo quedará sincronizado.
 - Haz las pruebas de status para verificar que todo se orquesta desde un solo punto.
 - Si cambias variables de entorno en Docker, recrea el servicio para aplicar cambios.
@@ -105,7 +80,7 @@ fetch("/api/llm/status")
 
 ### Contexto estructurado del asistente embebido
 
-- Cuando el chat se usa desde el iframe embebido, el frontend envía `assistantContext` con la superficie (`analyzer`, `examples`, `user-guide`), metadatos de la vista y, si aplica, un resumen formal curado.
+- Cuando el chat se usa desde el iframe embebido, el frontend envía `assistantContext` con la superficie (`home`, `analyzer`, `examples`, `user-guide`, `course`, `quizzes`, `about`, `privacy`), metadatos de la vista y, si aplica, un resumen formal curado. En **quizzes** puede incluir `quizDashboard` (áreas a reforzar, fortalezas, intentos recientes con puntuación) y, tras enviar respuestas, `quizSessionReview` (todas las preguntas del intento con respuestas del usuario, corrección y feedback serializado).
 - El endpoint transforma ese contexto en un preámbulo determinista y agrega reglas explícitas para que el asistente trate el análisis formal como fuente de verdad.
 - Si existe un panel o modal en foco, ese bloque se serializa antes que el análisis formal para darle prioridad semántica en preguntas ambiguas.
 - En `analyzer` el contexto puede incluir seguimiento de ejecución con resumen curado del diagrama visible, parámetros iniciales, paso activo y patrón estructural detectado.
@@ -113,11 +88,10 @@ fetch("/api/llm/status")
 
 ---
 
-## Estructura final del directorio
+## Estructura del directorio web
 
 ```
 llm/
-├── llm-config.ts
 ├── route.ts
 ├── classify/
 │   └── route.ts
@@ -127,11 +101,10 @@ llm/
 
 ## FAQ rápida
 
-- **¿Dónde están los prompts?** En llm-config, uno por job.
-- **¿Cambio de modelo?** Solo en config central.
-- **¿Cómo saber el modelo activo?** Solo consulta `/api/llm/status`.
-- **¿Agrego un job?** Solo lo defines en config y, si necesitas endpoint, lo implementas como todos (usando getJobConfig).
+- **¿Dónde están prompts y modelos?** En backend FastAPI.
+- **¿Cómo saber el modelo activo?** Consulta `/api/llm/status` (proxy de `/llm/status`).
+- **¿Dónde se valida la API key?** En backend, con prioridad a `API_KEY` de servidor.
 
 ---
 
-> _Cualquier cambio de modelo, job, prompt o endpoint debe registrarse en el config central. Así todo el backend y el frontend trabajan desde una sola fuente de la verdad._
+> _Cualquier cambio de proveedor, modelo, quota o timeout debe hacerse en backend. El frontend solo consume endpoints internos controlados._

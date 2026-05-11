@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
 
+import AALIECategoryIcon from "@/components/AALIECategoryIcon";
 import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -17,11 +18,11 @@ import {
   buildAssistantExampleListContext,
 } from "@/lib/examples/assistant-context";
 import {
+  categoryHasRecursiveMethods,
   filterByMethods,
   getCategoryMeta,
   getExamplesByCategory,
   getLocalizedExampleSource,
-  isRecursiveCategory,
   type ExampleCatalogItem,
   type ExampleCategory,
   type ExampleLocale,
@@ -69,7 +70,7 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
   }, [finishNavigation]);
 
   const meta = getCategoryMeta(category);
-  const recursiveCategory = isRecursiveCategory(category);
+  const hasMethodFilters = categoryHasRecursiveMethods(category);
   const selectedSlug = searchParams.get("example");
 
   const visibleExamples = useMemo(() => {
@@ -107,15 +108,13 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
         locale,
       ),
     );
-    return recursiveCategory
-      ? filterByMethods(sorted, selectedMethods)
-      : sorted;
+    return hasMethodFilters ? filterByMethods(sorted, selectedMethods) : sorted;
   }, [
     catalogItems,
     category,
+    hasMethodFilters,
     locale,
     query,
-    recursiveCategory,
     selectedMethods,
     tGlobal,
   ]);
@@ -150,7 +149,9 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
 
   const handleAnalyze = (example: ExampleCatalogItem) => {
     setAnalyzingExampleId(example.id);
-    void runAnalysis(getLocalizedExampleSource(example, locale));
+    void runAnalysis(getLocalizedExampleSource(example, locale)).finally(() => {
+      setAnalyzingExampleId(null);
+    });
   };
 
   const toggleMethod = (method: RecursiveMethodBadge) => {
@@ -166,13 +167,13 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
       surface: "examples",
       locale,
       pageContext: {
-        route: `/examples/${category}`,
+        route: `/examples/${meta.slug}`,
         view: "category",
         title: tGlobal(CATEGORY_LABEL_KEYS[category]),
         description: tGlobal(CATEGORY_OFFTEXT_KEYS[category]),
         query: query.trim() || undefined,
         filters:
-          recursiveCategory && selectedMethods.length > 0
+          hasMethodFilters && selectedMethods.length > 0
             ? selectedMethods
             : undefined,
         notes: [
@@ -200,9 +201,10 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
     [
       catalogItems,
       category,
+      hasMethodFilters,
       locale,
+      meta.slug,
       query,
-      recursiveCategory,
       selectedExample,
       selectedMethods,
       selectedSlug,
@@ -217,7 +219,9 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
       <main className="z-10 flex-1 p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
-            icon={meta.icon}
+            icon={
+              <AALIECategoryIcon category={category} size={28} />
+            }
             title={tGlobal(CATEGORY_LABEL_KEYS[category])}
             description={tGlobal(CATEGORY_OFFTEXT_KEYS[category])}
           />
@@ -229,16 +233,16 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
               placeholder={t("searchPlaceholder")}
               ariaLabel={t("searchAriaLabel")}
               filtersButtonAriaLabel={
-                recursiveCategory ? t("filtersTitle") : undefined
+                hasMethodFilters ? t("filtersTitle") : undefined
               }
               onToggleFilters={
-                recursiveCategory
+                hasMethodFilters
                   ? () => setFiltersOpen((prev) => !prev)
                   : undefined
               }
-              filtersActive={recursiveCategory ? filtersOpen : false}
+              filtersActive={hasMethodFilters ? filtersOpen : false}
               filtersDropdown={
-                recursiveCategory ? (
+                hasMethodFilters ? (
                   <ExamplesMethodFilters
                     selectedMethods={selectedMethods}
                     onToggle={toggleMethod}

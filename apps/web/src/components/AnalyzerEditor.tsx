@@ -7,6 +7,7 @@ import {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -17,6 +18,9 @@ import { insertSnippetIntoEditor } from "@/features/analyzer/editor-support/mona
 import { registerPseudocodeCommands } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCommands";
 import { registerPseudocodeCompletionProvider } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCompletionProvider";
 import { useDebouncedSyntaxHints } from "@/features/analyzer/editor-support/parser/validateSourceDebounced";
+import { AlgorithmTechniqueCard } from "@/features/analyzer/technique-detection/AlgorithmTechniqueCard";
+import { AlgorithmTechniqueModal } from "@/features/analyzer/technique-detection/AlgorithmTechniqueModal";
+import { detectTechniqueFromAst } from "@/features/analyzer/technique-detection/detectTechniqueFromAst";
 
 import AALIEIcon from "./AALIEIcon";
 import { useParseWorker } from "../hooks/useParseWorker";
@@ -97,8 +101,10 @@ export const AnalyzerEditor = forwardRef<
     onAIHelpClick,
     topRightActions,
   } = props;
+  const fillHeight = height === undefined || height === "100%";
   const [code, setCode] = useState(initialValue);
   const tManual = useTranslations("analyzer.manualMode");
+  const tTechnique = useTranslations("analyzer.techniques");
   const locale = useLocale();
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoReact | null>(null);
@@ -106,10 +112,20 @@ export const AnalyzerEditor = forwardRef<
   const rafLayoutRef = useRef<number | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [monacoMountKey, setMonacoMountKey] = useState(0);
+  const [techniqueModalOpen, setTechniqueModalOpen] = useState(false);
   const didRemountAfterZeroHeightRef = useRef(false);
-  const [, setMeasuredHeight] = useState<number | null>(null);
-  const lastMeasuredHeightRef = useRef<number | null>(null);
-  const hasFrozenMeasuredHeightRef = useRef(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    const syncViewport = () => {
+      setIsMobileViewport((globalThis.window?.innerWidth ?? 1024) < 768);
+    };
+    syncViewport();
+    globalThis.window?.addEventListener("resize", syncViewport);
+    return () => {
+      globalThis.window?.removeEventListener("resize", syncViewport);
+    };
+  }, []);
 
   // Sincronizar cambios externos del código
   useEffect(() => {
@@ -133,6 +149,11 @@ export const AnalyzerEditor = forwardRef<
   // Parsear código con worker
   const parseResult = useParseWorker(code);
   const syntaxHints = useDebouncedSyntaxHints(parseResult);
+  const techniqueDetection = useMemo(
+    () => detectTechniqueFromAst(parseResult.ast, code, tTechnique),
+    [code, parseResult.ast, tTechnique],
+  );
+  const showTechniqueCard = code.trim().length > 0;
 
   // Actualizar markers cuando cambien los errores
   useEffect(() => {
@@ -224,27 +245,11 @@ export const AnalyzerEditor = forwardRef<
 
     const ro = new ResizeObserver(() => {
       if (!editorRef.current) return;
-      const height = container.getBoundingClientRect().height;
+      const boxHeight = container.getBoundingClientRect().height;
 
-      // Congelar una sola vez la altura "real" para romper el feedback
-      // altura -> Monaco -> altura (evita crecer hasta el clamp del viewport).
-      if (!hasFrozenMeasuredHeightRef.current && height > 120) {
-        const viewportH = globalThis.window?.innerHeight ?? 0;
-        const next = Math.round(height);
-        const clamped =
-          viewportH > 0
-            ? Math.max(120, Math.min(next, Math.round(viewportH)))
-            : Math.max(120, next);
-
-        if (lastMeasuredHeightRef.current !== clamped) {
-          lastMeasuredHeightRef.current = clamped;
-          hasFrozenMeasuredHeightRef.current = true;
-          setMeasuredHeight(clamped);
-        }
-      }
       // Si el primer montaje vino "con altura 0" (comprimido), un remount
       // asegura que el wrapper interno de Monaco calcule tamaño bien.
-      if (!didRemountAfterZeroHeightRef.current && height > 0) {
+      if (!didRemountAfterZeroHeightRef.current && boxHeight >= 120) {
         didRemountAfterZeroHeightRef.current = true;
         setMonacoMountKey((k) => k + 1);
       }
@@ -264,11 +269,13 @@ export const AnalyzerEditor = forwardRef<
     };
   }, [isEditorReady]);
 
-  const monacoHeightProp = height ?? "100%";
+  const monacoHeightProp = fillHeight ? "100%" : (height ?? "100%");
+  const suggestFontSize = isMobileViewport ? 11 : 13;
+  const suggestLineHeight = isMobileViewport ? 18 : 22;
   const editorPadding =
     topRightActions != null || onVerifyParse != null || onViewAst != null
-      ? { top: 44, bottom: 36 }
-      : { top: 20, bottom: 24 };
+      ? { top: 44, bottom: 88 }
+      : { top: 20, bottom: 84 };
   const hasLocalParseErrors =
     Boolean(code.trim()) &&
     !parseResult.isParsing &&
@@ -302,7 +309,7 @@ export const AnalyzerEditor = forwardRef<
   }));
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-1 basis-0 flex-col">
       {/* Botones fuera del overflow-hidden para que los tooltips no se recorten */}
       {(topRightActions != null ||
         onVerifyParse != null ||
@@ -395,7 +402,7 @@ export const AnalyzerEditor = forwardRef<
       {/* Editor: glass-card-editor sin hover difuminado */}
       <div
         ref={editorContainerRef}
-        className="glass-card glass-card-editor relative !z-0 flex-1 min-h-0 h-full w-full overflow-hidden rounded-xl"
+        className="glass-card glass-card-editor relative !z-0 flex h-full min-h-0 flex-1 basis-0 w-full overflow-hidden rounded-xl"
       >
         <MonacoEditor
           key={monacoMountKey}
@@ -446,12 +453,25 @@ export const AnalyzerEditor = forwardRef<
             },
             renderLineHighlight: "none",
             wordBasedSuggestions: "off",
+            suggestFontSize,
+            suggestLineHeight,
             suggest: {
               showWords: false,
             },
           }}
         />
+        {showTechniqueCard && (
+          <AlgorithmTechniqueCard
+            detection={techniqueDetection}
+            onOpenDetails={() => setTechniqueModalOpen(true)}
+          />
+        )}
       </div>
+      <AlgorithmTechniqueModal
+        open={techniqueModalOpen}
+        onOpenChange={setTechniqueModalOpen}
+        detection={techniqueDetection}
+      />
     </div>
   );
 });

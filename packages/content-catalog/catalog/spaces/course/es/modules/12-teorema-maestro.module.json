@@ -1,0 +1,2418 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-teorema-maestro",
+  "slug": "teorema-maestro",
+  "title": "Teorema Maestro",
+  "order": 12,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Método directo para resolver recurrencias divide y vencerás de la forma T(n)=aT(n/b)+f(n). Incluye condiciones de aplicabilidad, extracción de parámetros, cálculo del exponente crítico, casos 1, 2 y 3, condición de regularidad, ejemplos resueltos y casos donde el teorema no aplica.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 55,
+  "tags": [
+    "recurrencias",
+    "teorema-maestro",
+    "master-theorem",
+    "divide-y-venceras",
+    "analisis-recursivo",
+    "logaritmo-base-b",
+    "exponente-critico",
+    "regularidad",
+    "merge-sort",
+    "busqueda-binaria",
+    "quicksort-mejor-caso",
+    "casos-mutualmente-excluyentes"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "teorema maestro",
+      "master theorem",
+      "método maestro",
+      "recurrencias divide y vencerás",
+      "T(n)=aT(n/b)+f(n)",
+      "casos del teorema maestro",
+      "condición de regularidad",
+      "exponente crítico"
+    ],
+    "keywords": [
+      "aT(n/b)+f(n)",
+      "a",
+      "b",
+      "f(n)",
+      "p=log_b(a)",
+      "n^(p-epsilon)",
+      "n^(p+epsilon)",
+      "regularidad",
+      "af(n/b) <= c f(n)",
+      "caso 1",
+      "caso 2",
+      "caso 3",
+      "no aplica",
+      "n/log n",
+      "merge sort",
+      "binary search"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-algoritmos-recursivos",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-maestra-notaciones-convenciones",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-sumatorias-comunes",
+        "kind": "required"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-clasificacion-ecuaciones-recurrencia",
+        "kind": "required"
+      },
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-omega",
+        "kind": "required"
+      },
+      {
+        "id": "sec-theta",
+        "kind": "required"
+      },
+      {
+        "id": "sec-tabla-maestra-notaciones-convenciones",
+        "kind": "required"
+      },
+      {
+        "id": "sec-sumatorias-simples",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-complejidad-temporal-espacial",
+    "mod-loop-invariant",
+    "mod-algoritmos-iterativos-patrones-costos",
+    "mod-notaciones-asintoticas",
+    "mod-tabla-maestra-notaciones-convenciones",
+    "mod-relaciones-notaciones",
+    "mod-demostraciones-completas-teorema-limites",
+    "mod-matriz-comparaciones-notaciones",
+    "mod-tabla-sumatorias-comunes",
+    "mod-cheatsheet-resumen-rapido",
+    "mod-algoritmos-recursivos",
+    "mod-teorema-maestro"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "reconocer-forma-teorema-maestro",
+      "text": "Reconocer cuándo una recurrencia tiene la forma canónica T(n)=aT(n/b)+f(n)."
+    },
+    {
+      "objectiveId": "extraer-parametros",
+      "text": "Extraer correctamente los parámetros a, b y f(n) desde una recurrencia divide y vencerás."
+    },
+    {
+      "objectiveId": "calcular-exponente-critico",
+      "text": "Calcular el exponente crítico p=log_b(a) y usar n^p como frontera de comparación."
+    },
+    {
+      "objectiveId": "aplicar-caso-uno",
+      "text": "Aplicar el caso 1 cuando f(n) crece polinómicamente más lento que n^p."
+    },
+    {
+      "objectiveId": "aplicar-caso-dos",
+      "text": "Aplicar el caso 2 cuando f(n) crece al mismo ritmo que n^p."
+    },
+    {
+      "objectiveId": "aplicar-caso-tres",
+      "text": "Aplicar el caso 3 cuando f(n) crece polinómicamente más rápido que n^p y cumple regularidad."
+    },
+    {
+      "objectiveId": "verificar-regularidad",
+      "text": "Verificar la condición de regularidad a·f(n/b) ≤ c·f(n), con 0<c<1, cuando se intenta aplicar el caso 3."
+    },
+    {
+      "objectiveId": "detectar-no-aplicabilidad",
+      "text": "Detectar recurrencias donde el Teorema Maestro no aplica, aunque la recurrencia parezca cercana a la forma canónica."
+    },
+    {
+      "objectiveId": "distinguir-orden-funcion-completa",
+      "text": "Distinguir que el Teorema Maestro entrega solo una cota Θ, no la función de eficiencia completa."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-teorema-maestro",
+      "label": "Teorema Maestro",
+      "definition": "Método para resolver directamente ciertas recurrencias divide y vencerás de la forma T(n)=aT(n/b)+f(n)."
+    },
+    {
+      "termId": "term-a-parametro",
+      "label": "a",
+      "definition": "Número de subproblemas recursivos generados por cada llamada."
+    },
+    {
+      "termId": "term-b-parametro",
+      "label": "b",
+      "definition": "Factor por el cual se reduce el tamaño de cada subproblema. En T(n/b), b debe ser mayor que 1."
+    },
+    {
+      "termId": "term-fn-costo-externo",
+      "label": "f(n)",
+      "definition": "Costo no recursivo de dividir, combinar o hacer trabajo local en una llamada."
+    },
+    {
+      "termId": "term-exponente-critico",
+      "label": "Exponente crítico",
+      "definition": "Valor p=log_b(a). Define la frontera n^p contra la cual se compara f(n)."
+    },
+    {
+      "termId": "term-frontera-maestro",
+      "label": "Frontera n^p",
+      "definition": "Función n^(log_b a) que separa los tres casos del Teorema Maestro."
+    },
+    {
+      "termId": "term-epsilon-maestro",
+      "label": "ε",
+      "definition": "Constante positiva usada para exigir separación polinómica entre f(n) y n^p. Debe existir algún ε>0."
+    },
+    {
+      "termId": "term-separacion-polinomica",
+      "label": "Separación polinómica",
+      "definition": "Diferencia de crecimiento suficientemente fuerte para que f(n) quede por debajo de n^(p-ε) o por encima de n^(p+ε)."
+    },
+    {
+      "termId": "term-condicion-regularidad",
+      "label": "Condición de regularidad",
+      "definition": "Condición requerida en el caso 3: a·f(n/b) ≤ c·f(n), para alguna constante c con 0<c<1 y n suficientemente grande."
+    },
+    {
+      "termId": "term-casos-mutualmente-excluyentes",
+      "label": "Casos mutuamente excluyentes",
+      "definition": "Propiedad de los tres casos del Teorema Maestro: si uno aplica correctamente, los otros no aplican."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-teorema-maestro",
+      "slug": "teorema-maestro",
+      "title": "Teorema Maestro",
+      "order": 1,
+      "summary": "Aplicabilidad, casos, regularidad y ejemplos resueltos del Teorema Maestro.",
+      "sections": [
+        {
+          "sectionId": "sec-cuando-aplica-teorema-maestro",
+          "slug": "cuando-aplica-teorema-maestro",
+          "title": "12. Teorema Maestro — Cuándo aplica",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "learningObjectives": [
+            {
+              "objectiveId": "validar-forma-canonica",
+              "text": "Validar si una recurrencia tiene exactamente la forma T(n)=aT(n/b)+f(n)."
+            },
+            {
+              "objectiveId": "rechazar-formas-no-validas",
+              "text": "Rechazar formas de resta, formas no homogéneas por tamaño o recurrencias fuera de los tres casos."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-clasificacion-ecuaciones-recurrencia",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-intro-metodos-analisis-recurrencias",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Existen diversos métodos para resolver ecuaciones de recurrencia, cada uno adecuado para diferentes tipos de problemas. Los métodos más utilizados son: el "
+                },
+                {
+                  "type": "strong",
+                  "text": "Método de Iteración"
+                },
+                {
+                  "type": "text",
+                  "text": " (expandir la recurrencia algebraicamente), el "
+                },
+                {
+                  "type": "strong",
+                  "text": "Método del Árbol de Recursión"
+                },
+                {
+                  "type": "text",
+                  "text": " (representación visual de niveles), el "
+                },
+                {
+                  "type": "strong",
+                  "text": "Método de Ecuación Característica"
+                },
+                {
+                  "type": "text",
+                  "text": " (para recurrencias lineales homogéneas), las "
+                },
+                {
+                  "type": "strong",
+                  "text": "Suposiciones Inteligentes o Método de Sustitución"
+                },
+                {
+                  "type": "text",
+                  "text": " (para verificar cotas mediante inducción) y el "
+                },
+                {
+                  "type": "strong",
+                  "text": "Teorema Maestro"
+                },
+                {
+                  "type": "text",
+                  "text": ", que proporciona una solución directa para recurrencias divide y vencerás."
+                }
+              ]
+            },
+            {
+              "id": "blk-teorema-maestro-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El Teorema Maestro es un método directo para resolver recurrencias divide y vencerás. Sirve cuando una recurrencia expresa un problema de tamaño "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": " como varios subproblemas del mismo tamaño reducido, más un costo externo de división, combinación o trabajo local."
+                }
+              ]
+            },
+            {
+              "id": "blk-forma-canonica-teorema-maestro",
+              "type": "equationBlock",
+              "title": "Forma canónica",
+              "latex": "T(n)=aT\\left(\\frac{n}{b}\\right)+f(n),\\qquad a\\ge 1,\\quad b>1"
+            },
+            {
+              "id": "blk-expl-forma-canonica-maestro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En esta ecuación, "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "a"
+                },
+                {
+                  "type": "text",
+                  "text": " indica cuántos subproblemas se generan, "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "b"
+                },
+                {
+                  "type": "text",
+                  "text": " es el factor de reducción del tamaño, y "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f(n)"
+                },
+                {
+                  "type": "text",
+                  "text": " representa el costo de dividir el problema y combinar los resultados. El comportamiento asintótico dependerá de la comparación entre "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f(n)"
+                },
+                {
+                  "type": "text",
+                  "text": " y la función frontera "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n^{\\log_b a}"
+                },
+                {
+                  "type": "text",
+                  "text": ", usando un valor "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\varepsilon"
+                },
+                {
+                  "type": "text",
+                  "text": " para asegurar una diferencia polinómica clara."
+                }
+              ]
+            },
+            {
+              "id": "blk-cuando-aplica-lista",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Aplica cuando todos los llamados recursivos tienen el mismo tamaño "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n/b"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Aplica cuando "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a"
+                    },
+                    {
+                      "type": "text",
+                      "text": " es constante y representa el número de subllamadas."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Aplica cuando "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "b>1"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", es decir, el tamaño realmente se reduce por división."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Aplica cuando "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " es el costo no recursivo y puede compararse contra "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^{\\log_b a}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-no-aplica-lista",
+              "type": "note",
+              "variant": "warning",
+              "title": "No aplica",
+              "blocks": [
+                {
+                  "id": "blk-no-aplica-lista-items",
+                  "type": "list",
+                  "style": "unordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "No aplica a formas de resta como "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "T(n)=T(n-1)+f(n)"
+                        },
+                        {
+                          "type": "text",
+                          "text": ". Eso es resta y vencerás, no divide y vencerás."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "No aplica a formas como "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "T(n)=T(n/3)+T(2n/3)+f(n)"
+                        },
+                        {
+                          "type": "text",
+                          "text": " porque los subproblemas no tienen tamaño uniforme "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "n/b"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "No aplica si "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "f(n)"
+                        },
+                        {
+                          "type": "text",
+                          "text": " queda entre dos casos sin separación polinómica."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "No entrega la función exacta "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "T(n)"
+                        },
+                        {
+                          "type": "text",
+                          "text": "; entrega el orden "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "\\Theta(\\cdot)"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-paso-a-paso-teorema-maestro",
+          "slug": "paso-a-paso-teorema-maestro",
+          "title": "Paso a paso — Teorema Maestro",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "ejecutar-procedimiento-maestro",
+              "text": "Ejecutar el procedimiento completo del Teorema Maestro desde la validación hasta la conclusión."
+            },
+            {
+              "objectiveId": "comparar-con-frontera",
+              "text": "Comparar f(n) contra n^p usando separación polinómica."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-big-o",
+                "kind": "required"
+              },
+              {
+                "id": "sec-omega",
+                "kind": "required"
+              },
+              {
+                "id": "sec-theta",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-procedimiento-maestro-lista",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Detectar y validar la forma."
+                    },
+                    {
+                      "type": "text",
+                      "text": " Confirmar que la recurrencia es exactamente "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=aT(n/b)+f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", con "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a\\ge 1"
+                    },
+                    {
+                      "type": "text",
+                      "text": " y "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "b>1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Extraer parámetros."
+                    },
+                    {
+                      "type": "text",
+                      "text": " Identificar "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a"
+                    },
+                    {
+                      "type": "text",
+                      "text": " como número de llamadas, "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "b"
+                    },
+                    {
+                      "type": "text",
+                      "text": " como factor de reducción y "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " como costo externo."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Calcular el exponente crítico."
+                    },
+                    {
+                      "type": "text",
+                      "text": " Calcular "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "p=\\log_b(a)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " y formar la frontera "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^p"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Comparar f(n) con n^p."
+                    },
+                    {
+                      "type": "text",
+                      "text": " Decidir si "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " está polinómicamente por debajo, igual o polinómicamente por encima de "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^p"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Verificar regularidad si parece caso 3."
+                    },
+                    {
+                      "type": "text",
+                      "text": " Probar "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a\\,f(n/b)\\le c\\,f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " para alguna constante "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "0<c<1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Concluir o rechazar."
+                    },
+                    {
+                      "type": "text",
+                      "text": " Si uno de los casos aplica, concluir. Si ninguno aplica, usar otro método: normalmente árbol de recursión o sustitución."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-exponente-critico-interpretacion",
+              "type": "note",
+              "variant": "info",
+              "title": "Interpretación de p",
+              "blocks": [
+                {
+                  "id": "blk-exponente-critico-interpretacion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "p=\\log_b(a)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " mide la presión de las hojas del árbol recursivo. Si "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a"
+                    },
+                    {
+                      "type": "text",
+                      "text": " es grande o "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "b"
+                    },
+                    {
+                      "type": "text",
+                      "text": " reduce poco, aparecen muchas hojas y "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^p"
+                    },
+                    {
+                      "type": "text",
+                      "text": " sube. Esa frontera compite contra el costo externo "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-casos-teorema-maestro",
+          "slug": "casos-teorema-maestro",
+          "title": "Los tres casos del Teorema Maestro",
+          "order": 3,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-casos-maestro",
+              "text": "Leer y aplicar los tres casos del Teorema Maestro."
+            },
+            {
+              "objectiveId": "evitar-error-epsilon",
+              "text": "Evitar el error de usar p-ε donde debe usarse p+ε."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-teorema-maestro",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-tabla-casos-maestro",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "caso",
+                  "label": "Caso"
+                },
+                {
+                  "key": "condicion",
+                  "label": "Condición"
+                },
+                {
+                  "key": "interpretacion",
+                  "label": "Interpretación"
+                },
+                {
+                  "key": "resultado",
+                  "label": "Resultado"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Caso 1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)\\in O\\left(n^{p-\\varepsilon}\\right)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " para algún "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\varepsilon>0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " crece estrictamente más lento que "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^p"
+                      },
+                      {
+                        "type": "text",
+                        "text": ". Dominan las hojas."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=\\Theta(n^p)=\\Theta(n^{\\log_b a})"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Caso 2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)\\in \\Theta(n^p)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " crece igual que "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^p"
+                      },
+                      {
+                        "type": "text",
+                        "text": ". Cada nivel cuesta lo mismo."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=\\Theta(n^p\\log n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Caso 3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)\\in \\Omega\\left(n^{p+\\varepsilon}\\right)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " para algún "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\varepsilon>0"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", y "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "a f(n/b)\\le c f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " con "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "0<c<1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " crece estrictamente más rápido que "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^p"
+                      },
+                      {
+                        "type": "text",
+                        "text": ". Domina la raíz."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=\\Theta(f(n))"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "Casos del Teorema Maestro"
+            },
+            {
+              "id": "blk-epsilon-correccion",
+              "type": "note",
+              "variant": "danger",
+              "title": "No rompas el criterio de ε",
+              "blocks": [
+                {
+                  "id": "blk-epsilon-correccion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "En el caso 1 se compara contra "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^{p-\\varepsilon}"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". En el caso 3 se compara contra "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^{p+\\varepsilon}"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Usar "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "p-\\varepsilon"
+                    },
+                    {
+                      "type": "text",
+                      "text": " en el caso 3 diría que basta crecer más que una función menor que "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^p"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", lo cual no garantiza que domine la raíz. Ese error destruye el Teorema Maestro."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-epsilon-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "inlineMath",
+                  "latex": "\\varepsilon"
+                },
+                {
+                  "type": "text",
+                  "text": " debe ser un número real positivo. No tiene que ser grande; basta con que exista. Por ejemplo, si "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "p=2"
+                },
+                {
+                  "type": "text",
+                  "text": " y "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f(n)=n^{1.99}"
+                },
+                {
+                  "type": "text",
+                  "text": ", el caso 1 aplica con "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "\\varepsilon=0.01"
+                },
+                {
+                  "type": "text",
+                  "text": ". La separación no tiene que ser bonita, pero sí debe ser polinómica."
+                }
+              ]
+            },
+            {
+              "id": "blk-regularidad-explicacion",
+              "type": "note",
+              "variant": "warning",
+              "title": "Regularidad solo se revisa en el caso 3",
+              "blocks": [
+                {
+                  "id": "blk-regularidad-explicacion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La condición "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a f(n/b)\\le c f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": " exige que el costo total de los subproblemas sea estrictamente menor que una fracción constante del costo de la raíz. Debes encontrar una constante "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "c"
+                    },
+                    {
+                      "type": "text",
+                      "text": " con "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "0<c<1"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". No basta decir 'parece que sí'."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-arbol-decision-teorema-maestro",
+          "slug": "arbol-decision-teorema-maestro",
+          "title": "Árbol de decisión del Teorema Maestro",
+          "order": 4,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "learningObjectives": [
+            {
+              "objectiveId": "usar-arbol-decision",
+              "text": "Usar un árbol de decisión para aplicar el Teorema Maestro sin saltarse validaciones."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-casos-teorema-maestro",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-arbol-decision-maestro",
+              "type": "mermaid",
+              "title": "Decisión de aplicabilidad y caso",
+              "code": "flowchart TD\n  A[\"Recurrencia T(n)\"] --> B{\"¿Tiene forma T(n)=aT(n/b)+f(n)?\"}\n  B -- \"No\" --> X[\"No aplica Teorema Maestro\\nUsar iteración, árbol, sustitución o ecuación característica\"]\n  B -- \"Sí\" --> C{\"¿a ≥ 1 y b > 1?\"}\n  C -- \"No\" --> X\n  C -- \"Sí\" --> D[\"Calcular p = log_b(a)\"]\n  D --> E{\"Comparar f(n) con n^p\"}\n  E -- \"f(n) ∈ O(n^(p-ε))\" --> F[\"Caso 1\\nT(n)=Θ(n^p)\"]\n  E -- \"f(n) ∈ Θ(n^p)\" --> G[\"Caso 2\\nT(n)=Θ(n^p log n)\"]\n  E -- \"f(n) ∈ Ω(n^(p+ε))\" --> H{\"¿Regularidad?\\na f(n/b) ≤ c f(n), 0<c<1\"}\n  H -- \"Sí\" --> I[\"Caso 3\\nT(n)=Θ(f(n))\"]\n  H -- \"No\" --> X\n  E -- \"Entre casos / sin ε\" --> X"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplos-base-teorema-maestro",
+          "slug": "ejemplos-base-teorema-maestro",
+          "title": "Ejemplos base",
+          "order": 5,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 16,
+          "learningObjectives": [
+            {
+              "objectiveId": "resolver-ejemplos-base",
+              "text": "Resolver los ejemplos base usando el procedimiento completo."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-teorema-maestro",
+                "kind": "required"
+              },
+              {
+                "id": "sec-casos-teorema-maestro",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-ejemplo-merge-sort-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo 1 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=2T(n/2)+cn"
+                },
+                {
+                  "type": "text",
+                  "text": " (Merge Sort / Quicksort mejor caso)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-merge-sort-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros",
+                  "title": "Parámetros",
+                  "latex": "a=2,\\quad b=2,\\quad f(n)=cn",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Identificamos los componentes de la recurrencia: dos subproblemas (a=2), división a la mitad (b=2) y costo lineal de combinación (f(n)=cn)."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-exponente-critico",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_2(2)=1,\\quad n^p=n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Calculamos el exponente crítico p usando el logaritmo de a en base b. Esto nos da la función frontera n^1."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-comparacion",
+                  "title": "Comparación",
+                  "latex": "f(n)=cn\\in \\Theta(n)=\\Theta(n^p)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Comparamos el costo externo f(n) con la frontera n^p. En este caso, ambos crecen al mismo ritmo (lineal)."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-caso",
+                  "title": "Caso",
+                  "latex": "\\text{Caso 2}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Dado que f(n) es del mismo orden que n^p, aplicamos el caso 2 del Teorema Maestro."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-resultado",
+                  "title": "Resultado",
+                  "latex": "T(n)=\\Theta(n^p\\log n)=\\Theta(n\\log n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El resultado final añade un factor logarítmico a la función frontera, resultando en una complejidad de n log n."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-4t-n2-mas-n-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo 2 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=4T(n/2)+n"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-4t-n2-mas-n-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-2",
+                  "title": "Parámetros",
+                  "latex": "a=4,\\quad b=2,\\quad f(n)=n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Extraemos los parámetros: hay 4 subllamadas, cada una reduce el tamaño a la mitad, y el costo externo es lineal."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-exponente-critico-2",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_2(4)=2,\\quad n^p=n^2",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "El exponente crítico p=2 define una frontera cuadrática n^2."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-comparacion-separacion",
+                  "title": "Comparación con separación",
+                  "latex": "f(n)=n\\in O(n^{2-\\varepsilon})\\quad \\text{tomando }\\varepsilon=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Comparamos f(n)=n con n^2. Como n es polinómicamente más pequeño que n^2, buscamos un epsilon que demuestre esta separación."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-verificacion",
+                  "title": "Verificación",
+                  "latex": "n\\in O(n^1)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Verificamos que efectivamente n crece más lento que n^(2-1)=n^1."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-caso-2",
+                  "title": "Caso",
+                  "latex": "\\text{Caso 1}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Al ser f(n) polinómicamente menor que la frontera, aplicamos el Caso 1."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-resultado-2",
+                  "title": "Resultado",
+                  "latex": "T(n)=\\Theta(n^2)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "La complejidad total queda dominada por el trabajo en las hojas, que es de orden cuadrático."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-4t-n2-mas-n3-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo 3 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=4T(n/2)+n^3"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-4t-n2-mas-n3-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-3",
+                  "title": "Parámetros",
+                  "latex": "a=4,\\quad b=2,\\quad f(n)=n^3",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Identificamos a=4, b=2 y un costo externo cúbico f(n)=n^3."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-exponente-critico-3",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_2(4)=2,\\quad n^p=n^2",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "La frontera sigue siendo n^2, pero ahora f(n) es n^3."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-comparacion-separacion-3",
+                  "title": "Comparación con separación",
+                  "latex": "n^3\\in \\Omega(n^{2+\\varepsilon})\\quad \\text{tomando }\\varepsilon=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Observamos que n^3 crece polinómicamente más rápido que n^2. Usamos epsilon=1 para validarlo."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-intento-caso",
+                  "title": "Intento de caso",
+                  "latex": "\\text{Parece Caso 3, pero falta regularidad}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Parece ser el Caso 3, pero este requiere obligatoriamente verificar la condición de regularidad."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-regularidad-3",
+                  "title": "Regularidad",
+                  "latex": "a f(n/b)=4\\left(\\frac{n}{2}\\right)^3=\\frac{n^3}{2}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Evaluamos la condición de regularidad: el costo de los subproblemas debe ser una fracción del costo original."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-constante-c",
+                  "title": "Constante c",
+                  "latex": "\\frac{n^3}{2}\\le \\frac{1}{2}n^3,\\quad c=\\frac{1}{2}<1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Encontramos c=1/2, que cumple con ser menor que 1. Se satisface la regularidad."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-resultado-3",
+                  "title": "Resultado",
+                  "latex": "T(n)=\\Theta(f(n))=\\Theta(n^3)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Al dominar el trabajo en la raíz (costo externo), la complejidad final es el orden de f(n), es decir, cúbico."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-n-sobre-log-no-aplica-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo 4 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=2T(n/2)+\\frac{n}{\\log n}"
+                },
+                {
+                  "type": "text",
+                  "text": " (no aplica)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-n-sobre-log-no-aplica-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-4",
+                  "title": "Parámetros",
+                  "latex": "a=2,\\quad b=2,\\quad f(n)=\\frac{n}{\\log n}"
+                },
+                {
+                  "stepId": "step-exponente-critico-4",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_2(2)=1,\\quad n^p=n"
+                },
+                {
+                  "stepId": "step-caso-1-no-aplica",
+                  "title": "Caso 1",
+                  "latex": "\\frac{n}{\\log n}\\notin O(n^{1-\\varepsilon})\\quad \\text{para todo }\\varepsilon>0"
+                },
+                {
+                  "stepId": "step-razon",
+                  "title": "Razón",
+                  "latex": "\\frac{n/\\log n}{n^{1-\\varepsilon}}=\\frac{n^{\\varepsilon}}{\\log n}\\to \\infty"
+                },
+                {
+                  "stepId": "step-caso-2-no-aplica",
+                  "title": "Caso 2",
+                  "latex": "\\frac{n}{\\log n}\\notin \\Theta(n)"
+                },
+                {
+                  "stepId": "step-caso-3-no-aplica",
+                  "title": "Caso 3",
+                  "latex": "\\frac{n}{\\log n}\\notin \\Omega(n^{1+\\varepsilon})"
+                },
+                {
+                  "stepId": "step-conclusion-no-aplica",
+                  "title": "Conclusión",
+                  "latex": "\\text{El Teorema Maestro no aplica. Usar árbol de recursión o sustitución.}"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-busqueda-binaria-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo 5 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=T(n/2)+1"
+                },
+                {
+                  "type": "text",
+                  "text": " (búsqueda binaria)"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-busqueda-binaria-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-5",
+                  "title": "Parámetros",
+                  "latex": "a=1,\\quad b=2,\\quad f(n)=1"
+                },
+                {
+                  "stepId": "step-exponente-critico-5",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_2(1)=0,\\quad n^p=n^0=1"
+                },
+                {
+                  "stepId": "step-comparacion-5",
+                  "title": "Comparación",
+                  "latex": "f(n)=1\\in \\Theta(1)=\\Theta(n^p)"
+                },
+                {
+                  "stepId": "step-caso-5",
+                  "title": "Caso",
+                  "latex": "\\text{Caso 2}"
+                },
+                {
+                  "stepId": "step-resultado-5",
+                  "title": "Resultado",
+                  "latex": "T(n)=\\Theta(1\\cdot \\log n)=\\Theta(\\log n)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplos-enriquecidos-teorema-maestro",
+          "slug": "ejemplos-enriquecidos-teorema-maestro",
+          "title": "Ejemplos enriquecidos y variantes típicas",
+          "order": 6,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "learningObjectives": [
+            {
+              "objectiveId": "resolver-variantes-polilog",
+              "text": "Resolver variantes frecuentes con potencias, constantes y factores logarítmicos simples."
+            },
+            {
+              "objectiveId": "detectar-limites-teorema-basico",
+              "text": "Detectar límites del Teorema Maestro básico frente a variantes que requieren extensiones o sustitución."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-ejemplos-base-teorema-maestro",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-enriquecido-8t-n2-n2-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo enriquecido 1 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=8T(n/2)+n^2"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-8t-n2-n2-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-e1",
+                  "title": "Parámetros",
+                  "latex": "a=8,\\quad b=2,\\quad f(n)=n^2"
+                },
+                {
+                  "stepId": "step-exponente-critico-e1",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_2(8)=3"
+                },
+                {
+                  "stepId": "step-comparacion-e1",
+                  "title": "Comparación",
+                  "latex": "n^2\\in O(n^{3-\\varepsilon})\\quad \\text{con }\\varepsilon=1"
+                },
+                {
+                  "stepId": "step-caso-e1",
+                  "title": "Caso",
+                  "latex": "\\text{Caso 1}"
+                },
+                {
+                  "stepId": "step-resultado-e1",
+                  "title": "Resultado",
+                  "latex": "T(n)=\\Theta(n^3)"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-3t-n3-n-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo enriquecido 2 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=3T(n/3)+n"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-3t-n3-n-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-e2",
+                  "title": "Parámetros",
+                  "latex": "a=3,\\quad b=3,\\quad f(n)=n"
+                },
+                {
+                  "stepId": "step-exponente-critico-e2",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_3(3)=1"
+                },
+                {
+                  "stepId": "step-comparacion-e2",
+                  "title": "Comparación",
+                  "latex": "f(n)=n\\in \\Theta(n^1)"
+                },
+                {
+                  "stepId": "step-caso-e2",
+                  "title": "Caso",
+                  "latex": "\\text{Caso 2}"
+                },
+                {
+                  "stepId": "step-resultado-e2",
+                  "title": "Resultado",
+                  "latex": "T(n)=\\Theta(n\\log n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-t-n2-n-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo enriquecido 3 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=T(n/2)+n"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-t-n2-n-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-e3",
+                  "title": "Parámetros",
+                  "latex": "a=1,\\quad b=2,\\quad f(n)=n"
+                },
+                {
+                  "stepId": "step-exponente-critico-e3",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_2(1)=0,\\quad n^p=1"
+                },
+                {
+                  "stepId": "step-comparacion-e3",
+                  "title": "Comparación",
+                  "latex": "n\\in \\Omega(n^{0+\\varepsilon})\\quad \\text{con }\\varepsilon=1"
+                },
+                {
+                  "stepId": "step-regularidad-e3",
+                  "title": "Regularidad",
+                  "latex": "a f(n/b)=1\\cdot \\frac{n}{2}=\\frac{n}{2}\\le \\frac{1}{2}n"
+                },
+                {
+                  "stepId": "step-caso-e3",
+                  "title": "Caso",
+                  "latex": "\\text{Caso 3}"
+                },
+                {
+                  "stepId": "step-resultado-e3",
+                  "title": "Resultado",
+                  "latex": "T(n)=\\Theta(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-t-n4-n2-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo enriquecido 4 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=T(n/4)+n^2"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-t-n4-n2-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-e4",
+                  "title": "Parámetros",
+                  "latex": "a=1,\\quad b=4,\\quad f(n)=n^2"
+                },
+                {
+                  "stepId": "step-exponente-critico-e4",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_4(1)=0"
+                },
+                {
+                  "stepId": "step-comparacion-e4",
+                  "title": "Comparación",
+                  "latex": "n^2\\in \\Omega(n^{0+\\varepsilon})\\quad \\text{por ejemplo con }\\varepsilon=1"
+                },
+                {
+                  "stepId": "step-regularidad-e4",
+                  "title": "Regularidad",
+                  "latex": "a f(n/b)=\\left(\\frac{n}{4}\\right)^2=\\frac{n^2}{16}\\le \\frac{1}{16}n^2"
+                },
+                {
+                  "stepId": "step-caso-e4",
+                  "title": "Caso",
+                  "latex": "\\text{Caso 3}"
+                },
+                {
+                  "stepId": "step-resultado-e4",
+                  "title": "Resultado",
+                  "latex": "T(n)=\\Theta(n^2)"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-9t-n3-n2log5-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo enriquecido 5 — "
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=9T(n/3)+n^2\\log^5 n"
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-9t-n3-n2log5-warning",
+              "type": "note",
+              "variant": "warning",
+              "title": "Límite del Teorema Maestro básico",
+              "blocks": [
+                {
+                  "id": "blk-enriquecido-9t-n3-n2log5-warning-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Con el Teorema Maestro básico de tres casos, este ejemplo no encaja en caso 1, 2 ni 3: "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^2\\log^5 n"
+                    },
+                    {
+                      "type": "text",
+                      "text": " es mayor que "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^2"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", pero no es polinómicamente mayor que "
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^2"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Requiere una versión extendida del Teorema Maestro o método alterno."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-enriquecido-9t-n3-n2log5-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "step-parametros-e5",
+                  "title": "Parámetros",
+                  "latex": "a=9,\\quad b=3,\\quad f(n)=n^2\\log^5 n"
+                },
+                {
+                  "stepId": "step-exponente-critico-e5",
+                  "title": "Exponente crítico",
+                  "latex": "p=\\log_3(9)=2,\\quad n^p=n^2"
+                },
+                {
+                  "stepId": "step-no-caso-2",
+                  "title": "No caso 2 básico",
+                  "latex": "n^2\\log^5 n\\notin \\Theta(n^2)"
+                },
+                {
+                  "stepId": "step-no-caso-3",
+                  "title": "No caso 3 básico",
+                  "latex": "n^2\\log^5 n\\notin \\Omega(n^{2+\\varepsilon})\\quad \\text{para ningún }\\varepsilon>0"
+                },
+                {
+                  "stepId": "step-conclusion-basica",
+                  "title": "Conclusión básica",
+                  "latex": "\\text{Teorema Maestro básico: no aplica}"
+                },
+                {
+                  "stepId": "step-resultado-extendido",
+                  "title": "Resultado por versión extendida",
+                  "latex": "T(n)=\\Theta(n^2\\log^{6}n)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-errores-tipicos-teorema-maestro",
+          "slug": "errores-tipicos-teorema-maestro",
+          "title": "Errores típicos",
+          "order": 7,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "learningObjectives": [
+            {
+              "objectiveId": "detectar-errores-maestro",
+              "text": "Detectar errores frecuentes al aplicar el Teorema Maestro."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-casos-teorema-maestro",
+                "kind": "required"
+              },
+              {
+                "id": "sec-ejemplos-base-teorema-maestro",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-errores-tipicos-maestro-tabla",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "error",
+                  "label": "Error"
+                },
+                {
+                  "key": "porQueEstaMal",
+                  "label": "Por qué está mal"
+                },
+                {
+                  "key": "correccion",
+                  "label": "Corrección"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Aplicarlo a "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=T(n-1)+f(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Eso no divide el tamaño entre "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "b"
+                      },
+                      {
+                        "type": "text",
+                        "text": ". Es resta, no división."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usar iteración o ecuación característica, según corresponda."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Confundir "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "a"
+                      },
+                      {
+                        "type": "text",
+                        "text": " con "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "b"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "a"
+                      },
+                      {
+                        "type": "text",
+                        "text": " cuenta llamados; "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "b"
+                      },
+                      {
+                        "type": "text",
+                        "text": " reduce tamaño."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Leer primero el número de términos "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(\\cdot)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " y luego el denominador del argumento."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usar "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^{p-\\varepsilon}"
+                      },
+                      {
+                        "type": "text",
+                        "text": " en el caso 3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El caso 3 exige que "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " sea polinómicamente mayor que "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^p"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Usar "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^{p+\\varepsilon}"
+                      },
+                      {
+                        "type": "text",
+                        "text": " en el caso 3."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Omitir regularidad en el caso 3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sin regularidad, el caso 3 no está demostrado."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Calcular "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "a f(n/b)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " y encontrar "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "c<1"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Decir que el resultado es la función exacta"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El teorema solo entrega orden asintótico."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Reportar "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(\\cdot)"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", no una fórmula exacta completa."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Forzar un caso cuando "
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": " cae entre casos"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Algunas funciones no tienen separación polinómica suficiente."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Declarar no aplicable y usar árbol o sustitución."
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "Errores frecuentes al aplicar el Teorema Maestro"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-teorema-maestro",
+          "slug": "resumen-teorema-maestro",
+          "title": "Resumen operativo",
+          "order": 8,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-resumen-maestro",
+              "text": "Consultar una version compacta del Teorema Maestro para ejercicios."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-casos-teorema-maestro",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-resumen-operativo-maestro",
+              "type": "note",
+              "variant": "success",
+              "title": "Receta mínima",
+              "blocks": [
+                {
+                  "id": "blk-resumen-operativo-maestro-lista",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Validar forma "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "T(n)=aT(n/b)+f(n)"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Extraer "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "a"
+                        },
+                        {
+                          "type": "text",
+                          "text": ", "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "b"
+                        },
+                        {
+                          "type": "text",
+                          "text": " y "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "f(n)"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Calcular "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "p=\\log_b(a)"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Comparar "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "f(n)"
+                        },
+                        {
+                          "type": "text",
+                          "text": " contra "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "n^p"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Caso 1: si "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "f(n)\\in O(n^{p-\\varepsilon})"
+                        },
+                        {
+                          "type": "text",
+                          "text": ", entonces "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "T(n)=\\Theta(n^p)"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Caso 2: si "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "f(n)\\in \\Theta(n^p)"
+                        },
+                        {
+                          "type": "text",
+                          "text": ", entonces "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "T(n)=\\Theta(n^p\\log n)"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Caso 3: si "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "f(n)\\in \\Omega(n^{p+\\varepsilon})"
+                        },
+                        {
+                          "type": "text",
+                          "text": " y hay regularidad, entonces "
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "T(n)=\\Theta(f(n))"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

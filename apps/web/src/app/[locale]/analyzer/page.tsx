@@ -60,6 +60,11 @@ import {
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { buildLlmComparisonPayload } from "@/lib/llm-compare-payload";
 import { translateLlmError } from "@/lib/llm-error-translator";
+import {
+  getNormalizedLlmStructured,
+  getNormalizedLlmText,
+  parseJsonFromText,
+} from "@/lib/llm-response";
 import { getSavedCase, saveCase } from "@/lib/polynomial";
 import {
   MAX_TXT_IMPORT_BYTES,
@@ -703,16 +708,14 @@ export default function AnalyzerPage() {
 
         setTxtImportModal({
           title: tView("txtImportGrammarTitle"),
-          description: hasApiKey
-            ? tView("txtImportParseFailed")
-            : tView("txtImportParseFailedNoAi"),
+          description: tView("txtImportParseFailed"),
           details: [
             ...errorDetails,
             ...getImportNormalizationSuggestions(
               validation.normalizedSource,
             ).map((suggestion) => suggestion.reason),
           ],
-          showRepairAction: hasApiKey,
+          showRepairAction: true,
         });
         setPendingImportSourceForRepair(validation.normalizedSource);
         setPendingImportErrorsForRepair(errors);
@@ -819,14 +822,12 @@ export default function AnalyzerPage() {
       setAnalysisMessage(getMessage("classifying"));
       let kind: ClassifyResponse["kind"];
       try {
-        const apiKey = getApiKey();
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             source,
             mode: "local",
-            apiKey: apiKey || undefined,
           }),
         });
 
@@ -924,14 +925,10 @@ export default function AnalyzerPage() {
         progressBeforeAnalysis = 55;
       }
 
-      // Obtener API key (solo necesitamos la key, no el status completo)
-      const apiKey = getApiKey();
-
       // Realizar una sola petición que trae todos los casos (worst, best y avg)
       const analyzeBody: {
         source: string;
         mode: string;
-        api_key?: string;
         avgModel?: { mode: string; predicates?: Record<string, string> };
         algorithm_kind?: string;
         preferred_method?: MethodType;
@@ -950,9 +947,6 @@ export default function AnalyzerPage() {
       // Solo agregar preferred_method si es recursivo y hay un método seleccionado
       if (isRecursive && selectedMethod) {
         analyzeBody.preferred_method = selectedMethod;
-      }
-      if (apiKey) {
-        analyzeBody.api_key = apiKey; // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
       }
 
       // Actualizar mensaje antes de iniciar el análisis real
@@ -1368,10 +1362,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
       setComparisonMessage("Generando comparación...");
 
-      // Extraer datos del LLM
-      const llmResponseText =
-        result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!llmResponseText) {
+      const structuredPayload =
+        getNormalizedLlmStructured<Record<string, unknown>>(result);
+      const llmResponseText = getNormalizedLlmText(result);
+      if (!llmResponseText && !structuredPayload) {
         throw new Error("No se recibió respuesta del LLM");
       }
 
@@ -1382,15 +1376,18 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         note?: string;
         algorithm_type?: string;
       };
-      try {
-        llmResponse = JSON.parse(llmResponseText);
-      } catch {
-        // Intentar extraer JSON si está dentro de un bloque de código
-        const jsonMatch = llmResponseText.match(
-          /```(?:json)?\s*(\{[\s\S]*\})\s*```/,
-        );
-        if (jsonMatch) {
-          llmResponse = JSON.parse(jsonMatch[1]);
+      if (structuredPayload && typeof structuredPayload === "object") {
+        llmResponse = structuredPayload;
+      } else {
+        const parsed =
+          parseJsonFromText<Record<string, unknown>>(llmResponseText);
+        if (parsed) {
+          llmResponse = parsed as {
+            analysis?: Record<string, unknown>;
+            time_complexity?: Record<string, unknown>;
+            note?: string;
+            algorithm_type?: string;
+          };
         } else {
           throw new Error(tMessages("llmParseError"));
         }
@@ -3378,7 +3375,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
   const isAlgorithmRecursive = isRecursiveAnalysis(data?.worst || null);
 
   return (
-    <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex w-full min-h-screen flex-col overflow-x-hidden">
       {/* Loader de análisis */}
       {analyzing && (
         <AAProgressLoader
@@ -3461,12 +3458,12 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
       <Header />
 
-      <main className="flex-1 px-6 py-4 z-10 min-h-0 flex flex-col">
-        <div className="max-w-7xl mx-auto flex-1 flex flex-col min-h-0 w-full">
+      <main className="relative z-10 flex max-lg:flex-none flex-col px-6 py-4 lg:min-h-0 lg:flex-1">
+        <div className="mx-auto flex w-full max-w-7xl flex-col max-lg:flex-none lg:min-h-0 lg:flex-1">
           {/* Vista trace: montada al abrir y se mantiene para persistir estado al volver */}
           {hasTraceViewMounted && (
             <div
-              className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${
+              className={`flex flex-col min-h-0 transition-all duration-300 max-lg:flex-none lg:flex-1 ${
                 analyzerViewMode !== "trace" ? "hidden" : ""
               } ${isSwitchingTrace ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"}`}
             >
@@ -3489,15 +3486,15 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           )}
           {/* Vista análisis */}
           <div
-            className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${
+            className={`flex flex-col min-h-0 transition-all duration-300 max-lg:flex-none lg:flex-1 ${
               analyzerViewMode === "trace" ? "hidden" : ""
             } ${isSwitchingTrace ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"}`}
           >
             {/* Main layout: código vertical, costos y ecuaciones horizontales */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-0">
+            <div className="grid grid-cols-1 gap-6 max-lg:flex-none lg:flex-1 lg:basis-0 lg:min-h-0 lg:grid-cols-12">
               {/* Columna izquierda: código fuente (vertical) */}
-              <section className="lg:col-span-4 h-full">
-                <div className="glass-card p-4 rounded-lg h-full flex flex-col">
+              <section className="flex min-h-0 flex-col max-lg:min-h-[max(220px,min(42svh,360px))] lg:col-span-4 lg:h-full">
+                <div className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-white font-semibold flex items-center">
                       <span className="material-symbols-outlined mr-2 text-blue-400">
@@ -3569,18 +3566,16 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <div className="flex h-full min-h-0 flex-col">
-                      <div className="min-h-0 flex-1">
-                        <AnalyzerEditor
-                          initialValue={source}
-                          onChange={setSource}
-                          onAstChange={setAst}
-                          onParseStatusChange={handleParseStatusChange}
-                          onErrorsChange={handleErrorsChange}
-                          height="100%"
-                        />
-                      </div>
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden basis-0">
+                    <div className="flex min-h-0 flex-1 basis-0 flex-col">
+                      <AnalyzerEditor
+                        initialValue={source}
+                        onChange={setSource}
+                        onAstChange={setAst}
+                        onParseStatusChange={handleParseStatusChange}
+                        onErrorsChange={handleErrorsChange}
+                        height="100%"
+                      />
                     </div>
                     <input
                       ref={txtInputRef}
@@ -3599,21 +3594,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         {!localParseOk && (
                           <button
                             onClick={() => setShowRepairModal(true)}
-                            disabled={!hasApiKey}
-                            className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                            className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 relative group"
                           >
                             <span className="material-symbols-outlined text-sm">
                               auto_awesome
                             </span>
-                            {!hasApiKey ? (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                                {tView("apiKeyRequired")}
-                              </div>
-                            ) : (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                                {tView("repairWithAI")}
-                              </div>
-                            )}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                              {tView("repairWithAI")}
+                            </div>
                           </button>
                         )}
                         <button
@@ -3748,8 +3736,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               </section>
 
               {/* Columna derecha: costos y ecuaciones (vertical en pantallas grandes) */}
-              <section className="lg:col-span-8 h-full">
-                <div className="grid grid-cols-1 xl:grid-cols-1 gap-6 h-full">
+              <section className="flex min-h-0 flex-col lg:col-span-8 lg:h-full">
+                <div className="grid h-full min-h-0 grid-cols-1 gap-6 xl:grid-cols-1">
                   {(() => {
                     // Determinar si es recursivo basado en algorithmType o en los datos
                     const isRecursive =
@@ -3796,13 +3784,15 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                           }
                         : null;
                       return (
-                        <IterativeAnalysisView
-                          data={dataWithAvg}
-                          selectedCase={selectedCase}
-                          onCaseChange={setSelectedCase}
-                          onViewLineProcedure={handleViewLineProcedure}
-                          onViewGeneralProcedure={handleViewGeneralProcedure}
-                        />
+                        <div className="flex flex-col lg:h-full lg:min-h-0">
+                          <IterativeAnalysisView
+                            data={dataWithAvg}
+                            selectedCase={selectedCase}
+                            onCaseChange={setSelectedCase}
+                            onViewLineProcedure={handleViewLineProcedure}
+                            onViewGeneralProcedure={handleViewGeneralProcedure}
+                          />
+                        </div>
                       );
                     }
                   })()}
@@ -4044,7 +4034,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         recursiveInvariant={recursiveInvariantData}
       />
 
-      <Footer />
+      <div className="mt-auto w-full">
+        <Footer />
+      </div>
     </div>
   );
 }

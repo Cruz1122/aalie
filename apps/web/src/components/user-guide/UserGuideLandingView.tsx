@@ -63,6 +63,7 @@ export function UserGuideLandingView({ data }: UserGuideLandingViewProps) {
                 <UserGuideCard
                   module={module}
                   progress={moduleProgressById[module.moduleId] ?? 0}
+                  locale={locale}
                 />
               </div>
             ))}

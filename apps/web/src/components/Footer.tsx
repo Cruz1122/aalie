@@ -2,7 +2,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import {
   getApiKey,
@@ -11,7 +11,7 @@ import {
   removeApiKey,
   getApiKeyStatus,
 } from "@/hooks/useApiKey";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 
 import HealthStatus from "./HealthStatus";
 import LocaleSwitcher from "./LocaleSwitcher";
@@ -19,6 +19,8 @@ import LocaleSwitcher from "./LocaleSwitcher";
 type ApiKeyStatus = "none" | "invalid" | "valid" | "server" | "local";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const footerRef = useRef<HTMLElement>(null);
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
   const tApiKey = useTranslations("footer.apiKey");
@@ -88,6 +90,92 @@ export default function Footer() {
     updateApiKeyStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Solo al montar
+
+  // #region agent log
+  useEffect(() => {
+    if (!pathname?.includes("/analyzer")) return;
+
+    const send = (hypothesisId: string, message: string, data: Record<string, unknown>) => {
+      fetch("http://127.0.0.1:7615/ingest/f8bbb90c-5683-490d-938c-8e69fd8876e2", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "6773fb",
+        },
+        body: JSON.stringify({
+          sessionId: "6773fb",
+          runId: "analyzer-footer-layout",
+          hypothesisId,
+          location: "Footer.tsx:layoutProbe",
+          message,
+          data,
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    };
+
+    const probe = () => {
+      const el = footerRef.current;
+      if (!el) return;
+      const fr = el.getBoundingClientRect();
+      const vv = window.visualViewport;
+      const main = document.querySelector("main");
+      const mr = main?.getBoundingClientRect();
+      const de = document.documentElement;
+      const body = document.body;
+      const m = main as HTMLElement | null;
+      const rootChain: { tag: string; cls: string; h: number; minH: string }[] = [];
+      let p: HTMLElement | null = el;
+      for (let i = 0; i < 6 && p; i++) {
+        const cs = window.getComputedStyle(p);
+        rootChain.push({
+          tag: p.tagName,
+          cls: (p.className && String(p.className).slice(0, 120)) || "",
+          h: p.offsetHeight,
+          minH: cs.minHeight,
+        });
+        p = p.parentElement;
+      }
+      const ih = window.innerHeight;
+      const gapBottom = ih - fr.bottom;
+      const footerVerticalCenterRatio = (fr.top + fr.height / 2) / ih;
+      send("H1-H5", "analyzer footer layout", {
+        pathname,
+        scrollY: window.scrollY,
+        innerHeight: ih,
+        visualViewportH: vv?.height ?? null,
+        visualViewportOffsetTop: vv?.offsetTop ?? null,
+        docClientH: de.clientHeight,
+        docScrollH: de.scrollHeight,
+        bodyOffsetH: body.offsetHeight,
+        mainScrollH: m?.scrollHeight ?? null,
+        mainClientH: m?.clientHeight ?? null,
+        mainScrollTop: m?.scrollTop ?? null,
+        footerTop: fr.top,
+        footerBottom: fr.bottom,
+        footerH: fr.height,
+        gapBottomViewport: gapBottom,
+        footerVerticalCenterRatio,
+        mainBottom: mr?.bottom ?? null,
+        gapMainToFooterTop: mr ? fr.top - mr.bottom : null,
+        ancestorChain: rootChain,
+      });
+    };
+
+    probe();
+    const tmr = window.setTimeout(probe, 400);
+    window.addEventListener("resize", probe);
+    const vvRoot = window.visualViewport;
+    vvRoot?.addEventListener("resize", probe);
+    vvRoot?.addEventListener("scroll", probe);
+    return () => {
+      window.clearTimeout(tmr);
+      window.removeEventListener("resize", probe);
+      vvRoot?.removeEventListener("resize", probe);
+      vvRoot?.removeEventListener("scroll", probe);
+    };
+  }, [pathname]);
+  // #endregion
 
   // Escuchar cambios en localStorage (cuando se guarda API_KEY desde otros componentes)
   useEffect(() => {
@@ -261,7 +349,10 @@ export default function Footer() {
   };
 
   return (
-    <footer className="glass-header px-3 sm:px-4 md:px-6 py-3">
+    <footer
+      ref={footerRef}
+      className="glass-header relative z-40 shrink-0 px-3 sm:px-4 md:px-6 py-3"
+    >
       {showInput ? (
         /* Input de API_KEY - reemplaza el contenido del footer cuando está activo */
         <div className="flex flex-col items-center justify-center gap-1">

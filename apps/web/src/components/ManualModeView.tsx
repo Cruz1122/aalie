@@ -466,16 +466,14 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
 
         setTxtImportModal({
           title: tView("txtImportGrammarTitle"),
-          description: hasValidApiKey
-            ? tView("txtImportParseFailed")
-            : tView("txtImportParseFailedNoAi"),
+          description: tView("txtImportParseFailed"),
           details: [
             ...errorDetails,
             ...getImportNormalizationSuggestions(
               validation.normalizedSource,
             ).map((suggestion) => suggestion.reason),
           ],
-          showRepairAction: hasValidApiKey,
+          showRepairAction: true,
         });
         setPendingImportSourceForRepair(validation.normalizedSource);
         setPendingImportErrorsForRepair(errors);
@@ -512,11 +510,11 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     );
 
     return (
-      <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center">
-          <div className="flex w-full flex-col gap-4">
-            <div className="flex min-h-0 flex-col gap-4 md:flex-row md:items-stretch">
-              <div className="h-[400px] min-h-0 min-w-0 flex-1 space-y-4 md:h-[490px] md:flex-none md:basis-[calc(100%-376px)] md:max-w-[calc(100%-376px)] lg:basis-[calc(100%-516px)] lg:max-w-[calc(100%-516px)] xl:flex-1 xl:basis-0 xl:max-w-none">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-[1240px] flex-1 flex-col px-4 sm:px-6 lg:px-8">
+        <div className="flex w-full flex-1 flex-col items-center">
+          <div className="flex min-h-0 w-full flex-1 flex-col gap-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 md:flex-row md:items-stretch">
+              <div className="flex min-h-0 min-w-0 max-md:min-h-[280px] flex-1 basis-0 flex-col gap-4 md:flex-none md:basis-[calc(100%-376px)] md:max-w-[calc(100%-376px)] lg:basis-[calc(100%-516px)] lg:max-w-[calc(100%-516px)] xl:flex-1 xl:basis-0 xl:max-w-none">
                 <AnalyzerEditor
                   ref={editorRef}
                   initialValue={code}
@@ -642,7 +640,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                   onChange={handleTxtImport}
                 />
               </div>
-              <div className="hidden h-[400px] min-h-0 shrink-0 overflow-hidden md:block md:h-[490px] md:w-[360px] lg:w-[500px] xl:w-[500px]">
+              <div className="hidden min-h-0 shrink-0 overflow-hidden md:flex md:h-full md:min-h-0 md:w-[360px] md:flex-col md:self-stretch lg:w-[500px] xl:w-[500px]">
                 <EditorSupportPanel
                   onInsert={(snippet: SnippetDefinition) => {
                     editorRef.current?.insertSnippet(snippet);

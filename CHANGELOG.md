@@ -173,6 +173,38 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - El snapshot de export ya conserva `structuredTrace` en los artefactos de trazado recursivo.
 - Se ajustó el manejo de trazas parciales, profundas o no concluyentes para degradar limpiamente sin romper la experiencia.
 
+## [Unreleased] - 2026-04-12
+
+### Added
+- Nuevo gateway LLM en backend (`apps/api/app/modules/llm`) con router, servicio, schemas y proveedores desacoplados.
+- Endpoints backend `POST /llm` y `GET /llm/status` con `requestId`, `errorCode` y payload normalizado para frontend.
+- Soporte de proveedor adicional `openai_compatible` en backend sin romper la interfaz consumida por frontend.
+- Helper frontend `apps/web/src/lib/llm-response.ts` para consumir respuestas normalizadas (`data.text`, `data.structured`, `data.metadata`).
+- Tests de sistema backend para LLM (`apps/api/tests/system/llm/test_llm_endpoint.py` y `apps/api/tests/system/llm/test_llm_status_endpoint.py`).
+- Plantilla `apps/api/.env.example` para configuración LLM del backend.
+
+### Changed
+- Migración de integración LLM: frontend dejó de llamar al proveedor directamente y ahora usa proxy interno (`/api/llm`, `/api/llm/status`) hacia backend.
+- `apps/web/src/app/api/llm/route.ts` y `apps/web/src/app/api/llm/status/route.ts` simplificados a proxy puro.
+- Registro del router LLM en backend (`apps/api/app/main.py`).
+- Separación de responsabilidades: análisis determinista ya no recibe `api_key` en contrato de `analyze/open`.
+- Normalización backend de respuestas LLM para desacoplar frontend de `candidates/content/parts` de Gemini.
+- Ajustes de performance LLM en backend: reducción de `max_tokens` por job y control de `thinkingConfig` para latencia.
+- Prompting reforzado de gramática para `repair`, `parser_assist` y `general` para mantener sintaxis válida del pseudocódigo del proyecto.
+- Documentación técnica actualizada para reflejar arquitectura backend-first y variables vigentes.
+
+### Fixed
+- Clasificación de timeout de proveedor a `LLM_TIMEOUT` (en lugar de error interno genérico) con retry corto controlado.
+- Flujo `repair`: envío de `apiKey` de cliente cuando no hay `API_KEY` de servidor, evitando `LLM_API_KEY_REQUIRED` en escenarios válidos.
+- Modal de reparación: compatibilidad con múltiples formatos de `removedLines`/`addedLines` (numéricos y textuales), mapeo robusto de líneas y fallback de diff.
+- Modal de reparación: normalización de código reparado con saltos de línea reales cuando el modelo devuelve texto en una sola línea.
+- Modal de reparación: formateo e indentación por bloques `BEGIN/END` para mejorar legibilidad del código reparado.
+- Visualización de comparación en repair: restaurado resaltado correcto de líneas removidas/agregadas sin marcar todo el archivo.
+
+### Docs
+- Consistencia de variables LLM entre `apps/api/.env.example` y documentación operativa.
+- Limpieza de referencias obsoletas en docs (variables y comportamiento de la arquitectura previa en frontend).
+
 ## [Unreleased] - 2026-03-28
 
 ### Added

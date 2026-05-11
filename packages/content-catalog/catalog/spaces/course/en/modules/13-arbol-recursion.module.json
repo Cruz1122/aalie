@@ -1,0 +1,2376 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-arbol-recursion",
+  "slug": "arbol-recursion",
+  "title": "Recursion Tree Method",
+  "order": 13,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Visual and algebraic method for solving recurrence equations by representing recursive calls as levels of a tree. Includes applicability, level construction, height, leaves, total sum, dominance patterns, and worked examples.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 60,
+  "tags": [
+    "recurrences",
+    "recursion-tree",
+    "recursion-tree",
+    "recursive-analysis",
+    "divide-and-conquer",
+    "subtract-and-you-will-be-defeated",
+    "levels",
+    "leaves",
+    "height",
+    "summation-by-levels",
+    "dominance",
+    "quicksort-best-case",
+    "towers-of-hanoi",
+    "unbalanced-recurrences"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "recursion tree",
+      "tree method",
+      "recursion tree",
+      "call tree",
+      "summation by levels",
+      "analysis by levels",
+      "cost of leaves",
+      "cost per level"
+    ],
+    "keywords": [
+      "T(n)=2T(n/2)+cn",
+      "T(n)=2T(n-1)+1",
+      "T(n)=T(n/3)+T(2n/3)+cn",
+      "level i",
+      "a^i",
+      "n/b^i",
+      "f(n/b^i)",
+      "log_b n height",
+      "sheets n^(log_b a)",
+      "sum of levels",
+      "dominate leaves",
+      "dominates root",
+      "each level costs the same"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-algoritmos-recursivos",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-sumatorias-comunes",
+        "kind": "required"
+      },
+      {
+        "id": "mod-teorema-maestro",
+        "kind": "required"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-clasificacion-ecuaciones-recurrencia",
+        "kind": "required"
+      },
+      {
+        "id": "sec-sumatorias-simples",
+        "kind": "required"
+      },
+      {
+        "id": "sec-sumatorias-dobles",
+        "kind": "required"
+      },
+      {
+        "id": "sec-cuando-aplica-teorema-maestro",
+        "kind": "required"
+      },
+      {
+        "id": "sec-casos-teorema-maestro",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-algoritmos-recursivos",
+    "mod-teorema-maestro",
+    "mod-tabla-sumatorias-comunes"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "reconocer-cuando-usar-arbol",
+      "text": "Recognize when it is convenient to use the recursion tree method, especially when the Master Theorem does not apply or when you want to visually justify the cost by levels."
+    },
+    {
+      "objectiveId": "construir-primeros-niveles",
+      "text": "Draw the first levels of the call tree based on a recurrence."
+    },
+    {
+      "objectiveId": "modelar-nivel-generico",
+      "text": "Build the model of the generic level i: number of nodes, subproblem size, cost per node and total cost of the level."
+    },
+    {
+      "objectiveId": "calcular-altura-arbol",
+      "text": "Calculate the height of the tree until you reach the base case."
+    },
+    {
+      "objectiveId": "costear-hojas",
+      "text": "Determine how many leaves the tree has and how much they contribute to the total cost."
+    },
+    {
+      "objectiveId": "sumar-costos-niveles",
+      "text": "Build the total sum of internal levels plus leaves."
+    },
+    {
+      "objectiveId": "identificar-dominancia",
+      "text": "Identify if the leaves, the intermediate levels or the root dominate."
+    },
+    {
+      "objectiveId": "resolver-merge-quicksort-mejor-caso",
+      "text": "Solve T(n)=2T(n/2)+cn by recursion tree and conclude Θ(n log n)."
+    },
+    {
+      "objectiveId": "resolver-hanoi-arbol",
+      "text": "Solve T(n)=2T(n−1)+1 by recursion tree and conclude Θ(2^n)."
+    },
+    {
+      "objectiveId": "analizar-recurrencias-no-balanceadas",
+      "text": "Analyze unbalanced recurrences as T(n)=T(n/3)+T(2n/3)+cn when the basic Master Theorem does not apply."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-arbol-recursion",
+      "label": "recursion tree",
+      "definition": "Representation of a recurrence as a tree where each node is a recursive call and each level groups subproblems of the same depth."
+    },
+    {
+      "termId": "term-raiz-arbol-recursion",
+      "label": "Root",
+      "definition": "First node of the tree, corresponding to the original call T(n)."
+    },
+    {
+      "termId": "term-nivel-arbol-recursion",
+      "label": "Level",
+      "definition": "Set of recursive calls located at the same depth within the tree."
+    },
+    {
+      "termId": "term-nivel-generico",
+      "label": "Generic level i",
+      "definition": "Algebraic model that describes the behavior of any level i of the tree: number of nodes, input size and total cost."
+    },
+    {
+      "termId": "term-hojas-arbol-recursion",
+      "label": "Leaves",
+      "definition": "End nodes of the tree where the base case of the recurrence is reached."
+    },
+    {
+      "termId": "term-altura-arbol-recursion",
+      "label": "Height",
+      "definition": "Number of reductions necessary to get from T(n) to the base case."
+    },
+    {
+      "termId": "term-costo-por-nodo",
+      "label": "Cost per node",
+      "definition": "Non-recursive work performed by a specific call. Normally it corresponds to f(subproblem size)."
+    },
+    {
+      "termId": "term-costo-por-nivel",
+      "label": "Cost per level",
+      "definition": "Sum of the cost of all nodes located at the same level of the tree."
+    },
+    {
+      "termId": "term-dominancia-hojas",
+      "label": "leaf dominance",
+      "definition": "Case where the largest asymptotic contribution to the total cost comes from the leaves of the tree."
+    },
+    {
+      "termId": "term-dominancia-raiz",
+      "label": "root dominance",
+      "definition": "Case where the greatest asymptotic contribution to the total cost comes from the initial cost or from higher levels."
+    },
+    {
+      "termId": "term-dominancia-uniforme",
+      "label": "Uniform cost per level",
+      "definition": "Case where all levels asymptotically cost the same, so the total cost is cost_per_level multiplied by the number of levels."
+    },
+    {
+      "termId": "term-recurrencia-no-balanceada",
+      "label": "Unbalanced recurrence",
+      "definition": "Recursion where the recursive calls have different sizes, for example T(n)=T(n/3)+T(2n/3)+cn."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-arbol-recursion",
+      "slug": "arbol-recursion",
+      "title": "Recursion Tree Method",
+      "order": 1,
+      "summary": "Construction, analysis by levels and resolution of recurrences through call trees.",
+      "sections": [
+        {
+          "sectionId": "sec-cuando-aplica-arbol-recursion",
+          "slug": "cuando-aplica-arbol-recursion",
+          "title": "When does the tree method apply?",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "learningObjectives": [
+            {
+              "objectiveId": "definir-aplicabilidad-arbol",
+              "text": "Deende the pedagogical applicability of the recursion tree method."
+            },
+            {
+              "objectiveId": "distinguir-arbol-vs-maestro",
+              "text": "Distinguish when to use recursion tree instead of Master Theorem."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              },
+              {
+                "id": "mod-teorema-maestro",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-clasificacion-ecuaciones-recurrencia",
+                "kind": "required"
+              },
+              {
+                "id": "sec-cuando-aplica-teorema-maestro",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-arbol-recursion-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The recursion tree method represents a recurrence equation as a call tree. Each node represents a recursive call, each level represents an expansion depth, and the total cost is obtained by adding the cost of all levels plus the cost of the leaves."
+                }
+              ]
+            },
+            {
+              "id": "blk-arbol-recursion-aplicabilidad",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "It applies pedagogically to any recurrence equation, but is especially useful when the Master Theorem does not apply, for example in unbalanced recurrences such as"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=T(n/3)+T(2n/3)+cn"
+                },
+                {
+                  "type": "text",
+                  "text": ", or when the equation has more than one recursive call of different size."
+                }
+              ]
+            },
+            {
+              "id": "blk-arbol-vs-maestro-table",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "situacion",
+                  "label": "Situation"
+                },
+                {
+                  "key": "metodoRecomendado",
+                  "label": "Recommended method"
+                },
+                {
+                  "key": "razon",
+                  "label": "Reason"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=aT(n/b)+f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "and it fits into a case of the Master"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Master Theorem"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It is more direct and avoids drawing the entire tree."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Subproblems of different sizes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recursion Tree"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The basic Master Theorem requires homogeneous subproblems."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "The Master Theorem result is not intuitive for the student"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Tree as visual justification"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The tree shows where each term of the sum comes from."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Subtraction recurrence with branching"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Tree or characteristic equation"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The tree allows you to visualize exponential growth by depth."
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "When to use Master Theorem and when to use Recursion Tree"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-modelo-mental-arbol-recursion",
+          "slug": "modelo-mental-arbol-recursion",
+          "title": "Mental model of the tree",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "learningObjectives": [
+            {
+              "objectiveId": "interpretar-nodos-niveles-hojas",
+              "text": "Interpret root, internal nodes, levels and leaves in a recursion tree."
+            },
+            {
+              "objectiveId": "conectar-arbol-con-pila",
+              "text": "Connect the recursion tree with the execution environments studied in recursion."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ambientes-ejecucion-pila",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-modelo-mental-arbol",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The root represents the first execution environment: the original call"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)"
+                },
+                {
+                  "type": "text",
+                  "text": ". Its children represent the recursive calls that that root triggers. Each child spawns other children until the base case is reached."
+                }
+              ]
+            },
+            {
+              "id": "blk-costo-nodo-vs-llamadas",
+              "type": "note",
+              "variant": "info",
+              "title": "What is paid at each node",
+              "blocks": [
+                {
+                  "id": "blk-costo-nodo-vs-llamadas-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The cost written inside a node is the non-recursive work: splitting, comparing, combining, printing, or executing local instructions. Recursive calls are not counted within"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "; They expand like children of the tree."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-mermaid-esqueleto-arbol",
+              "type": "mermaid",
+              "title": "Tree skeleton for T(n)=2T(n/2)+f(n)",
+              "code": "flowchart TD\n  A[\"T(n)\\nCost: f(n)\"] --> B[\"T(n/2)\\nCost: f(n/2)\"]\n  A --> C[\"T(n/2)\\nCost: f(n/2)\"]\n  B --> D[\"T(n/4)\\nCost: f(n/4)\"]\n  B --> E[\"T(n/4)\\nCost: f(n/4)\"]\n  C --> F[\"T(n/4)\\nCost: f(n/4)\"]\n  C --> G[\"T(n/4)\\nCost: f(n/4)\"]"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-paso-a-paso-arbol-recursion",
+          "slug": "paso-a-paso-arbol-recursion",
+          "title": "Step by step — Recursion Tree",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "ejecutar-procedimiento-arbol",
+              "text": "Execute the complete procedure of the recursion tree method."
+            },
+            {
+              "objectiveId": "construir-sumatoria-total",
+              "text": "Build the total sum of internal levels plus leaves."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-tabla-sumatorias-comunes",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-sumatorias-simples",
+                "kind": "required"
+              },
+              {
+                "id": "sec-sumatorias-dobles",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-paso-a-paso-arbol-lista",
+              "type": "list",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Detect recurrence and extract parameters."
+                    },
+                    {
+                      "type": "text",
+                      "text": "Identifies how many calls there are, the reduction or subtraction factor, and the cost per node"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Example:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=2T(n/2)+cn"
+                    },
+                    {
+                      "type": "text",
+                      "text": "has"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a=2"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "b=2"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)=cn"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Draw the first 3 levels of the tree."
+                    },
+                    {
+                      "type": "text",
+                      "text": "The root represents the first environment. Its node cost is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Each child has size"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n/b"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and cost"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n/b)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Drawing three levels is usually enough to see the pattern."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Build the model of a generic level i."
+                    },
+                    {
+                      "type": "text",
+                      "text": "for the level"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "i"
+                    },
+                    {
+                      "type": "text",
+                      "text": ": nodes"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a^i"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", size per node"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n/b^i"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", cost per node"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n/b^i)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and total cost"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a^i f(n/b^i)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Determine the height of the tree."
+                    },
+                    {
+                      "type": "text",
+                      "text": "If the base case is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(1)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and the size is divided by"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "b"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", it is resolved"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n/b^h=1"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", therefore"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "h=\\log_b n"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". The number of levels is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "h+1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Cost the leaves."
+                    },
+                    {
+                      "type": "text",
+                      "text": "At the level"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "h"
+                    },
+                    {
+                      "type": "text",
+                      "text": "there is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "a^h=a^{\\log_b n}=n^{\\log_b a}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "leaves. If each sheet costs constant, the total cost of leaves is proportional to"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n^{\\log_b a}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Construct and simplify the total sum."
+                    },
+                    {
+                      "type": "text",
+                      "text": "The costs of all internal levels plus the leaves are added."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Identify what dominates."
+                    },
+                    {
+                      "type": "text",
+                      "text": "Compare intermediate levels against leaves and root to decide the endal order."
+                    }
+                  ]
+                }
+              ],
+              "style": "ordered"
+            },
+            {
+              "id": "blk-sumatoria-general-arbol",
+              "type": "equationBlock",
+              "title": "Standard Total Sum",
+              "latex": "T(n)=\\sum_{i=0}^{h-1}a^i f\\left(\\frac{n}{b^i}\\right)+n^{\\log_b a}"
+            },
+            {
+              "id": "blk-expl-sumatoria-general-arbol",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This formula adds the work at all levels of the tree. The term"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "i"
+                },
+                {
+                  "type": "text",
+                  "text": "represents the current level, from the root (0) to just before the leaves (h-1). At each level, we have"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "a^i"
+                },
+                {
+                  "type": "text",
+                  "text": "nodes (branching factor raised to level), each processing a subproblem of size"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n/b^i"
+                },
+                {
+                  "type": "text",
+                  "text": ". The height of the tree"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "h"
+                },
+                {
+                  "type": "text",
+                  "text": "determines how many levels we go through, and the endal term"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n^{\\log_b a}"
+                },
+                {
+                  "type": "text",
+                  "text": "accounts for the total cost of the leaves at the base level."
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-nivel-generico",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "elemento",
+                  "label": "Level i element"
+                },
+                {
+                  "key": "expresion",
+                  "label": "Expression"
+                },
+                {
+                  "key": "interpretacion",
+                  "label": "Interpretation"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Number of nodes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "a^i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Each node generates children per level."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Size per node"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\frac{n}{b^i}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Each level divides the size by b."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Cost per node"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "f\\left(\\frac{n}{b^i}\\right)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Local work of a node of size n/b^i."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Total level cost"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "a^i f\\left(\\frac{n}{b^i}\\right)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Sum of the local work of all nodes in the level."
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "Generic level i model for balanced recurrences"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-patrones-dominancia-arbol",
+          "slug": "patrones-dominancia-arbol",
+          "title": "Dominance patterns",
+          "order": 4,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "clasificar-dominancia",
+              "text": "Classify the tree according to whether leaves dominate, uniform levels or roots."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-arbol-recursion",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-dominancia-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "After constructing the total sum, the decisive step is to identify which part of the tree dominates asymptotic growth."
+                }
+              ]
+            },
+            {
+              "id": "blk-tabla-dominancia-arbol",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "patron",
+                  "label": "Pattern"
+                },
+                {
+                  "key": "senal",
+                  "label": "Signal"
+                },
+                {
+                  "key": "resultadoTipico",
+                  "label": "Typical result"
+                },
+                {
+                  "key": "intuicion",
+                  "label": "intuition"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "leaves dominate"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The cost per level increases geometrically as you go down."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^{\\log_b a})"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "There are too many leaves or too much branching."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "All levels cost the same"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Each level costs, for example, cn."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The same cost is paid for each level and there are log n levels."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Master the root"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Costs decrease rapidly as they go down."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(f(n))"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The initial local work outweighs everything that happens underneath."
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "Dominance patterns in recursion trees"
+            },
+            {
+              "id": "blk-dominancia-cuidado",
+              "type": "note",
+              "variant": "warning",
+              "title": "Care",
+              "blocks": [
+                {
+                  "id": "blk-dominancia-cuidado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Don't decide the result by just looking at the number of leaves. A tree can have many leaves, but if the cost per level drops fast enough, the root can dominate. Always add or compare the cost by level."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-arbol-quicksort-mejor-caso",
+          "slug": "ejemplo-arbol-quicksort-mejor-caso",
+          "title": "Example 1 — T(n)=2T(n/2)+cn",
+          "order": 5,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "resolver-arbol-nlogn",
+              "text": "Solve a balanced recurrence where all levels cost cn."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-arbol-recursion",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-ejemplo1-arbol-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Solve"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=2T(n/2)+cn"
+                },
+                {
+                  "type": "text",
+                  "text": ", with"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(1)=1"
+                },
+                {
+                  "type": "text",
+                  "text": ". This pattern corresponds to Merge Sort or the best case of Quicksort."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-arbol-niveles",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "nivel",
+                  "label": "Level"
+                },
+                {
+                  "key": "nodos",
+                  "label": "Nodes"
+                },
+                {
+                  "key": "costoPorNodo",
+                  "label": "Cost per node"
+                },
+                {
+                  "key": "costoTotal",
+                  "label": "Total level cost"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "cn"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "cn"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "c(n/2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2\\cdot c(n/2)=cn"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "c(n/4)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "4\\cdot c(n/4)=cn"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2^i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "c\\left(n/2^i\\right)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2^i\\cdot c(n/2^i)=cn"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "First levels of T(n)=2T(n/2)+cn"
+            },
+            {
+              "id": "blk-ejemplo1-arbol-mermaid",
+              "type": "mermaid",
+              "title": "Tree of the first levels",
+              "code": "flowchart TD\n  A[\"T(n)\\ncn\"] --> B[\"T(n/2)\\nc(n/2)\"]\n  A --> C[\"T(n/2)\\nc(n/2)\"]\n  B --> D[\"T(n/4)\\nc(n/4)\"]\n  B --> E[\"T(n/4)\\nc(n/4)\"]\n  C --> F[\"T(n/4)\\nc(n/4)\"]\n  C --> G[\"T(n/4)\\nc(n/4)\"]"
+            },
+            {
+              "id": "blk-ejemplo1-arbol-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "latex": "a=2,\\quad b=2,\\quad f(n)=cn",
+                  "title": "Parameters",
+                  "stepId": "step-parametros"
+                },
+                {
+                  "latex": "\\text{Level cost }i=2^i\\cdot c\\left(\\frac{n}{2^i}\\right)=cn",
+                  "title": "Generic level",
+                  "stepId": "step-nivel-generico"
+                },
+                {
+                  "latex": "\\frac{n}{2^h}=1\\Rightarrow h=\\log_2 n",
+                  "title": "Height",
+                  "stepId": "step-altura"
+                },
+                {
+                  "latex": "\\log_2 n+1",
+                  "title": "Number of levels",
+                  "stepId": "step-numero-de-niveles"
+                },
+                {
+                  "latex": "2^{\\log_2 n}=n\\text{ leaves, each with constant cost}",
+                  "title": "Leaves",
+                  "stepId": "step-hojas"
+                },
+                {
+                  "latex": "\\Theta(n)",
+                  "title": "Cost of leaves",
+                  "stepId": "step-costo-hojas"
+                },
+                {
+                  "latex": "T(n)=cn(\\log_2 n+1)=cn\\log_2 n+cn",
+                  "title": "Total sum",
+                  "stepId": "step-suma-total"
+                },
+                {
+                  "latex": "T(n)=\\Theta(n\\log n)",
+                  "title": "Result",
+                  "stepId": "step-resultado"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo1-arbol-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Result",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo1-arbol-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=cn\\log_2 n+cn"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and therefore"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)\\in \\Theta(n\\log n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Growth is linearithmic."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-arbol-hanoi",
+          "slug": "ejemplo-arbol-hanoi",
+          "title": "Example 2 — T(n)=2T(n−1)+1",
+          "order": 6,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "resolver-arbol-hanoi",
+              "text": "Solve a subtraction recurrence and you will be defeated using recursion tree."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-torres-hanoi",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-ejemplo2-hanoi-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Solve"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=2T(n-1)+1"
+                },
+                {
+                  "type": "text",
+                  "text": ", with"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(1)=1"
+                },
+                {
+                  "type": "text",
+                  "text": ". This is the Towers of Hanoi pattern: subtract and you will be defeated."
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-hanoi-niveles",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "nivel",
+                  "label": "Level"
+                },
+                {
+                  "key": "nodos",
+                  "label": "Nodes"
+                },
+                {
+                  "key": "costoPorNodo",
+                  "label": "Cost per node"
+                },
+                {
+                  "key": "costoTotal",
+                  "label": "Total level cost"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "4"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "3"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "8"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "8"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2^i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2^i"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "First levels of T(n)=2T(n−1)+1"
+            },
+            {
+              "id": "blk-ejemplo2-hanoi-mermaid",
+              "type": "mermaid",
+              "title": "Towers of Hanoi initial tree",
+              "code": "flowchart TD\n  A[\"T(n)\\n1\"] --> B[\"T(n-1)\\n1\"]\n  A --> C[\"T(n-1)\\n1\"]\n  B --> D[\"T(n-2)\\n1\"]\n  B --> E[\"T(n-2)\\n1\"]\n  C --> F[\"T(n-2)\\n1\"]\n  C --> G[\"T(n-2)\\n1\"]"
+            },
+            {
+              "id": "blk-ejemplo2-hanoi-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "latex": "\\text{Level cost }i=2^i",
+                  "title": "Generic level",
+                  "stepId": "step-nivel-generico"
+                },
+                {
+                  "latex": "h=n-1\\quad \\text{because 1 is subtracted until reaching }T(1)",
+                  "title": "Height",
+                  "stepId": "step-altura"
+                },
+                {
+                  "latex": "T(n)=\\sum_{i=0}^{n-1}2^i",
+                  "title": "Total sum",
+                  "stepId": "step-suma-total"
+                },
+                {
+                  "latex": "\\sum_{i=0}^{n-1}2^i=2^n-1",
+                  "title": "geometric series",
+                  "stepId": "step-serie-geometrica"
+                },
+                {
+                  "latex": "T(n)=2^n-1\\in \\Theta(2^n)",
+                  "title": "Result",
+                  "stepId": "step-resultado"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo2-hanoi-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Result",
+              "blocks": [
+                {
+                  "id": "blk-ejemplo2-hanoi-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=2^n-1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and therefore"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)\\in \\Theta(2^n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". The growth is exponential."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-enriquecido-no-balanceado",
+          "slug": "ejemplo-enriquecido-no-balanceado",
+          "title": "Rich example — T(n)=T(n/3)+T(2n/3)+cn",
+          "order": 7,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "analizar-recurrencia-no-balanceada",
+              "text": "Analyze an unbalanced recurrence using the tree method."
+            },
+            {
+              "objectiveId": "entender-por-que-no-aplica-maestro",
+              "text": "Understand why the basic Master Theorem does not apply to T(n)=T(n/3)+T(2n/3)+cn."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-teorema-maestro",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-cuando-aplica-teorema-maestro",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-no-balanceado-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "One case where the recursion tree is especially useful is in unbalanced recursions such as:"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=T(n/3)+T(2n/3)+cn"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-no-balanceado-no-maestro",
+              "type": "note",
+              "variant": "warning",
+              "title": "Why does the basic Master Theorem not apply?",
+              "blocks": [
+                {
+                  "id": "blk-no-balanceado-no-maestro-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The basic Master Theorem requires homogeneous subproblems of size"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n/b"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Here the children have different sizes:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n/3"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "2n/3"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-no-balanceado-mermaid",
+              "type": "mermaid",
+              "title": "Initial unbalanced tree",
+              "code": "flowchart TD\n  A[\"T(n)\\ncn\"] --> B[\"T(n/3)\\nc(n/3)\"]\n  A --> C[\"T(2n/3)\\nc(2n/3)\"]\n  B --> D[\"T(n/9)\\nc(n/9)\"]\n  B --> E[\"T(2n/9)\\nc(2n/9)\"]\n  C --> F[\"T(2n/9)\\nc(2n/9)\"]\n  C --> G[\"T(4n/9)\\nc(4n/9)\"]"
+            },
+            {
+              "id": "blk-no-balanceado-steps",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "latex": "cn",
+                  "title": "Root cost",
+                  "stepId": "step-costo-raiz"
+                },
+                {
+                  "latex": "c(n/3)+c(2n/3)=cn",
+                  "title": "Level 1 cost",
+                  "stepId": "step-costo-nivel-1"
+                },
+                {
+                  "latex": "\\text{The sum of subproblem sizes at each complete level is }n",
+                  "title": "Observation",
+                  "stepId": "step-observacion"
+                },
+                {
+                  "latex": "\\Theta(n)",
+                  "title": "Cost per level",
+                  "stepId": "step-costo-por-nivel"
+                },
+                {
+                  "latex": "n\\left(\\frac{2}{3}\\right)^h=1\\Rightarrow h=\\log_{3/2}n",
+                  "title": "longest branch",
+                  "stepId": "step-rama-mas-larga"
+                },
+                {
+                  "latex": "\\Theta(n)\\cdot \\Theta(\\log n)=\\Theta(n\\log n)",
+                  "title": "Tier Cost",
+                  "stepId": "step-costo-de-niveles"
+                },
+                {
+                  "latex": "T(n)=\\Theta(n\\log n)",
+                  "title": "Result",
+                  "stepId": "step-resultado"
+                }
+              ]
+            },
+            {
+              "id": "blk-no-balanceado-cuidado",
+              "type": "note",
+              "variant": "warning",
+              "title": "Be careful with the leaves",
+              "blocks": [
+                {
+                  "id": "blk-no-balanceado-cuidado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "In unbalanced trees not all branches are the same height. For an initial explanation, it is enough to use the longest branch to limit the number of levels and observe that the cost per complete level is linear. For a ende formal proof, substitution or the Akra–Bazzi theorem is used, which is outside the scope of this module."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplos-enriquecidos-dominancia",
+          "slug": "ejemplos-enriquecidos-dominancia",
+          "title": "Rich examples of dominance",
+          "order": 8,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "comparar-hojas-raiz-niveles",
+              "text": "Compare three patterns: leaves dominate, equal levels and root dominates."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-patrones-dominancia-arbol",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-enriquecidos-dominancia-table",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "recurrencia",
+                  "label": "Recurrence"
+                },
+                {
+                  "key": "nivelGenerico",
+                  "label": "Level i cost"
+                },
+                {
+                  "key": "dominancia",
+                  "label": "What dominates"
+                },
+                {
+                  "key": "resultado",
+                  "label": "Result"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=4T(n/2)+n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "4^i\\cdot \\frac{n}{2^i}=n\\cdot 2^i"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Leaves/low levels"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=2T(n/2)+n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2^i\\cdot \\frac{n}{2^i}=n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "All levels"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n\\log n)"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=2T(n/2)+n^2"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "2^i\\cdot \\left(\\frac{n}{2^i}\\right)^2=\\frac{n^2}{2^i}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Root/upper levels"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(n^2)"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "Quick Examples of Dominance"
+            },
+            {
+              "id": "blk-ejemplo-hojas-dominan",
+              "type": "latexSteps",
+              "title": "Detail — T(n)=4T(n/2)+n",
+              "steps": [
+                {
+                  "latex": "\\text{Level cost }i=4^i\\cdot \\frac{n}{2^i}=n2^i",
+                  "title": "Generic level",
+                  "stepId": "step-nivel-generico"
+                },
+                {
+                  "latex": "h=\\log_2 n",
+                  "title": "Height",
+                  "stepId": "step-altura"
+                },
+                {
+                  "latex": "n2^{\\log_2 n}=n^2",
+                  "title": "Last internal level",
+                  "stepId": "step-ultimo-nivel-interno"
+                },
+                {
+                  "latex": "\\sum_{i=0}^{\\log_2 n} n2^i=n(2^{\\log_2 n+1}-1)=\\Theta(n^2)",
+                  "title": "geometric sum",
+                  "stepId": "step-suma-geometrica"
+                }
+              ]
+            },
+            {
+              "id": "blk-ejemplo-raiz-domina",
+              "type": "latexSteps",
+              "title": "Detail — T(n)=2T(n/2)+n²",
+              "steps": [
+                {
+                  "latex": "\\text{Level cost }i=2^i\\cdot \\left(\\frac{n}{2^i}\\right)^2=\\frac{n^2}{2^i}",
+                  "title": "Generic level",
+                  "stepId": "step-nivel-generico"
+                },
+                {
+                  "latex": "\\sum_{i=0}^{\\log_2 n}\\frac{n^2}{2^i}\\le 2n^2",
+                  "title": "Decreasing geometric sum",
+                  "stepId": "step-suma-geometrica-decreciente"
+                },
+                {
+                  "latex": "T(n)=\\Theta(n^2)",
+                  "title": "Result",
+                  "stepId": "step-resultado"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-errores-tipicos-arbol-recursion",
+          "slug": "errores-tipicos-arbol-recursion",
+          "title": "Typical errors",
+          "order": 9,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "learningObjectives": [
+            {
+              "objectiveId": "evitar-errores-arbol",
+              "text": "Avoid frequent errors when building and adding recursion trees."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-arbol-recursion",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-errores-arbol-table",
+              "type": "table",
+              "columns": [
+                {
+                  "key": "error",
+                  "label": "Error"
+                },
+                {
+                  "key": "porQueEstaMal",
+                  "label": "Why is it wrong?"
+                },
+                {
+                  "key": "correccion",
+                  "label": "Correction"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Count only nodes and forget the cost per node"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The total cost does not depend only on how many calls there are."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Multiply nodes by cost per node at each level."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Use"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\log_b n"
+                      },
+                      {
+                        "type": "text",
+                        "text": "in subtraction recurrences"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "If the size goes from n to n−1, the height is not logarithmic."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "For"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n-b)"
+                      },
+                      {
+                        "type": "text",
+                        "text": ", the height is usually linear in n."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Forget the leaves"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "On some trees the leaves dominate the total cost."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Explicitly add the cost of leaves to the sum."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Assume all levels cost the same"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "This only happens in specific cases such as"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "2T(n/2)+cn"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Calculate generic cost"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "a^i f(n/b^i)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Force a balanced shape on an unbalanced tree"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Recurrences like"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n/3)+T(2n/3)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "Not all children have the same size."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analyze sum of sizes by level and height of the longest branch."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Declare exact result when only order was demonstrated"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Many sums simplify asymptotically."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Distinguish between exact form and conclusion"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta(\\cdot)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "title": "Common errors in the tree method"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-arbol-recursion",
+          "slug": "resumen-operativo-arbol-recursion",
+          "title": "Operational summary",
+          "order": 10,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-receta-arbol",
+              "text": "Consult a minimum recipe to apply the recursion tree method."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-arbol-recursion",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-resumen-arbol-callout",
+              "type": "note",
+              "variant": "success",
+              "title": "Minimum recipe",
+              "blocks": [
+                {
+                  "id": "blk-resumen-arbol-lista",
+                  "type": "list",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Write recurrence and separate local cost recursive calls."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Draw root, level 1 and level 2."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Find the generic level pattern."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Calculate the height to the base case."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Cost leaves."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Add internal levels more leaves."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Identify dominant term and conclude in notation"
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "\\Theta"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    }
+                  ],
+                  "style": "ordered"
+                }
+              ]
+            },
+            {
+              "id": "blk-resumen-arbol-formulas",
+              "type": "latexSteps",
+              "title": "Key formulas",
+              "steps": [
+                {
+                  "latex": "\\text{Level cost }i=a^i f\\left(\\frac{n}{b^i}\\right)",
+                  "title": "Balanced generic level",
+                  "stepId": "step-nivel-generico-balanceado"
+                },
+                {
+                  "latex": "\\frac{n}{b^h}=1\\Rightarrow h=\\log_b n",
+                  "title": "Height per division",
+                  "stepId": "step-altura-por-division"
+                },
+                {
+                  "latex": "a^h=a^{\\log_b n}=n^{\\log_b a}",
+                  "title": "Leaves",
+                  "stepId": "step-hojas"
+                },
+                {
+                  "latex": "T(n)=\\sum_{i=0}^{h-1}a^i f\\left(\\frac{n}{b^i}\\right)+n^{\\log_b a}",
+                  "title": "Total sum",
+                  "stepId": "step-suma-total"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

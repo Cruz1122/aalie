@@ -11,7 +11,6 @@ import {
 import type { MethodType } from "@/components/MethodSelector";
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
-import { getApiKey } from "@/hooks/useApiKey";
 import { useRouter } from "@/i18n/navigation";
 
 type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
@@ -149,14 +148,12 @@ export function useRunAnalysis(options?: {
         updateMessage(getMessage("classifying"));
         let kind: AlgorithmKind;
         try {
-          const apiKey = getApiKey();
           const clsPromise = fetch("/api/llm/classify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               source: sourceCode,
               mode: "local",
-              apiKey: apiKey || undefined,
             }),
           });
 
@@ -232,7 +229,6 @@ export function useRunAnalysis(options?: {
           await animateProgress(50, 55, 200, updateProgress);
         }
 
-        const apiKey = getApiKey();
         const analyzeBody: Record<string, unknown> = {
           source: sourceCode,
           mode: "all",
@@ -242,9 +238,6 @@ export function useRunAnalysis(options?: {
         };
         if (isRecursive && selectedMethod) {
           analyzeBody.preferred_method = selectedMethod;
-        }
-        if (apiKey) {
-          analyzeBody.api_key = apiKey;
         }
 
         const analyzePromise = fetch("/api/analyze/open", {

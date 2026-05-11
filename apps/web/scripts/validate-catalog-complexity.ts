@@ -16,8 +16,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  EXAMPLE_CATEGORY_ORDER,
+  categoryHasRecursiveMethods,
   examplesCatalog,
-  isRecursiveCategory,
   type ExampleCatalogItem,
 } from "@/lib/examples/catalog";
 
@@ -646,7 +647,7 @@ async function main(): Promise<void> {
     const sizeMeta = sizeMetaBySlug[example.slug];
 
     let preferredMethod: string | undefined;
-    if (isRecursiveCategory(example.category)) {
+    if (categoryHasRecursiveMethods(example.category)) {
       const dm = await detectMethods(example.sourceCodeByLocale.es);
       if (dm.ok && dm.default_method) {
         preferredMethod = dm.default_method;
@@ -673,7 +674,7 @@ async function main(): Promise<void> {
     let response: AnalyzeAllJson = {};
     try {
       response = await analyzeOpenAll(example.sourceCodeByLocale.es, {
-        algorithmKind: isRecursiveCategory(example.category)
+        algorithmKind: categoryHasRecursiveMethods(example.category)
           ? "recursive"
           : undefined,
         preferredMethod,
@@ -838,14 +839,7 @@ async function main(): Promise<void> {
   );
   md.push("");
 
-  const categoryOrder = [
-    "iterativos",
-    "divide-y-venceras",
-    "resta-y-venceras",
-    "resta-y-seras-vencido",
-  ] as const;
-
-  for (const cat of categoryOrder) {
+  for (const cat of EXAMPLE_CATEGORY_ORDER) {
     const inCat = reportRows.filter((r) => r.example.category === cat);
     if (inCat.length === 0) {
       continue;
@@ -937,7 +931,7 @@ async function main(): Promise<void> {
     md.push("```");
     md.push("");
 
-    const isIter = !isRecursiveCategory(ex.category);
+    const isIter = !categoryHasRecursiveMethods(ex.category);
     const worst = r.response.worst;
     if (
       isIter &&
