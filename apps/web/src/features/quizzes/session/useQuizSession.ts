@@ -34,6 +34,20 @@ function toWeakSkillIds(mastery: Record<string, number>): string[] {
     .sort();
 }
 
+function mergeWeakSkillIds(progress: {
+  masteryBySkill: Record<string, number>;
+  weakSkillIds: string[];
+  lastFailedSkillIds: string[];
+}): string[] {
+  return Array.from(
+    new Set([
+      ...toWeakSkillIds(progress.masteryBySkill),
+      ...progress.weakSkillIds,
+      ...progress.lastFailedSkillIds,
+    ]),
+  ).sort();
+}
+
 export interface QuizSessionOptions {
   moduleId?: string;
   moduleTitle?: string;
@@ -61,7 +75,11 @@ export function useQuizSession(options: QuizSessionOptions = {}) {
           studentId: null,
           studiedContentRefs: loadStudiedContentRefs(),
           masteryBySkill: progress.masteryBySkill,
-          weakSkillIds: toWeakSkillIds(progress.masteryBySkill),
+          weakSkillIds: mergeWeakSkillIds(progress),
+          weakTopics:
+            progress.lastFailedTopicIds.length > 0
+              ? [...progress.lastFailedTopicIds].sort()
+              : undefined,
           recentQuestionIds: progress.recentQuestionIds,
           sessionPreferences: {
             questionCount: options.questionCount ?? fallbackQuestionCount,
@@ -128,7 +146,12 @@ export function useQuizSession(options: QuizSessionOptions = {}) {
 
         appendAttempt(storedAttempt);
         const progress = loadQuizProgress();
-        applyAttemptToProgress(progress, storedAttempt, evaluated);
+        const topicByQuestionId = Object.fromEntries(
+          session.questions.map((q) => [q.questionId, q.topic]),
+        );
+        applyAttemptToProgress(progress, storedAttempt, evaluated, {
+          topicByQuestionId,
+        });
 
         setResult(evaluated);
         return evaluated;

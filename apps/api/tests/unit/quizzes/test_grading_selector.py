@@ -410,6 +410,53 @@ def test_selector_filters_by_skill_ids_intersection():
         assert skill_id in q.skillIds
 
 
+def test_selector_prioritizes_weak_skill_ids_without_explicit_skill_filter():
+    questions = list(load_questions().values())
+    rare_skill = "skill.formulation.choose-control-structure-for-full-traversal"
+    with_skill = [
+        q for q in questions if q.status == "active" and rare_skill in q.skillIds
+    ]
+    assert len(with_skill) >= 2
+
+    from app.modules.quizzes.schemas import QuizSelectionRequest
+
+    req = QuizSelectionRequest.model_validate(
+        {
+            "studiedContentRefs": [],
+            "weakSkillIds": [rare_skill],
+            "sessionPreferences": {"questionCount": 2},
+        }
+    )
+    selected = select_questions(questions, req)
+    assert len(selected.questions) == 2
+    for q in selected.questions:
+        assert rare_skill in q.skillIds
+
+
+def test_selector_prioritizes_skills_from_low_mastery():
+    questions = list(load_questions().values())
+    rare_skill = "skill.formulation.choose-control-structure-for-full-traversal"
+    with_skill = [
+        q for q in questions if q.status == "active" and rare_skill in q.skillIds
+    ]
+    assert len(with_skill) >= 2
+
+    from app.modules.quizzes.schemas import QuizSelectionRequest
+
+    req = QuizSelectionRequest.model_validate(
+        {
+            "studiedContentRefs": [],
+            "masteryBySkill": {rare_skill: 0.2},
+            "weakSkillIds": [],
+            "sessionPreferences": {"questionCount": 2},
+        }
+    )
+    selected = select_questions(questions, req)
+    assert len(selected.questions) == 2
+    for q in selected.questions:
+        assert rare_skill in q.skillIds
+
+
 def test_selector_explicit_filters_take_priority_over_weak():
     questions = list(load_questions().values())
     topic1 = questions[0].topic

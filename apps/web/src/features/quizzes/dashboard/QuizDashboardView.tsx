@@ -1,21 +1,29 @@
 "use client";
 
-import { PlayCircle } from "lucide-react";
+import { PlayCircle, Trash2 } from "lucide-react";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import AALIEEmotionIcon from "@/components/AALIEEmotionIcon";
+import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import Footer from "@/components/Footer";
 import { GlobalLoader } from "@/components/GlobalLoader";
 import Header from "@/components/Header";
+import { PaginationControls } from "@/components/PaginationControls";
+import { useRunAnalysis } from "@/hooks/useRunAnalysis";
+import type { AssistantContext } from "@/lib/assistant/types";
 import type { Locale } from "@/i18n/routing";
 
+import { clearQuizAutostartDedupeKeys } from "../lib/quizAutostartDedupe";
+import { buildAssistantQuizDashboardContext } from "../assistant/quizAssistantContext";
 import { buildQuizDashboardCards } from "./buildQuizDashboardCards";
+import { HalfRouletteWheel } from "./HalfRouletteWheel";
 import type { StartQuizOptions } from "./quizDashboardTypes";
 import { StartQuizModal } from "./StartQuizModal";
 import { useQuizDashboard } from "./useQuizDashboard";
+import { clearQuizDashboardStorage } from "../storage/quizAttemptStorage";
 import { QuizSessionView } from "../session/QuizSessionView";
 
 interface QuizDashboardViewProps {
@@ -57,17 +65,23 @@ function hoverIconForCard(kind: string) {
   }
 }
 
-/** useSearchParams puede ir un tick detrás de router.push; el navegador ya tiene la query. */
+/**
+ * URL real del cliente primero: tras `history.replaceState` el hook puede seguir
+ * devolviendo la query antigua (StrictMode remount / desfase), y se re-disparaba el arranque.
+ */
 function getSearchParam(
   name: string,
   searchParams: ReadonlyURLSearchParams,
 ): string | null {
+  if (typeof window !== "undefined") {
+    const fromWindow = new URLSearchParams(window.location.search).get(name);
+    if (fromWindow != null && String(fromWindow).length > 0) {
+      return fromWindow;
+    }
+  }
   const fromHook = searchParams.get(name);
   if (fromHook != null && String(fromHook).length > 0) {
     return fromHook;
-  }
-  if (typeof window !== "undefined") {
-    return new URLSearchParams(window.location.search).get(name);
   }
   return null;
 }
@@ -90,35 +104,61 @@ function colorForCardIcon(kind: string) {
 }
 
 function scoreTone(accuracy: number) {
-  if (accuracy >= 0.9) {
+  const scoreOverFive = Math.max(0, Math.min(5, accuracy * 5));
+
+  if (scoreOverFive <= 0.5) {
     return {
-      card: "border-emerald-400/35 bg-emerald-500/10",
-      text: "text-emerald-300",
-      icon: "text-emerald-300",
-      emotion: "happy" as const,
+      card: "border-rose-400/35 bg-rose-500/10",
+      text: "text-rose-300",
+      icon: "text-rose-300",
+      emotion: "worried" as const,
     };
   }
-  if (accuracy >= 0.75) {
+  if (scoreOverFive <= 1.0) {
     return {
-      card: "border-lime-400/35 bg-lime-500/10",
-      text: "text-lime-300",
-      icon: "text-lime-300",
-      emotion: "satisfied" as const,
+      card: "border-orange-400/35 bg-orange-500/10",
+      text: "text-orange-300",
+      icon: "text-orange-300",
+      emotion: "confused" as const,
     };
   }
-  if (accuracy >= 0.55) {
+  if (scoreOverFive <= 2.0) {
     return {
       card: "border-amber-400/35 bg-amber-500/10",
       text: "text-amber-300",
       icon: "text-amber-300",
+      emotion: "thinking" as const,
+    };
+  }
+  if (scoreOverFive <= 3.0) {
+    return {
+      card: "border-lime-400/35 bg-lime-500/10",
+      text: "text-lime-300",
+      icon: "text-lime-300",
       emotion: "focused" as const,
     };
   }
+  if (scoreOverFive <= 3.9) {
+    return {
+      card: "border-emerald-400/35 bg-emerald-500/10",
+      text: "text-emerald-300",
+      icon: "text-emerald-300",
+      emotion: "curious" as const,
+    };
+  }
+  if (scoreOverFive <= 4.5) {
+    return {
+      card: "border-cyan-400/35 bg-cyan-500/10",
+      text: "text-cyan-300",
+      icon: "text-cyan-300",
+      emotion: "satisfied" as const,
+    };
+  }
   return {
-    card: "border-rose-400/35 bg-rose-500/10",
-    text: "text-rose-300",
-    icon: "text-rose-300",
-    emotion: "determined" as const,
+    card: "border-sky-400/35 bg-sky-500/10",
+    text: "text-sky-300",
+    icon: "text-sky-300",
+    emotion: "happy" as const,
   };
 }
 
@@ -148,13 +188,14 @@ export function QuizDashboardView({
   const tDashboard = useTranslations("quizzes.dashboard");
   const tTopics = useTranslations("quizzes.topics");
   const searchParams = useSearchParams();
+  const { runAnalysis } = useRunAnalysis();
   const { metrics, progress, attempts, isLoaded, reload } = useQuizDashboard();
   const [isStartModalOpen, setIsStartModalOpen] = useState(false);
   const [activeQuizOptions, setActiveQuizOptions] =
     useState<StartQuizOptions | null>(null);
-  const [hoveredCardKey, setHoveredCardKey] = useState<string | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
   const queryStartHandledRef = useRef(false);
-  const hoverDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const HISTORY_PAGE_SIZE = 9;
 
   const formatTopicLabel = useCallback(
     (topicId: string): string => {
@@ -226,6 +267,41 @@ export function QuizDashboardView({
     });
   }, [attempts, formatTopicLabel, isLoaded, metrics, tDashboard]);
 
+  const quizAssistantContext = useMemo<AssistantContext>(
+    () => ({
+      surface: "quizzes",
+      locale: String(locale),
+      pageContext: {
+        route: `/${locale}/quizzes`,
+        view: "dashboard",
+        title: tDashboard("title"),
+        description: tDashboard("subtitle"),
+        notes: [
+          `loaded=${isLoaded ? "true" : "false"}`,
+          `totalAttempts=${metrics.totalAttempts}`,
+          `averageAccuracy=${metrics.averageAccuracy}`,
+          `historyEntries=${attempts.length}`,
+          `weakSkills=${progress?.weakSkillIds?.length ?? 0}`,
+          `weakTopics=${progress?.lastFailedTopicIds?.length ?? 0}`,
+        ],
+      },
+      quizDashboard: buildAssistantQuizDashboardContext({
+        metrics,
+        progress,
+        formatTopicId: formatTopicLabel,
+      }),
+    }),
+    [
+      attempts.length,
+      formatTopicLabel,
+      isLoaded,
+      locale,
+      metrics,
+      progress,
+      tDashboard,
+    ],
+  );
+
   useEffect(() => {
     if (queryStartHandledRef.current) return;
     if (activeQuizOptions) return;
@@ -291,8 +367,29 @@ export function QuizDashboardView({
     }
   }, [activeQuizOptions, locale, searchParams]);
 
+  const historyTotalPages = Math.max(
+    1,
+    Math.ceil(attempts.length / HISTORY_PAGE_SIZE),
+  );
+
+  useEffect(() => {
+    setHistoryPage((current) => Math.min(current, historyTotalPages));
+  }, [historyTotalPages]);
+
+  const pagedAttempts = useMemo(() => {
+    const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
+    return attempts.slice(start, start + HISTORY_PAGE_SIZE);
+  }, [attempts, historyPage]);
+
   function openStartModal() {
     setIsStartModalOpen(true);
+  }
+
+  function handleClearQuizProgress() {
+    if (!window.confirm(tDashboard("rouletteClearConfirm"))) return;
+    clearQuizDashboardStorage();
+    setHistoryPage(1);
+    reload();
   }
 
   function goToHistory() {
@@ -318,6 +415,7 @@ export function QuizDashboardView({
   }
 
   function handleQuizExit() {
+    clearQuizAutostartDedupeKeys();
     reload();
     setActiveQuizOptions(null);
   }
@@ -326,41 +424,13 @@ export function QuizDashboardView({
     ? "Haz clic para continuar"
     : "Click to continue";
 
-  function handleCardHoverStart(cardKey: string) {
-    if (hoverDebounceRef.current) {
-      clearTimeout(hoverDebounceRef.current);
-    }
-    hoverDebounceRef.current = setTimeout(() => {
-      setHoveredCardKey(cardKey);
-      hoverDebounceRef.current = null;
-    }, 120);
-  }
-
-  function handleCardHoverEnd() {
-    if (hoverDebounceRef.current) {
-      clearTimeout(hoverDebounceRef.current);
-    }
-    hoverDebounceRef.current = setTimeout(() => {
-      setHoveredCardKey(null);
-      hoverDebounceRef.current = null;
-    }, 120);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (hoverDebounceRef.current) {
-        clearTimeout(hoverDebounceRef.current);
-      }
-    };
-  }, []);
-
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
       <Header />
-      <main className="z-10 flex-1 p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+      <main className="relative z-0 flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-8">
           {activeQuizOptions ? (
-            <section className="flex items-start justify-center">
+            <div className="flex min-h-0 w-full flex-1 flex-col">
               <QuizSessionView
                 locale={locale as Locale}
                 source="dashboard"
@@ -373,11 +443,11 @@ export function QuizDashboardView({
                 onCompleted={handleQuizCompleted}
                 onExit={handleQuizExit}
               />
-            </section>
+            </div>
           ) : (
             <>
               {isLoaded && metrics.totalAttempts === 0 ? (
-                <section className="flex min-h-[520px] items-center justify-center p-6">
+                <section className="flex min-h-[520px] flex-1 items-center justify-center p-6">
                   <div className="flex max-w-xl flex-col items-center gap-5 text-center">
                     <AALIEEmotionIcon
                       name="happy"
@@ -398,68 +468,46 @@ export function QuizDashboardView({
                   </div>
                 </section>
               ) : !isLoaded ? (
-                <section className="flex min-h-[520px] items-center justify-center">
+                <section className="flex min-h-[520px] flex-1 items-center justify-center">
                   <GlobalLoader variant="pulse" size="xl" />
                 </section>
               ) : (
-                <section className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                  {cards.map((card) => (
-                    <button
-                      key={`${card.kind}-${card.title}`}
-                      type="button"
-                      onClick={() => handleCardClick(card.kind)}
-                      onMouseEnter={() =>
-                        handleCardHoverStart(`${card.kind}-${card.title}`)
-                      }
-                      onMouseLeave={handleCardHoverEnd}
-                      onFocus={() =>
-                        setHoveredCardKey(`${card.kind}-${card.title}`)
-                      }
-                      onBlur={() => setHoveredCardKey(null)}
-                      className="group glass-card relative flex aspect-square w-full flex-col items-center justify-center rounded-2xl border border-slate-300/20 bg-slate-700/20 p-4 text-center text-slate-100 transition-colors"
-                    >
-                      {(() => {
-                        const cardKey = `${card.kind}-${card.title}`;
-                        const isHovered = hoveredCardKey === cardKey;
-                        return (
-                          <div className="flex flex-col items-center gap-3">
-                            <div
-                              className={`flex h-16 w-16 items-center justify-center rounded-full border border-slate-400/25 bg-slate-700/35 transition-all duration-200 ${
-                                isHovered
-                                  ? "border-slate-200/50 bg-slate-600/50"
-                                  : ""
-                              }`}
-                            >
-                              <span
-                                className={`material-symbols-outlined text-[28px] leading-none transition-all duration-200 ${
-                                  isHovered
-                                    ? "scale-110 text-slate-200"
-                                    : colorForCardIcon(card.kind)
-                                }`}
-                              >
-                                {isHovered
-                                  ? hoverIconForCard(card.kind)
-                                  : iconForCard(card.kind)}
-                              </span>
-                            </div>
-                            <h2
-                              className={`text-sm font-semibold transition-colors duration-200 ${
-                                isHovered
-                                  ? "text-slate-200"
-                                  : colorForCardIcon(card.kind)
-                              }`}
-                            >
-                              {isHovered ? card.ctaLabel : card.eyebrow}
-                            </h2>
-                            <p className="text-sm font-semibold leading-5 text-slate-200 transition-all duration-200">
-                              {isHovered ? clickHint : card.title}
-                            </p>
-                          </div>
-                        );
-                      })()}
-                    </button>
-                  ))}
-                </section>
+                <div className="flex w-full flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-center sm:gap-2 min-[801px]:sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={openStartModal}
+                    className="order-2 inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-400/25 bg-slate-700/40 px-2.5 py-2 text-xs font-semibold text-slate-100 transition-colors hover:bg-slate-700/60 sm:order-1 sm:w-32 sm:self-center min-[801px]:gap-2 min-[801px]:rounded-xl min-[801px]:px-4 min-[801px]:py-3 min-[801px]:text-sm min-[801px]:w-44 lg:w-48"
+                  >
+                    <PlayCircle
+                      className="h-4 w-4 shrink-0 min-[801px]:h-[18px] min-[801px]:w-[18px]"
+                      aria-hidden
+                    />
+                    {tDashboard("rouletteSideStart")}
+                  </button>
+                  <div className="order-1 min-w-0 flex-1 sm:order-2 sm:max-w-3xl">
+                    <HalfRouletteWheel
+                      options={cards.map((card) => ({
+                        kind: card.kind,
+                        title: card.title,
+                        eyebrow: card.eyebrow ?? "",
+                        ctaLabel: card.ctaLabel ?? "",
+                      }))}
+                      handleCardClick={handleCardClick}
+                      clickHint={clickHint}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearQuizProgress}
+                    className="order-3 inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-rose-400/35 bg-rose-500/15 px-2.5 py-2 text-xs font-semibold text-rose-100 transition-colors hover:bg-rose-500/25 sm:order-3 sm:w-32 sm:self-center min-[801px]:gap-2 min-[801px]:rounded-xl min-[801px]:px-4 min-[801px]:py-3 min-[801px]:text-sm min-[801px]:w-44 lg:w-48"
+                  >
+                    <Trash2
+                      className="h-4 w-4 shrink-0 min-[801px]:h-[18px] min-[801px]:w-[18px]"
+                      aria-hidden
+                    />
+                    {tDashboard("rouletteSideClear")}
+                  </button>
+                </div>
               )}
 
               {isLoaded && metrics.totalAttempts > 0 ? (
@@ -468,7 +516,7 @@ export function QuizDashboardView({
                     {tDashboard("historyCard.eyebrow")}
                   </h2>
                   <div className="documentation-grid">
-                    {attempts.slice(0, 6).map((attempt) => (
+                    {pagedAttempts.map((attempt) => (
                       <article
                         key={attempt.attemptId}
                         className={`glass-card flex min-h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border p-5 text-center ${scoreTone(attempt.accuracy).card}`}
@@ -519,12 +567,27 @@ export function QuizDashboardView({
                       </article>
                     ))}
                   </div>
+                  <PaginationControls
+                    currentPage={historyPage}
+                    totalPages={historyTotalPages}
+                    onPageChange={setHistoryPage}
+                    collapseThreshold={9}
+                  />
                 </section>
               ) : null}
             </>
           )}
         </div>
       </main>
+      {!activeQuizOptions ? (
+        <EmbeddedAssistantLauncher
+          surface="quizzes"
+          assistantContext={quizAssistantContext}
+          onAnalyzeCode={(code) => {
+            void runAnalysis(code);
+          }}
+        />
+      ) : null}
       <Footer />
 
       <StartQuizModal

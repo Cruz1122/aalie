@@ -38,6 +38,19 @@ def _next_difficulty(recent_results: list[dict[str, object]]) -> tuple[str, str]
     return current, "maintain_difficulty"
 
 
+def _weak_skill_target_set(request: QuizSelectionRequest) -> set[str]:
+    targets = {s for s in request.weakSkillIds if s}
+    for skill, raw in request.masteryBySkill.items():
+        if not skill:
+            continue
+        try:
+            if float(raw) < 0.5:
+                targets.add(skill)
+        except (TypeError, ValueError):
+            continue
+    return targets
+
+
 def _pick_priority_topic(request: QuizSelectionRequest) -> str | None:
     if request.weakTopics:
         return sorted(request.weakTopics)[0]
@@ -78,6 +91,7 @@ def _build_reason(code: str, question: QuizQuestion) -> dict[str, object]:
         "maintain_difficulty": "Se mantiene la dificultad por desempeño reciente estable.",
         "cover_pending_topic": "Se eligió este tema para cubrir contenido pendiente.",
         "avoid_repetition": "Se eligió esta pregunta para evitar repetición de tema o tipo.",
+        "target_weak_skills": "Se priorizó una habilidad con bajo dominio o área a reforzar.",
         "fallback_available_question": "Se eligió la mejor pregunta disponible por fallback determinista.",
     }
     return {
@@ -182,6 +196,13 @@ def select_questions(
 
         topic_pool = available
         reason_code = "fallback_available_question"
+
+        weak_targets = _weak_skill_target_set(request)
+        if weak_targets and not prefs.skillIds:
+            skill_biased = [q for q in topic_pool if set(q.skillIds) & weak_targets]
+            if skill_biased:
+                topic_pool = skill_biased
+                reason_code = "target_weak_skills"
 
         if priority_topic:
             same_topic = [q for q in topic_pool if q.topic == priority_topic]

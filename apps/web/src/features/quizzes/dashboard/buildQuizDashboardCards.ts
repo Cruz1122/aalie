@@ -112,6 +112,11 @@ function percent(value: number | null | undefined): number | null {
   return Math.max(0, Math.min(100, Math.round(value * 100)));
 }
 
+function gradeOverFive(value: number): string {
+  const grade = (Math.round(value * 50) / 10).toFixed(1);
+  return `${grade}/5.0`;
+}
+
 export function buildQuizDashboardCards({
   metrics,
   attempts,
@@ -196,9 +201,7 @@ export function buildQuizDashboardCards({
     {
       kind: "recent",
       eyebrow: i18n.latestTestEyebrow,
-      title: latestAttempt
-        ? i18n.latestTitle(Math.round(latestAttempt.accuracy * 100))
-        : i18n.noLatestTitle,
+      title: latestAttempt ? gradeOverFive(latestAttempt.accuracy) : i18n.noLatestTitle,
       description: latestAttempt
         ? i18n.latestDescription(
             Math.round(latestAttempt.score),

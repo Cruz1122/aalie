@@ -4,6 +4,10 @@ import type {
   AssistantExampleSectionContext,
   AssistantFeatureContext,
   AssistantFocusedPanelContext,
+  AssistantQuizDashboardContext,
+  AssistantQuizRecentAttemptContext,
+  AssistantQuizReviewQuestionContext,
+  AssistantQuizSessionReviewContext,
 } from "./types";
 
 const MAX_TEXT_CHARS = 4000;
@@ -16,6 +20,12 @@ const MAX_EXAMPLE_SOURCE_CHARS = 1600;
 const MAX_FEATURES = 10;
 const MAX_PANEL_NOTES = 12;
 const MAX_PANEL_NOTE_CHARS = 360;
+const MAX_QUIZ_RECENT_ATTEMPTS = 8;
+const MAX_QUIZ_TOPIC_LABELS = 16;
+const MAX_QUIZ_SKILL_IDS = 28;
+const MAX_QUIZ_REVIEW_QUESTIONS = 36;
+const MAX_QUIZ_OPTION_FEEDBACK_LINES = 10;
+const MAX_QUIZ_REVIEW_FIELD = 1400;
 
 function truncateText(value: string | undefined, maxChars = MAX_TEXT_CHARS) {
   if (!value) {
@@ -105,6 +115,109 @@ function sanitizeFeature(
   };
 }
 
+function sanitizeQuizRecentAttempt(
+  attempt: AssistantQuizRecentAttemptContext,
+): AssistantQuizRecentAttemptContext {
+  return {
+    attemptId: truncateText(attempt.attemptId, MAX_ITEM_CHARS),
+    completedAt: attempt.completedAt,
+    moduleId: truncateText(attempt.moduleId, MAX_ITEM_CHARS),
+    moduleTitle: truncateText(attempt.moduleTitle, MAX_ITEM_CHARS),
+    accuracy: attempt.accuracy,
+    score: attempt.score,
+    maxScore: attempt.maxScore,
+    topicHighlights: compactList(attempt.topicHighlights),
+    areasToImprove: compactList(attempt.areasToImprove),
+  };
+}
+
+function sanitizeQuizDashboard(
+  dashboard: AssistantQuizDashboardContext,
+): AssistantQuizDashboardContext {
+  return {
+    areasToImprove: (dashboard.areasToImprove ?? [])
+      .map((t) => truncateText(t, MAX_ITEM_CHARS))
+      .filter((t): t is string => Boolean(t))
+      .slice(0, MAX_QUIZ_TOPIC_LABELS),
+    strengths: (dashboard.strengths ?? [])
+      .map((t) => truncateText(t, MAX_ITEM_CHARS))
+      .filter((t): t is string => Boolean(t))
+      .slice(0, MAX_QUIZ_TOPIC_LABELS),
+    weakSkillIds: (dashboard.weakSkillIds ?? [])
+      .map((id) => truncateText(id, MAX_ITEM_CHARS))
+      .filter((id): id is string => Boolean(id))
+      .slice(0, MAX_QUIZ_SKILL_IDS),
+    lastFailedTopicIds: (dashboard.lastFailedTopicIds ?? [])
+      .map((t) => truncateText(t, MAX_ITEM_CHARS))
+      .filter((t): t is string => Boolean(t))
+      .slice(0, MAX_QUIZ_TOPIC_LABELS),
+    recentAttempts: (dashboard.recentAttempts ?? [])
+      .slice(0, MAX_QUIZ_RECENT_ATTEMPTS)
+      .map((a) => sanitizeQuizRecentAttempt(a)),
+  };
+}
+
+function sanitizeQuizReviewQuestion(
+  q: AssistantQuizReviewQuestionContext,
+): AssistantQuizReviewQuestionContext {
+  return {
+    index: q.index,
+    questionId: truncateText(q.questionId, MAX_ITEM_CHARS) || "question",
+    questionType: truncateText(q.questionType, MAX_ITEM_CHARS) || "unknown",
+    topic: truncateText(q.topic, MAX_ITEM_CHARS),
+    difficulty: truncateText(q.difficulty, MAX_ITEM_CHARS),
+    promptSummary: truncateText(q.promptSummary, MAX_QUIZ_REVIEW_FIELD) || "",
+    isCorrect: q.isCorrect,
+    score: q.score,
+    maxScore: q.maxScore,
+    userAnswerSummary: truncateText(q.userAnswerSummary, MAX_QUIZ_REVIEW_FIELD) || "",
+    correctAnswerSummary: truncateText(
+      q.correctAnswerSummary,
+      MAX_QUIZ_REVIEW_FIELD,
+    ),
+    explanationSummary: truncateText(
+      q.explanationSummary,
+      MAX_QUIZ_REVIEW_FIELD,
+    ),
+    optionFeedbackSummaries: q.optionFeedbackSummaries
+      ?.map((line) => truncateText(line, MAX_QUIZ_REVIEW_FIELD))
+      .filter((line): line is string => Boolean(line))
+      .slice(0, MAX_QUIZ_OPTION_FEEDBACK_LINES),
+    skillIds: q.skillIds
+      ?.map((id) => truncateText(id, MAX_ITEM_CHARS))
+      .filter((id): id is string => Boolean(id))
+      .slice(0, 20),
+  };
+}
+
+function sanitizeQuizSessionReview(
+  review: AssistantQuizSessionReviewContext,
+): AssistantQuizSessionReviewContext {
+  return {
+    view: review.view,
+    reviewStepIndex: review.reviewStepIndex,
+    reviewStepTotal: review.reviewStepTotal,
+    sessionId: truncateText(review.sessionId, MAX_ITEM_CHARS) || "session",
+    overallAccuracy: review.overallAccuracy,
+    overallScore: review.overallScore,
+    overallMaxScore: review.overallMaxScore,
+    areasToImprove: (review.areasToImprove ?? [])
+      .map((t) => truncateText(t, MAX_ITEM_CHARS))
+      .filter((t): t is string => Boolean(t))
+      .slice(0, MAX_QUIZ_TOPIC_LABELS),
+    strengths: (review.strengths ?? [])
+      .map((t) => truncateText(t, MAX_ITEM_CHARS))
+      .filter((t): t is string => Boolean(t))
+      .slice(0, MAX_QUIZ_TOPIC_LABELS),
+    currentQuestion: review.currentQuestion
+      ? sanitizeQuizReviewQuestion(review.currentQuestion)
+      : undefined,
+    allQuestions: (review.allQuestions ?? [])
+      .slice(0, MAX_QUIZ_REVIEW_QUESTIONS)
+      .map((q) => sanitizeQuizReviewQuestion(q)),
+  };
+}
+
 export function sanitizeAssistantContext(
   context: AssistantContext,
 ): AssistantContext {
@@ -180,6 +293,12 @@ export function sanitizeAssistantContext(
     availableFeatures: context.availableFeatures
       ?.slice(0, MAX_FEATURES)
       .map((feature) => sanitizeFeature(feature)),
+    quizDashboard: context.quizDashboard
+      ? sanitizeQuizDashboard(context.quizDashboard)
+      : undefined,
+    quizSessionReview: context.quizSessionReview
+      ? sanitizeQuizSessionReview(context.quizSessionReview)
+      : undefined,
   };
 }
 
@@ -204,6 +323,7 @@ REGLAS DEL ASISTENTE EMBEBIDO
 - Si hay un panel, modal, paso o sección en foco, esa es la referencia principal para preguntas como "que es esto", "que paso aqui", "explicame esto" o similares. Responde primero sobre eso y luego, si aporta valor, conecta con el analisis o la pagina completa.
 - No hables de "el contexto que me diste" o "el contexto recibido". Evita repetir "En AALIE" o "Segun lo que veo en AALIE" en cada respuesta; usa referencias directas a la vista actual y solo menciona el nombre de la app cuando realmente aporte claridad.
 - Si el usuario pregunta cómo validar resultados, prioriza las comprobaciones formales o manuales; si el tiempo es limitado, menciona la comparación con LLM de la app como contraste rápido complementario, nunca como prueba.
+- No cites al usuario identificadores internos del catálogo (p. ej. cadenas que empiecen por "skill." o "topic."); usa solo textos legibles (temas, títulos, resúmenes) que ya figuren en el contexto.
 `.trim();
   }
 
@@ -218,7 +338,34 @@ EMBEDDED ASSISTANT RULES
 - If there is an active panel, modal, step, or focused section, treat it as the primary referent for questions like "what is this", "what happened here", or similar. Answer that first, then connect it to the broader analysis or page only if it helps.
 - Do not say "based on the context you gave me" or similar. Avoid repeating "In AALIE" or "Based on what I can see in AALIE" in every answer; refer directly to the current view and mention the app name only when it adds clarity.
 - If the user asks how to validate results, prioritize formal or manual checks; if time is limited, mention the app's LLM comparison as a quick complementary cross-check, never as proof.
+- Do not quote internal catalog identifiers to the user (e.g. strings starting with "skill." or "topic."); use only human-readable labels already present in the context.
 `.trim();
+}
+
+function appendQuizQuestionDetail(
+  sections: string[],
+  q: AssistantQuizReviewQuestionContext,
+): void {
+  sections.push(
+    `- tipo: ${q.questionType} | tema: ${q.topic || "n/a"} | dificultad: ${q.difficulty || "n/a"}`,
+  );
+  sections.push(
+    `- correcta: ${q.isCorrect ? "si" : "no"} | puntaje: ${q.score}/${q.maxScore}`,
+  );
+  sections.push(`- enunciado: ${q.promptSummary}`);
+  sections.push(`- respuestaUsuario: ${q.userAnswerSummary}`);
+  if (q.correctAnswerSummary) {
+    sections.push(`- respuestaCorrecta: ${q.correctAnswerSummary}`);
+  }
+  if (q.explanationSummary) {
+    sections.push(`- explicacion: ${q.explanationSummary}`);
+  }
+  if (q.optionFeedbackSummaries && q.optionFeedbackSummaries.length > 0) {
+    sections.push("- feedbackPorOpcion:");
+    for (const line of q.optionFeedbackSummaries) {
+      sections.push(`  * ${line}`);
+    }
+  }
 }
 
 export function formatAssistantContextForPrompt(
@@ -245,6 +392,79 @@ export function formatAssistantContextForPrompt(
         : null,
     ].filter((value): value is string => Boolean(value)),
   );
+
+  if (safeContext.quizDashboard) {
+    const d = safeContext.quizDashboard;
+    sections.push("");
+    sections.push("PANORAMA QUIZ (DASHBOARD LOCAL)");
+    if (d.areasToImprove.length > 0) {
+      sections.push(`- areasAReforzar: ${d.areasToImprove.join("; ")}`);
+    }
+    if (d.strengths.length > 0) {
+      sections.push(`- fortalezas: ${d.strengths.join("; ")}`);
+    }
+    if (d.weakSkillIds.length > 0) {
+      sections.push(
+        `- senalInternaCompetenciasDebiles (recuento, sin ids): ${d.weakSkillIds.length}`,
+      );
+    }
+    if (d.lastFailedTopicIds.length > 0) {
+      sections.push(
+        `- temasConFalloReciente: ${d.lastFailedTopicIds.join("; ")}`,
+      );
+    }
+    if (d.recentAttempts.length > 0) {
+      sections.push("");
+      sections.push("ULTIMOS INTENTOS (puntuacion y temas por intento)");
+      d.recentAttempts.forEach((a, i) => {
+        const pct = Math.round(a.accuracy * 1000) / 10;
+        sections.push(
+          `- intento ${i + 1}: score ${a.score}/${a.maxScore}, precision ${pct}%${a.moduleTitle ? `, modulo=${a.moduleTitle}` : ""}${a.attemptId ? `, id=${a.attemptId}` : ""}`,
+        );
+        if (a.topicHighlights && a.topicHighlights.length > 0) {
+          sections.push(
+            `  temasFuertesEnEseIntento: ${a.topicHighlights.join("; ")}`,
+          );
+        }
+        if (a.areasToImprove && a.areasToImprove.length > 0) {
+          sections.push(
+            `  areasAMejorarEnEseIntento: ${a.areasToImprove.join("; ")}`,
+          );
+        }
+      });
+    }
+  }
+
+  if (safeContext.quizSessionReview) {
+    const r = safeContext.quizSessionReview;
+    sections.push("");
+    sections.push("INTENTO ACTUAL: FEEDBACK DE QUIZ");
+    sections.push(`- modoVista: ${r.view}`);
+    sections.push(
+      `- pasoRevision: ${r.reviewStepIndex + 1} de ${r.reviewStepTotal}`,
+    );
+    sections.push(`- sessionId: ${r.sessionId}`);
+    sections.push(
+      `- resultadoGlobal: score ${r.overallScore}/${r.overallMaxScore}, accuracy ${Math.round(r.overallAccuracy * 1000) / 10}%`,
+    );
+    if (r.areasToImprove.length > 0) {
+      sections.push(`- areasAReforzar: ${r.areasToImprove.join("; ")}`);
+    }
+    if (r.strengths.length > 0) {
+      sections.push(`- fortalezas: ${r.strengths.join("; ")}`);
+    }
+    if (r.currentQuestion) {
+      sections.push("");
+      sections.push("PREGUNTA_EN_PANTALLA (paso de revision)");
+      appendQuizQuestionDetail(sections, r.currentQuestion);
+    }
+    sections.push("");
+    sections.push("TODAS_LAS_PREGUNTAS_DE_ESTE_INTENTO");
+    r.allQuestions.forEach((q, i) => {
+      sections.push(`--- Item ${i + 1} ---`);
+      appendQuizQuestionDetail(sections, q);
+    });
+  }
 
   if (safeContext.focusedPanel) {
     sections.push("");

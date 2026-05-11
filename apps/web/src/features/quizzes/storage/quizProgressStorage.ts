@@ -6,7 +6,7 @@ import type { StoredQuizAttempt, StoredQuizProgress } from "./quizStorageTypes";
 export const QUIZ_PROGRESS_STORAGE_KEY = "aalie.quiz.progress.v1";
 export const CONTENT_PROGRESS_REFS_STORAGE_KEY = "aalie.content.progress.v1";
 
-const INITIAL_PROGRESS: StoredQuizProgress = {
+export const INITIAL_PROGRESS: StoredQuizProgress = {
   masteryBySkill: {},
   recentQuestionIds: [],
   weakSkillIds: [],
@@ -47,6 +47,7 @@ export function applyAttemptToProgress(
   progress: StoredQuizProgress,
   attempt: StoredQuizAttempt,
   result: QuizAttemptResult,
+  options?: { topicByQuestionId?: Record<string, string> },
 ): StoredQuizProgress {
   const nextMastery = { ...progress.masteryBySkill };
 
@@ -63,11 +64,12 @@ export function applyAttemptToProgress(
   const lastFailedSkillIds = new Set<string>();
   const lastFailedTopicIds = new Set<string>();
 
+  const topicByQ = options?.topicByQuestionId ?? {};
   for (const item of result.results) {
     if (!item.isCorrect) {
       item.skillIds.forEach((id) => lastFailedSkillIds.add(id));
-      // In the backend, the dataset has question.topic instead of topicId directly,
-      // but if the frontend doesn't have it, we might need to rely on the backend areasToImprove.
+      const topic = topicByQ[item.questionId];
+      if (topic) lastFailedTopicIds.add(topic);
     }
   }
 

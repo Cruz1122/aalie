@@ -299,19 +299,19 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex w-full min-h-screen flex-col overflow-x-hidden">
       <Header />
 
-      <main className="flex-1 flex flex-col justify-center p-3 sm:p-4 z-10 min-h-0">
+      <main className="z-10 flex flex-1 flex-col p-3 sm:p-4">
         <ModeToggle
           mode={mode}
           isSwitching={isSwitching}
           onModeSwitch={handleModeSwitch}
         />
 
-        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col justify-center">
+        <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col">
           <div
-            className={`transition-all duration-300 ${
+            className={`flex min-h-0 flex-1 flex-col transition-all duration-300 ${
               isSwitching
                 ? "opacity-0 translate-y-2"
                 : "opacity-100 translate-y-0"

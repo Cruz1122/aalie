@@ -21,13 +21,13 @@
     "quizzes": "Quizzes"
   },
   "quizzes": {
-    "title": "Cuestionario ADA",
-    "subtitle": "Responde un cuestionario corto según tu progreso en el curso.",
+    "title": "quiz ADA",
+    "subtitle": "Responde un quiz corto según tu progreso en el curso.",
     "session": {
       "moduleScope": "Quiz acotado al módulo: {title}"
     },
     "actions": {
-      "start": "Iniciar cuestionario",
+      "start": "Iniciar quiz",
       "loadingSession": "Cargando...",
       "previous": "Anterior",
       "next": "Siguiente",
@@ -172,7 +172,7 @@
     },
     "error": {
       "title": "Error",
-      "backend": "No se pudo cargar el cuestionario. Revisa la conexión con el backend e inténtalo de nuevo.",
+      "backend": "No se pudo cargar el quiz. Revisa la conexión con el backend e inténtalo de nuevo.",
       "unsupportedQuestion": "Esta pregunta tiene un formato no soportado por la interfaz."
     },
     "result": {
@@ -273,11 +273,14 @@
       }
     },
     "dashboard": {
-      "title": "Mis cuestionarios",
-      "subtitle": "Revisa tu progreso, fortalezas y áreas por mejorar.",
-      "startNew": "Nueva prueba",
-      "startFirst": "Hacer mi primer cuestionario",
-      "emptyTitle": "¡Empieza tu primer cuestionario!",
+      "title": "Mis quizzes",
+      "subtitle": "Revisa tu progreso, fortalezas y debilidades.",
+      "startNew": "Nuevo quiz",
+      "startFirst": "Hacer mi primer quiz",
+      "rouletteSideStart": "Iniciar quiz",
+      "rouletteSideClear": "Borrar progreso",
+      "rouletteClearConfirm": "¿Borrar todo el progreso e historial de quizzes en este navegador? Esta acción no se puede deshacer.",
+      "emptyTitle": "¡Empieza tu primer quiz!",
       "emptySubtitle": "Completa al menos una sesión para ver tus estadísticas.",
       "totalAttempts": "Intentos totales",
       "avgAccuracy": "Precisión media",
@@ -289,12 +292,12 @@
       "noAttempts": "Aún no tienes intentos. ¡Anímate!",
       "generalSession": "Sesión general",
       "emptyCentered": {
-        "message": "Tu primer cuestionario te va a encantar. Comencemos ahora.",
-        "cta": "Hacer mi primer cuestionario"
+        "message": "Tu primer quiz te va a encantar. Comencemos ahora.",
+        "cta": "Hacer mi primer quiz"
       },
       "historyCard": {
         "eyebrow": "Historial",
-        "completedWithScore": "Cuestionario completado con {correct}/{total} respuestas correctas.",
+        "completedWithScore": "quiz completado con {correct}/{total} respuestas correctas.",
         "moduleLabel": "Módulo: {moduleId}.",
         "generalSessionLabel": "Sesión general.",
         "scoreTitle": "{score}/5.0",
@@ -306,26 +309,26 @@
       },
       "cards": {
         "newTestEyebrow": "Nueva prueba",
-        "firstQuizTitle": "Empieza tu primer cuestionario",
+        "firstQuizTitle": "Empieza tu primer quiz",
         "firstQuizDescription": "Aún no hay historial. Realiza una primera prueba para construir estadísticas y detectar áreas por mejorar.",
         "noHistoryProgress": "Sin historial",
-        "firstQuizCta": "Hacer primer cuestionario",
+        "firstQuizCta": "Hacer primer quiz",
         "emptyStateEyebrow": "Estado",
         "noStatsTitle": "Sin estadísticas todavía",
-        "noStatsDescription": "Las métricas aparecen cuando completes al menos un cuestionario. No se muestran promedios inventados.",
+        "noStatsDescription": "Las métricas aparecen cuando completes al menos un quiz. No se muestran promedios inventados.",
         "pendingProgress": "Pendiente",
         "diagnosticCta": "Crear prueba diagnóstica",
         "recommendedPracticeEyebrow": "Práctica recomendada",
         "practiceAreaTitle": "Practicar {area}",
-        "newQuizTitle": "Hacer nuevo cuestionario",
+        "newQuizTitle": "Hacer nuevo quiz",
         "recommendedPracticeDescription": "Esta es el área que más conviene reforzar según tus resultados recientes.",
         "adaptiveDescription": "Crea una nueva prueba con selección adaptativa basada en tu progreso local.",
         "currentAverageProgress": "Promedio actual",
-        "startQuizCta": "Hacer cuestionario",
+        "startQuizCta": "Hacer quiz",
         "averageEyebrow": "Promedio",
         "averageUnavailableTitle": "Promedio no disponible",
         "averageTitle": "{score}/5.0",
-        "averageDescription": "Resumen de desempeño acumulado en cuestionarios completados en este navegador.",
+        "averageDescription": "Resumen de desempeño acumulado en quizzes completados en este navegador.",
         "averageAccuracyProgress": "Precisión promedio",
         "viewHistoryCta": "Ver historial",
         "weaknessEyebrow": "Área a mejorar",
@@ -336,10 +339,10 @@
         "practiceAreaCta": "Practicar área",
         "generalTestCta": "Prueba general",
         "latestTestEyebrow": "Última prueba",
-        "latestTitle": "{percent}% en el último cuestionario",
+        "latestTitle": "{percent}% en el último quiz",
         "noLatestTitle": "Sin última prueba",
         "latestDescription": "Respondiste {correct}/{total} de forma correcta.",
-        "noLatestDescription": "Cuando completes un cuestionario, aquí se mostrará el resultado más reciente.",
+        "noLatestDescription": "Cuando completes un quiz, aquí se mostrará el resultado más reciente.",
         "resultProgress": "Resultado",
         "retryCta": "Repetir práctica",
         "strengthEyebrow": "Fortaleza",
@@ -350,7 +353,7 @@
       }
     },
     "modal": {
-      "title": "Nuevo cuestionario",
+      "title": "Nuevo quiz",
       "modeLabel": "Modo de estudio",
       "mode": {
         "adaptive": "Adaptativo",
@@ -369,7 +372,7 @@
       "recommendedTitle": "Practicar áreas débiles",
       "recommendedDescription": "AALIE seleccionará preguntas usando tu progreso local y resultados recientes.",
       "cancel": "Cancelar",
-      "start": "Comenzar cuestionario",
+      "start": "Comenzar quiz",
       "note": "Las preguntas se seleccionan automáticamente de un banco de más de 475 preguntas."
     }
   },

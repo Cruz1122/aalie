@@ -76182,6 +76182,211 @@
         "cooldownSessions": 0,
         "discrimination": "high"
       }
+    },
+    {
+      "questionId": "kandelee-backtracking-nqueens-en",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "multiple_choice",
+      "difficulty": "advanced",
+      "cognitiveLevel": "analyze",
+      "topic": "backtracking",
+      "tags": [
+        "algorithm_patterns",
+        "search",
+        "recursive_algorithms",
+        "recursion_stack",
+        "factorial",
+        "control_structure"
+      ],
+      "skillIds": [
+        "skill.formulation.choose-control-structure-for-search",
+        "skill.correctness.distinguish-termination-from-correctness",
+        "skill.analysis.identify-input-size"
+      ],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Based on the `kandelee()` algorithm, mark the correct statements.",
+            "language": "text"
+          },
+          {
+            "type": "code",
+            "content": "kandelee(n)\nBEGIN\n  FOR i <- 0 TO n - 1 DO\n  BEGIN\n    FOR j <- 0 TO n - 1 DO\n    BEGIN\n      tablero[i][j] <- false;\n    END;\n  END;\n\n  FOR i <- 0 TO n - 1 DO\n  BEGIN\n    // Column flags\n    T_j[i] <- false;\n  END;\n\n  FOR i <- 0 TO 2 * n - 2 DO\n  BEGIN\n    // Main diagonal flags\n    D1[i] <- false;\n    // Secondary diagonal flags\n    D2[i] <- false;\n  END;\n\n  // Size of the solution set\n  k <- 0;\n\n  k <- backtrack(n, 0, tablero, T_j, D1, D2, S, k);\n\n  // Solution set\n  RETURN S;\nEND;\n\nbacktrack(n, row, tablero, T_j, D1, D2, S, k)\nBEGIN\n  IF (row = n) THEN\n  BEGIN\n    FOR i <- 0 TO n - 1 DO\n    BEGIN\n      line <- \"\";\n\n      FOR j <- 0 TO n - 1 DO\n      BEGIN\n        IF (tablero[i][j]) THEN\n        BEGIN\n          line <- line + \"Ro \";\n        END\n        ELSE\n        BEGIN\n          line <- line + \"** \";\n        END;\n      END;\n\n      representation[i] <- line;\n    END;\n\n    S[k] <- representation;\n    k <- k + 1;\n\n    RETURN k;\n  END;\n\n  FOR col <- 0 TO n - 1 DO\n  BEGIN\n    d1 <- row - col + n - 1;\n    d2 <- row + col;\n\n    IF (not T_j[col] and not D1[d1] and not D2[d2]) THEN\n    BEGIN\n      tablero[row][col] <- true;\n      T_j[col] <- true;\n      D1[d1] <- true;\n      D2[d2] <- true;\n\n      k <- backtrack(n, row + 1, tablero, T_j, D1, D2, S, k);\n\n      tablero[row][col] <- false;\n      T_j[col] <- false;\n      D1[d1] <- false;\n      D2[d2] <- false;\n    END;\n  END;\n\n  RETURN k;\nEND;",
+            "language": "aalie-pseudocode"
+          }
+        ]
+      },
+      "options": [
+        {
+          "optionId": "1",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "The algorithm explores all possible configurations and stores them in a set of valid configurations and a set of invalid configurations.",
+                "language": "text"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrect. The algorithm only stores complete valid configurations in `S`. Invalid configurations are discarded through the column and diagonal flags; they are not stored.",
+                "language": "text"
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-backtracking",
+                "chapterId": "cap-backtracking"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "2",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "The call `kandelee(0)` returns a list.",
+                "language": "text"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correct. When `n = 0`, the initial call immediately reaches the base case `row = n` and returns the solution set.",
+                "language": "text"
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-espacial",
+                "chapterId": "cap-complejidad-temporal-espacial"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "3",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "In the worst case, `kandelee ∈ O(n!)`, because the algorithm essentially explores all possible column permutations with early pruning.",
+                "language": "text"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correct. In the worst case, the algorithm explores essentially all column permutations because column pruning avoids placing two queens in the same column; additional pruning comes from the diagonal constraints.",
+                "language": "text"
+           
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-espacial",
+                "chapterId": "cap-complejidad-temporal-espacial"
+              },
+              {
+                "courseId": "ada",
+                "moduleId": "mod-backtracking",
+                "chapterId": "cap-backtracking"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "4",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "The maximum depth of the recursion stack is `n - 1`.",
+                "language": "text"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrect. The recursion advances through `row = 0, 1, ..., n`. Therefore, it does not stop at `n - 1`; it reaches the base case `row = n`.",
+                "language": "text"
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-algoritmos-recursivos",
+                "chapterId": "cap-algoritmos-recursivos"
+              }
+            ]
+          }
+        }
+      ],
+      "leftItems": [],
+      "rightItems": [],
+      "answer": {
+        "correctOptionIds": [
+          "2",
+          "3"
+        ],
+        "orderedOptionIds": [],
+        "pairs": []
+      },
+      "gradingPolicy": {
+        "mode": "exact_set",
+        "maxScore": 1,
+        "penalty": 0,
+        "minScore": 0
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "The algorithm uses backtracking to build valid solutions to the n-queens problem, discarding invalid branches through column and diagonal flags. It does not store invalid configurations. For `n = 0`, the base case holds immediately and the solution set is returned.",
+            "language": "text"
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "mod-backtracking",
+          "chapterId": "cap-backtracking"
+        },
+        {
+          "courseId": "ada",
+          "moduleId": "mod-algoritmos-recursivos",
+          "chapterId": "cap-algoritmos-recursivos"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1,
+        "estimatedTimeSec": 120,
+        "targetMastery": 0.75,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": [
+          "skill.formulation.choose-control-structure-for-search"
+        ],
+        "exposureLimit": 3,
+        "cooldownSessions": 0,
+        "discrimination": "medium"
+      }
     }
   ]
 }

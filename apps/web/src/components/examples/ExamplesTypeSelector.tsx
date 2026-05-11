@@ -27,29 +27,29 @@ export function ExamplesTypeSelector({
   const t = useTranslations();
 
   return (
-    <section>
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <section className="flex min-h-0 flex-1 flex-col">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 auto-rows-[minmax(260px,auto)] md:grid-cols-2 xl:grid-cols-3">
         {categories.map((category) => {
           const meta = getCategoryMeta(category);
           return (
             <div
               key={category}
-              className="glass-card grid h-full min-h-[60vh] content-center grid-rows-[84px_auto_auto_52px] place-items-center gap-3.5 rounded-2xl p-6 text-center"
+              className="glass-card flex h-full min-h-[260px] flex-col items-center justify-center gap-3.5 rounded-2xl p-6 text-center"
             >
               <AALIECategoryIcon
                 category={category}
                 size={68}
-                className="text-primary"
+                className="shrink-0"
               />
-              <h3 className="line-clamp-2 text-xl font-bold text-white">
+              <h3 className="line-clamp-2 shrink-0 text-xl font-bold text-white">
                 {t(CATEGORY_LABEL_KEYS[category])}
               </h3>
-              <p className="line-clamp-3 text-sm leading-relaxed text-dark-text">
+              <p className="line-clamp-3 max-w-prose shrink-0 text-sm leading-relaxed text-dark-text">
                 {t(CATEGORY_OFFTEXT_KEYS[category])}
               </p>
               <NavigationLink
                 href={`/examples/${meta.slug}`}
-                className="glass-secondary flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition-colors hover:bg-white/20"
+                className="glass-secondary flex h-10 w-full shrink-0 items-center justify-center rounded-xl px-4 text-sm font-bold text-white transition-colors hover:bg-white/20"
               >
                 {ctaLabel}
               </NavigationLink>

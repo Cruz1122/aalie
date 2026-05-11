@@ -1,9 +1,10 @@
 "use client";
 
 import type { QuizSessionResult } from "@aa/types";
-import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import { GlobalLoader } from "@/components/GlobalLoader";
 import {
   QuizQuestionCard,
@@ -15,11 +16,23 @@ import {
   type AnswerState,
   isQuestionComplete,
 } from "@/features/quizzes/lib/quizCompletion";
+import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import type { Locale } from "@/i18n/routing";
+import type { AssistantContext } from "@/lib/assistant/types";
 
 import { useQuizSession } from "./useQuizSession";
+import {
+  buildAssistantQuizSessionReviewContext,
+  renderableToPlainText,
+} from "../assistant/quizAssistantContext";
 import { QuizEmptyState } from "../components/QuizEmptyState";
 import { QuizErrorState } from "../components/QuizErrorState";
+import {
+  clearQuizAutostartDedupeKeys,
+  markQuizAutostartAttempt,
+  quizAutostartDedupeKey,
+  shouldSkipQuizAutostart,
+} from "../lib/quizAutostartDedupe";
 
 export interface QuizSessionViewProps {
   locale?: Locale;
@@ -37,6 +50,7 @@ export interface QuizSessionViewProps {
 }
 
 export function QuizSessionView({
+  locale: localeProp,
   moduleId,
   moduleTitle,
   selectedTopicIds,
@@ -47,7 +61,11 @@ export function QuizSessionView({
   onCompleted,
   onExit,
 }: QuizSessionViewProps) {
+  const appLocale = useLocale();
+  const effectiveLocale = localeProp ?? appLocale;
   const t = useTranslations("quizzes");
+  const tTopics = useTranslations("quizzes.topics");
+  const { runAnalysis } = useRunAnalysis();
   const {
     session,
     result,
@@ -69,7 +87,24 @@ export function QuizSessionView({
   >({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewIndex, setReviewIndex] = useState(0);
-  const autoStartedRef = useRef(false);
+
+  const autostartDedupeKey = useMemo(
+    () =>
+      quizAutostartDedupeKey({
+        moduleId,
+        moduleTitle,
+        questionCount,
+        selectedTopicIds,
+        selectedSkillIds,
+      }),
+    [
+      moduleId,
+      moduleTitle,
+      questionCount,
+      selectedSkillIds,
+      selectedTopicIds,
+    ],
+  );
 
   const isCurrentComplete = useMemo(() => {
     const currentQuestion = questions[currentIndex];
@@ -96,12 +131,23 @@ export function QuizSessionView({
 
   useEffect(() => {
     if (!autoStart) return;
-    if (autoStartedRef.current) return;
+    if (shouldSkipQuizAutostart(autostartDedupeKey)) return;
     if (session || loading || result) return;
-    autoStartedRef.current = true;
+    markQuizAutostartAttempt(autostartDedupeKey);
     void handleStart();
-  }, [autoStart, handleStart, loading, result, session]);
+  }, [
+    autoStart,
+    autostartDedupeKey,
+    handleStart,
+    loading,
+    result,
+    session,
+  ]);
 
+  const leaveQuiz = useCallback(() => {
+    clearQuizAutostartDedupeKeys();
+    onExit?.();
+  }, [onExit]);
   const handleSubmit = async () => {
     const answers = toStudentAnswers(questions, answersByQuestion);
     const evaluated = await submitAnswers(answers);
@@ -123,10 +169,69 @@ export function QuizSessionView({
       )
     : null;
 
+  const formatTopicId = useCallback(
+    (topicId: string): string => {
+      try {
+        return tTopics(topicId as Parameters<typeof tTopics>[0]);
+      } catch {
+        return topicId.replace(/_/g, " ");
+      }
+    },
+    [tTopics],
+  );
+
+  const quizFeedbackAssistantContext = useMemo<AssistantContext | null>(() => {
+    if (!result) {
+      return null;
+    }
+    const quizSessionReview = buildAssistantQuizSessionReviewContext({
+      result,
+      questions,
+      reviewIndex,
+      reviewTotal,
+      isSummaryStep,
+      formatTopicId,
+    });
+    const description = isSummaryStep
+      ? `${t("result.score", { score: result.score, maxScore: result.maxScore })} · ${t("result.accuracy", { percent: Math.round(result.accuracy * 1000) / 10 })}`
+      : currentReviewQuestion
+        ? renderableToPlainText(currentReviewQuestion.prompt, 280)
+        : undefined;
+    return {
+      surface: "quizzes",
+      locale: String(effectiveLocale),
+      pageContext: {
+        route: `/${effectiveLocale}/quizzes`,
+        view: isSummaryStep ? "quiz-feedback-summary" : "quiz-feedback-review",
+        title: isSummaryStep ? t("result.title") : t("result.feedback"),
+        description,
+        notes: [
+          `moduleId=${moduleId ?? ""}`,
+          `moduleTitle=${moduleTitle ?? ""}`,
+          `questionCount=${questionCount}`,
+        ],
+      },
+      quizSessionReview,
+    };
+  }, [
+    currentReviewQuestion,
+    effectiveLocale,
+    formatTopicId,
+    isSummaryStep,
+    moduleId,
+    moduleTitle,
+    questionCount,
+    questions,
+    result,
+    reviewIndex,
+    reviewTotal,
+    t,
+  ]);
+
+  const cardAreaClassName = "min-h-0 flex-1 basis-0";
+
   return (
-    <section
-      className="mx-auto flex w-full max-w-3xl flex-col p-2 pb-0 text-slate-100 sm:p-4 sm:pb-0"
-    >
+    <section className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-1 flex-col p-2 pb-0 text-slate-100 sm:p-4 sm:pb-0">
       {!session && autoStart && (loading || !error) ? (
         <div className="mt-6 flex min-h-0 flex-1 items-center justify-center">
           <GlobalLoader variant="pulse" size="xl" />
@@ -171,7 +276,7 @@ export function QuizSessionView({
             />
           </div>
 
-          <div className="h-[60vh] min-h-[360px] max-h-[640px]">
+          <div className={cardAreaClassName}>
             <QuizQuestionCard
               key={currentQuestion.questionId}
               question={currentQuestion}
@@ -237,13 +342,13 @@ export function QuizSessionView({
       {result ? (
         <div className="mt-1 flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
           {isSummaryStep ? (
-            <div className="h-[60vh] min-h-[360px] max-h-[640px]">
+            <div className={cardAreaClassName}>
               <article className="glass-card quiz-no-hover relative flex h-full min-h-0 flex-col rounded-2xl border border-white/10 bg-[rgba(24,36,49,0.94)] p-4 sm:p-5">
                 <QuizResultView result={result} />
               </article>
             </div>
           ) : currentReviewQuestion && currentReviewResult ? (
-            <div className="h-[60vh] min-h-[360px] max-h-[640px]">
+            <div className={cardAreaClassName}>
               <QuizQuestionReviewCard
                 question={currentReviewQuestion}
                 result={currentReviewResult}
@@ -281,7 +386,7 @@ export function QuizSessionView({
             </button>
             <button
               type="button"
-              onClick={onExit ?? handleStart}
+              onClick={onExit ? leaveQuiz : handleStart}
               disabled={loading}
               className="inline-flex h-10 min-w-36 items-center justify-center gap-2 rounded-lg border border-primary/50 bg-primary/20 px-3 text-sm text-sky-100 transition-colors hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9"
             >
@@ -292,6 +397,16 @@ export function QuizSessionView({
             </button>
           </div>
         </div>
+      ) : null}
+
+      {quizFeedbackAssistantContext ? (
+        <EmbeddedAssistantLauncher
+          surface="quizzes"
+          assistantContext={quizFeedbackAssistantContext}
+          onAnalyzeCode={(code) => {
+            void runAnalysis(code);
+          }}
+        />
       ) : null}
     </section>
   );

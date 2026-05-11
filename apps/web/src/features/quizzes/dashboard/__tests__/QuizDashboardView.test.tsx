@@ -1,11 +1,14 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { QuizDashboardView } from "../QuizDashboardView";
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "es",
   useTranslations:
     () => (key: string, values?: Record<string, string | number>) => {
+      if (key === "title") return "My Quizzes";
+      if (key === "subtitle") return "Review progress.";
       if (key === "emptyCentered.message")
         return "Tu primer quiz te va a encantar. Comencemos ahora.";
       if (key === "emptyCentered.cta") return "Hacer mi primer quiz";
@@ -24,10 +27,12 @@ vi.mock("next-intl", () => ({
     },
 }));
 
+const mockSearchParamsGet = vi.fn<(key: string) => string | null>(() => null);
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
   useSearchParams: () => ({
-    get: () => null,
+    get: (key: string) => mockSearchParamsGet(key),
   }),
 }));
 
@@ -50,6 +55,7 @@ vi.mock("../useQuizDashboard", () => ({
       lastFailedTopicIds: [],
       updatedAt: Date.now(),
     },
+    reload: vi.fn(),
   }),
 }));
 
@@ -61,11 +67,39 @@ vi.mock("@/components/Footer", () => ({
   default: () => <footer data-testid="footer" />,
 }));
 
+vi.mock("@/components/assistant/EmbeddedAssistantLauncher", () => ({
+  EmbeddedAssistantLauncher: () => (
+    <div data-testid="embedded-assistant-launcher" />
+  ),
+}));
+
+vi.mock("@/hooks/useAssistantAvailability", () => ({
+  useAssistantAvailability: () => ({
+    hasAny: true,
+    hasLocalStorage: true,
+    hasServer: false,
+    isChecking: false,
+  }),
+}));
+
+vi.mock("@/hooks/useRunAnalysis", () => ({
+  useRunAnalysis: () => ({ runAnalysis: vi.fn() }),
+}));
+
+vi.mock("@/features/quizzes/session/QuizSessionView", () => ({
+  QuizSessionView: () => <div data-testid="quiz-session-view" />,
+}));
+
 vi.mock("../StartQuizModal", () => ({
   StartQuizModal: () => <div data-testid="start-modal" />,
 }));
 
 describe("QuizDashboardView", () => {
+  beforeEach(() => {
+    mockSearchParamsGet.mockReset();
+    mockSearchParamsGet.mockImplementation(() => null);
+  });
+
   it("renders the institutional shell", () => {
     render(<QuizDashboardView locale="es" />);
 
@@ -92,5 +126,29 @@ describe("QuizDashboardView", () => {
 
     const hero = container.querySelector("header.glass-card");
     expect(hero).not.toBeInTheDocument();
+  });
+
+  it("mounts embedded assistant on dashboard", () => {
+    render(<QuizDashboardView locale="es" />);
+
+    expect(
+      screen.getByTestId("embedded-assistant-launcher"),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("quiz-session-view")).not.toBeInTheDocument();
+  });
+
+  it("hides embedded assistant while quiz session is active", async () => {
+    mockSearchParamsGet.mockImplementation((key) =>
+      key === "start" ? "1" : null,
+    );
+
+    render(<QuizDashboardView locale="es" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("quiz-session-view")).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByTestId("embedded-assistant-launcher"),
+    ).not.toBeInTheDocument();
   });
 });

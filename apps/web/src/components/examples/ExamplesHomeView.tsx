@@ -229,11 +229,12 @@ export function ExamplesHomeView({ page }: ExamplesHomeViewProps) {
   );
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex w-full min-h-screen flex-col overflow-x-hidden">
       <Header />
-      <main className="z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6">
-        <section className="space-y-4">
-          <div className="relative">
+      <main className="z-10 flex min-h-0 flex-1 flex-col p-6">
+        <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6">
+          <section className="shrink-0 space-y-4">
+            <div className="relative">
             <label className="glass-card flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3">
               <span className="material-symbols-outlined text-slate-400">
                 search
@@ -320,23 +321,24 @@ export function ExamplesHomeView({ page }: ExamplesHomeViewProps) {
                 )}
               </div>
             )}
-          </div>
-        </section>
+            </div>
+          </section>
 
-        <section className="flex flex-1 flex-col gap-4">
-          <ExamplesTypeSelector
-            ctaLabel={t("viewFamily")}
-            categories={visibleCategories}
-          />
-        </section>
-        <div className="sticky z-20 flex justify-center pt-0 mt-0 mb-0">
-          <PaginationControls
-            currentPage={safePage}
-            totalPages={EXAMPLE_CATEGORY_PAGE_COUNT}
-            onPageChange={(nextPage) =>
-              router.push(`/examples?page=${nextPage}`)
-            }
-          />
+          <section className="flex min-h-0 flex-1 flex-col gap-4">
+            <ExamplesTypeSelector
+              ctaLabel={t("viewFamily")}
+              categories={visibleCategories}
+            />
+          </section>
+          <div className="sticky z-20 mt-0 mb-0 flex shrink-0 justify-center pt-0">
+            <PaginationControls
+              currentPage={safePage}
+              totalPages={EXAMPLE_CATEGORY_PAGE_COUNT}
+              onPageChange={(nextPage) =>
+                router.push(`/examples?page=${nextPage}`)
+              }
+            />
+          </div>
         </div>
       </main>
       <EmbeddedAssistantLauncher

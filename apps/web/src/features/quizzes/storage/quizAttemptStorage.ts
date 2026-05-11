@@ -1,4 +1,5 @@
 import { safeGet, safeSet } from "./quizLocalStorage";
+import { INITIAL_PROGRESS, QUIZ_PROGRESS_STORAGE_KEY } from "./quizProgressStorage";
 import type { StoredQuizAttempt } from "./quizStorageTypes";
 
 export const QUIZ_ATTEMPTS_STORAGE_KEY = "aalie.quiz.attempts.v1";
@@ -17,4 +18,10 @@ export function appendAttempt(attempt: StoredQuizAttempt, maxKeep = 20): void {
   const next = [attempt, ...current];
   const pruned = next.slice(0, maxKeep);
   safeSet(QUIZ_ATTEMPTS_STORAGE_KEY, pruned);
+}
+
+/** Borra intentos y progreso de quizzes guardados en este navegador. */
+export function clearQuizDashboardStorage(): void {
+  safeSet(QUIZ_ATTEMPTS_STORAGE_KEY, []);
+  safeSet(QUIZ_PROGRESS_STORAGE_KEY, INITIAL_PROGRESS);
 }

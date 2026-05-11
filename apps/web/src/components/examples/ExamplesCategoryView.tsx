@@ -220,11 +220,7 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             icon={
-              <AALIECategoryIcon
-                category={category}
-                size={28}
-                className="text-primary"
-              />
+              <AALIECategoryIcon category={category} size={28} />
             }
             title={tGlobal(CATEGORY_LABEL_KEYS[category])}
             description={tGlobal(CATEGORY_OFFTEXT_KEYS[category])}

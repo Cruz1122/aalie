@@ -6,8 +6,10 @@ import type {
   ReferenceResource,
   Term,
 } from "@aa/content-catalog/types";
+import { useLocale } from "next-intl";
 import { useEffect, useMemo } from "react";
 
+import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { NavigationFooter } from "@/components/NavigationFooter";
@@ -17,6 +19,8 @@ import {
   TermAutoLinkProvider,
 } from "@/features/content-rendering";
 import { useSectionCompletionTracking } from "@/hooks/useContentProgress";
+import { useRunAnalysis } from "@/hooks/useRunAnalysis";
+import type { AssistantContext } from "@/lib/assistant/types";
 import type { ContentModuleData } from "@/lib/content/types";
 interface CourseModuleViewProps {
   data: ContentModuleData;
@@ -45,8 +49,10 @@ function buildTermMap(
 }
 
 export function CourseModuleView({ data }: CourseModuleViewProps) {
+  const locale = useLocale();
   const { finishNavigation } = useNavigation();
-  useSectionCompletionTracking({
+  const { runAnalysis } = useRunAnalysis();
+  const { activeSectionId, percentage } = useSectionCompletionTracking({
     spaceId: data.space.spaceId,
     module: data.moduleSummary,
     sections: data.sectionSummaries,
@@ -69,6 +75,53 @@ export function CourseModuleView({ data }: CourseModuleViewProps) {
     }
     return merged;
   }, [data.module.terms, data.courseTermsIndex]);
+
+  const activeSection = useMemo(
+    () =>
+      data.sectionSummaries.find(
+        (section) => section.sectionId === activeSectionId,
+      ) ?? data.sectionSummaries[0],
+    [activeSectionId, data.sectionSummaries],
+  );
+
+  const assistantContext: AssistantContext = useMemo(
+    () => ({
+      surface: "course",
+      locale,
+      pageContext: {
+        route: data.moduleSummary.route,
+        view: "course-module",
+        title: data.module.title,
+        description: data.module.summary,
+        notes: [
+          "context=course-module",
+          `spaceId=${data.space.spaceId}`,
+          `moduleId=${data.module.moduleId}`,
+          `slug=${data.moduleSummary.slug}`,
+          `progress=${percentage}`,
+        ],
+      },
+      guideSection: activeSection
+        ? {
+            id: activeSection.sectionId,
+            title: activeSection.title,
+            description: activeSection.chapterTitle,
+            summary: activeSection.summary,
+          }
+        : undefined,
+    }),
+    [
+      activeSection,
+      data.module.moduleId,
+      data.module.summary,
+      data.module.title,
+      data.moduleSummary.route,
+      data.moduleSummary.slug,
+      data.space.spaceId,
+      locale,
+      percentage,
+    ],
+  );
 
   useEffect(() => {
     finishNavigation();
@@ -146,6 +199,15 @@ export function CourseModuleView({ data }: CourseModuleViewProps) {
           />
         </div>
       </main>
+
+      <EmbeddedAssistantLauncher
+        surface="course"
+        assistantContext={assistantContext}
+        onAnalyzeCode={(code) => {
+          void runAnalysis(code);
+        }}
+      />
+
       <Footer />
     </div>
   );

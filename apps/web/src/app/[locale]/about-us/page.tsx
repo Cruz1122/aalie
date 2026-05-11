@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { EmbeddedAssistantStaticPage } from "@/components/assistant/EmbeddedAssistantStaticPage";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import NavigationLink from "@/components/NavigationLink";
@@ -20,7 +21,7 @@ export default async function AboutPage({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "about" });
   return (
-    <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
+    <div className="relative flex w-full min-h-screen flex-col overflow-x-hidden">
       <Header />
 
       {/* Contenido Principal */}
@@ -355,6 +356,13 @@ export default async function AboutPage({ params }: Props) {
           <p className="text-xs text-dark-text mt-6">{t("projectTitle")}</p>
         </div>
       </main>
+
+      <EmbeddedAssistantStaticPage
+        surface="about"
+        route={`/${locale}/about-us`}
+        title={t("heroTitle")}
+        description={t("heroDesc")}
+      />
 
       <Footer />
     </div>

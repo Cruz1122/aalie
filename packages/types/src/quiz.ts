@@ -155,6 +155,7 @@ export interface QuizSelectionReason {
     | "maintain_difficulty"
     | "cover_pending_topic"
     | "avoid_repetition"
+    | "target_weak_skills"
     | "fallback_available_question";
   message: string;
   topic?: string;

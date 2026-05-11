@@ -76182,6 +76182,210 @@
         "cooldownSessions": 0,
         "discrimination": "high"
       }
+    },
+    {
+      "questionId": "kandelee-backtracking-nqueens-es",
+      "questionVersion": 1,
+      "status": "active",
+      "type": "multiple_choice",
+      "difficulty": "advanced",
+      "cognitiveLevel": "analyze",
+      "topic": "backtracking",
+      "tags": [
+        "algorithm_patterns",
+        "search",
+        "recursive_algorithms",
+        "recursion_stack",
+        "factorial",
+        "control_structure"
+      ],
+      "skillIds": [
+        "skill.formulation.choose-control-structure-for-search",
+        "skill.correctness.distinguish-termination-from-correctness",
+        "skill.analysis.identify-input-size"
+      ],
+      "prompt": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "Con base al algoritmo `kandelee()`, marque las afirmaciones correctas.",
+            "language": "text"
+          },
+          {
+            "type": "code",
+            "content": "kandelee(n)\nBEGIN\n  FOR i <- 0 TO n - 1 DO\n  BEGIN\n    FOR j <- 0 TO n - 1 DO\n    BEGIN\n      tablero[i][j] <- false;\n    END;\n  END;\n\n  FOR i <- 0 TO n - 1 DO\n  BEGIN\n    // Banderas de columnas\n    T_j[i] <- false;\n  END;\n\n  FOR i <- 0 TO 2 * n - 2 DO\n  BEGIN\n    // Banderas de diagonales principales\n    D1[i] <- false;\n    // Banderas de diagonales secundarias\n    D2[i] <- false;\n  END;\n\n  // Tamaño del conjunto solución\n  k <- 0;\n\n  k <- backtrack(n, 0, tablero, T_j, D1, D2, S, k);\n\n  // Conjunto solución\n  RETURN S;\nEND;\n\nbacktrack(n, row, tablero, T_j, D1, D2, S, k)\nBEGIN\n  IF (row = n) THEN\n  BEGIN\n    FOR i <- 0 TO n - 1 DO\n    BEGIN\n      line <- \"\";\n\n      FOR j <- 0 TO n - 1 DO\n      BEGIN\n        IF (tablero[i][j]) THEN\n        BEGIN\n          line <- line + \"Ro \";\n        END\n        ELSE\n        BEGIN\n          line <- line + \"** \";\n        END;\n      END;\n\n      representation[i] <- line;\n    END;\n\n    S[k] <- representation;\n    k <- k + 1;\n\n    RETURN k;\n  END;\n\n  FOR col <- 0 TO n - 1 DO\n  BEGIN\n    d1 <- row - col + n - 1;\n    d2 <- row + col;\n\n    IF (not T_j[col] and not D1[d1] and not D2[d2]) THEN\n    BEGIN\n      tablero[row][col] <- true;\n      T_j[col] <- true;\n      D1[d1] <- true;\n      D2[d2] <- true;\n\n      k <- backtrack(n, row + 1, tablero, T_j, D1, D2, S, k);\n\n      tablero[row][col] <- false;\n      T_j[col] <- false;\n      D1[d1] <- false;\n      D2[d2] <- false;\n    END;\n  END;\n\n  RETURN k;\nEND;",
+            "language": "aalie-pseudocode"
+          }
+        ]
+      },
+      "options": [
+        {
+          "optionId": "1",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "El algoritmo explora todas las posibles configuraciones y las guarda en un conjunto de válidas y un conjunto de inválidas.",
+                "language": "text"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecta. El algoritmo solo almacena configuraciones completas válidas en `S`. Las configuraciones inválidas se descartan mediante las banderas de columna y diagonales; no se guardan.",
+                "language": "text"
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-backtracking",
+                "chapterId": "cap-backtracking"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "2",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "El llamado `kandelee(0)` devuelve una lista.",
+                "language": "text"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcta. Con `n = 0`, la llamada inicial entra directamente al caso base `row = n` y retorna el conjunto de soluciones.",
+                "language": "text"
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-espacial",
+                "chapterId": "cap-complejidad-temporal-espacial"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "3",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "En el peor caso se cumple que `kandelee ∈ O(n!)`, porque el algoritmo explora esencialmente todas las permutaciones de columnas posibles con podas tempranas.",
+                "language": "text"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Correcta. La poda por columnas evita colocar dos reinas en la misma columna, por lo que en el peor caso el algoritmo explora esencialmente todas las permutaciones posibles de columnas, con poda adicional por diagonales.",
+                "language": "text"
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-complejidad-temporal-espacial",
+                "chapterId": "cap-complejidad-temporal-espacial"
+              },
+              {
+                "courseId": "ada",
+                "moduleId": "mod-backtracking",
+                "chapterId": "cap-backtracking"
+              }
+            ]
+          }
+        },
+        {
+          "optionId": "4",
+          "content": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "La profundidad máxima de la pila de recursión es `n - 1`.",
+                "language": "text"
+              }
+            ]
+          },
+          "feedback": {
+            "blocks": [
+              {
+                "type": "markdown",
+                "content": "Incorrecta. La recursión avanza por valores `row = 0, 1, ..., n`. Por tanto, no se detiene en `n - 1`; llega al caso base `row = n`.",
+                "language": "text"
+              }
+            ],
+            "contentRefs": [
+              {
+                "courseId": "ada",
+                "moduleId": "mod-algoritmos-recursivos",
+                "chapterId": "cap-algoritmos-recursivos"
+              }
+            ]
+          }
+        }
+      ],
+      "leftItems": [],
+      "rightItems": [],
+      "answer": {
+        "correctOptionIds": [
+          "2",
+          "3"
+        ],
+        "orderedOptionIds": [],
+        "pairs": []
+      },
+      "gradingPolicy": {
+        "mode": "exact_set",
+        "maxScore": 1,
+        "penalty": 0,
+        "minScore": 0
+      },
+      "explanation": {
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "El algoritmo usa backtracking para construir soluciones válidas del problema de las n reinas, descartando ramas inválidas mediante banderas de columnas y diagonales. No guarda configuraciones inválidas. Para `n = 0`, el caso base se cumple de inmediato y se retorna el conjunto de soluciones.",
+            "language": "text"
+          }
+        ]
+      },
+      "contentRefs": [
+        {
+          "courseId": "ada",
+          "moduleId": "mod-backtracking",
+          "chapterId": "cap-backtracking"
+        },
+        {
+          "courseId": "ada",
+          "moduleId": "mod-algoritmos-recursivos",
+          "chapterId": "cap-algoritmos-recursivos"
+        }
+      ],
+      "selectionMeta": {
+        "weight": 1,
+        "estimatedTimeSec": 120,
+        "targetMastery": 0.75,
+        "prerequisiteSkillIds": [],
+        "reinforcesSkillIds": [
+          "skill.formulation.choose-control-structure-for-search"
+        ],
+        "exposureLimit": 3,
+        "cooldownSessions": 0,
+        "discrimination": "medium"
+      }
     }
   ]
 }

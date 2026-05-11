@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import re
@@ -32,6 +33,36 @@ logger = logging.getLogger(__name__)
 API_KEY_REGEX = re.compile(r"^AIza[0-9A-Za-z_-]{35,40}$")
 
 
+def _redact_assistant_context_for_llm(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Quita identificadores internos del catálogo (p. ej. skill.*) de la copia enviada al LLM."""
+    try:
+        out = copy.deepcopy(data)
+    except Exception:
+        return data
+    if not isinstance(out, dict):
+        return data
+
+    quiz_dashboard = out.get("quizDashboard")
+    if isinstance(quiz_dashboard, dict):
+        weak = quiz_dashboard.get("weakSkillIds")
+        if isinstance(weak, list) and weak:
+            quiz_dashboard["weakSkillIdCount"] = len(weak)
+        quiz_dashboard.pop("weakSkillIds", None)
+
+    quiz_review = out.get("quizSessionReview")
+    if isinstance(quiz_review, dict):
+        current = quiz_review.get("currentQuestion")
+        if isinstance(current, dict):
+            current.pop("skillIds", None)
+        all_questions = quiz_review.get("allQuestions")
+        if isinstance(all_questions, list):
+            for item in all_questions:
+                if isinstance(item, dict):
+                    item.pop("skillIds", None)
+
+    return out
+
+
 def _validate_api_key(key: str | None) -> bool:
     if not key or not isinstance(key, str):
         return False
@@ -41,7 +72,8 @@ def _validate_api_key(key: str | None) -> bool:
 def _append_context(prompt: str, context: str | None, assistant_context: Dict[str, Any] | None) -> str:
     blocks: List[str] = []
     if assistant_context:
-        serialized = json.dumps(assistant_context, ensure_ascii=True)
+        safe_ctx = _redact_assistant_context_for_llm(assistant_context)
+        serialized = json.dumps(safe_ctx, ensure_ascii=True)
         blocks.append(f"Assistant context:\n{serialized}")
     if context:
         blocks.append(f"Additional context:\n{context}")

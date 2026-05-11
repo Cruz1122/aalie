@@ -84,7 +84,6 @@ export const AnalyzerEditor = forwardRef<
   AnalyzerEditorHandle,
   AnalyzerEditorProps
 >(function AnalyzerEditor(props, ref) {
-  const MOBILE_EDITOR_HEIGHT_PX = 550;
   const {
     initialValue = "",
     onChange,
@@ -102,6 +101,7 @@ export const AnalyzerEditor = forwardRef<
     onAIHelpClick,
     topRightActions,
   } = props;
+  const fillHeight = height === undefined || height === "100%";
   const [code, setCode] = useState(initialValue);
   const tManual = useTranslations("analyzer.manualMode");
   const tTechnique = useTranslations("analyzer.techniques");
@@ -114,9 +114,6 @@ export const AnalyzerEditor = forwardRef<
   const [monacoMountKey, setMonacoMountKey] = useState(0);
   const [techniqueModalOpen, setTechniqueModalOpen] = useState(false);
   const didRemountAfterZeroHeightRef = useRef(false);
-  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
-  const lastMeasuredHeightRef = useRef<number | null>(null);
-  const hasFrozenMeasuredHeightRef = useRef(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   useEffect(() => {
@@ -248,27 +245,11 @@ export const AnalyzerEditor = forwardRef<
 
     const ro = new ResizeObserver(() => {
       if (!editorRef.current) return;
-      const height = container.getBoundingClientRect().height;
+      const boxHeight = container.getBoundingClientRect().height;
 
-      // Congelar una sola vez la altura "real" para romper el feedback
-      // altura -> Monaco -> altura (evita crecer hasta el clamp del viewport).
-      if (!hasFrozenMeasuredHeightRef.current && height > 120) {
-        const viewportH = globalThis.window?.innerHeight ?? 0;
-        const next = Math.round(height);
-        const clamped =
-          viewportH > 0
-            ? Math.max(120, Math.min(next, Math.round(viewportH)))
-            : Math.max(120, next);
-
-        if (lastMeasuredHeightRef.current !== clamped) {
-          lastMeasuredHeightRef.current = clamped;
-          hasFrozenMeasuredHeightRef.current = true;
-          setMeasuredHeight(clamped);
-        }
-      }
       // Si el primer montaje vino "con altura 0" (comprimido), un remount
       // asegura que el wrapper interno de Monaco calcule tamaño bien.
-      if (!didRemountAfterZeroHeightRef.current && height >= 120) {
+      if (!didRemountAfterZeroHeightRef.current && boxHeight >= 120) {
         didRemountAfterZeroHeightRef.current = true;
         setMonacoMountKey((k) => k + 1);
       }
@@ -288,11 +269,7 @@ export const AnalyzerEditor = forwardRef<
     };
   }, [isEditorReady]);
 
-  const monacoHeightProp = isMobileViewport
-    ? `${MOBILE_EDITOR_HEIGHT_PX}px`
-    : measuredHeight != null
-      ? `${measuredHeight}px`
-      : (height ?? "100%");
+  const monacoHeightProp = fillHeight ? "100%" : (height ?? "100%");
   const suggestFontSize = isMobileViewport ? 11 : 13;
   const suggestLineHeight = isMobileViewport ? 18 : 22;
   const editorPadding =
@@ -332,7 +309,7 @@ export const AnalyzerEditor = forwardRef<
   }));
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-1 basis-0 flex-col">
       {/* Botones fuera del overflow-hidden para que los tooltips no se recorten */}
       {(topRightActions != null ||
         onVerifyParse != null ||
@@ -425,7 +402,7 @@ export const AnalyzerEditor = forwardRef<
       {/* Editor: glass-card-editor sin hover difuminado */}
       <div
         ref={editorContainerRef}
-        className="glass-card glass-card-editor relative !z-0 flex-1 h-[320px] min-h-[320px] md:h-full md:min-h-0 w-full overflow-hidden rounded-xl"
+        className="glass-card glass-card-editor relative !z-0 flex h-full min-h-0 flex-1 basis-0 w-full overflow-hidden rounded-xl"
       >
         <MonacoEditor
           key={monacoMountKey}
