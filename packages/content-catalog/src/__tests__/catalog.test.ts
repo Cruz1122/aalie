@@ -37,7 +37,7 @@ test("routes are derived from space and module slugs without manual mapping", ()
   assert.equal(deriveSpaceRoute(theoryBundle.space), "/course");
   assert.equal(
     deriveModuleRoute(theoryBundle.space, theoryBundle.modules[0].module),
-    "/course/complejidad-temporal-espacial",
+    "/course/time-and-space-complexity",
   );
   assert.equal(deriveSpaceRoute(guideBundle.space), "/user-guide");
   assert.equal(
@@ -50,7 +50,7 @@ test("module progress is computed from trackable sections only", () => {
   const courseBundle = getSpaceBundle("course", "es");
   const module = getModuleBySlug(
     courseBundle,
-    "complejidad-temporal-espacial",
+    "time-and-space-complexity",
   )?.module;
 
   assert.ok(module);
@@ -109,7 +109,7 @@ test("search index is generated from JSON content, metadata, terms and captions"
   const courseBundle = getSpaceBundle("course", "es");
   const module = getModuleBySlug(
     courseBundle,
-    "complejidad-temporal-espacial",
+    "time-and-space-complexity",
   )?.module;
   assert.ok(module);
   const entries = buildModuleSearchIndex(courseBundle.space, module);

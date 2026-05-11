@@ -1,0 +1,1318 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-demostraciones-completas-teorema-limites",
+  "slug": "limit-theorem-complete-proofs",
+  "title": "Complete Proofs — Limits Theorem",
+  "order": 7,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "General limit theorem for asymptotic notations and complete step-by-step proofs using limit calculus, application of the theorem, and formal verification.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 35,
+  "tags": [
+    "proofs",
+    "limits-theorem",
+    "asymptotic-notations",
+    "convention",
+    "convention-b",
+    "big-o",
+    "omega",
+    "theta",
+    "little-o",
+    "little-omega",
+    "tilde",
+    "formal-verification",
+    "formal-definition"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "complete demos",
+      "limit theorem",
+      "limit criterion",
+      "prove with limits",
+      "lim f over g",
+      "lim g over f",
+      "theta proof",
+      "little-o proof",
+      "little-omega proof",
+      "verification with formal definition"
+    ],
+    "keywords": [
+      "zero limit",
+      "constant limit",
+      "infinite limit",
+      "oscillatory limit",
+      "3n^2 + 5n",
+      "theta n^2",
+      "n in little-o n^2",
+      "n^2 in little-omega n",
+      "c1",
+      "c2",
+      "n0",
+      "ceil",
+      "formal definition"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-maestra-notaciones-convenciones",
+        "kind": "required"
+      },
+      {
+        "id": "mod-relaciones-notaciones",
+        "kind": "required"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-big-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-omega",
+        "kind": "required"
+      },
+      {
+        "id": "sec-theta",
+        "kind": "required"
+      },
+      {
+        "id": "sec-little-o",
+        "kind": "required"
+      },
+      {
+        "id": "sec-little-omega",
+        "kind": "required"
+      },
+      {
+        "id": "sec-tilde",
+        "kind": "required"
+      },
+      {
+        "id": "sec-tabla-maestra-notaciones-convenciones",
+        "kind": "required"
+      },
+      {
+        "id": "sec-relaciones-entre-notaciones",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-notaciones-asintoticas",
+    "mod-tabla-maestra-notaciones-convenciones",
+    "mod-relaciones-notaciones"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "enunciar-teorema-limites",
+      "text": "State the limit criterion for asymptotic notations in Convention A and Convention B."
+    },
+    {
+      "objectiveId": "aplicar-convencion-a",
+      "text": "Apply the theorem using Convention A, based on lim f(n)/g(n)."
+    },
+    {
+      "objectiveId": "aplicar-convencion-b",
+      "text": "Apply the theorem using Convention B from the course, based on lim g(n)/f(n)."
+    },
+    {
+      "objectiveId": "demostrar-theta",
+      "text": "Formally prove that 3n² + 5n belongs to Θ(n²)."
+    },
+    {
+      "objectiveId": "demostrar-little-o",
+      "text": "Formally prove that n belongs to o(n²)."
+    },
+    {
+      "objectiveId": "demostrar-little-omega",
+      "text": "Formally prove that n² belongs to ω(n)."
+    },
+    {
+      "objectiveId": "verificar-con-definicion",
+      "text": "Verify an asymptotic conclusion using the formal definition with constants and n₀."
+    },
+    {
+      "objectiveId": "reconocer-caso-oscilatorio",
+      "text": "Recognize that if the limit does not exist, for example due to oscillation, the theorem does not automatically allow us to conclude with this criterion."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-teorema-limites",
+      "label": "Limits theorem",
+      "definition": "Criterion that allows deciding membership in asymptotic notations based on the limit of the quotient between two functions."
+    },
+    {
+      "termId": "term-convencion-a",
+      "label": "Convention A",
+      "definition": "Convention that calculates L = lim f(n)/g(n) as n approaches infinity."
+    },
+    {
+      "termId": "term-convencion-b",
+      "label": "Convention B / course",
+      "definition": "Course convention that calculates L' = lim g(n)/f(n) as n tends to infinity."
+    },
+    {
+      "termId": "term-limite-cero",
+      "label": "Zero limit",
+      "definition": "Case where the quotient tends to 0; under Convention A denotes f ∈ o(g) and f ∈ O(g)."
+    },
+    {
+      "termId": "term-limite-constante",
+      "label": "Finite positive constant limit",
+      "definition": "Case where the quotient tends to a constant c with 0 < c < ∞; indicates f ∈ Θ(g)."
+    },
+    {
+      "termId": "term-limite-uno",
+      "label": "Limit one",
+      "definition": "Case where the quotient tends exactly to 1; indicates f ~ g."
+    },
+    {
+      "termId": "term-limite-infinito",
+      "label": "infinite limit",
+      "definition": "Case where the quotient tends to +∞; under Convention A denotes f ∈ ω(g) and f ∈ Ω(g)."
+    },
+    {
+      "termId": "term-caso-oscilatorio",
+      "label": "Oscillatory case",
+      "definition": "Case where the limit does not exist due to oscillation; The direct limit criterion does not automatically conclude a notation."
+    },
+    {
+      "termId": "term-verificacion-formal",
+      "label": "Formal verification",
+      "definition": "Step where the conclusion is confirmed using the formal definition of the notation, with constants and an appropriate n₀."
+    },
+    {
+      "termId": "term-n0",
+      "label": "n₀",
+      "definition": "Point from which an asymptotic inequality must be satisfied."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-demostraciones-completas-teorema-limites",
+      "slug": "limit-theorem-complete-proofs",
+      "title": "Complete Proofs — Limits Theorem",
+      "order": 1,
+      "summary": "General limit criterion and three complete proofs of asymptotic membership.",
+      "sections": [
+        {
+          "sectionId": "sec-teorema-general-limites",
+          "slug": "teorema-general-limites",
+          "title": "7. Complete proofs — Limit theorem",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "leer-teorema-convencion-a",
+              "text": "Read the general theorem using Convention A."
+            },
+            {
+              "objectiveId": "leer-teorema-convencion-b",
+              "text": "Read the same theorem using Convention B, with 0 and infinity swapped."
+            },
+            {
+              "objectiveId": "entender-alcance-teorema",
+              "text": "Understand what conclusions each limit result allows."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              },
+              {
+                "id": "mod-tabla-maestra-notaciones-convenciones",
+                "kind": "required"
+              },
+              {
+                "id": "mod-relaciones-notaciones",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-tabla-maestra-notaciones-convenciones",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-teorema-general-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "general theorem"
+                }
+              ]
+            },
+            {
+              "id": "blk-teorema-general-callout",
+              "type": "theorem",
+              "title": "Theorem: Limits criterion for asymptotic notations",
+              "blocks": [
+                {
+                  "id": "blk-teorema-convencion-a-intro",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Be"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "L = \\lim_{n \\to \\infty}\\frac{f(n)}{g(n)}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(Convention A). So:"
+                    }
+                  ]
+                },
+                {
+                  "id": "blk-teorema-convencion-a-tabla",
+                  "type": "table",
+                  "title": "Limits criterion with Convention A",
+                  "columns": [
+                    {
+                      "key": "limite",
+                      "label": "Limit result"
+                    },
+                    {
+                      "key": "conclusion",
+                      "label": "Conclusion"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "cells": [
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "L = 0"
+                          }
+                        ],
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in o(g)"
+                          },
+                          {
+                            "type": "text",
+                            "text": "and"
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in O(g)"
+                          }
+                        ]
+                      ]
+                    },
+                    {
+                      "cells": [
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "0 < L < \\infty"
+                          }
+                        ],
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in \\Theta(g)"
+                          },
+                          {
+                            "type": "text",
+                            "text": "and also"
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "O"
+                          },
+                          {
+                            "type": "text",
+                            "text": ","
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "\\Omega"
+                          }
+                        ]
+                      ]
+                    },
+                    {
+                      "cells": [
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "L = 1"
+                          }
+                        ],
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\sim g"
+                          },
+                          {
+                            "type": "text",
+                            "text": "and also"
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "\\Theta"
+                          },
+                          {
+                            "type": "text",
+                            "text": ","
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "O"
+                          },
+                          {
+                            "type": "text",
+                            "text": ","
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "\\Omega"
+                          }
+                        ]
+                      ]
+                    },
+                    {
+                      "cells": [
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "L = +\\infty"
+                          }
+                        ],
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in \\omega(g)"
+                          },
+                          {
+                            "type": "text",
+                            "text": "and"
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in \\Omega(g)"
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "blk-teorema-convencion-b-intro",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "With Convention B ("
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\lim g/f = L'"
+                    },
+                    {
+                      "type": "text",
+                      "text": "), the same table but with"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "0"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\infty"
+                    },
+                    {
+                      "type": "text",
+                      "text": "exchanged:"
+                    }
+                  ]
+                },
+                {
+                  "id": "blk-teorema-convencion-b-tabla",
+                  "type": "table",
+                  "title": "Limits criterion with Convention B",
+                  "columns": [
+                    {
+                      "key": "limite",
+                      "label": "Limit result"
+                    },
+                    {
+                      "key": "conclusion",
+                      "label": "Conclusion"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "cells": [
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "L' = 0"
+                          }
+                        ],
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in \\omega(g)"
+                          },
+                          {
+                            "type": "text",
+                            "text": "and"
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in \\Omega(g)"
+                          }
+                        ]
+                      ]
+                    },
+                    {
+                      "cells": [
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "0 < L' < \\infty"
+                          }
+                        ],
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in \\Theta(g)"
+                          }
+                        ]
+                      ]
+                    },
+                    {
+                      "cells": [
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "L' = 1"
+                          }
+                        ],
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\sim g"
+                          }
+                        ]
+                      ]
+                    },
+                    {
+                      "cells": [
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "L' = +\\infty"
+                          }
+                        ],
+                        [
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in o(g)"
+                          },
+                          {
+                            "type": "text",
+                            "text": "and"
+                          },
+                          {
+                            "type": "inlineMath",
+                            "latex": "f \\in O(g)"
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-teorema-caso-oscilatorio",
+              "type": "note",
+              "variant": "warning",
+              "title": "Oscillatory case",
+              "blocks": [
+                {
+                  "id": "blk-teorema-caso-oscilatorio-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The declared scope of the module includes the oscillatory case. If the limit does not exist due to oscillation, this direct criterion does not automatically allow us to conclude a membership in"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "O"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Omega"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "o"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\omega"
+                    },
+                    {
+                      "type": "text",
+                      "text": "or"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sim"
+                    },
+                    {
+                      "type": "text",
+                      "text": "only for the table; you must go back to the definitions or use another tool."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-demostracion-theta-n2",
+          "slug": "demostracion-theta-n2",
+          "title": "Proof 1: 3n² + 5n ∈ Θ(n²)",
+          "order": 2,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "calcular-limite-theta",
+              "text": "Calculate the limit of (3n² + 5n)/n²."
+            },
+            {
+              "objectiveId": "aplicar-teorema-theta",
+              "text": "Apply the theorem when the limit is a finite positive constant."
+            },
+            {
+              "objectiveId": "verificar-theta-definicion",
+              "text": "Verify membership in Θ(n²) using c₁, c₂ and n₀."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              },
+              {
+                "id": "mod-tabla-maestra-notaciones-convenciones",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-teorema-general-limites",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-demo1-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "show that"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "3n^2 + 5n \\in \\Theta(n^2)"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-demo1-paso1-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Step 1 — Calculate the limit (Conv. A)"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo1-paso1-formulas",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Set the limit",
+                  "latex": "\\lim_{n \\to \\infty}\\frac{3n^2 + 5n}{n^2}"
+                },
+                {
+                  "stepId": "dividir",
+                  "title": "Divide each term of the numerator by n²",
+                  "latex": "\\lim_{n \\to \\infty}\\left(\\frac{3n^2}{n^2} + \\frac{5n}{n^2}\\right)"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplify",
+                  "latex": "\\lim_{n \\to \\infty}\\left(3 + \\frac{5}{n}\\right)"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluate",
+                  "latex": "3 + 0 = 3"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo1-paso2-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Step 2 — Apply the theorem"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo1-paso2-text",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "inlineMath",
+                  "latex": "L = 3"
+                },
+                {
+                  "type": "text",
+                  "text": ", which is a finite positive constant"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "(0 < 3 < \\infty)"
+                },
+                {
+                  "type": "text",
+                  "text": ". By the theorem, this implies"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f \\in \\Theta(n^2)"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-demo1-paso3-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Step 3 — Verification with formal definition"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo1-paso3-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "We take"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "c_1 = 3"
+                },
+                {
+                  "type": "text",
+                  "text": "and"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "c_2 = 4"
+                },
+                {
+                  "type": "text",
+                  "text": ", and we search"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n_0"
+                },
+                {
+                  "type": "text",
+                  "text": "such that:"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo1-paso3-desigualdad",
+              "type": "equationBlock",
+              "latex": "3n^2 \\le 3n^2 + 5n \\le 4n^2 \\quad \\text{for all } n \\ge n_0"
+            },
+            {
+              "id": "blk-demo1-paso3-lista",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Left inequality"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "3n^2 \\le 3n^2 + 5n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "is always true for"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n \\ge 0"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The right inequality"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "3n^2 + 5n \\le 4n^2"
+                    },
+                    {
+                      "type": "text",
+                      "text": "equivalent to"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "5n \\le n^2"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", that is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n \\ge 5"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-demo1-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Conclusion",
+              "blocks": [
+                {
+                  "id": "blk-demo1-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "taking"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n_0 = 5"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", the property holds for everything"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n \\ge 5"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-demostracion-little-o-n-n2",
+          "slug": "demostracion-little-o-n-n2",
+          "title": "Proof 2: n ∈ o(n²)",
+          "order": 3,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "calcular-limite-little-o-convencion-a",
+              "text": "Calculate the limit n/n² with Convention A."
+            },
+            {
+              "objectiveId": "calcular-limite-little-o-convencion-b",
+              "text": "Calculate the limit n²/n with Convention B."
+            },
+            {
+              "objectiveId": "verificar-little-o-definicion",
+              "text": "Verify membership in o(n²) using the definition for every constant c > 0."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              },
+              {
+                "id": "mod-tabla-maestra-notaciones-convenciones",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-teorema-general-limites",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-demo2-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "show that"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n \\in o(n^2)"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-demo2-conv-a-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Convention A — Step 1"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo2-conv-a-formula",
+              "type": "equationBlock",
+              "latex": "\\lim_{n \\to \\infty}\\frac{n}{n^2} = \\lim_{n \\to \\infty}\\frac{1}{n} = 0"
+            },
+            {
+              "id": "blk-demo2-conv-b-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Convention B (course) — Step 1"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo2-conv-b-formula",
+              "type": "equationBlock",
+              "latex": "\\lim_{n \\to \\infty}\\frac{n^2}{n} = \\lim_{n \\to \\infty}n = +\\infty"
+            },
+            {
+              "id": "blk-demo2-paso2-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Step 2 — Apply the theorem"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo2-paso2-text",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Conv. A:"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "L = 0 \\Rightarrow f \\in o(g)"
+                },
+                {
+                  "type": "text",
+                  "text": ". Conv. B:"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "L = \\infty \\Rightarrow f \\in o(g)"
+                },
+                {
+                  "type": "text",
+                  "text": "(course criteria). Both conclude"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n \\in o(n^2)"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-demo2-paso3-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Step 3 — Verification with definition"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo2-paso3-text",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "We must show that for all"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "c > 0"
+                },
+                {
+                  "type": "text",
+                  "text": ", exists"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n_0"
+                },
+                {
+                  "type": "text",
+                  "text": "such that"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n < c \\cdot n^2"
+                },
+                {
+                  "type": "text",
+                  "text": "for"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n \\ge n_0"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-demo2-paso3-formula",
+              "type": "latexSteps",
+              "steps": [
+                {
+                  "stepId": "partir",
+                  "title": "We start from inequality",
+                  "latex": "n < c \\cdot n^2"
+                },
+                {
+                  "stepId": "dividir",
+                  "title": "We divide by positive n",
+                  "latex": "1 < c \\cdot n"
+                },
+                {
+                  "stepId": "despejar",
+                  "title": "We clear n",
+                  "latex": "n > \\frac{1}{c}"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo2-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Conclusion",
+              "blocks": [
+                {
+                  "id": "blk-demo2-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "taking"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n_0 = \\left\\lceil \\frac{1}{c} \\right\\rceil + 1"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", it is true for everything"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n \\ge n_0"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-demostracion-little-omega-n2-n",
+          "slug": "demostracion-little-omega-n2-n",
+          "title": "Proof 3: n² ∈ ω(n)",
+          "order": 4,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "learningObjectives": [
+            {
+              "objectiveId": "calcular-limite-little-omega-convencion-a",
+              "text": "Calculate the limit n²/n with Convention A."
+            },
+            {
+              "objectiveId": "calcular-limite-little-omega-convencion-b",
+              "text": "Calculate the limit n/n² with Convention B."
+            },
+            {
+              "objectiveId": "aplicar-teorema-little-omega",
+              "text": "Apply the theorem to conclude n² ∈ ω(n)."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-notaciones-asintoticas",
+                "kind": "required"
+              },
+              {
+                "id": "mod-tabla-maestra-notaciones-convenciones",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-teorema-general-limites",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-demo3-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "show that"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n^2 \\in \\omega(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-demo3-conv-a-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Convention A — Step 1"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo3-conv-a-formula",
+              "type": "equationBlock",
+              "latex": "\\lim_{n \\to \\infty}\\frac{n^2}{n} = \\lim_{n \\to \\infty}n = +\\infty"
+            },
+            {
+              "id": "blk-demo3-conv-b-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Convention B (course) — Step 1"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo3-conv-b-formula",
+              "type": "equationBlock",
+              "latex": "\\lim_{n \\to \\infty}\\frac{n}{n^2} = \\lim_{n \\to \\infty}\\frac{1}{n} = 0"
+            },
+            {
+              "id": "blk-demo3-paso2-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Step 2 — Apply the theorem"
+                }
+              ]
+            },
+            {
+              "id": "blk-demo3-paso2-text",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Conv. A:"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "L = \\infty \\Rightarrow f \\in \\omega(g)"
+                },
+                {
+                  "type": "text",
+                  "text": ". Conv. B:"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "L = 0 \\Rightarrow f \\in \\omega(g)"
+                },
+                {
+                  "type": "text",
+                  "text": ". Both conclude"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n^2 \\in \\omega(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-demo3-nota-sin-paso3",
+              "type": "note",
+              "variant": "info",
+              "title": "Scope of the demo in the document",
+              "blocks": [
+                {
+                  "id": "blk-demo3-nota-sin-paso3-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "In this third proof, the document closes with the application of the theorem. It does not include additional verification with the formal definition, unlike Proofs 1 and 2."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

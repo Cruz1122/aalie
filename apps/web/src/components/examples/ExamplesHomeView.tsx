@@ -20,10 +20,8 @@ import {
   getCategoryMeta,
   getEnabledExamples,
   getExampleCategoriesByPage,
-  getMethodTranslationKey,
   isRecursiveCategory,
   type ExampleLocale,
-  type RecursiveMethodBadge,
   examplesCatalog,
 } from "@/lib/examples/catalog";
 import {
@@ -34,20 +32,6 @@ import {
 } from "@/lib/examples/i18n";
 
 import { ExamplesTypeSelector } from "./ExamplesTypeSelector";
-
-const METHOD_BADGE_CLASSNAMES: Record<RecursiveMethodBadge, string> = {
-  TM: "border-orange-500/40 bg-orange-500/15 text-orange-200",
-  IT: "border-emerald-500/40 bg-emerald-500/15 text-emerald-200",
-  AR: "border-cyan-500/40 bg-cyan-500/15 text-cyan-200",
-  EC: "border-blue-500/40 bg-blue-500/15 text-blue-200",
-};
-
-const METHOD_BADGE_LABELS: Record<RecursiveMethodBadge, string> = {
-  TM: "M-TM",
-  IT: "M-IT",
-  AR: "M-AR",
-  EC: "M-EC",
-};
 
 interface ExamplesHomeViewProps {
   page: number;
@@ -294,20 +278,6 @@ export function ExamplesHomeView({ page }: ExamplesHomeViewProps) {
                               <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
                                 {recursive ? kindLabel : iterativeLabel}
                               </span>
-                              {item.verifiedMethods.map((method) => (
-                                <span
-                                  key={method}
-                                  title={tGlobal(
-                                    getMethodTranslationKey(method),
-                                  )}
-                                  aria-label={tGlobal(
-                                    getMethodTranslationKey(method),
-                                  )}
-                                  className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${METHOD_BADGE_CLASSNAMES[method]}`}
-                                >
-                                  {METHOD_BADGE_LABELS[method]}
-                                </span>
-                              ))}
                             </div>
                           </button>
                         </li>

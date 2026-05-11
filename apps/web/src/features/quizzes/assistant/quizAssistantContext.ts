@@ -57,14 +57,22 @@ function formatStudentAnswerSummary(
   answer: StudentAnswer,
   maxLen: number,
 ): string {
-  if ("selectedOptionIds" in answer && answer.selectedOptionIds.length > 0) {
+  if (
+    "selectedOptionIds" in answer &&
+    answer.selectedOptionIds &&
+    answer.selectedOptionIds.length > 0
+  ) {
     const labels = answer.selectedOptionIds.map((id) =>
       optionLabelById(question, id, 120),
     );
     const s = labels.join(" | ");
     return s.length <= maxLen ? s : `${s.slice(0, maxLen - 1)}…`;
   }
-  if ("orderedOptionIds" in answer && answer.orderedOptionIds.length > 0) {
+  if (
+    "orderedOptionIds" in answer &&
+    answer.orderedOptionIds &&
+    answer.orderedOptionIds.length > 0
+  ) {
     const labels = answer.orderedOptionIds.map((id, i) => {
       const label = optionLabelById(question, id, 100);
       return `${i + 1}. ${label}`;
@@ -72,7 +80,7 @@ function formatStudentAnswerSummary(
     const s = labels.join("; ");
     return s.length <= maxLen ? s : `${s.slice(0, maxLen - 1)}…`;
   }
-  if ("pairs" in answer && answer.pairs.length > 0) {
+  if ("pairs" in answer && answer.pairs && answer.pairs.length > 0) {
     const lines = answer.pairs.map((pair) => {
       const leftItem = question.leftItems?.find((l) => l.leftId === pair.leftId);
       const rightItem = question.rightItems?.find(

@@ -1,0 +1,2502 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-ecuacion-caracteristica",
+  "slug": "characteristic-equation",
+  "title": "Characteristic Equation Method",
+  "order": 14,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Algebraic method to solve linear recurrence equations with constant coefficients using the characteristic polynomial. Includes applicability, ERLH, distinct roots, repeated roots, non-homogeneous cases, Fibonacci, Towers of Hanoi and frequent errors.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 65,
+  "tags": [
+    "recurrences",
+    "characteristic-equation",
+    "erlh",
+    "linear-recurrences",
+    "constant-coefficients",
+    "fibonacci",
+    "towers-of-hanoi",
+    "different-roots",
+    "repeated-roots",
+    "dominant-root",
+    "non-homogeneous",
+    "term-forcing"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "characteristic equation",
+      "characteristic equation method",
+      "homogeneous linear recurrences",
+      "ERLH",
+      "characteristic polynomial",
+      "characteristic roots",
+      "Fibonacci by characteristic equation",
+      "linear recurrence with constant coefficients"
+    ],
+    "keywords": [
+      "T(n)=c1T(n-1)+c2T(n-2)",
+      "T(n)=T(n-1)+T(n-2)",
+      "r^n",
+      "characteristic polynomial",
+      "r^2-r-1",
+      "dominant root",
+      "multiplicity",
+      "general solution",
+      "initial conditions",
+      "homogeneous",
+      "not homogeneous",
+      "b^n p(n)"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-algoritmos-recursivos",
+        "kind": "required"
+      },
+      {
+        "id": "mod-notaciones-asintoticas",
+        "kind": "required"
+      },
+      {
+        "id": "mod-tabla-sumatorias-comunes",
+        "kind": "recommended"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-clasificacion-ecuaciones-recurrencia",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-fibonacci",
+        "kind": "required"
+      },
+      {
+        "id": "sec-ejemplo-torres-hanoi",
+        "kind": "recommended"
+      },
+      {
+        "id": "sec-sumatorias-simples",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-algoritmos-recursivos",
+    "mod-notaciones-asintoticas",
+    "mod-tabla-sumatorias-comunes",
+    "mod-teorema-maestro",
+    "mod-arbol-recursion"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "reconocer-erlh",
+      "text": "Recognize when a recurrence is linear homogeneous with constant coefficients."
+    },
+    {
+      "objectiveId": "rechazar-formas-no-validas",
+      "text": "Detect when the characteristic equation does not apply directly, especially in divide and conquer recurrences."
+    },
+    {
+      "objectiveId": "construir-polinomio-caracteristico",
+      "text": "Transform a recurrence into its characteristic polynomial using the substitution T(n)=r^n."
+    },
+    {
+      "objectiveId": "resolver-raices",
+      "text": "Calculate real, complex or repeated roots of the characteristic polynomial."
+    },
+    {
+      "objectiveId": "formar-solucion-general",
+      "text": "Build the general solution from the roots and their multiplicities."
+    },
+    {
+      "objectiveId": "usar-condiciones-iniciales",
+      "text": "Use initial conditions to solve for the constants of the general solution."
+    },
+    {
+      "objectiveId": "identificar-raiz-dominante",
+      "text": "Identify the dominant root and translate the closed solution to asymptotic order."
+    },
+    {
+      "objectiveId": "resolver-fibonacci",
+      "text": "Solve the Fibonacci recurrence using characteristic equation."
+    },
+    {
+      "objectiveId": "resolver-no-homogenea-simple",
+      "text": "Resolve simple non-homogeneous recurrences by separating homogeneous solution and particular solution."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-erlh",
+      "label": "ERLH",
+      "definition": "Homogeneous Linear Recurrence Equation. It is linear because the terms T appear to the power 1, homogeneous because it has no external term independent of T, and it has constant coefficients."
+    },
+    {
+      "termId": "term-polinomio-caracteristico",
+      "label": "characteristic polynomial",
+      "definition": "Polynomial obtained by substituting T(n)=r^n into a homogeneous linear recurrence and dividing by the lowest common power of r."
+    },
+    {
+      "termId": "term-raiz-caracteristica",
+      "label": "characteristic root",
+      "definition": "Value of r that satisfies the characteristic polynomial."
+    },
+    {
+      "termId": "term-multiplicidad",
+      "label": "Multiplicity",
+      "definition": "Number of times a root appears repeated in the characteristic polynomial."
+    },
+    {
+      "termId": "term-solucion-general",
+      "label": "General solution",
+      "definition": "Closed form of T(n) expressed as a combination of terms constructed from the characteristic roots."
+    },
+    {
+      "termId": "term-raiz-dominante",
+      "label": "dominant root",
+      "definition": "Root with highest absolute value. Determines the principal asymptotic growth when there is no cancellation due to initial conditions."
+    },
+    {
+      "termId": "term-termino-forzante",
+      "label": "Forcing term",
+      "definition": "External term g(n) in a non-homogeneous recurrence, for example +1, +n or b^n·p(n)."
+    },
+    {
+      "termId": "term-solucion-particular",
+      "label": "particular solution",
+      "definition": "Additional part of the solution used to capture the effect of the forcing term on a non-homogeneous recurrence."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-ecuacion-caracteristica",
+      "slug": "characteristic-equation",
+      "title": "Characteristic Equation Method",
+      "order": 1,
+      "summary": "Applicability, algebraic procedure, root cases, worked examples and common errors.",
+      "sections": [
+        {
+          "sectionId": "sec-cuando-aplica-ecuacion-caracteristica",
+          "slug": "cuando-aplica-ecuacion-caracteristica",
+          "title": "When does the Characteristic Equation apply?",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-aplicabilidad-erlh",
+              "text": "Understand that the method applies directly to ERLH with constant coefficients."
+            },
+            {
+              "objectiveId": "detectar-no-aplicabilidad-divide",
+              "text": "Understand why divide and conquer does not apply directly to recurrences."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-clasificacion-ecuaciones-recurrencia",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-ecuacion-caracteristica-intro",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The characteristic equation method is an algebraic method for solving certain recurrences where the size decreases by fixed subtraction, not by division. Its cleanest case is a homogeneous linear recurrence equation with constant coefficients."
+                }
+              ]
+            },
+            {
+              "id": "blk-forma-general-erlh",
+              "type": "equationBlock",
+              "title": "General form of an ERLH",
+              "latex": "T(n)=c_1T(n-1)+c_2T(n-2)+\\cdots+c_kT(n-k)"
+            },
+            {
+              "id": "blk-forma-general-erlh-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In this expression, each"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "c_i"
+                },
+                {
+                  "type": "text",
+                  "text": "represents a constant coefficient that multiplies the previous terms of the recurrence. The value of"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "k"
+                },
+                {
+                  "type": "text",
+                  "text": "indicates the order of the equation, that is, how many steps back we need to know to calculate the current value."
+                }
+              ]
+            },
+            {
+              "id": "blk-aplica-no-aplica-table",
+              "type": "table",
+              "title": "Method applicability",
+              "columns": [
+                {
+                  "key": "situacion",
+                  "label": "Situation"
+                },
+                {
+                  "key": "aplica",
+                  "label": "Does it apply?"
+                },
+                {
+                  "key": "razon",
+                  "label": "Reason"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=T(n-1)+T(n-2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It is linear, homogeneous and with constant coefficients."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=2T(n-1)+1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes, but not directly as homogeneous"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It is not homogeneous by the term"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "+1"
+                      },
+                      {
+                        "type": "text",
+                        "text": "; requires a particular solution."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=T(n-1)+n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Yes, with extension"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It is linear with constant coefficients, but not homogeneous."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=2T(n/2)+n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Not directly"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It's divide and conquer. Requires Master Theorem, tree, substitution or previous variable change."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=nT(n-1)+1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The coefficient of"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n-1)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "depends on"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=T(n-1)^2+1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "No"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It is not linear because"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T"
+                      },
+                      {
+                        "type": "text",
+                        "text": "appears squared."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-advertencia-divide-y-venceras",
+              "type": "note",
+              "variant": "warning",
+              "title": "Do not mix methods",
+              "blocks": [
+                {
+                  "id": "blk-advertencia-divide-y-venceras-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The characteristic equation is not the natural method for"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=aT(n/b)+f(n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". That form belongs to Divide and Conquer. Forcing characteristic equation there, without change of variable, is a bad sign of analysis."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-concepto-erlh",
+          "slug": "concepto-erlh",
+          "title": "Fundamental concept: what is an ERLH",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "definir-linealidad",
+              "text": "Deende linearity in a recurrence."
+            },
+            {
+              "objectiveId": "definir-homogeneidad",
+              "text": "Deende homogeneity and recognize forcing terms."
+            },
+            {
+              "objectiveId": "definir-coeficientes-constantes",
+              "text": "Recognize when the coefficients are constant."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-clasificacion-ecuaciones-recurrencia",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-erlh-definicion",
+              "type": "definition",
+              "title": "Homogeneous Linear Recurrence Equation",
+              "blocks": [
+                {
+                  "id": "blk-erlh-definicion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "An ERLH is a linear, homogeneous recurrence with constant coefficients. This triple condition is mandatory to directly apply the characteristic polynomial without a particular solution."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-propiedades-erlh-table",
+              "type": "table",
+              "title": "Conditions of an ERLH",
+              "columns": [
+                {
+                  "key": "propiedad",
+                  "label": "Property"
+                },
+                {
+                  "key": "significado",
+                  "label": "Meaning"
+                },
+                {
+                  "key": "ejemploValido",
+                  "label": "Valid"
+                },
+                {
+                  "key": "ejemploInvalido",
+                  "label": "Invalid"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Linear"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The terms"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T"
+                      },
+                      {
+                        "type": "text",
+                        "text": "They appear at the power 1 and do not multiply with each other."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=T(n-1)+T(n-2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=T(n-1)^2"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Homogeneous"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "There are no external terms independent of"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=2T(n-1)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=2T(n-1)+1"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Constant coefficients"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The coefficients of each"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n-k)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "do not depend on"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=3T(n-1)-2T(n-2)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=nT(n-1)"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-forma-estandar-erlh",
+              "type": "equationBlock",
+              "title": "Standard shape",
+              "latex": "T(n)-c_1T(n-1)-c_2T(n-2)-\\cdots-c_kT(n-k)=0"
+            },
+            {
+              "id": "blk-forma-estandar-erlh-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The standard form sets the recurrence equal to zero to facilitate the construction of the characteristic polynomial. When replacing"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "for a solution of the type"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "r^n"
+                },
+                {
+                  "type": "text",
+                  "text": "We look for the roots"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "r_i"
+                },
+                {
+                  "type": "text",
+                  "text": "that satisfy this algebraic equality."
+                }
+              ]
+            },
+            {
+              "id": "blk-erlh-cuidado-homogeneidad",
+              "type": "note",
+              "variant": "danger",
+              "title": "Homogeneous does not mean simple",
+              "blocks": [
+                {
+                  "id": "blk-erlh-cuidado-homogeneidad-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "A recurrence can be linear and still not be homogeneous. If it appears"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "+1"
+                    },
+                    {
+                      "type": "text",
+                      "text": ","
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "+n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "or"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "+2^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "outside the terms"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(\\cdot)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", is no longer homogeneous."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-paso-a-paso-ecuacion-caracteristica",
+          "slug": "paso-a-paso-ecuacion-caracteristica",
+          "title": "Step by step — Characteristic Equation",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "learningObjectives": [
+            {
+              "objectiveId": "ejecutar-procedimiento-caracteristica",
+              "text": "Execute the complete procedure of the characteristic equation method."
+            },
+            {
+              "objectiveId": "traducir-raices-a-solucion",
+              "text": "Translate the roots of the polynomial to the general solution."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-concepto-erlh",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-pasos-caracteristica-lista",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Detect recurrence and verify that it is ERLH."
+                    },
+                    {
+                      "type": "text",
+                      "text": "Confirms linearity, homogeneity and constant coefficients. If there is an external term"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g(n)\\ne 0"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", separates homogeneous part and particular solution."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Write the equation in standard form."
+                    },
+                    {
+                      "type": "text",
+                      "text": "Move everything to the left side to get an equality against zero."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Plan the change"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=r^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Replaces"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n),T(n-1),\\ldots,T(n-k)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "by powers of"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "r"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Divide by the lowest common power."
+                    },
+                    {
+                      "type": "text",
+                      "text": "It is usually divided by"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "r^{n-k}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "to obtain a polynomial of degree"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "k"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Calculate the roots."
+                    },
+                    {
+                      "type": "text",
+                      "text": "The roots can be different, repeated or complex."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Build the general solution."
+                    },
+                    {
+                      "type": "text",
+                      "text": "The shape depends on the multiplicity of the roots."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Apply initial conditions."
+                    },
+                    {
+                      "type": "text",
+                      "text": "Replaces"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(0),T(1),\\ldots"
+                    },
+                    {
+                      "type": "text",
+                      "text": "to solve the constants."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Identify the dominant root."
+                    },
+                    {
+                      "type": "text",
+                      "text": "The root with the highest absolute value determines the main growth."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-polinomio-general-caracteristico",
+              "type": "latexSteps",
+              "title": "Derivation of the characteristic polynomial",
+              "steps": [
+                {
+                  "stepId": "step-forma-estandar",
+                  "title": "Standard shape",
+                  "latex": "T(n)-c_1T(n-1)-c_2T(n-2)-\\cdots-c_kT(n-k)=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "First the recurrence is passed to the left side to compare it against zero."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-sustitucion-rn",
+                  "title": "Replacement",
+                  "latex": "r^n-c_1r^{n-1}-c_2r^{n-2}-\\cdots-c_kr^{n-k}=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It is used"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=r^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "as an algebraic hypothesis."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-division-potencia-menor",
+                  "title": "Divide by the lowest power",
+                  "latex": "\\frac{r^n-c_1r^{n-1}-\\cdots-c_kr^{n-k}}{r^{n-k}}=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It is divided by"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "r^{n-k}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "to eliminate the common factor."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-polinomio-final",
+                  "title": "characteristic polynomial",
+                  "latex": "r^k-c_1r^{k-1}-c_2r^{k-2}-\\cdots-c_k=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "This is the polynomial that is solved to endd the characteristic roots."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-formas-solucion-raices",
+          "slug": "formas-solucion-raices",
+          "title": "Forms of solution according to the roots",
+          "order": 4,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "manejar-raices-distintas",
+              "text": "Construct the general solution when all the roots are different."
+            },
+            {
+              "objectiveId": "manejar-raices-repetidas",
+              "text": "Construct the general solution when a root has a multiplicity greater than 1."
+            },
+            {
+              "objectiveId": "manejar-raices-complejas",
+              "text": "Recognize the form of solution associated with complex conjugate roots."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-ecuacion-caracteristica",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-formas-raices-table",
+              "type": "table",
+              "title": "General solution according to the roots",
+              "columns": [
+                {
+                  "key": "caso",
+                  "label": "Case"
+                },
+                {
+                  "key": "raices",
+                  "label": "Roots"
+                },
+                {
+                  "key": "solucion",
+                  "label": "General solution"
+                },
+                {
+                  "key": "comentario",
+                  "label": "Comment"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Different roots"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "r_1,r_2,\\ldots,r_k"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=C_1r_1^n+C_2r_2^n+\\cdots+C_kr_k^n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Each root provides an exponential term."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "repeated root"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "r"
+                      },
+                      {
+                        "type": "text",
+                        "text": "with multiplicity"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "m"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "(C_0+C_1n+C_2n^2+\\cdots+C_{m-1}n^{m-1})r^n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Multiplicity introduces polynomial factors in"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Complex conjugated roots"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "r=\\rho(\\cos\\theta\\pm i\\sin\\theta)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\rho^n(A\\cos n\\theta+B\\sin n\\theta)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It appears in general algebraic analysis; This is not usually the main case in the basic examples of the course."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-raiz-dominante-nota",
+              "type": "note",
+              "variant": "info",
+              "title": "dominant root",
+              "blocks": [
+                {
+                  "id": "blk-raiz-dominante-nota-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If the solution has several roots, the one with the highest absolute value dominates. For example, if they appear"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "1.618^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "(-0.618)^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", the first term dominates."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-cuidado-cancelacion",
+              "type": "note",
+              "variant": "warning",
+              "title": "Beware of cancellations",
+              "blocks": [
+                {
+                  "id": "blk-cuidado-cancelacion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The dominant root determines the order unless the initial conditions exactly cancel its coefficient. In basic exercises this almost never happens, but mathematically it can happen."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-fibonacci-ecuacion-caracteristica",
+          "slug": "ejemplo-fibonacci-ecuacion-caracteristica",
+          "title": "Example 1 — Fibonacci",
+          "order": 5,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "learningObjectives": [
+            {
+              "objectiveId": "resolver-fibonacci-caracteristica",
+              "text": "Solve complete Fibonacci with characteristic equation."
+            },
+            {
+              "objectiveId": "interpretar-formula-binet",
+              "text": "Interpret the Fibonacci closed form and its dominant growth."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-fibonacci",
+                "kind": "required"
+              },
+              {
+                "id": "sec-paso-a-paso-ecuacion-caracteristica",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-fibonacci-caracteristica-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Solve the Fibonacci recurrence:"
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-caracteristica-recurrencia",
+              "type": "equationBlock",
+              "title": "Recurrence",
+              "latex": "T(n)=T(n-1)+T(n-2),\\qquad T(0)=0,\\quad T(1)=1"
+            },
+            {
+              "id": "blk-fibonacci-caracteristica-recurrencia-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This is the classic Fibonacci recurrence, where each term is the sum of the previous two. Solving it using the characteristic equation allows us to endd a direct (closed) formula without having to calculate all the intermediate values."
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-caracteristica-steps",
+              "type": "latexSteps",
+              "title": "Step by step solution",
+              "steps": [
+                {
+                  "stepId": "step-fib-forma-estandar",
+                  "title": "Go to standard form",
+                  "latex": "T(n)-T(n-1)-T(n-2)=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "All terms are moved to the left side."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-sustitucion",
+                  "title": "Substitute T(n)=r^n",
+                  "latex": "r^n-r^{n-1}-r^{n-2}=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Each term"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n-k)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "is replaced by"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "r^{n-k}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-polinomio",
+                  "title": "Divide by r^(n−2)",
+                  "latex": "\\frac{r^n-r^{n-1}-r^{n-2}}{r^{n-2}}=0\\Rightarrow r^2-r-1=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The characteristic polynomial is quadratic."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-raices",
+                  "title": "Solve roots",
+                  "latex": "r=\\frac{1\\pm\\sqrt5}{2}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The roots are different:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\varphi=\\frac{1+\\sqrt5}{2}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "and"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\psi=\\frac{1-\\sqrt5}{2}"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-solucion-general",
+                  "title": "Build general solution",
+                  "latex": "T(n)=C_1\\varphi^n+C_2\\psi^n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Since the roots are different, each one contributes an exponential term."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-condicion-cero",
+                  "title": "Apply T(0)=0",
+                  "latex": "T(0)=C_1+C_2=0\\Rightarrow C_2=-C_1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The first initial condition relates both constants."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-condicion-uno",
+                  "title": "Apply T(1)=1",
+                  "latex": "T(1)=C_1\\varphi+C_2\\psi=1\\Rightarrow C_1(\\varphi-\\psi)=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "When replacing"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "C_2=-C_1"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", there is only one constant left to solve."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-constantes",
+                  "title": "Solve constants",
+                  "latex": "\\varphi-\\psi=\\sqrt5\\Rightarrow C_1=\\frac{1}{\\sqrt5},\\quad C_2=-\\frac{1}{\\sqrt5}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The difference between the roots is"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sqrt5"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-forma-cerrada",
+                  "title": "closed form",
+                  "latex": "T(n)=\\frac{\\varphi^n-\\psi^n}{\\sqrt5}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "This is the closed form of Fibonacci known as the Binet formula."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-fib-dominancia",
+                  "title": "dominant root",
+                  "latex": "|\\varphi|\\approx1.618>|\\psi|\\approx0.618",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The term with"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\psi^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "becomes despicable in front of"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\varphi^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-fibonacci-caracteristica-resultado",
+              "type": "note",
+              "variant": "success",
+              "title": "Result",
+              "blocks": [
+                {
+                  "id": "blk-fibonacci-caracteristica-resultado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)\\in\\Theta(\\varphi^n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", where"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\varphi\\approx1.618"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Furthermore,"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)\\in o(2^n)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "because"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "1.618^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "grows strictly slower than"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "2^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-raiz-repetida",
+          "slug": "ejemplo-raiz-repetida",
+          "title": "Example 2 — Repeated root",
+          "order": 6,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "resolver-raiz-repetida",
+              "text": "Resolve a recurrence with a repeated characteristic root."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-formas-solucion-raices",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-raiz-repetida-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Resolve recurrence:"
+                }
+              ]
+            },
+            {
+              "id": "blk-raiz-repetida-recurrencia",
+              "type": "equationBlock",
+              "title": "Recurrence",
+              "latex": "T(n)=2T(n-1)-T(n-2),\\qquad T(0)=1,\\quad T(1)=2"
+            },
+            {
+              "id": "blk-raiz-repetida-recurrencia-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When a characteristic root has multiplicity"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "m > 1"
+                },
+                {
+                  "type": "text",
+                  "text": "(repeated), the general solution must include polynomial factors in"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": "to maintain the linear independence of the terms."
+                }
+              ]
+            },
+            {
+              "id": "blk-raiz-repetida-steps",
+              "type": "latexSteps",
+              "title": "Step by step solution",
+              "steps": [
+                {
+                  "stepId": "step-repetida-estandar",
+                  "title": "Standard shape",
+                  "latex": "T(n)-2T(n-1)+T(n-2)=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The recurrence is homogeneous linear with constant coefficients."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-repetida-polinomio",
+                  "title": "characteristic polynomial",
+                  "latex": "r^2-2r+1=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It is obtained by substituting"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=r^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-repetida-factorizacion",
+                  "title": "Factorize",
+                  "latex": "(r-1)^2=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The root"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "r=1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "has multiplicity 2."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-repetida-solucion-general",
+                  "title": "General solution",
+                  "latex": "T(n)=(C_0+C_1n)1^n=C_0+C_1n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The repeated root introduces the factor"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-repetida-condiciones",
+                  "title": "Apply initial conditions",
+                  "latex": "T(0)=C_0=1,\\qquad T(1)=1+C_1=2\\Rightarrow C_1=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The two initial conditions determine the two constants."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-repetida-resultado",
+                  "title": "Result",
+                  "latex": "T(n)=1+n\\in\\Theta(n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The endal growth is linear."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-hanoi-no-homogenea",
+          "slug": "ejemplo-hanoi-no-homogenea",
+          "title": "Example 3 — Towers of Hanoi as non-homogeneous",
+          "order": 7,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "learningObjectives": [
+            {
+              "objectiveId": "resolver-hanoi-no-homogenea",
+              "text": "Solve T(n)=2T(n−1)+1 separating the homogeneous part and the particular solution."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-ejemplo-torres-hanoi",
+                "kind": "recommended"
+              },
+              {
+                "id": "sec-concepto-erlh",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-hanoi-no-homogenea-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Towers of Hanoi produces recurrence:"
+                }
+              ]
+            },
+            {
+              "id": "blk-hanoi-no-homogenea-recurrencia",
+              "type": "equationBlock",
+              "title": "Recurrence",
+              "latex": "T(n)=2T(n-1)+1,\\qquad T(0)=0"
+            },
+            {
+              "id": "blk-hanoi-no-homogenea-recurrencia-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This recurrence is non-homogeneous due to the constant term"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "+1"
+                },
+                {
+                  "type": "text",
+                  "text": "(forcing term). To solve it, we first calculate the homogeneous solution and then add a particular solution that captures the effect of that external term."
+                }
+              ]
+            },
+            {
+              "id": "blk-hanoi-no-homogenea-warning",
+              "type": "note",
+              "variant": "warning",
+              "title": "It is not homogeneous",
+              "blocks": [
+                {
+                  "id": "blk-hanoi-no-homogenea-warning-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The term"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "+1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "prevents applying only the homogeneous part. A particular solution must be added."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-hanoi-no-homogenea-steps",
+              "type": "latexSteps",
+              "title": "Step by step solution",
+              "steps": [
+                {
+                  "stepId": "step-hanoi-parte-homogenea",
+                  "title": "homogeneous part",
+                  "latex": "T_h(n)=2T_h(n-1)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The term forcing is temporarily removed."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-hanoi-polinomio",
+                  "title": "characteristic polynomial",
+                  "latex": "r-2=0\\Rightarrow r=2",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The homogeneous part has a single root."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-hanoi-solucion-homogenea",
+                  "title": "homogeneous solution",
+                  "latex": "T_h(n)=C2^n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The root"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "2"
+                    },
+                    {
+                      "type": "text",
+                      "text": "produces the exponential term."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-hanoi-particular",
+                  "title": "Propose constant particular solution",
+                  "latex": "T_p(n)=A",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Since the forcing term is constant, a particular constant solution is attempted."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-hanoi-resolver-particular",
+                  "title": "Solve A",
+                  "latex": "A=2A+1\\Rightarrow A=-1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It is replaced"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T_p(n)=A"
+                    },
+                    {
+                      "type": "text",
+                      "text": "in the original recurrence."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-hanoi-solucion-general",
+                  "title": "General solution",
+                  "latex": "T(n)=C2^n-1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The total solution is the sum of the homogeneous and the particular solution."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-hanoi-condicion-inicial",
+                  "title": "Apply T(0)=0",
+                  "latex": "0=C2^0-1\\Rightarrow C=1",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The initial condition sets the constant."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-hanoi-resultado",
+                  "title": "Result",
+                  "latex": "T(n)=2^n-1\\in\\Theta(2^n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The growth is exponential."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ejemplo-tribonacci",
+          "slug": "ejemplo-tribonacci",
+          "title": "Example 4 — Tribonacci",
+          "order": 8,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "plantear-polinomio-grado-tres",
+              "text": "Establish the characteristic polynomial of a recurrence of order 3."
+            },
+            {
+              "objectiveId": "usar-raiz-dominante-sin-cerrar-constantes",
+              "text": "Use the dominant root even if the entire system of constants is not resolved."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-ecuacion-caracteristica",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-tribonacci-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Solve recurrence asymptotically:"
+                }
+              ]
+            },
+            {
+              "id": "blk-tribonacci-recurrencia",
+              "type": "equationBlock",
+              "title": "Recurrence",
+              "latex": "T(n)=T(n-1)+T(n-2)+T(n-3)"
+            },
+            {
+              "id": "blk-tribonacci-recurrencia-explicacion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Tribonacci is a Fibonacci extension that adds the three terms above, producing a characteristic polynomial of the third degree. The real root with the greatest absolute value will determine the dominant exponential growth of the solution."
+                }
+              ]
+            },
+            {
+              "id": "blk-tribonacci-steps",
+              "type": "latexSteps",
+              "title": "Asymptotic solution",
+              "steps": [
+                {
+                  "stepId": "step-tribonacci-estandar",
+                  "title": "Standard shape",
+                  "latex": "T(n)-T(n-1)-T(n-2)-T(n-3)=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It is an ERLH of order 3."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-tribonacci-polinomio",
+                  "title": "characteristic polynomial",
+                  "latex": "r^3-r^2-r-1=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It is obtained with the substitution"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=r^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-tribonacci-raiz-dominante",
+                  "title": "dominant root",
+                  "latex": "r_1\\approx1.839286",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The polynomial has a dominant real root known as the tribonacci constant."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-tribonacci-resultado",
+                  "title": "Asymptotic result",
+                  "latex": "T(n)\\in\\Theta(1.839286^n)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "For complexity it is enough to identify the dominant root; It is not always necessary to solve the entire system of constants."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-diagrama-decision-ecuacion-caracteristica",
+          "slug": "diagrama-decision-ecuacion-caracteristica",
+          "title": "Method decision tree",
+          "order": 9,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "learningObjectives": [
+            {
+              "objectiveId": "usar-arbol-decision-caracteristica",
+              "text": "Use a decision tree to determine if the method applies."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-cuando-aplica-ecuacion-caracteristica",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-mermaid-decision-caracteristica",
+              "type": "mermaid",
+              "title": "Applicability decision",
+              "code": "flowchart TD\n  A[\"Recurrence T(n)\"] --> B{\"Es linear?\"}\n  B -- \"No\" --> X[\"Do not apply characteristic equation\"]\n  B -- \"Yes\" --> C{\"Constant coefficients?\"}\n  C -- \"No\" --> X\n  C -- \"Yes\" --> D{\"Decreases by fixed subtraction?\"}\n  D -- \"No, decreases by n/b\" --> Y[\"Use Master Theorem, Recursion Tree, or a change of variable\"]\n  D -- \"Yes\" --> E{\"Homogeneous?\"}\n  E -- \"Yes\" --> F[\"Apply characteristic polynomial directly\"]\n  E -- \"No\" --> G{\"Manageable forcing term?\"}\n  G -- \"Yes\" --> H[\"Homogeneous solution + particular solution\"]\n  G -- \"No\" --> X\n  F --> I[\"Solve roots\"]\n  H --> I\n  I --> J[\"Apply initial conditions\"]\n  J --> K[\"Identify dominant root and conclude\"]"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-errores-tipicos-ecuacion-caracteristica",
+          "slug": "errores-tipicos-ecuacion-caracteristica",
+          "title": "Typical errors",
+          "order": 10,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "learningObjectives": [
+            {
+              "objectiveId": "evitar-errores-caracteristica",
+              "text": "Avoid frequent errors when applying characteristic equation."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-ecuacion-caracteristica",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-errores-caracteristica-table",
+              "type": "table",
+              "title": "Frequent errors in characteristic equation",
+              "columns": [
+                {
+                  "key": "error",
+                  "label": "Error"
+                },
+                {
+                  "key": "porQueEstaMal",
+                  "label": "Why is it wrong?"
+                },
+                {
+                  "key": "correccion",
+                  "label": "Correction"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Apply it directly to"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(n)=2T(n/2)+n"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "That recurrence does not go down by fixed subtraction; down by division."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Use Master Theorem, recursion tree or variable change."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Forgetting to move everything to the left side"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The characteristic polynomial comes out with incorrect signs."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Write standard form against zero first."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Use only the homogeneous part in a non-homogeneous part"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "It ignores the forcing term and produces an incomplete solution."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Add homogeneous solution and particular solution."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Treat repeated roots as distinct"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Polynomial factors such as"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n"
+                      },
+                      {
+                        "type": "text",
+                        "text": "or"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "n^2"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Use"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(C_0+C_1n+\\cdots+C_{m-1}n^{m-1})r^n"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Do not apply initial conditions"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "There remains a family of solutions, not the solution of the given recurrence."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Solve the constants with"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "T(0),T(1),\\ldots"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Confuse closed solution with order"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "The closed solution can have several terms; the complexity depends on the dominant."
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "After closing, identify the dominant root and express"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\Theta"
+                      },
+                      {
+                        "type": "text",
+                        "text": "."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resumen-operativo-ecuacion-caracteristica",
+          "slug": "resumen-operativo-ecuacion-caracteristica",
+          "title": "Operational summary",
+          "order": 11,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "learningObjectives": [
+            {
+              "objectiveId": "consultar-receta-caracteristica",
+              "text": "Consult a minimum recipe to apply characteristic equation."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-recursivos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-paso-a-paso-ecuacion-caracteristica",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-resumen-operativo-caracteristica",
+              "type": "note",
+              "variant": "success",
+              "title": "Minimum recipe",
+              "blocks": [
+                {
+                  "id": "blk-resumen-operativo-caracteristica-lista",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Verify that the recurrence is linear and has constant coefficients."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "If it is homogeneous, apply the direct method; If not, separate homogeneous and particular."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Go to standard form equal to zero."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Replace"
+                        },
+                        {
+                          "type": "inlineMath",
+                          "latex": "T(n)=r^n"
+                        },
+                        {
+                          "type": "text",
+                          "text": "."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Obtain and solve the characteristic polynomial."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Build the general solution according to different, repeated or complex roots."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Apply initial conditions to endd constants."
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Identify the dominant root and conclude the asymptotic order."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-formulas-clave-caracteristica",
+              "type": "latexSteps",
+              "title": "Key formulas",
+              "steps": [
+                {
+                  "stepId": "step-formula-erlh",
+                  "title": "ERLH",
+                  "latex": "T(n)=c_1T(n-1)+c_2T(n-2)+\\cdots+c_kT(n-k)",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Main input form of the method."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-polinomio",
+                  "title": "characteristic polynomial",
+                  "latex": "r^k-c_1r^{k-1}-c_2r^{k-2}-\\cdots-c_k=0",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "It is obtained by substituting"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "T(n)=r^n"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-raices-distintas",
+                  "title": "Different roots",
+                  "latex": "T(n)=C_1r_1^n+C_2r_2^n+\\cdots+C_kr_k^n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "Each different root provides a term."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-raiz-repetida",
+                  "title": "repeated root",
+                  "latex": "(C_0+C_1n+\\cdots+C_{m-1}n^{m-1})r^n",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "A root of multiplicity"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "m"
+                    },
+                    {
+                      "type": "text",
+                      "text": "generates"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "m"
+                    },
+                    {
+                      "type": "text",
+                      "text": "associated terms."
+                    }
+                  ]
+                },
+                {
+                  "stepId": "step-formula-dominancia",
+                  "title": "Dominance",
+                  "latex": "T(n)\\in\\Theta(|r_{max}|^n)\\quad\\text{if }r_{max}\\text{ dominates without cancellation}",
+                  "explanation": [
+                    {
+                      "type": "text",
+                      "text": "The root with the highest absolute value determines the main growth."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

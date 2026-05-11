@@ -1,0 +1,2298 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "course",
+  "moduleId": "mod-notaciones-asintoticas",
+  "slug": "asymptotic-notation",
+  "title": "Notaciones Asintóticas",
+  "order": 4,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "draft",
+  "summary": "Las seis notaciones asintóticas del curso: O, Omega, Theta, o, omega y tilde. Incluye interpretación intuitiva, definición formal, criterio con límites en las dos convenciones y ejemplos resueltos.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 60,
+  "tags": [
+    "notaciones-asintoticas",
+    "big-o",
+    "omega",
+    "theta",
+    "little-o",
+    "little-omega",
+    "tilde",
+    "cuchiflu",
+    "limites",
+    "familias-de-funciones",
+    "cotas"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "notaciones asintóticas",
+      "big o",
+      "big omega",
+      "theta",
+      "little o",
+      "little omega",
+      "tilde",
+      "cuchiflú",
+      "cotas asintóticas",
+      "familias asintóticas"
+    ],
+    "keywords": [
+      "O",
+      "Omega",
+      "Theta",
+      "o",
+      "omega pequena",
+      "tilde",
+      "cota superior",
+      "cota inferior",
+      "cota exacta",
+      "cota estricta",
+      "equivalencia asintótica",
+      "lim f sobre g",
+      "lim g sobre f"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-algoritmos-iterativos-patrones-costos",
+        "kind": "required"
+      }
+    ],
+    "sections": [
+      {
+        "id": "sec-comparar-funciones-correctamente",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-algoritmos-iterativos-patrones-costos"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "explicar-proposito-notaciones",
+      "text": "Explicar por qué las notaciones asintóticas resumen el comportamiento de una función ignorando constantes y términos de menor crecimiento."
+    },
+    {
+      "objectiveId": "identificar-f-y-g",
+      "text": "Identificar correctamente cuál función es f y cuál es g antes de aplicar un criterio con límites."
+    },
+    {
+      "objectiveId": "definir-big-o",
+      "text": "Definir Big-O cómo cota superior y aplicar su criterio con límites en las dos convenciones."
+    },
+    {
+      "objectiveId": "definir-omega",
+      "text": "Definir Omega cómo cota inferior y aplicar su criterio con límites en las dos convenciones."
+    },
+    {
+      "objectiveId": "definir-theta",
+      "text": "Definir Theta cómo cota exacta y reconocer que su criterio de límite es igual en ambas convenciones."
+    },
+    {
+      "objectiveId": "definir-little-o",
+      "text": "Definir little-o cómo cota superior estricta y diferenciarla de Big-O."
+    },
+    {
+      "objectiveId": "definir-little-omega",
+      "text": "Definir little-omega cómo cota inferior estricta y diferenciarla de Omega."
+    },
+    {
+      "objectiveId": "definir-tilde",
+      "text": "Definir la tilde o cuchiflú cómo equivalencia asintótica exacta y distinguirla de Theta."
+    },
+    {
+      "objectiveId": "resolver-ejemplos-convenciones",
+      "text": "Resolver ejemplos usando tanto la convención lim f/g cómo la convención del curso lim g/f."
+    }
+  ],
+  "quizRefs": [],
+  "contentRefs": [],
+  "terms": [
+    {
+      "termId": "term-notacion-asintotica",
+      "label": "Notación asintótica",
+      "definition": "Forma de resumir el comportamiento de crecimiento de una función cuando n tiende al infinito, ignorando constantes y términos de menor orden."
+    },
+    {
+      "termId": "term-funcion-f",
+      "label": "f(n)",
+      "definition": "Función que se analiza o cuya pertenencia a una familia asintótica se quiere demostrar."
+    },
+    {
+      "termId": "term-funcion-g",
+      "label": "g(n)",
+      "definition": "Función de referencia contra la que se compara f(n)."
+    },
+    {
+      "termId": "term-big-o",
+      "label": "Big-O",
+      "definition": "Cota superior. Indica que f no crece más r?pido que g, salvo por una constante multiplicativa."
+    },
+    {
+      "termId": "term-big-omega",
+      "label": "Big-Omega",
+      "definition": "Cota inferior. Indica que f no crece más lento que g, salvo por una constante multiplicativa."
+    },
+    {
+      "termId": "term-theta",
+      "label": "Theta",
+      "definition": "Cota exacta. Indica que f y g crecen al mismo ritmo asintótico."
+    },
+    {
+      "termId": "term-little-o",
+      "label": "little-o",
+      "definition": "Cota superior estricta. Indica que f crece estrictamente más lento que g."
+    },
+    {
+      "termId": "term-little-omega",
+      "label": "little-omega",
+      "definition": "Cota inferior estricta. Indica que f crece estrictamente más r?pido que g."
+    },
+    {
+      "termId": "term-tilde",
+      "label": "Tilde / cuchiflú",
+      "definition": "Equivalencia asintótica exacta. Indica que f y g son asintóticamente idénticas y su cociente tiende a 1."
+    },
+    {
+      "termId": "term-convencion-a",
+      "label": "Convención A",
+      "definition": "Convención de límites que compara f(n)/g(n)."
+    },
+    {
+      "termId": "term-convencion-b",
+      "label": "Convención B / curso",
+      "definition": "Convención de límites usada en el curso que compara g(n)/f(n)."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-notaciones-asintoticas",
+      "slug": "asymptotic-notation",
+      "title": "Notaciones Asintóticas",
+      "order": 1,
+      "summary": "Familias de funciones, cotas superiores, inferiores, exactas, estrictas y equivalencia asintótica.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion-notaciones-asintoticas",
+          "slug": "introduccion-notaciones-asintoticas",
+          "title": "4. Notaciones Asintóticas",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "entender-resumen-asintotico",
+              "text": "Entender que las notaciones asintóticas resumen el comportamiento de un algoritmo con una sola expresión."
+            },
+            {
+              "objectiveId": "entender-familias-funciones",
+              "text": "Entender que las notaciones trabajan sobre familias o conjuntos de funciones."
+            },
+            {
+              "objectiveId": "distinguir-seis-notaciones",
+              "text": "Distinguir las seis notaciones del curso antes de calcular límites."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-iterativos-patrones-costos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-comparar-funciones-correctamente",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-notaciones-intro-definicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Las notaciones asintóticas permiten resumir el comportamiento de un algoritmo con una sola expresión, ignorando constantes y términos pequeños. Se fijan en cómo crece la función cuando"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": "se va al infinito."
+                }
+              ]
+            },
+            {
+              "id": "blk-notaciones-ignorar-terminos-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Por qué ignoramos los términos pequeños?"
+                }
+              ]
+            },
+            {
+              "id": "blk-notaciones-ignorar-terminos",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Porque para valores grandes de"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n"
+                },
+                {
+                  "type": "text",
+                  "text": ", el termino que más crece aplasta a todos los demás. Si"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "T(n)=n^2+1000n+50000"
+                },
+                {
+                  "type": "text",
+                  "text": ", cuando"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n=1\\, 000\\, 000"
+                },
+                {
+                  "type": "text",
+                  "text": ", el termino"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n^2"
+                },
+                {
+                  "type": "text",
+                  "text": "vale"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "10^{12}"
+                },
+                {
+                  "type": "text",
+                  "text": "mientras que"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "1000n"
+                },
+                {
+                  "type": "text",
+                  "text": "vale solo"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "10^9"
+                },
+                {
+                  "type": "text",
+                  "text": ". Para el análisis asintótico el"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "n^2"
+                },
+                {
+                  "type": "text",
+                  "text": "es lo —nico que importa."
+                }
+              ]
+            },
+            {
+              "id": "blk-notaciones-familias-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Sobre qué trabajan?"
+                }
+              ]
+            },
+            {
+              "id": "blk-notaciones-familias",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Las notaciones trabajan sobre familias (conjuntos) de funciones. Decir"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f \\in O(g)"
+                },
+                {
+                  "type": "text",
+                  "text": "es decir que"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f"
+                },
+                {
+                  "type": "text",
+                  "text": "pertenece al conjunto de todas las funciones que"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "g"
+                },
+                {
+                  "type": "text",
+                  "text": "acota por arriba."
+                }
+              ]
+            },
+            {
+              "id": "blk-seis-notaciones-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Las 6 notaciones del curso"
+                }
+              ]
+            },
+            {
+              "id": "blk-seis-notaciones-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "O"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(Big-O) — cota superior:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f"
+                    },
+                    {
+                      "type": "text",
+                      "text": "no crece más r?pido que"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Omega"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(Big-Omega) — cota inferior:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f"
+                    },
+                    {
+                      "type": "text",
+                      "text": "no crece más lento que"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(Theta) — cota exacta:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f"
+                    },
+                    {
+                      "type": "text",
+                      "text": "y"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g"
+                    },
+                    {
+                      "type": "text",
+                      "text": "crecen igual"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "o"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(little-o) — cota superior estricta:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f"
+                    },
+                    {
+                      "type": "text",
+                      "text": "crece estrictamente más lento que"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\omega"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(little-omega) — cota inferior estricta:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f"
+                    },
+                    {
+                      "type": "text",
+                      "text": "crece estrictamente más r?pido que"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sim"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(Tilde / Cuchiflú) — equivalencia:"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f"
+                    },
+                    {
+                      "type": "text",
+                      "text": "y"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g"
+                    },
+                    {
+                      "type": "text",
+                      "text": "son asintóticamente idénticas"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-notaciones-clave-f-g",
+              "type": "note",
+              "variant": "warning",
+              "title": "Clave",
+              "blocks": [
+                {
+                  "id": "blk-notaciones-clave-f-g-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Antes de calcular cuálquier límite, identifica bien cuál función es"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(la que analizas) y cuál es"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g"
+                    },
+                    {
+                      "type": "text",
+                      "text": "(la de referencia). Eso determina que convención aplicar."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-big-o",
+          "slug": "big-o",
+          "title": "4.1 Big-O — Cota Superior: O(g(n))",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "learningObjectives": [
+            {
+              "objectiveId": "explicar-big-o-intuitivamente",
+              "text": "Explicar Big-O cómo un techo asintótico."
+            },
+            {
+              "objectiveId": "aplicar-definicion-formal-big-o",
+              "text": "Aplicar la definición formal de Big-O con constantes c y n0."
+            },
+            {
+              "objectiveId": "comparar-criterios-big-o",
+              "text": "Comparar el criterio de Big-O bajo las dos convenciones de límites."
+            }
+          ],
+          "prerequisites": {
+            "modules": [
+              {
+                "id": "mod-algoritmos-iterativos-patrones-costos",
+                "kind": "required"
+              }
+            ],
+            "sections": [
+              {
+                "id": "sec-comparar-funciones-correctamente",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-big-o-intuicion-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Qué significa intuitivamente?"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-intuicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "inlineMath",
+                  "latex": "O(g(n))"
+                },
+                {
+                  "type": "text",
+                  "text": "establece un techo: a partir de cierto punto,"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "nunca supera a"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "g(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "multiplicada por alguna constante."
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-definicion-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Definicion formal"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-definicion",
+              "type": "definition",
+              "title": "Definicion de O(g(n))",
+              "blocks": [
+                {
+                  "id": "blk-big-o-definicion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n) \\in O(g(n))"
+                    },
+                    {
+                      "type": "text",
+                      "text": "si existen una constante real"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "c>0"
+                    },
+                    {
+                      "type": "text",
+                      "text": "y un natural"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n_0"
+                    },
+                    {
+                      "type": "text",
+                      "text": "tales que:"
+                    }
+                  ]
+                },
+                {
+                  "id": "blk-big-o-definicion-formula",
+                  "type": "equationBlock",
+                  "latex": "\\forall n \\ge n_0: f(n) \\le c \\cdot g(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-criterio-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Criterio con límites — las dos convenciones"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-criterio-tabla",
+              "type": "table",
+              "title": "Criterios de Big-O seg?n la convención usada",
+              "columns": [
+                {
+                  "key": "convencion",
+                  "label": "Convención"
+                },
+                {
+                  "key": "limite",
+                  "label": "Limite"
+                },
+                {
+                  "key": "criterio",
+                  "label": "Criterio para f en O(g)"
+                },
+                {
+                  "key": "razon",
+                  "label": "Razon"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención A —"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim f(n)/g(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L = \\lim_{n \\to \\infty}\\frac{f(n)}{g(n)}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=0"
+                      },
+                      {
+                        "type": "text",
+                        "text": "o"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=c"
+                      },
+                      {
+                        "type": "text",
+                        "text": "finita"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(c>0)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Si L es finito, f no crece más r?pido que g."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención B —"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim g(n)/f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(curso)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L = \\lim_{n \\to \\infty}\\frac{g(n)}{f(n)}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=c"
+                      },
+                      {
+                        "type": "text",
+                        "text": "finita"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(c>0)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "o"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=\\infty"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Si g/f tiende a infinito, g acota por arriba a f."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-nota-inversion",
+              "type": "note",
+              "variant": "warning",
+              "title": "Nota",
+              "blocks": [
+                {
+                  "id": "blk-big-o-nota-inversion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f/g \\to 0"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", entonces"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "g/f \\to \\infty"
+                    },
+                    {
+                      "type": "text",
+                      "text": ". Es el mismo hecho matematico expresado al reves."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-ejemplo-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo resuelto con ambas convenciones"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-ejemplo-o-n2-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "f(n)=3n^2+5n pertenece a O(n^2)?"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-ejemplo-o-n2-conv-a",
+              "type": "latexSteps",
+              "title": "Convención A: f/g",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{3n^2+5n}{n^2}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\left(3+\\frac{5}{n}\\right)"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = 3"
+                },
+                {
+                  "stepId": "conclusion",
+                  "title": "Conclusion",
+                  "latex": "L=3 \\Rightarrow f \\in O(n^2)"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-ejemplo-o-n2-conv-b",
+              "type": "latexSteps",
+              "title": "Convención B: g/f (curso)",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n^2}{3n^2+5n}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{1}{3+5/n}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = \\frac{1}{3}"
+                },
+                {
+                  "stepId": "conclusion",
+                  "title": "Conclusion",
+                  "latex": "L=\\frac{1}{3} \\Rightarrow f \\in O(n^2)"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-ejemplo-o-n-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "f(n)=3n^2+5n pertenece a O(n)?"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-ejemplo-o-n-conv-a",
+              "type": "latexSteps",
+              "title": "Convención A: f/g",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{3n^2+5n}{n}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}(3n+5)"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = +\\infty"
+                },
+                {
+                  "stepId": "conclusion",
+                  "title": "Conclusion",
+                  "latex": "L=\\infty \\Rightarrow f \\notin O(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-ejemplo-o-n-conv-b",
+              "type": "latexSteps",
+              "title": "Convención B: g/f (curso)",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n}{3n^2+5n}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{1}{3n+5}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = 0"
+                },
+                {
+                  "stepId": "conclusion",
+                  "title": "Conclusion",
+                  "latex": "L=0 \\Rightarrow f \\notin O(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-big-o-ejemplo-o-n-cuidado",
+              "type": "note",
+              "variant": "danger",
+              "title": "Cuidado",
+              "blocks": [
+                {
+                  "id": "blk-big-o-ejemplo-o-n-cuidado-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Cuando el límite de Convención A da"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\infty"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", el de Convención B da"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "0"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", y viceversa."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-omega",
+          "slug": "omega",
+          "title": "4.2 Omega — Cota Inferior: Ω(g(n))",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "explicar-omega-intuitivamente",
+              "text": "Explicar Omega cómo un piso asintótico."
+            },
+            {
+              "objectiveId": "aplicar-definicion-formal-omega",
+              "text": "Aplicar la definición formal de Omega con constantes c y n0."
+            },
+            {
+              "objectiveId": "comparar-criterios-omega",
+              "text": "Comparar el criterio de Omega bajo las dos convenciones de límites."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-big-o",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-omega-intuicion-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Qué significa intuitivamente?"
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-intuicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "inlineMath",
+                  "latex": "\\Omega(g(n))"
+                },
+                {
+                  "type": "text",
+                  "text": "establece un piso: a partir de cierto punto,"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "siempre está por encima de"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "g(n)"
+                },
+                {
+                  "type": "text",
+                  "text": "multiplicada por alguna constante."
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-definicion-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Definicion formal"
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-definicion",
+              "type": "definition",
+              "title": "Definicion de Omega(g(n))",
+              "blocks": [
+                {
+                  "id": "blk-omega-definicion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "f(n) \\in \\Omega(g(n))"
+                    },
+                    {
+                      "type": "text",
+                      "text": "si existen una constante real"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "c>0"
+                    },
+                    {
+                      "type": "text",
+                      "text": "y un natural"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "n_0"
+                    },
+                    {
+                      "type": "text",
+                      "text": "tales que:"
+                    }
+                  ]
+                },
+                {
+                  "id": "blk-omega-definicion-formula",
+                  "type": "equationBlock",
+                  "latex": "\\forall n \\ge n_0: f(n) \\ge c \\cdot g(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-criterio-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Criterio con límites — las dos convenciones"
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-criterio-tabla",
+              "type": "table",
+              "title": "Criterios de Omega seg?n la convención usada",
+              "columns": [
+                {
+                  "key": "convencion",
+                  "label": "Convención"
+                },
+                {
+                  "key": "limite",
+                  "label": "Limite"
+                },
+                {
+                  "key": "criterio",
+                  "label": "Criterio para f en Omega(g)"
+                },
+                {
+                  "key": "razon",
+                  "label": "Razon"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención A —"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim f(n)/g(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L = \\lim_{n \\to \\infty}\\frac{f(n)}{g(n)}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=c"
+                      },
+                      {
+                        "type": "text",
+                        "text": "finita"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(c>0)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "o"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=\\infty"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Si f/g tiende a infinito, f crece mucho más que g."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención B —"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim g(n)/f(n)"
+                      },
+                      {
+                        "type": "text",
+                        "text": "(curso)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L = \\lim_{n \\to \\infty}\\frac{g(n)}{f(n)}"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=0"
+                      },
+                      {
+                        "type": "text",
+                        "text": "o"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=c"
+                      },
+                      {
+                        "type": "text",
+                        "text": "finita"
+                      },
+                      {
+                        "type": "inlineMath",
+                        "latex": "(c>0)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Si g/f tiende a 0, g crece mucho más lento que f."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-ejemplo-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ejemplo resuelto"
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-ejemplo-enunciado",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "f(n)=3n^2+5n pertenece a Omega(n)?"
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-ejemplo-conv-a",
+              "type": "latexSteps",
+              "title": "Convención A: f/g",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{3n^2+5n}{n}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}(3n+5)"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = +\\infty"
+                },
+                {
+                  "stepId": "conclusion",
+                  "title": "Conclusion",
+                  "latex": "L=\\infty \\Rightarrow f \\in \\Omega(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-omega-ejemplo-conv-b",
+              "type": "latexSteps",
+              "title": "Convención B: g/f (curso)",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n}{3n^2+5n}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{1}{3n+5}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = 0"
+                },
+                {
+                  "stepId": "conclusion",
+                  "title": "Conclusion",
+                  "latex": "L=0 \\Rightarrow f \\in \\Omega(n)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-theta",
+          "slug": "theta",
+          "title": "4.3 Theta — Cota Exacta: θ(g(n))",
+          "order": 4,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 9,
+          "learningObjectives": [
+            {
+              "objectiveId": "explicar-theta-intuitivamente",
+              "text": "Explicar Theta cómo una cota exacta por arriba y por abajo."
+            },
+            {
+              "objectiveId": "aplicar-definicion-formal-theta",
+              "text": "Aplicar la definición formal de Theta con constantes c1, c2 y n0."
+            },
+            {
+              "objectiveId": "reconocer-criterio-theta",
+              "text": "Reconocer que el criterio de Theta es igual en ambas convenciones."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-big-o",
+                "kind": "required"
+              },
+              {
+                "id": "sec-omega",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-theta-intuicion-heading",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "¿Qué significa intuitivamente?"
+                }
+              ]
+            },
+            {
+              "id": "blk-theta-intuicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "inlineMath",
+                  "latex": "\\Theta(g(n))"
+                },
+                {
+                  "type": "text",
+                  "text": "dice que"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f"
+                },
+                {
+                  "type": "text",
+                  "text": "y"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "g"
+                },
+                {
+                  "type": "text",
+                  "text": "crecen exactamente al mismo ritmo asintótico."
+                }
+              ]
+            },
+            {
+              "id": "blk-theta-definicion",
+              "type": "definition",
+              "title": "Definicion de Theta(g(n))",
+              "blocks": [
+                {
+                  "id": "blk-theta-definicion-formula",
+                  "type": "equationBlock",
+                  "latex": "\\forall n \\ge n_0: c_1 g(n) \\le f(n) \\le c_2 g(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-theta-criterio-tabla",
+              "type": "table",
+              "title": "Criterios de Theta seg?n la convención usada",
+              "columns": [
+                {
+                  "key": "convencion",
+                  "label": "Convención"
+                },
+                {
+                  "key": "limite",
+                  "label": "Limite"
+                },
+                {
+                  "key": "criterio",
+                  "label": "Criterio para f en Theta(g)"
+                },
+                {
+                  "key": "razon",
+                  "label": "Razon"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención A"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim f(n)/g(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=c,\\ 0<c<\\infty"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El cociente se estabiliza en una constante positiva."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención B (curso)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim g(n)/f(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=c,\\ 0<c<\\infty"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "El reciproco de una constante positiva finita sigue siendo constante positiva finita."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-theta-clave",
+              "type": "note",
+              "variant": "info",
+              "title": "Clave",
+              "blocks": [
+                {
+                  "id": "blk-theta-clave-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Theta es el —nico caso donde el criterio numérico es igual en ambas convenciones: una constante positiva finita."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-theta-ejemplo-n2-conv-a",
+              "type": "latexSteps",
+              "title": "Convención A: f/g",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{3n^2+5n}{n^2}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\left(3+\\frac{5}{n}\\right)"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = 3"
+                }
+              ]
+            },
+            {
+              "id": "blk-theta-ejemplo-n2-conv-b",
+              "type": "latexSteps",
+              "title": "Convención B: g/f (curso)",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n^2}{3n^2+5n}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{1}{3+5/n}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = \\frac{1}{3}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-little-o",
+          "slug": "little-o",
+          "title": "4.4 Little-o — Cota Superior Estricta: o(g(n))",
+          "order": 5,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 9,
+          "learningObjectives": [
+            {
+              "objectiveId": "explicar-little-o-intuitivamente",
+              "text": "Explicar little-o cómo una cota superior estricta."
+            },
+            {
+              "objectiveId": "diferenciar-little-o-big-o",
+              "text": "Diferenciar little-o de Big-O por el uso de para toda constante c."
+            },
+            {
+              "objectiveId": "aplicar-criterio-little-o",
+              "text": "Aplicar el criterio de little-o en ambas convenciones de límites."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-big-o",
+                "kind": "required"
+              },
+              {
+                "id": "sec-theta",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-little-o-intuicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Little-o es cómo Big-O pero más restrictivo:"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f"
+                },
+                {
+                  "type": "text",
+                  "text": "crece estrictamente más lento que"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "g"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-little-o-definicion",
+              "type": "definition",
+              "title": "Definicion de o(g(n))",
+              "blocks": [
+                {
+                  "id": "blk-little-o-definicion-formula",
+                  "type": "equationBlock",
+                  "latex": "\\forall n \\ge n_0: f(n) < c \\cdot g(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-little-o-criterio-tabla",
+              "type": "table",
+              "title": "Criterios de little-o seg?n la convención usada",
+              "columns": [
+                {
+                  "key": "convencion",
+                  "label": "Convención"
+                },
+                {
+                  "key": "limite",
+                  "label": "Limite"
+                },
+                {
+                  "key": "criterio",
+                  "label": "Criterio"
+                },
+                {
+                  "key": "razon",
+                  "label": "Razon"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención A"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim f(n)/g(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "f/g tiende a cero."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención B (curso)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim g(n)/f(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=+\\infty"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "g/f tiende a infinito."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-little-o-ejemplo-n-conv-a",
+              "type": "latexSteps",
+              "title": "Convención A: f/g",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n}{n^2}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{1}{n}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = 0"
+                }
+              ]
+            },
+            {
+              "id": "blk-little-o-ejemplo-n-conv-b",
+              "type": "latexSteps",
+              "title": "Convención B: g/f (curso)",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n^2}{n}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = +\\infty"
+                }
+              ]
+            },
+            {
+              "id": "blk-little-o-nota-relacion",
+              "type": "note",
+              "variant": "warning",
+              "title": "Nota",
+              "blocks": [
+                {
+                  "id": "blk-little-o-nota-relacion-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "inlineMath",
+                      "latex": "f \\in o(g)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "implica"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "f \\in O(g)"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", pero no al reves."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-little-omega",
+          "slug": "little-omega",
+          "title": "4.5 Little-omega — Cota Inferior Estricta: ω(g(n))",
+          "order": 6,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "explicar-little-omega-intuitivamente",
+              "text": "Explicar little-omega cómo el espejo de little-o."
+            },
+            {
+              "objectiveId": "aplicar-definicion-formal-little-omega",
+              "text": "Aplicar la definición formal de little-omega con desigualdad estricta."
+            },
+            {
+              "objectiveId": "aplicar-criterio-little-omega",
+              "text": "Aplicar el criterio de little-omega en ambas convenciones de límites."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-little-o",
+                "kind": "required"
+              },
+              {
+                "id": "sec-omega",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-little-omega-intuicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Little-omega es el espejo de little-o:"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "f"
+                },
+                {
+                  "type": "text",
+                  "text": "crece estrictamente más r?pido que"
+                },
+                {
+                  "type": "inlineMath",
+                  "latex": "g"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-little-omega-definicion",
+              "type": "definition",
+              "title": "Definicion de omega(g(n))",
+              "blocks": [
+                {
+                  "id": "blk-little-omega-definicion-formula",
+                  "type": "equationBlock",
+                  "latex": "\\forall n \\ge n_0: f(n) > c \\cdot g(n)"
+                }
+              ]
+            },
+            {
+              "id": "blk-little-omega-criterio-tabla",
+              "type": "table",
+              "title": "Criterios de little-omega seg?n la convención usada",
+              "columns": [
+                {
+                  "key": "convencion",
+                  "label": "Convención"
+                },
+                {
+                  "key": "limite",
+                  "label": "Limite"
+                },
+                {
+                  "key": "criterio",
+                  "label": "Criterio"
+                },
+                {
+                  "key": "razon",
+                  "label": "Razon"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención A"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim f(n)/g(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=+\\infty"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "f/g tiende a infinito."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención B (curso)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim g(n)/f(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=0"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "g/f tiende a cero."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-little-omega-ejemplo-conv-a",
+              "type": "latexSteps",
+              "title": "Convención A: f/g",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n^2}{n}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = +\\infty"
+                }
+              ]
+            },
+            {
+              "id": "blk-little-omega-ejemplo-conv-b",
+              "type": "latexSteps",
+              "title": "Convención B: g/f (curso)",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n}{n^2}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L = 0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-tilde",
+          "slug": "tilde",
+          "title": "4.6 Tilde (~) — Equivalencia Asintótica",
+          "order": 7,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "learningObjectives": [
+            {
+              "objectiveId": "explicar-tilde-intuitivamente",
+              "text": "Explicar la tilde o cuchiflú cómo la notación más exigente."
+            },
+            {
+              "objectiveId": "distinguir-tilde-theta",
+              "text": "Distinguir la equivalencia asintótica exacta de la cota exacta Theta."
+            },
+            {
+              "objectiveId": "aplicar-criterio-tilde",
+              "text": "Aplicar el criterio de la tilde en ambas convenciones de límites."
+            }
+          ],
+          "prerequisites": {
+            "modules": [],
+            "sections": [
+              {
+                "id": "sec-theta",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-tilde-intuicion",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La tilde es la notación más exigente: exige que el cociente entre las funciones tienda exactamente a 1."
+                }
+              ]
+            },
+            {
+              "id": "blk-tilde-comparacion-theta",
+              "type": "note",
+              "variant": "info",
+              "title": "Comparacion con Theta",
+              "blocks": [
+                {
+                  "id": "blk-tilde-comparacion-theta-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si Theta es crecen igual hasta constante multiplicativa, la tilde es crecen exactamente igual y esa constante es 1."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-tilde-definicion",
+              "type": "definition",
+              "title": "Definicion de ~ (Tilde)",
+              "blocks": [
+                {
+                  "id": "blk-tilde-definicion-formula",
+                  "type": "equationBlock",
+                  "latex": "f(n) \\sim g(n) \\iff \\lim_{n \\to \\infty}\\frac{f(n)}{g(n)}=1"
+                }
+              ]
+            },
+            {
+              "id": "blk-tilde-criterio-tabla",
+              "type": "table",
+              "title": "Criterios de tilde seg?n la convención usada",
+              "columns": [
+                {
+                  "key": "convencion",
+                  "label": "Convención"
+                },
+                {
+                  "key": "limite",
+                  "label": "Limite"
+                },
+                {
+                  "key": "criterio",
+                  "label": "Criterio para f ~ g"
+                },
+                {
+                  "key": "razon",
+                  "label": "Razon"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención A"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim f(n)/g(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Las funciones son asintóticamente idénticas."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Convención B (curso)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "\\lim g(n)/f(n)"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineMath",
+                        "latex": "L=1"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Si f~g, entonces g/f tambien tiende a 1."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-tilde-clave",
+              "type": "note",
+              "variant": "info",
+              "title": "Clave",
+              "blocks": [
+                {
+                  "id": "blk-tilde-clave-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La tilde exige L=1. Theta, en cambio, acepta cuálquier constante positiva finita."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-tilde-ejemplo-conv-a",
+              "type": "latexSteps",
+              "title": "Convención A: f/g",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n^2+n}{n^2}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\left(1+\\frac{1}{n}\\right)"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L=1"
+                }
+              ]
+            },
+            {
+              "id": "blk-tilde-ejemplo-conv-b",
+              "type": "latexSteps",
+              "title": "Convención B: g/f (curso)",
+              "steps": [
+                {
+                  "stepId": "plantear",
+                  "title": "Plantear",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{n^2}{n^2+n}"
+                },
+                {
+                  "stepId": "simplificar",
+                  "title": "Simplificar",
+                  "latex": "L = \\lim_{n \\to \\infty}\\frac{1}{1+1/n}"
+                },
+                {
+                  "stepId": "evaluar",
+                  "title": "Evaluar",
+                  "latex": "L=1"
+                }
+              ]
+            },
+            {
+              "id": "blk-tilde-nota-final",
+              "type": "note",
+              "variant": "warning",
+              "title": "Nota",
+              "blocks": [
+                {
+                  "id": "blk-tilde-nota-final-text",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La tilde implica Theta, pero Theta no implica tilde. Por ejemplo,"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "3n^2"
+                    },
+                    {
+                      "type": "text",
+                      "text": "tiene"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\Theta(n^2)"
+                    },
+                    {
+                      "type": "text",
+                      "text": "pero no es"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "latex": "\\sim n^2"
+                    },
+                    {
+                      "type": "text",
+                      "text": "."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

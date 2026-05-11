@@ -23,7 +23,7 @@ packages/content-catalog/catalog/spaces/<spaceId>/<locale>/modules/<nn>-<slug>.m
 Ejemplo:
 
 ```txt
-packages/content-catalog/catalog/spaces/course/es/modules/01-complejidad-temporal-espacial.module.json
+packages/content-catalog/catalog/spaces/course/es/modules/01-time-and-space-complexity.module.json
 ```
 
 ## Contrato base del módulo
@@ -36,7 +36,7 @@ Campos principales:
   "schemaVersion": "1.0.0",
   "spaceId": "course",
   "moduleId": "mod-complejidad-temporal-espacial",
-  "slug": "complejidad-temporal-espacial",
+  "slug": "time-and-space-complexity",
   "title": "Complejidad Temporal y Espacial",
   "order": 1,
   "locale": "es",
@@ -119,7 +119,7 @@ Cada capítulo usa:
 ```json
 {
   "chapterId": "cap-complejidad-temporal-espacial",
-  "slug": "complejidad-temporal-espacial",
+  "slug": "time-and-space-complexity",
   "title": "Complejidad Temporal y Espacial",
   "order": 1,
   "summary": "Resumen opcional",

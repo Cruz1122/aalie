@@ -16,6 +16,7 @@ import AALIEEmotionIcon, {
 import RenderableContent from "@/components/content/RenderableContent";
 import type { QuizOptionState } from "@/features/quizzes/components/types";
 import { Link } from "@/i18n/navigation";
+import { getCourseChapterHrefFromContentRef } from "@/lib/content/resolveCourseContentRef";
 
 import { DefinitionsConceptsQuestion } from "./DefinitionsConceptsQuestion";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
@@ -334,15 +335,16 @@ export function QuizQuestionReviewCard({
       {result.contentRefs.length > 0 ? (
         <div className="mt-3 text-xs">
           {result.contentRefs.map((ref, idx) => {
-            const moduleSlug = ref.moduleId.replace(/^mod-/, "");
-            const chapterSlug = ref.chapterId.replace(/^cap-/, "");
-            const anchor = ref.blockId ? `#${ref.blockId}` : "";
+            const href = getCourseChapterHrefFromContentRef(ref);
+            if (!href) {
+              return null;
+            }
 
             return (
               <Link
                 key={`${ref.moduleId}-${ref.chapterId}-${idx}`}
                 className="mr-2 inline-flex items-center rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-colors hover:bg-cyan-500/20 hover:text-cyan-100"
-                href={`/course/${moduleSlug}/${chapterSlug}${anchor}`}
+                href={href}
               >
                 {t("result.goToContentNatural", {
                   prompt: reviewCtaPrefix,
