@@ -1,470 +1,615 @@
-# AALIE (Algorithmic Analysis Live Interaction Expert)
+<p align="center">
+  <img src="./apps/web/public/aalie-white.svg" alt="AALIE" width="160" />
+</p>
 
-![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript)
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi&logoColor=white)
-![ANTLR4](https://img.shields.io/badge/ANTLR4-4.13.2-FF6C37?logo=antlr)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
+<p align="center" style="font-size:2rem;"><strong>AALIE</strong></p>
+<p align="center" style="font-size:1.25rem; margin-top:-1em;"><em>Algorithmic Analysis Live Interaction Expert</em></p>
 
-> Herramienta educativa moderna para analizar la complejidad algorítmica de pseudocódigo con visualizaciones interactivas y cálculos automáticos.
+<p align="center">
+  Plataforma educativa para analizar pseudocódigo, entender complejidad algorítmica y practicar con trazas, visualizaciones, contenido guiado y quizzes.
+</p>
 
-## Tabla de Contenidos
+<p align="center">
+  <strong>Frontend</strong>
+</p>
 
-- [Descripción](#descripción)
-- [Características](#características)
-- [Estado del Proyecto](#estado-del-proyecto)
-- [Tecnologías](#tecnologías)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Documentación](#documentación)
-- [Testing](#testing)
-- [CI/CD](#cicd)
-- [Contribuir](#contribuir)
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-14.2-555555?labelColor=000000&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/TypeScript-5.5-555555?labelColor=3178c6&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-555555?labelColor=06b6d4&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Monaco_Editor-0.54-555555?labelColor=007acc&logo=visualstudiocode&logoColor=white" alt="Monaco Editor" />
+  <img src="https://img.shields.io/badge/KaTeX-0.16-555555?labelColor=008080&logo=katex&logoColor=white" alt="KaTeX" />
+  <img src="https://img.shields.io/badge/React_Flow-12.10-555555?labelColor=111827&logo=react&logoColor=61dafb" alt="React Flow" />
+  <img src="https://img.shields.io/badge/next--intl-i18n-555555?labelColor=111827&logo=nextdotjs&logoColor=white" alt="next-intl" />
+</p>
 
-## Descripción
+<p align="center">
+  <strong>Backend</strong>
+</p>
 
-**AALIE** es la aplicación de análisis de complejidad algorítmica que permite escribir algoritmos en pseudocódigo y obtener automáticamente el análisis de su complejidad. El asistente integrado se llama AALIE (Algorithmic Analysis Live Interaction Expert). El sistema utiliza un lenguaje de pseudocódigo estructurado con validación en tiempo real, análisis automático de casos (best/worst/average), y visualizaciones interactivas de resultados.
+<p align="center">
+  <img src="https://img.shields.io/badge/FastAPI-0.110+-555555?labelColor=009688&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Python-3.11+-555555?labelColor=3776ab&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/ANTLR4-4.13-555555?labelColor=ff6c37" alt="ANTLR4" />
+  <img src="https://img.shields.io/badge/SymPy-1.12+-555555?labelColor=3b5526&logo=sympy&logoColor=white" alt="SymPy" />
+  <img src="https://img.shields.io/badge/Pydantic-2.x-555555?labelColor=e92063&logo=pydantic&logoColor=white" alt="Pydantic" />
+  <img src="https://img.shields.io/badge/Uvicorn-ASGI-555555?labelColor=111827&logo=python&logoColor=white" alt="Uvicorn" />
+</p>
 
-**Stack principal:** Next.js + TypeScript (frontend) y FastAPI + Python 3.11+ (backend).  
-Este repositorio usa **pnpm workspaces** para gestionar paquetes de Node del frontend y utilidades compartidas.  
-El backend (Python) NO forma parte de los workspaces de pnpm.
+<p align="center">
+  <strong>Proyecto</strong>
+</p>
 
-## Características
+<p align="center">
+  <img src="https://img.shields.io/badge/pnpm-9.15-555555?labelColor=f69220&logo=pnpm&logoColor=white" alt="pnpm" />
+  <img src="https://img.shields.io/badge/GitHub_Actions-CI-555555?labelColor=2088ff&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Docker-Compose-555555?labelColor=2496ed&logo=docker&logoColor=white" alt="Docker Compose" />
+  <img src="https://img.shields.io/badge/LaTeX-PDF_Export-555555?labelColor=008080&logo=latex&logoColor=white" alt="LaTeX" />
+</p>
 
-### Análisis Completo
-- Análisis de complejidad temporal (Big-O) automático
-- Soporte para algoritmos iterativos y recursivos
-- Análisis de best/worst/average case
-- Modelos probabilísticos para caso promedio
-- **Cuatro métodos para análisis recursivo:**
-  - **Teorema Maestro** - Para recurrencias divide-and-conquer estándar T(n) = a·T(n/b) + f(n)
-  - **Método de Iteración** - Despliega la recurrencia iterativamente para obtener forma cerrada
-  - **Árbol de Recursión** - Visualiza el árbol de llamadas recursivas para divide-and-conquer
-  - **Ecuación Característica** - Para recurrencias lineales homogéneas y no homogéneas (ej: Fibonacci)
-- Detección automática de métodos aplicables para cada algoritmo
-- Visualización interactiva de árboles de recursión con React Flow
+---
 
-### Editor Avanzado
-- Editor Monaco (VS Code en el navegador)
-- Syntax highlighting para pseudocódigo
-- Validación en tiempo real con Web Workers
-- Autocompletado contextual con prioridad para parámetros y variables locales
-- Inserción bilingüe de snippets y algoritmos según locale (`es` / `en`)
-- Panel lateral curado de ayuda de escritura con paginación responsive
-- Numeración de líneas
-- La sintaxis visible enseña la asignación oficial `<-`
+## Qué es AALIE
 
-### Asistente IA
-- Chatbot integrado con modelos de lenguaje
-- Asistente embebido por iframe en `/analyzer`, `/examples` y `/user-guide`
-- Clasificación automática de algoritmos
-- Análisis directo desde bloques de código
-- Corrección automática de errores
+**AALIE** es una plataforma educativa para estudiar análisis y diseño de algoritmos. Permite escribir pseudocódigo, analizar su complejidad, ver el proceso paso a paso y reforzar conceptos con ejemplos, contenido guiado y quizzes.
+
+Está pensada para clases de análisis de algoritmos: el profesor puede usarla como apoyo visual y los estudiantes pueden usarla para experimentar con algoritmos iterativos, recursivos, ciclos, recurrencias, trazas de ejecución y reportes exportables.
+
+El análisis principal no depende de IA. AALIE usa reglas y contratos deterministas para producir resultados reproducibles. Las funciones con modelos de lenguaje son opcionales y sirven como apoyo pedagógico, no como reemplazo del motor formal.
+
+---
+
+## Qué puedes hacer con AALIE
+
+### Escribir y validar pseudocódigo
+
+AALIE incluye un editor basado en Monaco, similar a VS Code en el navegador. Mientras escribes, la aplicación valida la sintaxis, ofrece ayudas contextuales y permite trabajar con una gramática diseñada para algoritmos académicos.
+
+### Analizar complejidad automáticamente
+
+La herramienta analiza algoritmos iterativos y recursivos, calcula costos por línea cuando aplica y presenta resultados en notación asintótica. También separa casos como peor caso, mejor caso y caso promedio cuando el algoritmo y el modelo lo permiten.
+
+### Entender ciclos `WHILE`
+
+AALIE reconoce patrones frecuentes en ciclos `WHILE`, como contadores lineales, crecimiento geométrico, búsqueda binaria, Euclides con módulo y ciclos controlados por bandera. Cuando no hay evidencia suficiente, evita inventar una respuesta y reporta el estado correspondiente.
+
+### Resolver recurrencias con varios métodos
+
+Para algoritmos recursivos, AALIE puede detectar recurrencias y aplicar métodos como Teorema Maestro, método de iteración, árbol de recursión y ecuación característica, según la forma del algoritmo.
+
+### Ver trazas de ejecución
+
+La aplicación permite observar cómo avanza un algoritmo paso a paso: cambios de variables, llamadas recursivas, retornos, condiciones y eventos relevantes. Esto ayuda a conectar el pseudocódigo con su comportamiento real.
+
+### Usar visualizaciones
+
+AALIE muestra fórmulas, tablas, árboles de recursión y vistas gráficas para que el análisis no quede reducido a una respuesta final. La idea es mostrar el proceso, no solo el resultado.
+
+### Exportar reportes
+
+Los análisis pueden exportarse como reportes institucionales en Markdown, LaTeX, PDF o ZIP, según el entorno disponible. La vista en pantalla y los reportes exportados usan la misma fuente de resultados para evitar inconsistencias.
+
+### Aprender con contenido modular
+
+El curso está organizado mediante contenido JSON versionado. Esto permite agregar módulos, capítulos, explicaciones, ejemplos y referencias sin reprogramar toda la interfaz.
+
+### Practicar con quizzes
+
+AALIE incluye quizzes por módulos, evaluación determinista y progreso local en el navegador. Las preguntas se conectan con el contenido mediante dificultad, habilidades, temas y referencias pedagógicas.
+
+### Usar asistencia IA opcional
+
+Si se configura una API key, AALIE puede habilitar funciones de apoyo con modelos de lenguaje: explicación adicional, comparación de resultados, reparación o ayuda contextual. Si no hay API key, el análisis formal sigue funcionando.
+
+---
+
+## Estado actual
+
+### Implementado
+
+- Editor Monaco con validación y autocompletado contextual.
+- Parser ANTLR compartido entre frontend y backend.
+- Análisis iterativo y recursivo.
+- Detección de métodos de recurrencia.
+- Soporte conservador para ciclos `WHILE`.
+- Trazas de ejecución paso a paso.
+- Visualizaciones matemáticas y árboles de recursión.
+- Export institucional basado en snapshot.
+- Curso modular JSON versionado.
+- Dashboard de quizzes, sesiones y evaluación determinista.
+- Internacionalización en español e inglés.
+- Asistente IA opcional.
+
+### Parcial o experimental
+
+- Recomendación GPU vs CPU: orientativa, no benchmark científico.
+- Comparación LLM: apoyo pedagógico, no fuente formal.
+- Diagramas y jobs LLM: dependen de API key y del entorno configurado.
+- PDF: requiere `pdflatex` disponible en runtime.
+- Banco de quizzes: el flujo existe, pero la madurez del banco depende de la curaduría y activación del contenido.
+
+### En expansión
+
+- Más módulos de curso.
+- Más ejemplos y bancos de preguntas.
+- Más cobertura bilingüe.
+- Mejoras de experiencia pedagógica.
+
+---
+
+## Características principales
+
+### Editor de pseudocódigo
+
+- Editor Monaco en navegador.
+- Validación de gramática en tiempo real.
+- Autocompletado contextual.
+- Snippets y ayudas por idioma.
+- Sintaxis alineada con el lenguaje de la aplicación.
+
+### Parser y gramática
+
+- Gramática ANTLR4.
+- Parseo a AST.
+- Paquete dedicado en `packages/grammar`.
+- Generación de parser para frontend y backend.
+
+### Análisis de complejidad
+
+- Clasificación de algoritmos.
+- Análisis de peor caso, mejor caso y caso promedio cuando aplica.
+- Costos por línea.
+- Expresiones simbólicas.
+- Notación O, Ω y Θ.
+- Procedimiento paso a paso para explicar el resultado.
+
+### Análisis iterativo
+
+- Costeo por línea.
+- Sumas simbólicas.
+- Cierre de expresiones cuando el motor puede hacerlo de forma defendible.
+- Modelos de caso promedio cuando el contrato lo permite.
+
+### Análisis de `WHILE`
+
+AALIE analiza ciclos `WHILE` mediante heurísticas conservadoras. El motor reconoce patrones frecuentes y evita forzar conclusiones cuando no hay evidencia suficiente.
+
+Patrones soportados:
+
+- contadores lineales;
+- crecimiento geométrico;
+- búsqueda binaria;
+- Euclides con módulo;
+- ciclos controlados por bandera.
+
+### Análisis recursivo
+
+- Extracción de recurrencias.
+- Detección automática de métodos aplicables.
+- Priorización del método recomendado según la forma del algoritmo.
+- Explicación paso a paso del procedimiento elegido.
+
+### Métodos de recurrencia
+
+- Teorema Maestro.
+- Método de iteración.
+- Árbol de recursión.
+- Ecuación característica.
+
+### Trazas de ejecución
+
+- Trazas iterativas.
+- Trazas recursivas.
+- Estado de variables.
+- Evaluación de condiciones.
+- Llamadas y retornos.
+- Eventos relevantes para entender el flujo del algoritmo.
 
 ### Visualizaciones
-- Tablas de costos por línea
-- Fórmulas matemáticas renderizadas con KaTeX
-- Visualización de AST
-- Procedimientos detallados paso a paso
-- Gráficos de complejidad
-- **Árboles de recursión interactivos con React Flow**
-- **Trace de ejecución paso a paso** (iterativos y recursivos)
-- **Diagramas de flujo generados con LLM** (para algoritmos recursivos)
+
+- Fórmulas con KaTeX.
+- Árboles de recursión con React Flow.
+- Tablas de costos.
+- Vistas de apoyo para interpretar el análisis.
+- Diagramas pedagógicos cuando la funcionalidad está disponible.
+
+### Export institucional
+
+AALIE puede generar reportes a partir de un snapshot único de análisis. El objetivo es evitar inconsistencias entre lo que se muestra en pantalla y lo que se exporta.
+
+Formatos soportados:
+
+- Markdown.
+- LaTeX.
+- PDF mediante `pdflatex`.
+- ZIP con artefactos, `snapshot.json` y `manifest.json`.
+
+### Curso modular
+
+El contenido pedagógico vive en JSON versionado y validado. La estructura permite crecer por cursos, módulos, capítulos y bloques sin reprogramar el renderer principal.
+
+### Quizzes
+
+- Dashboard en `/{locale}/quizzes`.
+- Quizzes por módulos.
+- Selección determinista adaptativa.
+- Evaluación backend.
+- Progreso local en navegador.
+- Bancos de preguntas en español e inglés, sujetos al estado de curaduría del contenido.
+
+### Ejemplos
+
+- Catálogo en `/{locale}/examples`.
+- Páginas por categoría.
+- Ejemplos organizados por tema y nivel de soporte.
+- Apoyo directo para practicar análisis de algoritmos.
+
+### Asistente IA opcional
+
+Las funciones LLM son opcionales. Si no hay API key válida, AALIE conserva sus funcionalidades deterministas principales.
+
+El asistente puede apoyar en:
+
+- explicación del análisis;
+- comparación de resultados;
+- reparación o ayuda sobre pseudocódigo;
+- orientación contextual dentro de la aplicación.
+
+### Comparación LLM
+
+La comparación con modelos de lenguaje existe como apoyo pedagógico. No reemplaza el análisis formal ni debe tratarse como fuente de verdad.
+
+### GPU vs CPU
+
+El sistema puede mostrar una lectura heurística de idoneidad estructural para CPU o GPU. Es útil para discusión didáctica, pero no equivale a un benchmark de rendimiento.
 
 ### Internacionalización
-- Soporte multiidioma (español/inglés) con next-intl
-- Rutas localizadas (`/es/analyzer`, `/en/analyzer`)
-- Labels de procedimiento y trace en idioma del usuario
-- Prompts de LLM parametrizados por idioma
 
-### Nuevas Funcionalidades
+- Rutas localizadas con `next-intl`.
+- Interfaz en español e inglés.
+- Contenido modular bilingüe.
+- Fallback controlado cuando una traducción no está disponible.
 
-#### Seguimiento de Pseudocódigo
-- **Trace iterativo**: Instrumentación de código y captura de estado en cada paso
-- **Trace recursivo**: Generación automática de diagramas de árbol con LLM (Gemini)
-- Visualización paso a paso de variables y operaciones
-- Diagramas Mermaid interactivos
+---
 
-#### Comparación con LLM
-- Contrasta el análisis del sistema con análisis de Gemini
-- Detección automática de diferencias
-- Explicaciones de discrepancias
-- Nivel de confianza del análisis
+## Arquitectura general
 
-#### Análisis GPU vs CPU
-- Sistema de scoring (0-100) para GPU y CPU
-- Análisis de paralelismo y patrones de acceso a memoria
-- Evaluación de complejidad de control de flujo
-- Recomendaciones de ejecución (GPU/CPU/Mixto)
-- Métricas detalladas: recursión, branching, loops, arrays, operaciones matemáticas
+Flujo principal:
 
-#### Configuración de API Key
-- Gestión de API key de Gemini en el frontend
-- Almacenamiento seguro en localStorage
-- Validación de formato y autenticidad
-- Prioridad efectiva para llamadas BFF: `API_KEY` del servidor > API key local válida del usuario
-- Sin API key válida, el asistente embebido no se renderiza y la app base sigue operando normal
+```text
+pseudocódigo
+  -> parse
+  -> AST
+  -> classify
+  -> analyze
+  -> trace
+  -> snapshot
+  -> render UI / export
+```
 
-## Estado del Proyecto
+AALIE está organizado como monorepo:
 
-### Completado
+- `apps/web`: frontend Next.js, UI y BFF.
+- `apps/api`: backend FastAPI para parseo, clasificación, análisis, trazas, export y quizzes.
+- `packages/grammar`: gramática ANTLR y codegen.
+- `packages/types`: tipos compartidos.
+- `packages/content-catalog`: catálogo modular, schemas y validación.
+- `docs`: contratos técnicos, guías y ADRs.
+- `infra`: Docker y soporte de despliegue local.
 
-**Frontend:**
-- [x] Editor Monaco con validación en tiempo real
-- [x] Sistema de análisis con loader de progreso
-- [x] Visualización de resultados (iterativos y recursivos)
-- [x] Visualización interactiva de árboles de recursión (React Flow)
-  - Soporta algoritmos divide-and-conquer con recurrencias uniformes
-  - Soporta algoritmos con desplazamiento lineal (ej: Fibonacci)
-- [x] Chatbot integrado con IA
-- [x] Modo manual y modo AI
-- [x] Internacionalización con next-intl (español/inglés)
-- [x] Soporte de locale en análisis y trace de ejecución
-- [x] Guía de usuario completa
-- [x] Documentación técnica
+---
 
-**Backend:**
-- [x] Parser ANTLR4 completo
-- [x] Análisis iterativo (best/worst/average)
-- [x] Análisis recursivo con múltiples métodos:
-  - [x] Teorema Maestro (tres casos)
-  - [x] Método de Iteración
-  - [x] Árbol de Recursión
-  - [x] Ecuación Característica
-- [x] Detección automática de métodos aplicables (`/analyze/detect-methods`)
-- [x] Detección automática de tipo de algoritmo
-- [x] Modelos probabilísticos para caso promedio
-- [x] Tests exhaustivos
+## API principal
 
-**Documentación:**
-- [x] Documentación contractual centralizada en `docs/`
-- [x] Catálogo unificado de contenido en `packages/content-catalog/`
-- [x] Guía de usuario rediseñada
-- [x] README completo
+### FastAPI
 
-### En Desarrollo
+| Endpoint | Propósito |
+| --- | --- |
+| `GET /health` | Healthcheck |
+| `POST /grammar/parse` | Parseo de pseudocódigo a AST |
+| `POST /classify` | Clasificación del algoritmo |
+| `POST /analyze/open` | Análisis principal |
+| `POST /analyze/detect-methods` | Detección de métodos recursivos aplicables |
+| `POST /analyze/trace` | Trace de ejecución |
+| `POST /export/report` | Export institucional |
+| `POST /llm` | Jobs LLM opcionales |
+| `GET /llm/status` | Estado/configuración LLM |
+| `GET /quizzes/health` | Estado del módulo de quizzes |
+| `GET /quizzes/taxonomy` | Taxonomía del banco |
+| `GET /quizzes/dataset/summary` | Resumen del banco |
+| `POST /quizzes/attempts` | Crear sesión/intento |
+| `POST /quizzes/attempts/evaluate` | Evaluar respuestas |
 
-- [ ] Exportación de resultados (PDF, LaTeX)
+### Next BFF
+
+| Endpoint | Propósito |
+| --- | --- |
+| `GET /api/health` | Healthcheck del backend |
+| `POST /api/grammar/parse` | Proxy de parseo |
+| `POST /api/analyze/open` | Proxy de análisis |
+| `POST /api/analyze/detect-methods` | Proxy de métodos |
+| `POST /api/analyze/trace` | Proxy de trace |
+| `POST /api/llm` | Proxy de jobs LLM |
+| `GET /api/llm/status` | Estado/configuración LLM |
+| `POST /api/llm/classify` | Compatibilidad para clasificación |
+| `POST /api/quizzes/session` | Proxy de inicio de quiz |
+| `POST /api/quizzes/evaluate` | Proxy de evaluación |
+| `GET /api/quizzes/summary` | Resumen del banco |
+| `GET /api/quizzes/taxonomy` | Taxonomía del banco |
+
+---
 
 ## Tecnologías
 
 ### Frontend
-![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css)
-![Monaco Editor](https://img.shields.io/badge/Monaco_Editor-0.54-0078D4?logo=visual-studio-code)
-![KaTeX](https://img.shields.io/badge/KaTeX-0.16-008080?logo=latex)
 
-- **Next.js 14.2** (App Router) - Framework React
-- **TypeScript 5.5.4** - Tipado estático
-- **Monaco Editor 0.54** - Editor de código
-- **KaTeX 0.16.10** - Renderizado de fórmulas matemáticas
-- **Tailwind CSS 3.4.13** - Framework CSS utility-first
-- **Material Symbols** - Iconografía
+- Next.js 14.2
+- React 18
+- TypeScript 5.5
+- Tailwind CSS 3.4
+- Monaco Editor
+- KaTeX
+- React Flow
+- Dagre
+- `next-intl`
+- Material UI y Material Symbols
 
 ### Backend
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi&logoColor=white)
-![ANTLR4](https://img.shields.io/badge/ANTLR4-4.13.2-FF6C37?logo=antlr)
-![SymPy](https://img.shields.io/badge/SymPy-1.12-3B5526?logo=sympy)
 
-- **FastAPI** (≥0.110) - Framework web moderno
-- **Python 3.11+** - Lenguaje de programación
-- **ANTLR4** (4.13.2) - Generación de parsers
-- **SymPy** - Matemáticas simbólicas
-- **Pydantic** - Validación de datos
+- FastAPI
+- Python 3.11+
+- ANTLR4
+- SymPy
+- Pydantic
+- `uvicorn`
 
-### Herramientas
-![pnpm](https://img.shields.io/badge/pnpm-9.x-F69220?logo=pnpm)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
-![Git](https://img.shields.io/badge/Git-Latest-F05032?logo=git)
+### Monorepo y contenido
 
-- **pnpm 9.x** - Gestor de paquetes
-- **Docker Compose** - Containerización
-- **ANTLR4** - Generación de parsers TS/Py
+- pnpm workspaces
+- `packages/grammar`
+- `packages/types`
+- `packages/content-catalog`
+
+### Export
+
+- Markdown
+- LaTeX
+- PDF
+- ZIP
+- `pdflatex`
+
+### Calidad
+
+- GitHub Actions
+- `pytest`
+- `ruff`
+- ESLint
+- Prettier
+- Validación del catálogo
+- Validación del banco de quizzes
+
+---
 
 ## Requisitos
 
-- **Node.js** ≥20 <23 (CI usa 22.x, compatible con 20.x)
-- **pnpm** 9.x
-- **Python** 3.11+
-- **Java** ≥8 (para generación de parser Python con ANTLR)
-- **Git**
+- Node.js `>=20 <23`
+- pnpm `9.15.0`
+- Python `3.11+`
+- Java `>=8` para codegen ANTLR cuando se necesite regenerar parsers
+- `pdflatex` si se quiere exportar PDF en local
+
+---
 
 ## Instalación
 
-### 1. Clonar el repositorio
-
 ```bash
-git clone <repository-url>
-cd algorithmic-analysis
-```
-
-### 2. Instalar dependencias
-
-```bash
-# Instalar dependencias de Node/pnpm
 pnpm install
-
-# Instalar dependencias Python (backend, incluye parser aa_grammar)
 cd apps/api
 pip install -r requirements.txt
 ```
 
-### 3. Configurar variables de entorno (opcional)
+---
+
+## Desarrollo local
+
+Levantar backend:
 
 ```bash
-# Frontend - apps/web/.env.local
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-
-# Frontend / BFF - apps/web/.env.local
-API_KEY=tu_api_key_here  # Opcional, habilita funciones LLM del servidor y el asistente embebido
-```
-
-Si `API_KEY` no existe en servidor ni se configura una API key válida en el navegador, el asistente embebido de `/analyzer`, `/examples` y `/user-guide` no se muestra. El análisis formal principal sigue funcionando sin depender del asistente.
-
-### Asistente embebido por API key
-
-- Se muestra solo en `/analyzer`, `/examples` y `/user-guide`.
-- Reutiliza la UI base del chatbot, pero corre dentro de un `iframe` interno mismo-origen.
-- Mantiene historial separado del chatbot de home y persiste entre cambios de página.
-- Usa contexto curado de la vista actual. Si hay un modal o panel en foco, esa vista tiene prioridad sobre el resto del análisis.
-- En `analyzer` puede apoyarse en resultados formales visibles, seguimiento, comparación con LLM, GPU/CPU, loop invariant, procedimientos y modales recursivos.
-- En `examples` recibe secciones, algoritmos visibles y pseudocódigo del ejemplo focalizado.
-- En `user-guide` recibe la sección o modal visible.
-- El motor formal sigue siendo la fuente de verdad; el asistente explica, orienta o amplía, pero no sustituye el resultado determinista.
-
-## Uso
-
-### Desarrollo
-
-```bash
-# Terminal 1: Frontend (puerto 3000)
-cd apps/web
-pnpm dev
-
-# Terminal 2: Backend (puerto 8000)
 cd apps/api
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
-
-### Generación de Código (Codegen)
+Levantar frontend:
 
 ```bash
-# Generar parser TypeScript desde gramática ANTLR
-pnpm --filter @aa/grammar build
-
-# Generar parser Python desde gramática ANTLR
-pnpm --filter @aa/grammar gen:py
+cd apps/web
+pnpm dev
 ```
 
-### Build Producción
+Por defecto, la aplicación web queda disponible en:
 
-```bash
-# Build completo (frontend + tipos)
-pnpm -r build
-
-# Backend (FastAPI no requiere build)
-cd apps/api
-pip install -r requirements.txt
+```text
+http://localhost:3000
 ```
-
-### Docker
-
-```bash
-cd infra
-docker-compose up
-```
-
-## Estructura del Proyecto
-
-```
-algorithmic-analysis/
-├── apps/
-│   ├── web/              # Next.js frontend (App Router)
-│   │   ├── src/
-│   │   │   ├── app/      # Páginas y rutas
-│   │   │   ├── components/  # Componentes React
-│   │   │   ├── hooks/    # Hooks personalizados
-│   │   │   └── lib/      # Utilidades
-│   │   └── package.json
-│   └── api/              # FastAPI backend (Python)
-│       ├── app/
-│       │   ├── modules/  # Módulos principales (nueva arquitectura)
-│       │   │   ├── parsing/      # Router: /grammar/parse
-│       │   │   ├── analysis/     # Router: /analyze/*
-│       │   │   └── classification/ # Router: /classify
-│       │   ├── routers/  # Routers legacy (en proceso de migración)
-│       │   └── core/     # Configuración y utilidades
-│       └── requirements.txt
-├── packages/
-│   ├── grammar/          # Gramática ANTLR4 y codegen (TS/Py)
-│   │   ├── grammar/      # Archivos .g4
-│   │   └── src/          # Parsers generados
-│   ├── content-catalog/  # Schemas, catálogo y validación de contenido
-│   │   ├── catalog/      # Espacios y módulos JSON
-│   │   ├── schemas/      # JSON Schemas del contrato
-│   │   └── src/          # Discovery, search, progress y validate
-│   └── types/            # Tipos compartidos (TypeScript)
-│       └── src/          # Definiciones de tipos
-├── docs/                 # Documentación contractual y operativa
-│   ├── 03-specs/         # Specs del motor y catálogos
-│   ├── 08-content/       # Contrato del contenido unificado
-│   └── 09-decisions/     # ADRs
-├── infra/                # Docker Compose
-└── pnpm-workspace.yaml   # Configuración de workspaces
-```
-
-### Workspaces pnpm
-
-Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
-
-## Documentación
-
-### Documentación Técnica
-
-- **[Mapa principal de documentación](docs/README.md)** - Puerta de entrada contractual del repo.
-- **[Mapa de navegación](docs/index.md)** - Ruta corta para ubicar specs, API, calidad y contenido.
-- **[Contrato del catálogo unificado](docs/08-content/content-model.md)** - Modelo `space -> module -> chapter -> section -> block`.
-- **[Schemas y catálogo real](packages/content-catalog/)** - Implementación canónica de contenido, búsqueda, progreso y validación.
-
-### Documentación de Usuario
-
-- **[Guía de usuario contractual](docs/07-user/user-guide.md)** - Uso operativo del sistema.
-- **[Guía viva en la app](apps/web/src/app/[locale]/user-guide/page.tsx)** - UI actual aún no migrada al renderer genérico.
-- **[Gramática y sintaxis](docs/03-specs/pseudocode-grammar-spec.md)** - Contrato visible del lenguaje.
-
-### Guía de Desarrollo
-
-- [Generación de código TS/Py](packages/grammar/grammar/README.md#generación-de-código-codegen)
-- [Probar endpoint /parse](packages/grammar/grammar/README.md#probar-el-endpoint-parse)
-- [Configurar KaTeX](packages/grammar/grammar/README.md#activar-katex-para-renderizado-de-fórmulas)
-- [Contratos de tipos @aa/types](packages/grammar/grammar/README.md#contratos-de-tipos-en-aatypes)
-
-## Testing
-
-```bash
-# Tests del backend (Python)
-cd apps/api
-python -m pytest tests/ -v
-
-# Tests con cobertura de código
-cd apps/api
-pytest tests/ --cov=app --cov-report=term --cov-report=html
-
-# Ver reporte HTML de cobertura
-# Abre apps/api/htmlcov/index.html en tu navegador
-
-# Tests de la gramática
-cd packages/grammar
-npm run verify
-
-# Validar catálogo de contenido
-pnpm validate:content-catalog
-```
-
-### Cobertura de Código
-
-El proyecto mantiene un umbral mínimo de **70% de cobertura de código** para módulos críticos. La cobertura actual del proyecto es del **71.48\%** (4,473 de 6,258 declaraciones cubiertas). Los reportes de cobertura se generan automáticamente en CI y están disponibles como artefactos.
-
-**Comandos útiles:**
-- `pytest tests/ --cov=app --cov-report=term` - Ver cobertura en terminal
-- `pytest tests/ --cov=app --cov-report=html` - Generar reporte HTML
-- `pytest tests/ --cov=app --cov-report=term-missing` - Ver líneas no cubiertas
-
-Para más información sobre cobertura, ver [apps/api/tests/README.md](apps/api/tests/README.md#cobertura-de-código).
-
-### Cobertura de Tests
-
-**Analizador Iterativo:**
-- Casos comunes: búsqueda lineal, búsqueda binaria, factorial
-- Casos intermedios: selection sort, bubble sort, insertion sort
-- Casos complejos: bucles anidados, WHILE complejos, IF anidados
-- Caso promedio: modelos uniforme y simbólico
-- Todos los tests cubren best/worst/average case
-
-**Analizador Recursivo:**
-- Extracción de recurrencias: merge sort, binary search, quick sort, factorial, Fibonacci
-- **Teorema Maestro**: verificación de los 3 casos (f(n) < n^log_b(a), f(n) = n^log_b(a), f(n) > n^log_b(a))
-- **Método de Iteración**: despliegue iterativo de recurrencias para obtener forma cerrada
-- **Árbol de Recursión**: construcción y visualización del árbol para divide-and-conquer
-- **Ecuación Característica**: resolución de recurrencias lineales homogéneas y no homogéneas
-- Detección automática de métodos aplicables según el tipo de recurrencia
-- Priorización de métodos: characteristic_equation > iteration > recursion_tree > master
-- Estructura: validación de parámetros a, b, f(n), n₀, y formas de recurrencia
-- Pasos de prueba: verificación de generación de pasos en LaTeX para todos los métodos
-
-**Ubicación de Tests:**
-- `apps/api/tests/integration/test_iterative_analyzer.py`
-- `apps/api/tests/integration/test_intermediate_algorithms.py`
-- `apps/api/tests/integration/test_complex_algorithms.py`
-- `apps/api/tests/integration/test_avg_case.py`
-- `apps/api/tests/integration/test_recursive_algorithms.py`
-
-## CI/CD
-
-El proyecto utiliza **GitHub Actions** para automatización continua de builds, tests y calidad de código.
-
-### Jobs de CI
-
-1. **Build** - Build crítico del frontend y verificación de dependencias
-   - Build de packages (`@aa/types`, `@aa/grammar`)
-   - Build de aplicación web Next.js
-   - Verificación de FastAPI y dependencias Python
-
-2. **Test** - Suite completa de tests del backend
-   - Tests unitarios e integración con pytest
-   - Cobertura de código (umbral mínimo: 70%)
-   - Reportes de cobertura disponibles como artefactos
-
-3. **Quality** - Verificación de calidad de código
-   - ESLint y Prettier para frontend
-   - Ruff (lint y format) para backend
-   - No bloquea el build principal
-
-4. **Docker Integration** - Verificación de contenedores
-   - Build de imágenes Docker
-   - Validación de docker-compose
-   - Solo corre si build y tests pasan
-
-### Configuración
-
-El workflow se activa automáticamente en:
-- Push a ramas `main`, `develop`, `ci-test`
-- Pull Requests a `main` o `develop`
-- Cambios en código fuente, dependencias o configuración
-
-**Ubicación:** `.github/workflows/ci.yaml`
-
-## Contribuir
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. **Fork** el repositorio
-2. Crear una **rama** desde `develop`
-3. Hacer **cambios** y commit
-4. Abrir un **Pull Request** a `develop`
-5. Esperar **revisión** y aprobación
-
-### Convenciones
-
-- Seguir **convenciones de código** existentes
-- Añadir **tests** cuando corresponda
-- Actualizar **documentación** si es necesario
-
-
-Proyecto académico - Universidad de Caldas (2025-2)
 
 ---
 
-<div align="center">
+## Codegen
 
-[Documentación](./docs/) • [Guía de Usuario](./apps/web/src/app/[locale]/user-guide/) • [Ejemplos](./apps/web/src/app/[locale]/examples/)
+Generar parser TypeScript:
 
-</div>
+```bash
+pnpm --filter @aa/grammar build
+```
+
+Generar parser Python:
+
+```bash
+pnpm --filter @aa/grammar gen:py
+```
+
+---
+
+## Variables de entorno principales
+
+| Variable | Capa | Uso |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_BASE_URL` | Web | URL pública del backend para consumo cliente directo |
+| `API_BASE_URL` | BFF | URL base del backend para proxies Next |
+| `API_INTERNAL_BASE_URL` | BFF/Docker | URL interna del backend |
+| `API_KEY` | Backend LLM | API key del proveedor |
+| `GEMINI_ENDPOINT_BASE` | Backend LLM | Endpoint base del proveedor |
+| `LLM_MODEL_GENERAL` | Backend LLM | Modelo general |
+| `LLM_MODEL_REPAIR` | Backend LLM | Modelo de reparación |
+| `LLM_MODEL_COMPARE` | Backend LLM | Modelo de comparación |
+| `AALIE_EXPORTER_ASSETS_DIR` | API export | Override de assets LaTeX |
+| `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS` | Web | Fuerza diagramas deterministas sin LLM |
+
+La lista ampliada vive en [docs/06-operations/environment-variables.md](./docs/06-operations/environment-variables.md).
+
+---
+
+## Uso
+
+Flujo básico:
+
+1. Entra a `/{locale}/analyzer`.
+2. Escribe o carga pseudocódigo.
+3. Revisa la validación de sintaxis.
+4. Ejecuta el análisis.
+5. Observa resultados, trazas y visualizaciones.
+6. Exporta el reporte si lo necesitas.
+7. Refuerza conceptos con curso, ejemplos, guía de usuario y quizzes.
+
+Rutas principales:
+
+| Ruta | Uso |
+| --- | --- |
+| `/{locale}/analyzer` | Editor y análisis de algoritmos |
+| `/{locale}/examples` | Ejemplos por categoría |
+| `/{locale}/course` | Contenido modular del curso |
+| `/{locale}/quizzes` | Dashboard y sesiones de quiz |
+| `/{locale}/user-guide` | Guía de uso |
+
+Locales disponibles:
+
+- `es`
+- `en`
+
+---
+
+## Export institucional
+
+El backend genera exportes desde un snapshot versionado y estable, no desde recálculos ad hoc. Eso mantiene consistencia entre la UI, el archivo exportado y los artefactos adjuntos.
+
+Formatos disponibles:
+
+- `markdown`
+- `latex`
+- `pdf`
+- `zip`
+
+Notas prácticas:
+
+- `markdown` y `latex` son formatos nativos del pipeline.
+- `pdf` depende de `pdflatex`.
+- El bundle ZIP puede incluir `report.*`, `snapshot.json` y `manifest.json`.
+
+Contratos relacionados:
+
+- [docs/03-specs/report-snapshot-spec.md](./docs/03-specs/report-snapshot-spec.md)
+- [docs/03-specs/export-engine-spec.md](./docs/03-specs/export-engine-spec.md)
+
+---
+
+## Contenido y quizzes
+
+El catálogo modular se organiza por espacios de contenido. Hoy el repo incluye al menos:
+
+- `course`: módulos de curso por locale.
+- `user-guide`: módulos de guía de usuario por locale.
+
+El sistema de quizzes usa bancos JSON bilingües y rutas activas en web y backend. El progreso del estudiante se persiste localmente en el navegador para intentos recientes, dominio por habilidad y contenido estudiado.
+
+A nivel de README, los quizzes deben entenderse como un sistema implementado con banco de preguntas sujeto a curaduría continua.
+
+---
+
+## Testing y calidad
+
+AALIE usa pruebas por capas:
+
+- unitarias;
+- component;
+- contract;
+- system;
+- export;
+- benchmark;
+- validación del catálogo;
+- validación del banco de quizzes.
+
+Los tests críticos funcionan como oráculos: entrada real, salida esperada real. Para expresiones simbólicas se prioriza equivalencia matemática o forma contractual esperada, no snapshots textuales frágiles.
+
+El CI mantiene un umbral mínimo de cobertura de `70%` para la API en la lane principal.
+
+Comandos útiles:
+
+```bash
+pnpm -r build
+pnpm validate:content-catalog
+pnpm test:api
+pnpm test:api:cov
+pnpm lint:web
+pnpm lint:api:local
+```
+
+---
+
+## CI/CD
+
+GitHub Actions ejecuta:
+
+- build de web y smoke de API;
+- pruebas de PR con cobertura;
+- lanes extendidos y nightly;
+- lint web y lint API;
+- validación contractual de `docs/`;
+- validación y tests del sistema de quizzes;
+- integración Docker.
+
+Workflow:
+
+- [`.github/workflows/ci.yaml`](./.github/workflows/ci.yaml)
+
+---
+
+## Estructura del proyecto
+
+```text
+apps/
+  api/                  FastAPI, análisis, trace, export, quizzes, LLM
+  web/                  Next.js App Router, UI y BFF
+
+packages/
+  grammar/              gramática ANTLR y codegen
+  types/                contratos y tipos compartidos
+  content-catalog/      catálogo modular y validación
+
+docs/                   specs, arquitectura, operación y ADRs
+infra/                  Docker y soporte de entorno
+```
+
+---
+
+## Documentación
+
+- [docs/README.md](./docs/README.md): mapa principal de documentación.
+- [docs/index.md](./docs/index.md): navegación rápida.
+- [docs/02-architecture/system-architecture.md](./docs/02-architecture/system-architecture.md): arquitectura general.
+- [docs/04-api/endpoints-overview.md](./docs/04-api/endpoints-overview.md): resumen de endpoints.
+- [docs/07-user/user-guide.md](./docs/07-user/user-guide.md): guía de uso contractual.
+- [docs/08-content/content-model.md](./docs/08-content/content-model.md): modelo del catálogo.
+
+
+
+<p align="center"><em>Proyecto académico, Universidad de Caldas.</em></p>
