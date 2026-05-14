@@ -5,6 +5,7 @@ Usa pseudocódigo CORRECTAMENTE formado.
 
 import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)

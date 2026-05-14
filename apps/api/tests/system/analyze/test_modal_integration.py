@@ -3,10 +3,10 @@ Test de integración: Verifica que la modal de métodos aparece cuando se carga 
 """
 
 import json
-from typing import Any, Dict
-from fastapi.testclient import TestClient
-from app.main import app
 
+from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app)
 
@@ -162,7 +162,7 @@ END"""
     data = response.json()
 
     print(f"Status: {response.status_code}")
-    print(f"Response structure:")
+    print("Response structure:")
     print(json.dumps(data, indent=2, ensure_ascii=False)[:500])
 
     assert response.status_code == 200, "El endpoint debe retornar 200"

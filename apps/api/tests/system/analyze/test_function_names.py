@@ -3,6 +3,7 @@ Test para identificar qué nombres de función funcionan en el parser.
 """
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
@@ -58,7 +59,7 @@ def test_which_function_names_work():
             not_working.append((name, f"HTTP {response.status_code}"))
     
     print("\n" + "=" * 80)
-    print(f"\nRESULTADOS:")
+    print("\nRESULTADOS:")
     print(f"Nombres que funcionan: {len(working)}")
     print(f"  {[name for name, _ in working]}")
     print(f"\nNombres que NO funcionan: {len(not_working)}")

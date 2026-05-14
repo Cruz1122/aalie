@@ -8,10 +8,11 @@ Author: Debugging Session
 """
 
 import json
+
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
 
+from app.main import app
 
 client = TestClient(app)
 
@@ -307,7 +308,7 @@ class TestApplicableMethodsDetection:
             default_method = data.get("default_method")
             recurrence_info = data.get("recurrence_info", {})
 
-            print(f"[OK] Detectado como algoritmo recursivo")
+            print("[OK] Detectado como algoritmo recursivo")
             print(f"   Metodos aplicables: {applicable_methods}")
             print(f"   Metodo por defecto: {default_method}")
             print(f"   Tipo de recurrencia: {recurrence_info.get('type', 'unknown')}")
@@ -382,7 +383,6 @@ def test_all_algorithms_summary():
     print("=" * 80 + "\n")
 
     global_results = []
-    global_failures = []
 
     for family, algorithms in TEST_ALGORITHMS.items():
         family_results = {

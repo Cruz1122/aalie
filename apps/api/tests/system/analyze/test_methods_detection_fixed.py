@@ -2,11 +2,9 @@
 Test de detección de métodos CORREGIDO - con nombres de función válidos.
 """
 
-import json
-import pytest
 from fastapi.testclient import TestClient
-from app.main import app
 
+from app.main import app
 
 client = TestClient(app)
 
@@ -265,7 +263,6 @@ def test_all_algorithms_have_multiple_methods():
                 continue
 
             applicable_methods = data.get("applicable_methods", [])
-            default_method = data.get("default_method")
             num_methods = len(applicable_methods)
 
             if num_methods >= 2:
@@ -311,7 +308,7 @@ def test_all_algorithms_have_multiple_methods():
     print(f"Porcentaje de exito: {percentage:.1f}%")
 
     # Tabla por familia
-    print(f"\nDetalle por familia:")
+    print("\nDetalle por familia:")
     for family, stats in global_stats["families"].items():
         fam_pass = stats["passing"]
         fam_total = stats["total"]

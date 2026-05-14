@@ -2,10 +2,9 @@
 Test FINAL: Modal de métodos aparece correctamente para algoritmos del catálogo.
 """
 
-import json
 from fastapi.testclient import TestClient
-from app.main import app
 
+from app.main import app
 
 client = TestClient(app)
 
