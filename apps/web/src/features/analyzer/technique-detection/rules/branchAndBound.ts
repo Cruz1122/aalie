@@ -13,6 +13,7 @@ export const branchAndBoundRule: TechniqueRule = {
 
     if (facts.recursion.hasSelfCall) score += 15;
     if (facts.choice.hasChoiceEnumeration) score += 20;
+    if (facts.choice.hasChoiceEnumerationFromBranches) score += 20;
     if (facts.mutation.hasMutationBeforeRecursiveCall) score += 20;
     if (facts.mutation.hasUndoAfterRecursiveCall) score += 20;
 
@@ -45,17 +46,31 @@ export const branchAndBoundRule: TechniqueRule = {
       });
     }
 
-    if (!facts.choice.hasChoiceEnumeration) {
+    if (
+      !facts.choice.hasChoiceEnumeration &&
+      !facts.choice.hasChoiceEnumerationFromBranches
+    ) {
       score -= 40;
       diagnostics.push(
         "No se encontró enumeración de opciones propia de búsqueda ramificada.",
       );
+    } else if (facts.choice.hasChoiceEnumerationFromBranches) {
+      diagnostics.push(
+        "Se detectó ramificación IF-based como mecanismo de elección.",
+      );
     }
 
     if (!facts.mutation.hasUndoAfterRecursiveCall) {
-      score -= 25;
+      score -= 10;
       diagnostics.push(
-        "No se encontró rollback posterior a la exploración recursiva.",
+        "No se encontró rollback posterior a la exploración recursiva (esperado en B&B).",
+      );
+    }
+
+    if (!facts.recursion.summary.hasCoExecutedSelfCalls) {
+      score -= 30;
+      diagnostics.push(
+        "Las llamadas recursivas no son co-ejecutadas (patrón de búsqueda binaria, no B&B).",
       );
     }
 
@@ -65,7 +80,7 @@ export const branchAndBoundRule: TechniqueRule = {
 
     return {
       technique: "branch_and_bound",
-      matched: score >= 85,
+      matched: score >= 70,
       score,
       confidence: confidenceFromScore(score),
       evidenceItems: evidenceItems.filter((item) => item.nodeId !== "unknown"),

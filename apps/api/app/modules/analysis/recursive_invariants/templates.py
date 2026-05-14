@@ -19,25 +19,25 @@ def _template_by_type_and_locale(
                 "base_property": "If {{base_condition}}, the function returns {{base_result}}.",
                 "inductive_hypothesis": "Assume f(k) works correctly for all k < n. "
                 "That is, f(k) satisfies the required property.",
-                "recursive_step": "For f(n), we compute f(n-1) and combine it with a constant amount of work "
-                "({{work_term}}). By the inductive hypothesis, f(n-1) works correctly, "
+                "recursive_step": "For f(n), we compute f(n-1) and combine it with local work {{work_term}}. "
+                "The recurrence is {{recurrence_template}}. By the inductive hypothesis, f(n-1) works correctly, "
                 "so f(n) also satisfies the property.",
                 "termination_guarantee": "Each call decreases n by a constant (1). Eventually, n reaches the base case, "
                 "guaranteeing termination.",
                 "didactic_summary": "This is a {{recursion_type}} pattern. The algorithm calls itself on a smaller instance "
-                "and combines results. Each recursion level does constant work.",
+                "and combines results. Each recursion level performs {{work_term}} local work, yielding total complexity {{total_complexity}}.",
             },
             "es": {
                 "base_property": "Si {{base_condition}}, la función retorna {{base_result}}.",
                 "inductive_hypothesis": "Asumimos que f(k) funciona correctamente para todo k < n. "
                 "Es decir, f(k) satisface la propiedad requerida.",
-                "recursive_step": "Para f(n), computamos f(n-1) y lo combinamos con una cantidad constante de trabajo "
-                "({{work_term}}). Por la hipótesis inductiva, f(n-1) funciona correctamente, "
+                "recursive_step": "Para f(n), computamos f(n-1) y lo combinamos con trabajo local {{work_term}}. "
+                "La recurrencia es {{recurrence_template}}. Por la hipótesis inductiva, f(n-1) funciona correctamente, "
                 "entonces f(n) también satisface la propiedad.",
                 "termination_guarantee": "Cada llamada disminuye n por una constante (1). Eventualmente, n alcanza el caso base, "
                 "garantizando la terminación.",
                 "didactic_summary": "Este es un patrón {{recursion_type}}. El algoritmo se llama a sí mismo en una instancia más pequeña "
-                "y combina resultados. Cada nivel de recursión hace trabajo constante.",
+                "y combina resultados. Cada nivel de recursión realiza trabajo local {{work_term}}, produciendo complejidad total {{total_complexity}}.",
             },
         },
         # DIVIDE AND CONQUER
@@ -148,14 +148,15 @@ def build_invariant_text(
         "recursion_type": recursion_type,
         "base_condition": facts.base_conditions[0] if facts.base_conditions else "base case",
         "base_result": facts.base_results[0] if facts.base_results else "result",
-        "num_recursive_calls": max(facts.recursive_call_count, 1),
+        "num_recursive_calls": max(facts.subproblems_per_call or facts.recursive_call_count, 1),
         # num_subproblems reflects actual subproblems resolved (1 if mutually exclusive branches)
         "num_subproblems": getattr(facts, "subproblems_per_call", max(facts.recursive_call_count, 2)),
         "divisor": 2,  # Default for divide-and-conquer; can be overridden
         # work_term describes local per-call work; total complexity depends on branching
-        "work_term": "O(n)" if facts.recursion_type == "divide_conquer" else "O(1)",
+        "work_term": getattr(facts, "local_work_term", "O(1)"),
+        "total_complexity": getattr(facts, "estimated_total_complexity", "unknown"),
         # recurrence_template is a human-friendly recurrence shape when possible
-        "recurrence_template": _build_recurrence_template(facts),
+        "recurrence_template": _build_recurrence_template(recursion_type, facts),
     }
 
     # Get templates
@@ -201,7 +202,7 @@ def build_invariant_text(
     )
 
 
-def _build_recurrence_template(facts: RecursiveFacts) -> str:
+def _build_recurrence_template(recursion_type: RecursionType, facts: RecursiveFacts) -> str:
     """Build a simple recurrence template string from detected recursive calls.
 
     This creates a human-friendly template like "T(n) = T(n-1) + T(n-2) + O(1)" when shifts
@@ -210,23 +211,44 @@ def _build_recurrence_template(facts: RecursiveFacts) -> str:
     if not facts or not facts.has_recursive_calls:
         return "T(n) = ..."
 
+    work_term = getattr(facts, "local_work_term", "O(1)")
+    size_symbols = [str(s) for s in getattr(facts, "size_parameters", [])]
+
+    if recursion_type == "divide_conquer":
+        # Single-branch divide-and-conquer and mutually exclusive branches
+        # are modeled as one subproblem per invocation.
+        return f"T(n) = T(n/2) + {work_term}"
+
     shifts = []
     for call in facts.recursive_calls:
-        # try to extract numeric shift from parameters like 'n-1' or 'n-2'
+        chosen: Optional[str] = None
         if call.parameters:
-            p = call.parameters[0]
-            if isinstance(p, str) and "n" in p:
-                shifts.append(p.replace(" ", ""))
-            else:
-                shifts.append("T(sub)")
-        else:
-            shifts.append("T(sub)")
+            # Prefer an argument that references a known size symbol and reduces/divides it.
+            for param in call.parameters:
+                p = str(param).replace(" ", "")
+                if any(sym in p for sym in size_symbols) and ("-" in p or "/" in p):
+                    chosen = p
+                    break
+
+            # Fallback: common symbolic size variable n.
+            if chosen is None:
+                for param in call.parameters:
+                    p = str(param).replace(" ", "")
+                    if "n" in p and ("-" in p or "/" in p):
+                        chosen = p
+                        break
+
+        shifts.append(chosen or "T(sub)")
 
     if not shifts:
         return "T(n) = sum recursive calls + O(work)"
 
     # join shifts into recurrence form
-    return "T(n) = " + " + ".join([f"T({s})" if s.startswith("n") else s for s in shifts]) + " + O(work)"
+    return (
+        "T(n) = "
+        + " + ".join([f"T({s})" if s.startswith("n") else s for s in shifts])
+        + f" + {work_term}"
+    )
 
 
 def generate_recursion_type_label(

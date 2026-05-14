@@ -174,14 +174,15 @@ function normalizeBlock(value: unknown): AstNode[] {
   return [];
 }
 
-function findMainProcedure(ast: AstNode): AstNode | null {
+export function findMainProcedure(ast: AstNode): AstNode | null {
   if (kindOf(ast) === "procedure") return ast;
 
-  const stack = [ast];
-  while (stack.length > 0) {
-    const node = stack.pop()!;
+  // BFS — returns the first ProcDef encountered (top-to-bottom order)
+  const queue = [ast];
+  while (queue.length > 0) {
+    const node = queue.shift()!;
     if (kindOf(node) === "procedure") return node;
-    stack.push(...getChildren(node));
+    queue.push(...getChildren(node));
   }
 
   return null;

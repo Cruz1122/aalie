@@ -136,6 +136,16 @@ export const divideAndConquerRule: TechniqueRule = {
       );
     }
 
+    if (
+      facts.recursion.summary.hasCoExecutedSelfCalls &&
+      facts.choice.hasChoiceEnumerationFromBranches
+    ) {
+      score -= 35;
+      diagnostics.push(
+        "Se detectan señales de poda/cota que no son típicas de Divide y Vencerás (posible Branch and Bound).",
+      );
+    }
+
     return {
       technique: "divide_and_conquer",
       matched: score >= 70,

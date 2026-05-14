@@ -51,6 +51,7 @@ interface AnalyzerEditorProps {
   /** Mostrar botón Ayuda con IA en esquina */
   readonly showAIHelpButton?: boolean;
   readonly onAIHelpClick?: () => void;
+  readonly onAnalyze?: () => void;
   readonly topRightActions?: ReactNode;
 }
 
@@ -218,7 +219,7 @@ export const AnalyzerEditor = forwardRef<
     // Registrar lenguaje pseudocódigo
     registerPseudocodeLanguage(monaco);
     registerPseudocodeCompletionProvider(monaco, locale);
-    registerPseudocodeCommands(editor, monaco);
+    registerPseudocodeCommands(editor, monaco, props.onAnalyze);
 
     // Aplicar tema
     monaco.editor.setTheme("pseudocode-theme");

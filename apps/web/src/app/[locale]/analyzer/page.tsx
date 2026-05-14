@@ -52,6 +52,7 @@ import type {
   AssistantFocusedPanelContext,
 } from "@/lib/assistant/types";
 import { translateBackendContent } from "@/lib/backend-content-translator";
+import { resolveProcedureCalls } from "@/lib/examples/resolveProcedureCalls";
 import {
   extractCoreData,
   isRecursiveAnalysis,
@@ -587,6 +588,7 @@ export default function AnalyzerPage() {
             best: null,
             avg: null,
             loopInvariant: parsed.loopInvariant || null,
+            recursiveInvariant: parsed.recursiveInvariant || null,
           });
         } else if (parsed && (parsed.worst || parsed.best)) {
           setData({
@@ -594,6 +596,7 @@ export default function AnalyzerPage() {
             best: parsed.best || null,
             avg: parsed.avg || null,
             loopInvariant: parsed.loopInvariant || null,
+            recursiveInvariant: parsed.recursiveInvariant || null,
           });
         }
       } catch (error) {
@@ -775,6 +778,8 @@ export default function AnalyzerPage() {
     // Verificar que no esté ya analizando
     if (analyzing) return;
 
+    const augmentedSource = resolveProcedureCalls(source);
+
     // Activar estado de carga inmediatamente
     setAnalyzing(true);
     setAnalysisProgress(0);
@@ -790,7 +795,7 @@ export default function AnalyzerPage() {
       const parsePromise = fetch("/api/grammar/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source }),
+        body: JSON.stringify({ source: augmentedSource }),
       }).then((r) => r.json() as Promise<ParseResponse>);
 
       // Animar progreso mientras se parsea (espera a que parsePromise se resuelva)
@@ -826,7 +831,7 @@ export default function AnalyzerPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            source,
+            source: augmentedSource,
             mode: "local",
           }),
         });
@@ -892,7 +897,7 @@ export default function AnalyzerPage() {
 
         // Detectar métodos aplicables
         selectedMethod = await detectAndSelectMethod(
-          source,
+          augmentedSource,
           kind,
           locale === "es" ? "es" : "en",
           progressBeforeMethodSelection,
@@ -934,7 +939,7 @@ export default function AnalyzerPage() {
         preferred_method?: MethodType;
         locale?: string;
       } = {
-        source,
+        source: augmentedSource,
         mode: "all",
         avgModel: {
           mode: "uniform",
@@ -3491,7 +3496,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             } ${isSwitchingTrace ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"}`}
           >
             {/* Main layout: código vertical, costos y ecuaciones horizontales */}
-            <div className="grid grid-cols-1 gap-6 max-lg:flex-none lg:flex-1 lg:basis-0 lg:min-h-0 lg:grid-cols-12">
+            <div className="grid grid-cols-1 gap-6 max-lg:flex-none lg:flex-1 lg:basis-0 lg:min-h-0 lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)]">
               {/* Columna izquierda: código fuente (vertical) */}
               <section className="flex min-h-0 flex-col max-lg:min-h-[max(220px,min(42svh,360px))] lg:col-span-4 lg:h-full">
                 <div className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4">
@@ -3574,6 +3579,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         onAstChange={setAst}
                         onParseStatusChange={handleParseStatusChange}
                         onErrorsChange={handleErrorsChange}
+                        onAnalyze={handleAnalyze}
                         height="100%"
                       />
                     </div>
@@ -3665,21 +3671,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         {isAlgorithmRecursive ? (
                           <button
                             onClick={() => setShowRecursiveInvariantModal(true)}
-                            disabled={!recursiveInvariantData}
                             className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-violet-400/50 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-violet-500/30 hover:from-violet-500/30 hover:to-fuchsia-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                           >
                             <span className="material-symbols-outlined text-sm">
                               verified_user
                             </span>
-                            {!recursiveInvariantData ? (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                                {tView("recursiveInvariantUnavailable")}
-                              </div>
-                            ) : (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                                {tView("viewRecursiveInvariant")}
-                              </div>
-                            )}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                              {tView("viewRecursiveInvariant")}
+                            </div>
                           </button>
                         ) : (
                           <button
@@ -3736,8 +3735,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               </section>
 
               {/* Columna derecha: costos y ecuaciones (vertical en pantallas grandes) */}
-              <section className="flex min-h-0 flex-col lg:col-span-8 lg:h-full">
-                <div className="grid h-full min-h-0 grid-cols-1 gap-6 xl:grid-cols-1">
+              <section className="flex min-h-0 flex-col lg:col-span-8 lg:h-full lg:min-h-0">
+                <div className="flex min-h-0 flex-1 flex-col gap-6">
                   {(() => {
                     // Determinar si es recursivo basado en algorithmType o en los datos
                     const isRecursive =
@@ -3784,15 +3783,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                           }
                         : null;
                       return (
-                        <div className="flex flex-col lg:h-full lg:min-h-0">
-                          <IterativeAnalysisView
-                            data={dataWithAvg}
-                            selectedCase={selectedCase}
-                            onCaseChange={setSelectedCase}
-                            onViewLineProcedure={handleViewLineProcedure}
-                            onViewGeneralProcedure={handleViewGeneralProcedure}
-                          />
-                        </div>
+                        <IterativeAnalysisView
+                          data={dataWithAvg}
+                          selectedCase={selectedCase}
+                          onCaseChange={setSelectedCase}
+                          onViewLineProcedure={handleViewLineProcedure}
+                          onViewGeneralProcedure={handleViewGeneralProcedure}
+                        />
                       );
                     }
                   })()}

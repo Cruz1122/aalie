@@ -25,7 +25,7 @@ def get_asymptotic_notation(bound_kind: str, result: str) -> str:
     def _unwrap(expression: str) -> str:
         expression = str(expression).strip()
         expression = re.sub(r"^T\(n\)\s*=\s*", "", expression).strip()
-        for prefix in ("\\Theta(", "\\mathcal{O}(", "\\Omega("):
+        for prefix in ("\\Theta(", "O(", "\\Omega("):
             if expression.startswith(prefix) and expression.endswith(")"):
                 expression = expression[len(prefix):-1].strip()
                 break
@@ -42,7 +42,7 @@ def get_asymptotic_notation(bound_kind: str, result: str) -> str:
     if bound_kind == "equivalent":
         return f"\\Theta({result})"
     elif bound_kind == "upper":
-        return f"\\mathcal{{O}}({result})"
+        return f"O({result})"
     elif bound_kind == "lower":
         return f"\\Omega({result})"
     else:  # "partial"

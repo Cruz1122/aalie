@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
   {
     href: "/analyzer",
     labelKey: "analyzer",
-    icon: "analytics",
+    icon: "psychology",
     color: "orange",
   },
   {

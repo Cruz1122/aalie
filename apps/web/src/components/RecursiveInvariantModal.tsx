@@ -1,5 +1,3 @@
-// RecursiveInvariantModal.tsx - Display recursive invariant artefact
-
 "use client";
 
 import type { RecursiveInvariant } from "@aa/types";
@@ -71,13 +69,11 @@ export default function RecursiveInvariantModal({
   const data = recursiveInvariant || fallbackInvariant(t);
   const structure = data.recursiveStructure;
 
-  // Display recursion type
   const recursionTypeLabel = getRecursionTypeLabel(
     data.evidence.recursionType,
     t,
   );
 
-  // Display status badge
   const badgeClass = statusClass[data.status] || statusClass.unavailable;
 
   return (
@@ -86,102 +82,126 @@ export default function RecursiveInvariantModal({
       onClose={onClose}
       title={t("title")}
       description={t("subtitle")}
+      titleIcon="account_tree"
+      titleIconClassName="text-cyan-400"
+      sizeClassName="w-[min(90vw,860px)] max-h-[85vh]"
       dataTestId="recursive-invariant-modal"
     >
-      <div className="space-y-6">
-        {/* Status Badge */}
-        <div
-          data-testid="status-badge"
-          className={`inline-block px-3 py-1 rounded-md border text-sm font-medium ${badgeClass}`}
-        >
-          {t(`status.${data.status}`)}
-          {data.confidence > 0 && (
-            <span data-testid="confidence-score" className="ml-2 opacity-75">
-              ({Math.round(data.confidence * 100)}%)
-            </span>
-          )}
+      <div className="space-y-4">
+        {/* Top row: didactic summary + status badge */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <p data-testid="didactic-summary" className="text-sm text-slate-300">
+            {data.didacticSummary}
+          </p>
+          <span
+            data-testid="status-badge"
+            className={`inline-flex items-center px-2.5 py-1 rounded-md border text-xs font-semibold ${badgeClass}`}
+          >
+            {t(`status.${data.status}`)}
+            {data.confidence > 0 && (
+              <span data-testid="confidence-score" className="ml-2 opacity-75">
+                ({Math.round(data.confidence * 100)}%)
+              </span>
+            )}
+          </span>
         </div>
 
-        {/* Recursive Structure Summary */}
-        {data.status !== "unavailable" && (
-          <div
-            data-testid="recursive-structure"
-            className="bg-white/5 border border-white/10 rounded-md p-4"
-          >
-            <h3 className="text-cyan-200 font-semibold text-sm mb-3 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">
-                device_hub
-              </span>
-              {t("sections.recursiveStructure")}
-            </h3>
-            <div className="space-y-2 text-sm">
-              {structure.baseCondition && (
-                <div data-testid="base-condition">
-                  <span className="text-gray-400">
-                    {t("labels.baseCondition")}:
-                  </span>
-                  <code className="ml-2 bg-black/30 px-2 py-1 rounded text-cyan-300">
-                    {structure.baseCondition}
-                  </code>
-                </div>
-              )}
-              {structure.baseResult && (
-                <div data-testid="base-result">
-                  <span className="text-gray-400">
-                    {t("labels.baseResult")}:
-                  </span>
-                  <code className="ml-2 bg-black/30 px-2 py-1 rounded text-cyan-300">
-                    {structure.baseResult}
-                  </code>
-                </div>
-              )}
-              {structure.recursiveCallPattern.length > 0 && (
-                <div data-testid="recursive-calls">
-                  <span className="text-gray-400">
-                    {t("labels.recursiveCalls")}:
-                  </span>
-                  <div className="mt-1 space-y-1">
-                    {structure.recursiveCallPattern.map((pattern, idx) => (
-                      <div
-                        key={idx}
-                        className="ml-2 bg-black/30 px-2 py-1 rounded text-cyan-300 text-xs font-mono"
-                      >
-                        {pattern.calls}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div data-testid="recursion-type">
-                <span className="text-gray-400">
-                  {t("labels.recursionType")}:
-                </span>
-                <span className="ml-2 text-blue-300">{recursionTypeLabel}</span>
-              </div>
-            </div>
+        {/* Reason alert */}
+        {data.reason && data.status !== "unavailable" && (
+          <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+            <span className="font-semibold">{t("labels.reason")}: </span>
+            {t(`reasons.${data.reason}`)}
           </div>
         )}
 
-        {/* Invariant Sections - Three Column Layout */}
+        {/* Structure info row */}
         {data.status !== "unavailable" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {/* Base Property */}
-            <article
-              data-testid="section-base-property"
-              className="bg-white/5 border border-white/10 rounded-md p-4"
-            >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <article className="bg-white/5 border border-white/10 rounded-md p-3">
               <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[16px]">
-                  check_circle
+                  account_tree
                 </span>
-                {t("sections.baseProperty")}
+                {t("labels.recursionType")}
               </h3>
-              <div className="text-sm text-gray-200 leading-relaxed">
-                <MarkdownRenderer content={data.invariant.baseProperty} />
+              <p
+                data-testid="recursion-type"
+                className="text-sm text-slate-200"
+              >
+                {recursionTypeLabel}
+              </p>
+            </article>
+            <article className="bg-white/5 border border-white/10 rounded-md p-3">
+              <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">
+                  info
+                </span>
+                {t("sections.recursiveStructure")}
+              </h3>
+              <div className="space-y-1 text-sm">
+                {structure.baseCondition && (
+                  <div data-testid="base-condition">
+                    <span className="text-gray-400 text-xs">
+                      {t("labels.baseCondition")}:
+                    </span>
+                    <code className="ml-2 bg-black/30 px-2 py-0.5 rounded text-cyan-300 text-xs">
+                      {structure.baseCondition}
+                    </code>
+                  </div>
+                )}
+                {structure.baseResult && (
+                  <div data-testid="base-result">
+                    <span className="text-gray-400 text-xs">
+                      {t("labels.baseResult")}:
+                    </span>
+                    <code className="ml-2 bg-black/30 px-2 py-0.5 rounded text-cyan-300 text-xs">
+                      {structure.baseResult}
+                    </code>
+                  </div>
+                )}
+                {structure.recursiveCallPattern.length > 0 && (
+                  <div data-testid="recursive-calls">
+                    <span className="text-gray-400 text-xs">
+                      {t("labels.recursiveCalls")}:
+                    </span>
+                    <div className="mt-0.5 space-y-0.5">
+                      {structure.recursiveCallPattern.map((pattern, idx) => (
+                        <code
+                          key={idx}
+                          className="block bg-black/30 px-2 py-0.5 rounded text-cyan-300 text-xs font-mono"
+                        >
+                          {pattern.calls}
+                        </code>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </article>
+          </div>
+        )}
 
-            {/* Inductive Hypothesis */}
+        {/* Base Property — full width */}
+        {data.status !== "unavailable" && (
+          <article
+            data-testid="section-base-property"
+            className="bg-white/5 border border-white/10 rounded-md p-4"
+          >
+            <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">
+                check_circle
+              </span>
+              {t("sections.baseProperty")}
+            </h3>
+            <div className="text-sm text-gray-200 leading-relaxed">
+              <MarkdownRenderer content={data.invariant.baseProperty} />
+            </div>
+          </article>
+        )}
+
+        {/* 3-column grid: Inductive Hypothesis | Recursive Step | Termination Guarantee */}
+        {data.status !== "unavailable" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <article
               data-testid="section-inductive-hypothesis"
               className="bg-white/5 border border-white/10 rounded-md p-4"
@@ -198,8 +218,6 @@ export default function RecursiveInvariantModal({
                 />
               </div>
             </article>
-
-            {/* Recursive Step */}
             <article
               data-testid="section-recursive-step"
               className="bg-white/5 border border-white/10 rounded-md p-4"
@@ -214,42 +232,26 @@ export default function RecursiveInvariantModal({
                 <MarkdownRenderer content={data.invariant.recursiveStep} />
               </div>
             </article>
+            <article
+              data-testid="section-termination-guarantee"
+              className="bg-white/5 border border-white/10 rounded-md p-4"
+            >
+              <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">
+                  done_all
+                </span>
+                {t("sections.terminationGarantee")}
+              </h3>
+              <div className="text-sm text-gray-200 leading-relaxed">
+                <MarkdownRenderer
+                  content={data.invariant.terminationGarantee}
+                />
+              </div>
+            </article>
           </div>
         )}
 
-        {/* Termination Guarantee */}
-        {data.status !== "unavailable" && (
-          <article
-            data-testid="section-termination-guarantee"
-            className="bg-white/5 border border-white/10 rounded-md p-4"
-          >
-            <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">
-                done_all
-              </span>
-              {t("sections.terminationGarantee")}
-            </h3>
-            <div className="text-sm text-gray-200 leading-relaxed">
-              <MarkdownRenderer content={data.invariant.terminationGarantee} />
-            </div>
-          </article>
-        )}
-
-        {/* Didactic Summary */}
-        <article
-          data-testid="didactic-summary"
-          className="bg-blue-500/10 border border-blue-400/30 rounded-md p-4"
-        >
-          <h3 className="text-blue-300 font-semibold text-sm mb-2 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[16px]">info</span>
-            {t("sections.summary")}
-          </h3>
-          <p className="text-sm text-gray-200 leading-relaxed">
-            {data.didacticSummary}
-          </p>
-        </article>
-
-        {/* Evidence (if detailed view wanted) */}
+        {/* Evidence */}
         {data.evidence.detectedRecursiveCalls.length > 0 && (
           <details
             data-testid="evidence-section"
