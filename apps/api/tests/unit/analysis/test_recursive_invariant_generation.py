@@ -212,6 +212,85 @@ def test_spanish_locale():
     print(f"  ES: {invariant_es['didacticSummary']}")
 
 
+def test_insertion_sort_recursive_invariant_work_term_and_complexity():
+    """Insertion sort recursion should infer linear local work and quadratic total complexity."""
+
+    ast = {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ProcDef",
+                "name": "insertionSortRec",
+                "params": [{"name": "A"}, {"name": "n"}],
+                "body": [
+                    {
+                        "type": "If",
+                        "test": {
+                            "type": "Binary",
+                            "op": "<=",
+                            "left": {"type": "Identifier", "name": "n"},
+                            "right": {"type": "Literal", "value": 1},
+                        },
+                        "consequent": [
+                            {"type": "Return", "value": {"type": "Literal", "value": 0}}
+                        ],
+                        "alternate": [],
+                    },
+                    {
+                        "type": "Call",
+                        "func": {"type": "Identifier", "name": "insertionSortRec"},
+                        "args": [
+                            {"type": "Identifier", "name": "A"},
+                            {
+                                "type": "Binary",
+                                "op": "-",
+                                "left": {"type": "Identifier", "name": "n"},
+                                "right": {"type": "Literal", "value": 1},
+                            },
+                        ],
+                    },
+                    {
+                        "type": "While",
+                        "test": {
+                            "type": "Binary",
+                            "op": ">",
+                            "left": {"type": "Identifier", "name": "j"},
+                            "right": {"type": "Literal", "value": 0},
+                        },
+                        "body": [
+                            {
+                                "type": "Assign",
+                                "left": {"type": "Identifier", "name": "j"},
+                                "right": {
+                                    "type": "Binary",
+                                    "op": "-",
+                                    "left": {"type": "Identifier", "name": "j"},
+                                    "right": {"type": "Literal", "value": 1},
+                                },
+                            }
+                        ],
+                    },
+                    {"type": "Return", "value": {"type": "Literal", "value": 0}},
+                ],
+            }
+        ],
+    }
+
+    facts = extract_recursive_facts(ast)
+    assert facts.local_work_term == "O(n)"
+    assert facts.estimated_total_complexity == "O(n^2)"
+
+    invariant = generate_recursive_invariant(ast=ast, locale="es")
+    step = invariant["invariant"]["recursiveStep"]
+    summary = invariant["didacticSummary"]
+
+    assert "O(n)" in step
+    assert "T(n) = T(n-1) + O(n)" in step
+    assert "O(n^2)" in summary
+
+    print("\n✓ Insertion sort invariant reflects O(n) per level and O(n^2) total")
+
+
 if __name__ == "__main__":
     print("=" * 80)
     print("Testing Recursive Invariant Generation")

@@ -5603,6 +5603,48 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Simplificar el resultado final
             return self._simplify_latex_expr(result)
 
+    def _extract_asymptotic_core(self, expression: Any) -> Optional[str]:
+        """Extrae el núcleo de crecimiento desde expresiones como T(n)=..., Θ(...), O(...), Ω(...)."""
+        if expression is None:
+            return None
+
+        expr = str(expression).strip()
+        if not expr or expr == "N/A":
+            return None
+
+        expr = re.sub(r"^T\(n\)\s*=\s*", "", expr).strip()
+
+        wrappers = (
+            "\\Theta(",
+            "Theta(",
+            "\\mathcal{O}(",
+            "\\mathcal{O}(",
+            "O(",
+            "\\Omega(",
+            "Omega(",
+        )
+        for prefix in wrappers:
+            if expr.startswith(prefix) and expr.endswith(")"):
+                expr = expr[len(prefix) : -1].strip()
+                break
+
+        if not expr:
+            return None
+        return expr
+
+    def _wrap_asymptotic_by_bound_kind(self, core: Optional[str], bound_kind: str) -> str:
+        """Envuelve el núcleo con la notación correcta según bound_kind."""
+        if not core:
+            return "N/A"
+
+        if bound_kind == "upper":
+            return f"O({core})"
+        if bound_kind == "lower":
+            return f"\\Omega({core})"
+        if bound_kind == "partial":
+            return f"\\approx {core}"
+        return f"\\Theta({core})"
+
     def result(self) -> Dict[str, Any]:
         """
         Genera la respuesta estándar del análisis recursivo.
@@ -5614,7 +5656,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
         by_line = []
 
         # Determinar T_open según el método usado y el modo (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
+        selected_method = "none"
         if self.characteristic_equation:
+            selected_method = "characteristic_equation"
             # Para characteristic_equation, si hay early return y estamos en modo best, usar Θ(1)
             # El theta ya debería estar ajustado en _apply_characteristic_equation_method, pero verificamos por seguridad
             if self.mode == "best" and self.characteristic_equation.get("has_early_return", False):
@@ -5622,10 +5666,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
             else:
                 t_open = self.characteristic_equation.get("theta", "N/A")
         elif self.iteration:
+            selected_method = "iteration"
             t_open = self.iteration.get("theta", "N/A")
         elif self.recursion_tree:
+            selected_method = "recursion_tree"
             t_open = self.recursion_tree.get("theta", "N/A")
         elif self.master:
+            selected_method = "master"
             # Para master theorem, usar theta_best si mode="best"
             # Sino usar theta (worst/average)
             if self.mode == "best":
@@ -5635,10 +5682,30 @@ class RecursiveAnalyzer(BaseAnalyzer):
         else:
             t_open = "N/A"
 
+        bound_kind = self._get_method_bound_kind(selected_method)
+        core_growth = self._extract_asymptotic_core(t_open)
+        normalized_t_open = self._wrap_asymptotic_by_bound_kind(core_growth, bound_kind)
+
+        big_theta = None
+        big_o = None
+        big_omega = None
+
+        if core_growth:
+            if bound_kind == "equivalent":
+                big_theta = f"\\Theta({core_growth})"
+                big_o = f"O({core_growth})"
+                big_omega = f"\\Omega({core_growth})"
+            elif bound_kind == "upper":
+                big_o = f"O({core_growth})"
+            elif bound_kind == "lower":
+                big_omega = f"\\Omega({core_growth})"
+
         # Construir totals (big_theta para que get_notation_from_totals sea genérico)
         totals = {
-            "T_open": t_open,
-            "big_theta": t_open if t_open and t_open != "N/A" else None,
+            "T_open": normalized_t_open,
+            "big_theta": big_theta,
+            "big_o": big_o,
+            "big_omega": big_omega,
             "symbols": self.symbols if self.symbols else None,
             "notes": self.notes if self.notes else None,
         }

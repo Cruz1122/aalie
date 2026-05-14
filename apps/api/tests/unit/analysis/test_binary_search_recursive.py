@@ -87,3 +87,101 @@ def test_binary_search_classification_and_base_result():
     assert facts.base_results and facts.base_results[0] == "return -1"
 
     print('\n✓ Binary search classified as divide-and-conquer and base result correct')
+
+
+def test_binary_search_with_tail_return_branch_is_single_path_divide_conquer():
+    """Binary search style with one recursive call in an if-branch and one tail return
+    must still be treated as one recursive subproblem per execution path."""
+
+    ast = {
+        "type": "Program",
+        "body": [
+            {
+                "type": "ProcDef",
+                "name": "binarySearchRec",
+                "params": [
+                    {"name": "A"},
+                    {"name": "x"},
+                    {"name": "inicio"},
+                    {"name": "fin"},
+                ],
+                "body": [
+                    {
+                        "type": "If",
+                        "test": {
+                            "type": "Binary",
+                            "op": ">",
+                            "left": {"type": "Identifier", "name": "inicio"},
+                            "right": {"type": "Identifier", "name": "fin"},
+                        },
+                        "consequent": [
+                            {"type": "Return", "value": {"type": "Literal", "value": -1}}
+                        ],
+                        "alternate": [],
+                    },
+                    {
+                        "type": "If",
+                        "test": {
+                            "type": "Binary",
+                            "op": "<",
+                            "left": {"type": "Identifier", "name": "x"},
+                            "right": {"type": "Identifier", "name": "A[medio]"},
+                        },
+                        "consequent": [
+                            {
+                                "type": "Return",
+                                "value": {
+                                    "type": "Call",
+                                    "func": {
+                                        "type": "Identifier",
+                                        "name": "binarySearchRec",
+                                    },
+                                    "args": [
+                                        {"type": "Identifier", "name": "A"},
+                                        {"type": "Identifier", "name": "x"},
+                                        {"type": "Identifier", "name": "inicio"},
+                                        {
+                                            "type": "Binary",
+                                            "op": "-",
+                                            "left": {"type": "Identifier", "name": "medio"},
+                                            "right": {"type": "Literal", "value": 1},
+                                        },
+                                    ],
+                                },
+                            }
+                        ],
+                        "alternate": [],
+                    },
+                    {
+                        "type": "Return",
+                        "value": {
+                            "type": "Call",
+                            "func": {"type": "Identifier", "name": "binarySearchRec"},
+                            "args": [
+                                {"type": "Identifier", "name": "A"},
+                                {"type": "Identifier", "name": "x"},
+                                {
+                                    "type": "Binary",
+                                    "op": "+",
+                                    "left": {"type": "Identifier", "name": "medio"},
+                                    "right": {"type": "Literal", "value": 1},
+                                },
+                                {"type": "Identifier", "name": "fin"},
+                            ],
+                        },
+                    },
+                ],
+            }
+        ],
+    }
+
+    facts = extract_recursive_facts(ast)
+    assert facts.recursive_call_count == 2
+    assert facts.max_recursive_calls_per_path == 1
+    assert facts.subproblems_per_call == 1
+
+    invariant = generate_recursive_invariant(ast=ast, locale="es")
+    assert invariant["evidence"]["recursionType"] == "divide_conquer"
+    assert "logar" in invariant["didacticSummary"].lower()
+
+    print("\n✓ Tail-return binary search stays single-branch divide-and-conquer")

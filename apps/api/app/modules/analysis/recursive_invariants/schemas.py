@@ -56,6 +56,15 @@ class RecursiveFacts:
     # Number of subproblems actually resolved per call (1 if mutually exclusive branches, else recursive_call_count)
     subproblems_per_call: int = 0
 
+    # Maximum number of recursive calls that can execute in a single execution path.
+    max_recursive_calls_per_path: int = 0
+
+    # Estimated local work term performed per recursive level (e.g., O(1), O(n), O(n^2)).
+    local_work_term: str = "O(1)"
+
+    # Estimated total asymptotic complexity for explanatory summary (best-effort heuristic).
+    estimated_total_complexity: str = "O(n)"
+
 
 @dataclass(slots=True)
 class ClassificationResult:
