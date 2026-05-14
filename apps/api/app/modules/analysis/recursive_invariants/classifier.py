@@ -43,8 +43,11 @@ def classify_recursion_pattern(facts: RecursiveFacts) -> ClassificationResult:
             else:
                 param_patterns.add("unknown")
 
-    # If recursive calls are found but are mutually exclusive (different branches), prefer divide-and-conquer
-    if getattr(facts, "calls_are_mutually_exclusive", False):
+    # If only one recursive call can execute per path, prefer single-branch divide-and-conquer.
+    if getattr(facts, "calls_are_mutually_exclusive", False) or (
+        getattr(facts, "max_recursive_calls_per_path", 0) <= 1
+        and facts.recursive_call_count >= 2
+    ):
         reasons = [
             "Detected recursive calls in mutually exclusive branches",
             "Only one recursive branch executes per call (e.g., binary search pattern)",

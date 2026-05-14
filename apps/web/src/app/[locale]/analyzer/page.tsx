@@ -587,6 +587,7 @@ export default function AnalyzerPage() {
             best: null,
             avg: null,
             loopInvariant: parsed.loopInvariant || null,
+            recursiveInvariant: parsed.recursiveInvariant || null,
           });
         } else if (parsed && (parsed.worst || parsed.best)) {
           setData({
@@ -594,6 +595,7 @@ export default function AnalyzerPage() {
             best: parsed.best || null,
             avg: parsed.avg || null,
             loopInvariant: parsed.loopInvariant || null,
+            recursiveInvariant: parsed.recursiveInvariant || null,
           });
         }
       } catch (error) {
@@ -3665,21 +3667,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         {isAlgorithmRecursive ? (
                           <button
                             onClick={() => setShowRecursiveInvariantModal(true)}
-                            disabled={!recursiveInvariantData}
                             className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-violet-400/50 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border border-violet-500/30 hover:from-violet-500/30 hover:to-fuchsia-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                           >
                             <span className="material-symbols-outlined text-sm">
                               verified_user
                             </span>
-                            {!recursiveInvariantData ? (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                                {tView("recursiveInvariantUnavailable")}
-                              </div>
-                            ) : (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                                {tView("viewRecursiveInvariant")}
-                              </div>
-                            )}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                              {tView("viewRecursiveInvariant")}
+                            </div>
                           </button>
                         ) : (
                           <button
