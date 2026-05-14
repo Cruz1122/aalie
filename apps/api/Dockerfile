@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /usr/src/app/apps/api
 
 COPY packages/grammar/py /usr/src/app/packages/grammar/py
+COPY packages/content-data /usr/src/app/packages/content-data
 COPY apps/api/requirements.txt /tmp/requirements.txt
 
 RUN python -m pip install --upgrade pip \
