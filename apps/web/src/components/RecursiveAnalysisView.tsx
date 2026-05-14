@@ -27,6 +27,10 @@ type IterationType = AnalyzeOpenResponse["totals"]["iteration"];
 type RecursionTreeType = AnalyzeOpenResponse["totals"]["recursion_tree"];
 type MasterType = AnalyzeOpenResponse["totals"]["master"];
 
+/** Scroll + escala para KaTeX dentro de cards (min-w-0 en cadena flex/grid). */
+const KATEX_IN_CARD =
+  "min-w-0 w-full max-w-full overflow-x-auto overflow-y-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] [&_.katex-display]:!max-w-full [&_.katex-display]:!overflow-x-auto [&_.katex]:!text-[0.78em] sm:[&_.katex]:!text-[0.88em] md:[&_.katex]:!text-[0.95em]";
+
 type CaseType = "worst" | "best" | "average";
 type DPApplicabilityStatus = "clear" | "doubtful" | "rejected";
 type DPPatternType = "table" | "memoization" | "rolling_window" | "none";
@@ -312,29 +316,35 @@ const renderEfficiencyEquation = (
   if (isMasterMethod && hasDifferentComplexities) {
     // Para teorema maestro con diferentes complejidades, mostrar solo la ecuación del caso seleccionado
     return (
-      <Formula
-        latex={`T(n) = ${roundLatexNumbers(currentTheta || "N/A")}`}
-        display
-      />
+      <div className={KATEX_IN_CARD}>
+        <div className="flex justify-center">
+          <Formula
+            latex={`T(n) = ${roundLatexNumbers(currentTheta || "N/A")}`}
+            display
+          />
+        </div>
+      </div>
     );
   }
 
   if (hasDifferentComplexities) {
     return (
-      <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
-        <div className="text-center">
-          <div className="text-xs text-green-300 mb-1">{tCases("best")}:</div>
-          <Formula latex={`T(n) = ${roundLatexNumbers(bestT)}`} display />
-        </div>
-        <div className="text-center">
-          <div className="text-xs text-yellow-300 mb-1">
-            {tCases("average")}:
+      <div className={KATEX_IN_CARD}>
+        <div className="flex min-w-0 w-full max-w-full flex-row flex-wrap items-center justify-center gap-x-4 gap-y-3">
+          <div className="min-w-0 max-w-full shrink overflow-x-auto px-1 text-center">
+            <div className="mb-1 text-xs text-green-300">{tCases("best")}:</div>
+            <Formula latex={`T(n) = ${roundLatexNumbers(bestT)}`} display />
           </div>
-          <Formula latex={`T(n) = ${roundLatexNumbers(avgT)}`} display />
-        </div>
-        <div className="text-center">
-          <div className="text-xs text-red-300 mb-1">{tCases("worst")}:</div>
-          <Formula latex={`T(n) = ${roundLatexNumbers(worstT)}`} display />
+          <div className="min-w-0 max-w-full shrink overflow-x-auto px-1 text-center">
+            <div className="mb-1 text-xs text-yellow-300">
+              {tCases("average")}:
+            </div>
+            <Formula latex={`T(n) = ${roundLatexNumbers(avgT)}`} display />
+          </div>
+          <div className="min-w-0 max-w-full shrink overflow-x-auto px-1 text-center">
+            <div className="mb-1 text-xs text-red-300">{tCases("worst")}:</div>
+            <Formula latex={`T(n) = ${roundLatexNumbers(worstT)}`} display />
+          </div>
         </div>
       </div>
     );
@@ -342,10 +352,14 @@ const renderEfficiencyEquation = (
 
   // Sin diferencias, mostrar una sola ecuación
   return (
-    <Formula
-      latex={`T(n) = ${roundLatexNumbers(theta || bestT || worstT || avgT || "N/A")}`}
-      display
-    />
+    <div className={KATEX_IN_CARD}>
+      <div className="flex justify-center">
+        <Formula
+          latex={`T(n) = ${roundLatexNumbers(theta || bestT || worstT || avgT || "N/A")}`}
+          display
+        />
+      </div>
+    </div>
   );
 };
 
@@ -760,7 +774,7 @@ interface EmptyStateProps {
  */
 const renderEmptyState = (props: EmptyStateProps): React.JSX.Element => {
   return (
-    <div className="flex-1 flex items-center justify-center text-slate-400">
+    <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center text-slate-400">
       <div className="text-center">
         <span className="material-symbols-outlined text-4xl mb-2 block">
           hourglass_empty
@@ -831,9 +845,9 @@ const renderRecursionTreeCards = (
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:items-stretch">
       {/* Nivel Dominante */}
-      <div className="glass-card p-3 rounded-lg h-full flex flex-col border border-cyan-500/20">
+      <div className="glass-card flex h-full min-h-0 min-w-0 flex-col rounded-lg border border-cyan-500/20 p-3">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -841,28 +855,26 @@ const renderRecursionTreeCards = (
             </span>
             <span>{tRT("dominatingLevel")}</span>
           </h3>
-          <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-2 flex-1 min-h-[120px]">
-            <div className="text-base font-semibold text-cyan-300 text-center">
+          <div className="flex min-h-[120px] min-w-0 flex-1 flex-col items-stretch justify-between gap-2 overflow-hidden rounded border border-white/10 bg-slate-800/60 p-3">
+            <div className="shrink-0 text-center text-base font-semibold text-cyan-300">
               {getDominatingLevelText(
                 props.recursionTree?.dominating_level?.level,
               )}
             </div>
-            <div className="text-center overflow-x-auto w-full max-w-full">
-              <div className="text-xs scale-85">
-                <Formula
-                  latex={props.translateReason(
-                    props.recursionTree?.dominating_level?.reason || "",
-                  )}
-                  display
-                />
-              </div>
+            <div className={`${KATEX_IN_CARD} flex-1 text-center`}>
+              <Formula
+                latex={props.translateReason(
+                  props.recursionTree?.dominating_level?.reason || "",
+                )}
+                display
+              />
             </div>
           </div>
         </div>
       </div>
 
       {/* Ecuación de Eficiencia */}
-      <div className="glass-card p-3 rounded-lg h-full flex flex-col border border-cyan-500/30">
+      <div className="glass-card flex h-full min-h-0 min-w-0 flex-col rounded-lg border border-cyan-500/30 p-3">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -870,36 +882,38 @@ const renderRecursionTreeCards = (
             </span>
             <span>{tRT("efficiencyEquation")}</span>
           </h3>
-          <div className="bg-slate-800/60 p-3 rounded border border-cyan-500/25 flex flex-col items-center justify-center gap-3 overflow-x-auto overflow-y-auto max-h-[40vh] flex-1 min-h-[120px] min-w-0">
-            <div className="w-full min-w-0 overflow-auto [&_.katex]:!text-[0.8em] sm:[&_.katex]:!text-[0.95em] md:[&_.katex]:!text-[1em]">
-              {props.hasDifferentComplexities ? (
-                <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
-                  <div className="text-center">
-                    <div className="text-xs text-green-300 mb-1">
-                      {props.tCases("best")}:
-                    </div>
-                    <Formula latex={`T(n) = ${props.bestT}`} display />
+          <div
+            className={`${KATEX_IN_CARD} flex min-h-[120px] flex-1 flex-col items-center justify-center gap-3 rounded border border-cyan-500/25 bg-slate-800/60 p-3`}
+          >
+            {props.hasDifferentComplexities ? (
+              <div className="flex min-w-0 w-full max-w-full flex-row flex-wrap items-center justify-center gap-x-4 gap-y-3">
+                <div className="min-w-0 max-w-full shrink overflow-x-auto px-1 text-center">
+                  <div className="mb-1 text-xs text-green-300">
+                    {props.tCases("best")}:
                   </div>
-                  <div className="text-center">
-                    <div className="text-xs text-yellow-300 mb-1">
-                      {props.tCases("average")}:
-                    </div>
-                    <Formula latex={`T(n) = ${props.avgT}`} display />
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs text-red-300 mb-1">
-                      {props.tCases("worst")}:
-                    </div>
-                    <Formula latex={`T(n) = ${props.worstT}`} display />
-                  </div>
+                  <Formula latex={`T(n) = ${props.bestT}`} display />
                 </div>
-              ) : (
+                <div className="min-w-0 max-w-full shrink overflow-x-auto px-1 text-center">
+                  <div className="mb-1 text-xs text-yellow-300">
+                    {props.tCases("average")}:
+                  </div>
+                  <Formula latex={`T(n) = ${props.avgT}`} display />
+                </div>
+                <div className="min-w-0 max-w-full shrink overflow-x-auto px-1 text-center">
+                  <div className="mb-1 text-xs text-red-300">
+                    {props.tCases("worst")}:
+                  </div>
+                  <Formula latex={`T(n) = ${props.worstT}`} display />
+                </div>
+              </div>
+            ) : (
+              <div className="flex min-w-0 w-full justify-center overflow-x-auto">
                 <Formula
                   latex={`T(n) = ${roundLatexNumbers(props.theta || props.recursionTree?.theta || props.worstT || "N/A")}`}
                   display
                 />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -952,9 +966,9 @@ const renderEfficiencyCard = (
 
   return (
     <div
-      className={`glass-card p-4 sm:p-7 rounded-lg border flex-shrink-0 min-w-0 ${efficiencyBorderClass}`}
+      className={`glass-card flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border p-4 sm:p-7 ${efficiencyBorderClass}`}
     >
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 min-w-0">
+      <div className="mb-4 flex min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-white font-semibold text-sm flex items-center gap-2 flex-wrap min-w-0">
           <span
             className={`material-symbols-outlined text-base flex-shrink-0 ${efficiencyIconClass}`}
@@ -997,13 +1011,13 @@ const renderEfficiencyCard = (
         )}
       </div>
       <div
-        className={`rounded-lg bg-slate-800/60 border flex justify-start sm:justify-center items-center overflow-x-auto overflow-y-auto max-h-[40vh] min-w-0 ${efficiencyInnerBorderClass} ${
+        className={`flex min-h-0 min-w-0 flex-1 basis-0 flex-col items-center justify-center overflow-x-auto overflow-y-auto rounded-lg border bg-slate-800/60 ${efficiencyInnerBorderClass} ${
           props.isIterationMethod
             ? "p-4 sm:p-7 min-h-[100px] sm:min-h-[140px]"
             : "p-4 sm:p-6 min-h-[100px] sm:min-h-[120px]"
         }`}
       >
-        <div className="w-full min-w-0 overflow-auto [&_.katex]:!text-[0.8em] sm:[&_.katex]:!text-[0.95em] md:[&_.katex]:!text-[1em]">
+        <div className="flex w-full min-w-0 max-w-full justify-center">
           {renderEfficiencyEquation(
             props.tCases,
             props.isMasterMethod,
@@ -1775,9 +1789,9 @@ export default function RecursiveAnalysisView({
 
   // Mostrar mensaje educativo si no hay variabilidad entre worst/best/avg
   return (
-    <div className="h-full flex flex-col space-y-6">
+    <div className="flex h-full min-h-0 flex-col gap-6">
       {/* Card principal: Método y Parámetros */}
-      <div className="glass-card px-6 pt-6 pb-0 rounded-lg">
+      <div className="glass-card shrink-0 min-w-0 rounded-lg px-6 pb-0 pt-6">
         <div className="mb-4">
           <div
             className={`relative flex items-start justify-between flex-wrap gap-2 mb-3 ${isCharacteristicMethod ? "pr-56 sm:pr-72" : ""}`}
@@ -1822,21 +1836,23 @@ export default function RecursiveAnalysisView({
         </div>
 
         {/* Parámetros de la recurrencia */}
-        <div className="mb-4">
-          <h3 className="text-white font-semibold text-sm mb-3">
+        <div className="mb-4 min-w-0">
+          <h3 className="mb-3 text-sm font-semibold text-white">
             {tView("recurrenceParameters")}
           </h3>
-          <div className="flex flex-wrap items-center justify-center gap-1">
+          <div className="flex max-w-full min-w-0 flex-wrap items-center justify-center gap-x-2 gap-y-1 overflow-x-auto rounded-lg bg-slate-800/20 px-1 py-2">
             {recurrence && renderRecurrenceParameters(recurrence, tView)}
           </div>
         </div>
 
         {/* Ecuación de Recurrencia */}
-        <div className="mb-4">
-          <h3 className="text-white font-semibold text-sm mb-2">
+        <div className="mb-4 min-w-0">
+          <h3 className="mb-2 text-sm font-semibold text-white">
             {tView("recurrenceEquation")}
           </h3>
-          <div className="p-3 rounded-lg bg-slate-800/60 border border-white/10 flex justify-center">
+          <div
+            className={`${KATEX_IN_CARD} flex justify-center rounded-lg border border-white/10 bg-slate-800/60 p-3`}
+          >
             <Formula latex={recurrence.form} />
           </div>
         </div>
@@ -1965,33 +1981,35 @@ export default function RecursiveAnalysisView({
         })()}
       </div>
 
-      {/* Card de costos o información del método de Árbol de Recursión */}
-      {isRecursionTreeMethod && recursionTree
-        ? renderRecursionTreeCards({
-            tCases,
-            tRecursionTree,
-            translateReason: (r) => translateBackendContent(r, locale),
-            recursionTree,
-            hasDifferentComplexities,
-            bestT,
-            avgT,
-            worstT,
-            theta,
-          })
-        : renderEfficiencyCard({
-            tCases,
-            tRecursionTree,
-            isMasterMethod,
-            isIterationMethod,
-            hasDifferentComplexities,
-            selectedCase,
-            setSelectedCase,
-            currentTheta,
-            bestT,
-            avgT,
-            worstT,
-            theta,
-          })}
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Card de costos o información del método de Árbol de Recursión */}
+        {isRecursionTreeMethod && recursionTree
+          ? renderRecursionTreeCards({
+              tCases,
+              tRecursionTree,
+              translateReason: (r) => translateBackendContent(r, locale),
+              recursionTree,
+              hasDifferentComplexities,
+              bestT,
+              avgT,
+              worstT,
+              theta,
+            })
+          : renderEfficiencyCard({
+              tCases,
+              tRecursionTree,
+              isMasterMethod,
+              isIterationMethod,
+              hasDifferentComplexities,
+              selectedCase,
+              setSelectedCase,
+              currentTheta,
+              bestT,
+              avgT,
+              worstT,
+              theta,
+            })}
+      </div>
 
       {/* Modal de procedimiento completo */}
       {renderProcedureModal({

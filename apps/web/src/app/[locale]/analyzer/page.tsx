@@ -3491,7 +3491,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             } ${isSwitchingTrace ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"}`}
           >
             {/* Main layout: código vertical, costos y ecuaciones horizontales */}
-            <div className="grid grid-cols-1 gap-6 max-lg:flex-none lg:flex-1 lg:basis-0 lg:min-h-0 lg:grid-cols-12">
+            <div className="grid grid-cols-1 gap-6 max-lg:flex-none lg:flex-1 lg:basis-0 lg:min-h-0 lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)]">
               {/* Columna izquierda: código fuente (vertical) */}
               <section className="flex min-h-0 flex-col max-lg:min-h-[max(220px,min(42svh,360px))] lg:col-span-4 lg:h-full">
                 <div className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4">
@@ -3736,8 +3736,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               </section>
 
               {/* Columna derecha: costos y ecuaciones (vertical en pantallas grandes) */}
-              <section className="flex min-h-0 flex-col lg:col-span-8 lg:h-full">
-                <div className="grid h-full min-h-0 grid-cols-1 gap-6 xl:grid-cols-1">
+              <section className="flex min-h-0 flex-col lg:col-span-8 lg:h-full lg:min-h-0">
+                <div className="flex min-h-0 flex-1 flex-col gap-6">
                   {(() => {
                     // Determinar si es recursivo basado en algorithmType o en los datos
                     const isRecursive =
@@ -3784,15 +3784,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                           }
                         : null;
                       return (
-                        <div className="flex flex-col lg:h-full lg:min-h-0">
-                          <IterativeAnalysisView
-                            data={dataWithAvg}
-                            selectedCase={selectedCase}
-                            onCaseChange={setSelectedCase}
-                            onViewLineProcedure={handleViewLineProcedure}
-                            onViewGeneralProcedure={handleViewGeneralProcedure}
-                          />
-                        </div>
+                        <IterativeAnalysisView
+                          data={dataWithAvg}
+                          selectedCase={selectedCase}
+                          onCaseChange={setSelectedCase}
+                          onViewLineProcedure={handleViewLineProcedure}
+                          onViewGeneralProcedure={handleViewGeneralProcedure}
+                        />
                       );
                     }
                   })()}

@@ -162,7 +162,7 @@ export default function IterativeAnalysisView({
   };
 
   return (
-    <div className="flex flex-col gap-4 min-w-0 lg:h-full lg:min-h-0">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 min-w-0 lg:h-full lg:min-h-0">
       {/* Card de costos por línea */}
       <div className="glass-card flex min-h-0 flex-col rounded-lg p-4 min-w-0 lg:flex-1 lg:basis-0">
         <div className="flex shrink-0 flex-col gap-2 mb-3 min-w-0 sm:flex-row sm:items-center sm:justify-between">
@@ -218,7 +218,7 @@ export default function IterativeAnalysisView({
                   </div>
                 </div>
               ) : (
-                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                <div className="flex min-h-16 min-w-0 w-full items-center justify-center overflow-x-auto py-2">
                   <Formula latex={bestNotation} />
                 </div>
               );
@@ -335,7 +335,7 @@ export default function IterativeAnalysisView({
                   </div>
                 </div>
               ) : (
-                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                <div className="flex min-h-16 min-w-0 w-full items-center justify-center overflow-x-auto py-2">
                   <Formula latex={avgNotation} />
                 </div>
               );
@@ -397,7 +397,7 @@ export default function IterativeAnalysisView({
                   </div>
                 </div>
               ) : (
-                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                <div className="flex min-h-16 min-w-0 w-full items-center justify-center overflow-x-auto py-2">
                   <Formula latex={worstNotation} />
                 </div>
               );
