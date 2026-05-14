@@ -9298,7 +9298,7 @@ FIN FUNCIÓN"""
                 self.proof_steps.append(
                     {
                         "id": "step5",
-                        "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = \\Theta(2^n)",
+                        "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = O(2^n)",
                     }
                 )
                 theta = "2^n"
@@ -9327,12 +9327,13 @@ FIN FUNCIÓN"""
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Ramificación: número de nodos } \\Theta(2^n)"
+                        "level": "leaves",
+                        "reason": "\\text{Ramificación: número de nodos \\Theta(2^n) dominan las hojas}"
                     },
                     "table_by_levels": [],
-                    "theta": f"\\Theta({theta})",
+                    "theta": f"O({theta})",
                 }
-                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
                     support_code="RT_UNSUPPORTED_FORM",
@@ -9373,10 +9374,11 @@ FIN FUNCIÓN"""
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Cota superior por árbol balanceado: } O(n^2)"
+                        "level": "root",
+                        "reason": "\\text{Cota superior por árbol balanceado: cada nivel aporta } n-i \\text{, domina la raíz}"
                     },
                     "table_by_levels": [],
-                    "theta": theta,
+                    "theta": f"O({theta})",
                 }
                 self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
@@ -9445,10 +9447,11 @@ FIN FUNCIÓN"""
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": f"\\text{{Cota superior por árbol balanceado: }} O({branch_factor}^n)"
+                        "level": "leaves",
+                        "reason": f"\\text{{Cota superior por árbol balanceado: }} O({branch_factor}^n)\\text{{, dominan las hojas}}"
                     },
                     "table_by_levels": [],
-                    "theta": theta,
+                    "theta": f"O({theta})",
                 }
                 self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(
@@ -9522,10 +9525,11 @@ FIN FUNCIÓN"""
                         "theta": theta,
                     },
                     "dominating_level": {
-                        "reason": "\\text{Cota superior por árbol balanceado: } O(2^n)"
+                        "level": "leaves",
+                        "reason": "\\text{Cota superior por árbol balanceado: } O(2^n)\\text{, dominan las hojas}"
                     },
                     "table_by_levels": [],
-                    "theta": theta,
+                    "theta": f"O({theta})",
                 }
                 self.proof_steps.append({"id": "tree_result", "text": f"T(n) = O({theta})"})
                 recursion_tree = _with_tree_steps(

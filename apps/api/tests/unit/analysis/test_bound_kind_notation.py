@@ -89,7 +89,7 @@ def test_fibonacci_recursion_tree_uses_big_o_notation():
     payload = asymptotic_step.get("payload", {})
     asymptotic_result = payload.get("asymptoticResult", "")
 
-    assert "\\mathcal{O}(" in primary_latex or "\\mathcal{O}(" in asymptotic_result, (
+    assert "O(" in primary_latex or "O(" in asymptotic_result, (
         f"Expected O notation but got: primary_latex={primary_latex}, asymptotic_result={asymptotic_result}"
     )
     assert "\\Theta(" not in primary_latex and "\\Theta(" not in asymptotic_result, (

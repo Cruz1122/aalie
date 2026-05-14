@@ -148,10 +148,7 @@ def test_linear_shift_recursion_tree_dynamic_upper_bound(case):
     assert f"{expected_b}^n" in dominant_latex, (
         f"dominant term mismatch for {case['name']}: {dominant_latex}"
     )
-    assert (
-        f"O({expected_b}^n)" in dominant_latex
-        or f"\\mathcal{{O}}({expected_b}^n)" in dominant_latex
-    ), (
+    assert f"O({expected_b}^n)" in dominant_latex, (
         f"dominant O notation mismatch for {case['name']}: {dominant_latex}"
     )
 

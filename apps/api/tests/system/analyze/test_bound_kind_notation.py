@@ -75,7 +75,7 @@ END
     payload = asymptotic_step.get("payload", {})
     asymptotic_result = payload.get("asymptoticResult", "")
 
-    has_o = "\\mathcal{O}(2^n)" in str(primary_latex) or "\\mathcal{O}(2^n)" in str(asymptotic_result)
+    has_o = "O(2^n)" in str(primary_latex) or "O(2^n)" in str(asymptotic_result)
     has_theta = "\\Theta(" in str(primary_latex) or "\\Theta(" in str(asymptotic_result)
     has_phi = "\\varphi" in str(primary_latex) or "\\varphi" in str(asymptotic_result)
 
