@@ -6,7 +6,11 @@ import {
 import { collectLoopFacts, type LoopFacts } from "./loopFacts";
 import { collectMutationFacts, type MutationFacts } from "./mutationFacts";
 import { collectPartitionFacts, type PartitionFacts } from "./partitionFacts";
-import { collectRecursionFacts, type RecursionFacts } from "./recursionFacts";
+import {
+  collectRecursionFacts,
+  findMainProcedure,
+  type RecursionFacts,
+} from "./recursionFacts";
 import { collectShrinkFacts, type ShrinkFacts } from "./shrinkFacts";
 import { collectTableFacts, type TableFacts } from "./tableFacts";
 import type { AstNode } from "../ast/astAdapter";
@@ -28,20 +32,26 @@ export type TechniqueFacts = {
 export function collectTechniqueFacts(ast: AstNode): TechniqueFacts {
   const index = buildNodeIndex(ast);
 
-  const recursion = collectRecursionFacts(ast, index);
-  const loops = collectLoopFacts(ast, index);
-  const shrink = collectShrinkFacts(ast, index, recursion);
-  const partition = collectPartitionFacts(ast, index, recursion);
+  // Scope all fact collectors to the main procedure only.
+  // Helper procedures (like maxSubarrayCruzando) should not influence
+  // the main algorithm's technique classification.
+  const mainProc = findMainProcedure(ast);
+  const scopedAst = mainProc || ast;
+
+  const recursion = collectRecursionFacts(scopedAst, index);
+  const loops = collectLoopFacts(scopedAst, index);
+  const shrink = collectShrinkFacts(scopedAst, index, recursion);
+  const partition = collectPartitionFacts(scopedAst, index, recursion);
   const decomposition = collectDecompositionFacts(
-    ast,
+    scopedAst,
     index,
     recursion,
     shrink,
     partition,
   );
-  const table = collectTableFacts(ast, index, recursion);
-  const mutation = collectMutationFacts(ast, index, recursion);
-  const choice = collectChoiceFacts(ast, index, mutation);
+  const table = collectTableFacts(scopedAst, index, recursion);
+  const mutation = collectMutationFacts(scopedAst, index, recursion);
+  const choice = collectChoiceFacts(scopedAst, index, mutation);
 
   return {
     ast,

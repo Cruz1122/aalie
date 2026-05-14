@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from pathlib import Path
 
 from .schemas import QuizDataset, QuizQuestion, ValidationReport
 from .validator import validate_dataset
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
-QUIZ_DIR = REPO_ROOT / "packages" / "content-data" / "quizzes"
+_env_quiz_dir = os.getenv("QUIZ_DATA_DIR", "").strip()
+if _env_quiz_dir:
+    QUIZ_DIR = Path(_env_quiz_dir)
+else:
+    REPO_ROOT = Path(__file__).resolve().parents[5]
+    QUIZ_DIR = REPO_ROOT / "packages" / "content-data" / "quizzes"
 QUIZ_DATA_PATH_ES = QUIZ_DIR / "ada-quiz-bank.json"
 QUIZ_DATA_PATH_EN = QUIZ_DIR / "ada-quiz-bank.en.json"
 

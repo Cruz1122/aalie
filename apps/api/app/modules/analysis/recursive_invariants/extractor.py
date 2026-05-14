@@ -252,6 +252,15 @@ def _find_recursive_calls_in_stmt(
         value = stmt.get("value")
         if isinstance(value, dict):
             calls.extend(_find_recursive_calls_in_stmt(value, proc_name, path=list(path)))
+    elif stmt_type in ("AssignStmt", "Assignment", "VariableAssignment"):
+        # The recursive call could be in the value (RHS) of the assignment
+        value = stmt.get("value")
+        if isinstance(value, dict):
+            calls.extend(_find_recursive_calls_in_stmt(value, proc_name, path=list(path)))
+        # Also scan the target (LHS) for any nested calls (rare but possible)
+        target = stmt.get("target")
+        if isinstance(target, dict):
+            calls.extend(_find_recursive_calls_in_stmt(target, proc_name, path=list(path)))
     else:
         # Generic: if this node contains expression fields, try to scan them
         # e.g., Binary expressions nested as statements in some ASTs

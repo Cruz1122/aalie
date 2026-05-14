@@ -52,6 +52,7 @@ import type {
   AssistantFocusedPanelContext,
 } from "@/lib/assistant/types";
 import { translateBackendContent } from "@/lib/backend-content-translator";
+import { resolveProcedureCalls } from "@/lib/examples/resolveProcedureCalls";
 import {
   extractCoreData,
   isRecursiveAnalysis,
@@ -777,6 +778,8 @@ export default function AnalyzerPage() {
     // Verificar que no esté ya analizando
     if (analyzing) return;
 
+    const augmentedSource = resolveProcedureCalls(source);
+
     // Activar estado de carga inmediatamente
     setAnalyzing(true);
     setAnalysisProgress(0);
@@ -792,7 +795,7 @@ export default function AnalyzerPage() {
       const parsePromise = fetch("/api/grammar/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source }),
+        body: JSON.stringify({ source: augmentedSource }),
       }).then((r) => r.json() as Promise<ParseResponse>);
 
       // Animar progreso mientras se parsea (espera a que parsePromise se resuelva)
@@ -828,7 +831,7 @@ export default function AnalyzerPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            source,
+            source: augmentedSource,
             mode: "local",
           }),
         });
@@ -894,7 +897,7 @@ export default function AnalyzerPage() {
 
         // Detectar métodos aplicables
         selectedMethod = await detectAndSelectMethod(
-          source,
+          augmentedSource,
           kind,
           locale === "es" ? "es" : "en",
           progressBeforeMethodSelection,
@@ -936,7 +939,7 @@ export default function AnalyzerPage() {
         preferred_method?: MethodType;
         locale?: string;
       } = {
-        source,
+        source: augmentedSource,
         mode: "all",
         avgModel: {
           mode: "uniform",
@@ -3576,6 +3579,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         onAstChange={setAst}
                         onParseStatusChange={handleParseStatusChange}
                         onErrorsChange={handleErrorsChange}
+                        onAnalyze={handleAnalyze}
                         height="100%"
                       />
                     </div>

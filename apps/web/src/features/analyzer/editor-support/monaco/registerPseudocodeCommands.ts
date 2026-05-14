@@ -3,6 +3,7 @@ import type * as Monaco from "monaco-editor";
 export function registerPseudocodeCommands(
   editor: Monaco.editor.IStandaloneCodeEditor,
   monaco: typeof Monaco,
+  onAnalyze?: () => void,
 ) {
   editor.addCommand(monaco.KeyCode.Tab, () => {
     const suggestState = editor.getContribution(
@@ -53,4 +54,9 @@ export function registerPseudocodeCommands(
 
     editor.trigger("editor-support", "cursorRight", {});
   });
+
+  // Ctrl+Enter (or Cmd+Enter on Mac) to trigger analysis
+  if (onAnalyze) {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, onAnalyze);
+  }
 }

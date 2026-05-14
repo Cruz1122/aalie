@@ -604,4 +604,74 @@ quickSort3Way(A[n], izq, der) BEGIN
 END
 `,
   },
+  {
+    id: "max-subarray-dc-is-divide-and-conquer",
+    expectedTechnique: "divide_and_conquer",
+    forbiddenTechniques: ["iterative"],
+    requiredRoles: ["recursive_call"],
+    source: `
+maxSubarrayDC(A[n], inicio, fin) BEGIN
+    IF (inicio = fin) THEN BEGIN
+        RETURN A[inicio];
+    END
+    medio <- (inicio + fin) DIV 2;
+    izq <- maxSubarrayDC(A, inicio, medio);
+    der <- maxSubarrayDC(A, medio + 1, fin);
+    cruz <- maxSubarrayCruzando(A, inicio, medio, fin);
+    IF (izq >= der AND izq >= cruz) THEN BEGIN
+        RETURN izq;
+    END
+    IF (der >= cruz) THEN BEGIN
+        RETURN der;
+    END
+    RETURN cruz;
+END
+
+maxSubarrayCruzando(A[n], inicio, medio, fin) BEGIN
+    suma <- 0;
+    mejorIzq <- A[medio];
+    i <- medio;
+    WHILE (i >= inicio) DO BEGIN
+        suma <- suma + A[i];
+        IF (suma > mejorIzq) THEN BEGIN
+            mejorIzq <- suma;
+        END
+        i <- i - 1;
+    END
+    suma <- 0;
+    mejorDer <- A[medio + 1];
+    j <- medio + 1;
+    WHILE (j <= fin) DO BEGIN
+        suma <- suma + A[j];
+        IF (suma > mejorDer) THEN BEGIN
+            mejorDer <- suma;
+        END
+        j <- j + 1;
+    END
+    RETURN mejorIzq + mejorDer;
+END
+`,
+  },
+  {
+    id: "n-queens-is-backtracking",
+    expectedTechnique: "backtracking",
+    forbiddenTechniques: ["decrease_and_conquer"],
+    requiredRoles: ["choice", "mutation", "undo"],
+    source: `
+nQueens(Q[n], row, n) BEGIN
+    IF (row > n) THEN BEGIN
+        RETURN 1;
+    END
+    total <- 0;
+    FOR col <- 1 TO n DO BEGIN
+        IF (isSafeQueen(Q, row, col) = true) THEN BEGIN
+            Q[row] <- col;
+            total <- total + nQueens(Q, row + 1, n);
+            Q[row] <- 0;
+        END
+    END
+    RETURN total;
+END
+`,
+  },
 ];

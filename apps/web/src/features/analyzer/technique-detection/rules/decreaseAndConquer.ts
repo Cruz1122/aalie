@@ -54,6 +54,19 @@ export const decreaseAndConquerRule: TechniqueRule = {
       diagnostics.push("Hay señales de memoización; podría ser DP top-down.");
     }
 
+    // If the algorithm has choice enumeration + mutation + undo (backtracking signals),
+    // it should not be classified as decrease and conquer
+    if (
+      facts.choice.hasChoiceEnumeration &&
+      facts.mutation.hasMutationBeforeRecursiveCall &&
+      facts.mutation.hasUndoAfterRecursiveCall
+    ) {
+      score -= 40;
+      diagnostics.push(
+        "Se detectan señales de backtracking (elección + mutación + rollback).",
+      );
+    }
+
     return {
       technique: "decrease_and_conquer",
       matched: score >= 65,
