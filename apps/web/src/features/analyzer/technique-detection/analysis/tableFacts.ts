@@ -72,17 +72,24 @@ function inspectLoopForTableTransition(loopNode: AstNode): {
 } {
   let maxDependencyInSingleAssign = 0;
   const varDeps: Map<string, Map<string, number>> = new Map();
-  const indexedWrites: Array<{ targetBase: string | null; value: AstNode | null }> = [];
+  const indexedWrites: Array<{
+    targetBase: string | null;
+    value: AstNode | null;
+  }> = [];
 
   function getVarBaseCount(name: string, base: string): number {
     return varDeps.get(name)?.get(base) ?? 0;
   }
 
-  function resolveDeps(value: AstNode | null, targetBase: string | null): number {
+  function resolveDeps(
+    value: AstNode | null,
+    targetBase: string | null,
+  ): number {
     if (!value) return 0;
-    const direct = targetBase !== null
-      ? collectIndexedReadBases(value).filter((b) => b === targetBase).length
-      : 0;
+    const direct =
+      targetBase !== null
+        ? collectIndexedReadBases(value).filter((b) => b === targetBase).length
+        : 0;
 
     if (kindOf(value) === "expr" && value.name) {
       const varName = String(value.name);

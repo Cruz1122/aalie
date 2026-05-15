@@ -15,14 +15,6 @@ export type MutationFacts = {
   undoNodeIds: string[];
 };
 
-type MutationEvent = {
-  node: AstNode;
-  nodeId: string;
-  order: number;
-  base: string | null;
-  valueText: string;
-};
-
 export function collectMutationFacts(
   ast: AstNode,
   index: NodeIndex,
@@ -53,9 +45,7 @@ export function collectMutationFacts(
       valueText: stringifyNodeSafe(getAssignValue(node)),
     }));
 
-  const callNodeIds = new Set(
-    recursion.calls.map((call) => call.nodeId),
-  );
+  const callNodeIds = new Set(recursion.calls.map((call) => call.nodeId));
 
   const statementContainsCall = (node: AstNode): boolean => {
     const stack = [node];
@@ -145,7 +135,9 @@ function flattenStatements(ast: AstNode): AstNode[] {
     const kind = kindOf(node);
 
     if (
-      ["assign", "call", "return", "if", "for", "while", "repeat"].includes(kind)
+      ["assign", "call", "return", "if", "for", "while", "repeat"].includes(
+        kind,
+      )
     ) {
       out.push(node);
     }
@@ -167,12 +159,7 @@ function getBaseFromIndexChain(obj: Record<string, unknown>): string | null {
   if (typeof obj.name === "string") return obj.name;
   if (typeof obj.identifier === "string") return obj.identifier;
 
-  const deeper =
-    obj.target ??
-    obj.object ??
-    obj.value ??
-    obj.base ??
-    null;
+  const deeper = obj.target ?? obj.object ?? obj.value ?? obj.base ?? null;
 
   if (deeper && typeof deeper === "object") {
     return getBaseFromIndexChain(deeper as Record<string, unknown>);
@@ -211,7 +198,8 @@ function extractNodeValue(node: unknown): unknown {
   if (obj.name && typeof obj.name === "string") return obj.name as string;
   if (obj.text && typeof obj.text === "string") return obj.text as string;
   if (obj.raw && typeof obj.raw === "string") return obj.raw as string;
-  if (obj.sourceText && typeof obj.sourceText === "string") return obj.sourceText as string;
+  if (obj.sourceText && typeof obj.sourceText === "string")
+    return obj.sourceText as string;
 
   if (obj.expression && typeof obj.expression === "object") {
     return extractNodeValue(obj.expression);
@@ -227,7 +215,8 @@ function stringifyNodeSafe(node: unknown): string {
   if (node === null || node === undefined) return "";
 
   if (typeof node === "string") return node;
-  if (typeof node === "number" || typeof node === "boolean") return String(node);
+  if (typeof node === "number" || typeof node === "boolean")
+    return String(node);
 
   const extracted = extractNodeValue(node);
   if (extracted !== node) return stringifyNodeSafe(extracted);

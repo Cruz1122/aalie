@@ -1,5 +1,5 @@
-import type { MutableRefObject } from "react";
 import type * as Monaco from "monaco-editor";
+import type { MutableRefObject } from "react";
 
 export function registerPseudocodeCommands(
   editor: Monaco.editor.IStandaloneCodeEditor,

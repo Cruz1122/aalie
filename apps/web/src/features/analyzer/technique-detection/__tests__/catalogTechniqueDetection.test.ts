@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  examplesCatalog,
-  getEnabledExamples,
-} from "@/lib/examples/catalog";
+import { examplesCatalog, getEnabledExamples } from "@/lib/examples/catalog";
 
 import { detectTechniqueFromAst } from "../index";
 import { parseSourceToAst } from "./parseSourceToAst";

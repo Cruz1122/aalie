@@ -43,7 +43,6 @@ const BRANCH_AND_BOUND_CUES = [
 
 export function collectSemanticFacts(ast: AstNode): SemanticFacts {
   const identifiers = collectIdentifierLikeStrings(ast);
-  const normalized = identifiers.map(normalize);
 
   const hasGreedyCue = hasAnyCue(identifiers, GREEDY_CUES);
   const hasBranchAndBoundCue = hasAnyCue(identifiers, BRANCH_AND_BOUND_CUES);
@@ -79,13 +78,6 @@ function hasAnyCue(values: string[], cues: string[]): boolean {
       return false;
     });
   });
-}
-
-function normalize(value: string): string {
-  return value
-    .trim()
-    .replace(/[_\-\s]/g, "")
-    .toLowerCase();
 }
 
 function collectIdentifierLikeStrings(ast: AstNode): string[] {

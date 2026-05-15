@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  examplesCatalog,
-  getEnabledExamples,
-} from "@/lib/examples/catalog";
-
 import { parseSourceToAst } from "@/features/analyzer/technique-detection/__tests__/parseSourceToAst";
+import { examplesCatalog, getEnabledExamples } from "@/lib/examples/catalog";
 
 const LOCALES = ["es", "en"] as const;
 

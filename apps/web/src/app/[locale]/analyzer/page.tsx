@@ -41,6 +41,7 @@ import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-su
 import { requestTraceRefresh } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import { getApiErrorType } from "@/lib/api-error-translator";
 import {
   buildBundleDetailNotes,
   normalizeAssistantLocale,
@@ -60,7 +61,6 @@ import {
 } from "@/lib/extract-core-data";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { buildLlmComparisonPayload } from "@/lib/llm-compare-payload";
-import { getApiErrorType } from "@/lib/api-error-translator";
 import { translateLlmError } from "@/lib/llm-error-translator";
 import {
   getNormalizedLlmStructured,
@@ -811,7 +811,10 @@ export default function AnalyzerPage() {
       )) as ParseResponse;
 
       if (!parseRes.ok) {
-        if (getApiErrorType(parseRes as unknown as Record<string, unknown>) === "connection") {
+        if (
+          getApiErrorType(parseRes as unknown as Record<string, unknown>) ===
+          "connection"
+        ) {
           handleAnalysisError(
             tMessages("errorConnection"),
             setAnalyzing,
@@ -1003,7 +1006,10 @@ export default function AnalyzerPage() {
       };
 
       if (!analyzeRes.ok) {
-        if (getApiErrorType(analyzeRes as unknown as Record<string, unknown>) === "connection") {
+        if (
+          getApiErrorType(analyzeRes as unknown as Record<string, unknown>) ===
+          "connection"
+        ) {
           handleAnalysisError(
             tMessages("errorConnection"),
             setAnalyzing,

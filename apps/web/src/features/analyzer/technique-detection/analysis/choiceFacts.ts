@@ -1,5 +1,10 @@
 import type { MutationFacts } from "./mutationFacts";
-import { getCallName, getChildren, kindOf, type AstNode } from "../ast/astAdapter";
+import {
+  getCallName,
+  getChildren,
+  kindOf,
+  type AstNode,
+} from "../ast/astAdapter";
 import { opOf } from "../ast/exprInspect";
 import type { NodeIndex } from "../ast/nodeIdentity";
 
@@ -12,7 +17,21 @@ export type ChoiceFacts = {
   choiceNodeIds: string[];
 };
 
-const FEASIBILITY_PREFIXES = ["is", "can", "has", "valid", "safe", "check", "feasible", "possible", "es", "puede", "tiene", "valido", "seguro"];
+const FEASIBILITY_PREFIXES = [
+  "is",
+  "can",
+  "has",
+  "valid",
+  "safe",
+  "check",
+  "feasible",
+  "possible",
+  "es",
+  "puede",
+  "tiene",
+  "valido",
+  "seguro",
+];
 
 function isFeasibilityCallName(name: string): boolean {
   const lower = name.toLowerCase();
@@ -68,14 +87,24 @@ export function collectChoiceFacts(
     // Also detect patterns like `usado[k] = false` (availability check)
     // and `B[fila][col] != 0` (cell emptiness check) which act as
     // feasibility guards in backtracking algorithms.
-    const lhs = (condition as Record<string, unknown>).left as AstNode | undefined;
-    const rhs = (condition as Record<string, unknown>).right as AstNode | undefined;
+    const lhs = (condition as Record<string, unknown>).left as
+      | AstNode
+      | undefined;
+    const rhs = (condition as Record<string, unknown>).right as
+      | AstNode
+      | undefined;
     const op = opOf(condition);
     if (lhs && rhs && (op === "=" || op === "!=")) {
       const rhsVal = extractLiteralValue(rhs);
       const lhsVal = extractLiteralValue(lhs);
-      if (rhsVal === "false" || rhsVal === "0" || rhsVal === "f" ||
-          lhsVal === "false" || lhsVal === "0" || lhsVal === "f") {
+      if (
+        rhsVal === "false" ||
+        rhsVal === "0" ||
+        rhsVal === "f" ||
+        lhsVal === "false" ||
+        lhsVal === "0" ||
+        lhsVal === "f"
+      ) {
         return true;
       }
     }
@@ -88,7 +117,13 @@ export function collectChoiceFacts(
     if (typeof obj.value === "boolean") return String(obj.value);
     if (typeof obj.name === "string") {
       const lower = obj.name.toLowerCase();
-      if (lower === "false" || lower === "true" || lower === "f" || lower === "v") return lower;
+      if (
+        lower === "false" ||
+        lower === "true" ||
+        lower === "f" ||
+        lower === "v"
+      )
+        return lower;
     }
     if (typeof obj.raw === "string") return obj.raw;
     if (typeof obj.text === "string") return obj.text;

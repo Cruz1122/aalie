@@ -21,7 +21,9 @@ export interface AnalysisError {
 /**
  * Extrae el mensaje de error de una respuesta de parseo.
  */
-export function extractParseError(parseRes: ParseResponse & { error?: string }): string {
+export function extractParseError(
+  parseRes: ParseResponse & { error?: string },
+): string {
   if (parseRes.error) return "Error al conectar con el servidor";
   if (!parseRes.errors) {
     return "Error al parsear el código";

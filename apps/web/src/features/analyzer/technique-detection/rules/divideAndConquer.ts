@@ -1,4 +1,5 @@
 import type { TechniqueRule } from "./ruleTypes";
+import type { EvidenceItem } from "../types";
 import { confidenceFromScore } from "./score";
 
 const BT_CORE_PENALTY = 80;
@@ -9,7 +10,7 @@ export const divideAndConquerRule: TechniqueRule = {
 
   evaluate(facts) {
     let score = 0;
-    const evidenceItems = [];
+    const evidenceItems: EvidenceItem[] = [];
     const secondarySignals: string[] = [];
     const diagnostics: string[] = [];
 
@@ -81,9 +82,7 @@ export const divideAndConquerRule: TechniqueRule = {
         "Search by partition over fractionally reduced interval.",
       );
 
-      if (
-        facts.recursion.summary.maxSelfCallsOnAnyPath === 1
-      ) {
+      if (facts.recursion.summary.maxSelfCallsOnAnyPath === 1) {
         score += 25;
         secondarySignals.push("single_branch_interval_partition");
       }

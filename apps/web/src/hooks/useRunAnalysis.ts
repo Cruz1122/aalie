@@ -131,7 +131,10 @@ export function useRunAnalysis(options?: {
         };
 
         if (!parseRes.ok) {
-          if (getApiErrorType(parseRes as unknown as Record<string, unknown>) === "connection") {
+          if (
+            getApiErrorType(parseRes as unknown as Record<string, unknown>) ===
+            "connection"
+          ) {
             handleError(tMessages("errorConnection"));
             options?.onParseFail?.();
             return null;
@@ -275,7 +278,11 @@ export function useRunAnalysis(options?: {
         await animateProgress(70, 80, 200, updateProgress);
 
         if (!analyzeRes.ok) {
-          if (getApiErrorType(analyzeRes as unknown as Record<string, unknown>) === "connection") {
+          if (
+            getApiErrorType(
+              analyzeRes as unknown as Record<string, unknown>,
+            ) === "connection"
+          ) {
             handleError(tMessages("errorConnection"));
             return null;
           }
