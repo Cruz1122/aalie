@@ -3,7 +3,7 @@
 **Tipo:** normativa
 **Estado:** final
 **Audiencia:** dev
-**Fuente de verdad:** `packages/web/src/lib/analysis/technique-detector.ts`, `apps/api/app/modules/classification/classifier.py`
+**Fuente de verdad:** `apps/web/src/features/analyzer/technique-detection/`, `apps/api/app/modules/classification/classifier.py`
 **Última revisión:** 2026-05-18
 **Relacionado con informe técnico:** Sección 2.2 — Clasificación de técnicas
 
@@ -37,10 +37,24 @@ Esta clasificación es ejecutada por `detect_algorithm_kind()` en `apps/api/app/
 
 Etiquetas de alto nivel que describen la técnica algorítmica desde una perspectiva pedagógica. Se usan en el catálogo de ejemplos (`examples-catalog-spec.md`), la UI y la guía de usuario.
 
+## Core concepts
+
+Two core definitions drive the detection frontier:
+
+```
+hasBacktrackingCore =
+  choiceEnumeration && feasibilityCheck && mutationBeforeRecursion && undoAfterRecursion && hasSelfCall
+
+hasDivideAndConquerCore =
+  structuralDecomposition && fractionalShrink && independentSubproblems && !undoAfterRecursion
+```
+
+**Backtracking** is identified by *reversible mutation of a partial solution around recursive exploration*. **Divide and Conquer** is identified by *structural decomposition into independent subproblems and post-recursive combination*.
+
 ## Main Pipeline
 
 1. Normalize and index AST nodes.
-2. Collect global structural facts once.
+2. Collect global structural facts once, including semantic cues (identifiers from the source).
 3. Evaluate scoring rules over the collected facts.
 4. Pick the strongest rule, degrade confidence on strong ambiguity.
 5. Build a pedagogical evidence bundle for UI consumption.
@@ -87,18 +101,18 @@ Estas técnicas tienen soporte en el motor de análisis (pueden generar análisi
 Estas técnicas son etiquetas pedagógicas. El motor de AALIE **no** tiene soporte formal para analizar su complejidad. Se detectan por heurísticas de AST (estructura, señales) pero el análisis formal de complejidad depende de los analizadores iterativo/recursivo subyacentes:
 
 | Técnica | Estado | Criterio de detección (AST) |
-|---|---|---|
-| `greedy` | **Solo etiqueta pedagógica** | Elección greedy detectable por patrón de selección local sin backtracking. No hay motor de optimalidad greedy. Se mantiene conservador y no debe ganar en transiciones partition-like o stateful. |
-| `backtracking` | **Solo etiqueta pedagógica** | Requiere mutación + exploración recursiva + deshacer (undo). Detectable por presencia de asignación + llamada recursiva + reasignación. El análisis de complejidad resultante es el del motor recursivo (puede producir O(2^n) o O(n!)). |
-| `branch_and_bound` | **Solo etiqueta pedagógica** | Requiere lo de backtracking + evidencia de bound/poda (prune). La poda no se modela formalmente. El análisis asume worst case sin poda. |
-| `divide_and_conquer` | Completo (ver arriba) | Clasificación técnica también, con soporte completo. |
-| `dynamic_programming` | Parcial (ver arriba) | Metadata auxiliar; análisis formal via recursivo subyacente. |
+|---|---|---|---|
+| `greedy` | **Solo etiqueta pedagógica** | Algoritmos iterativos con selección local + señales semánticas (nombres de identificadores como `sortByFinishTime`, `prim`, `dijkstra`, `extractMin`). Sin señal semántica, no puede distinguirse de código iterativo genérico. Penalizado en presencia de partición. No hay motor de optimalidad greedy. |
+| `backtracking` | **Solo etiqueta pedagógica** | **Core**: `choiceEnumeration + feasibilityCheck + mutationBeforeRecursion + undoAfterRecursion + hasSelfCall`. Gana automáticamente sobre DyV, DP y B&B (a menos que B&B tenga señales de cota explícitas). El análisis de complejidad es el del motor recursivo subyacente. |
+| `branch_and_bound` | **Solo etiqueta pedagógica** | Requiere estructura de backtracking + señales semánticas de cota/poda (`bound`, `cota`, `best`, `mejor`, `prune`, `priorityQueue`, `incumbent`). Si el core de backtracking está presente SIN estas señales, se penaliza. Si está presente CON estas señales, se bonifica (+40) para ganarle a backtracking. La poda no se modela formalmente. |
+| `divide_and_conquer` | Completo (ver arriba) | **Core**: `structuralDecomposition + fractionalShrink + independentSubproblems + !undoAfterRecursion`. Penalizado fuertemente (-80) si el core de backtracking está presente. Co-ejecución de llamadas recursivas como señal secundaria. Búsqueda binaria/ternaria detectada por `mutuallyExclusiveCalls + fractionalShrink`. |
+| `dynamic_programming` | Parcial (ver arriba) | Requiere `hasReturnFromIndexedRead` (early return desde estado memoizado). Patrón de memoización bonificado (+20) cuando todas las señales de tabla coinciden. Penalizado (-80) si el core de backtracking está presente (visited marking vs memoization). |
 
 ### Greedy
 - No hay motor de optimalidad greedy: AALIE no verifica la propiedad de subestructura óptima ni la elección greedy.
-- La etiqueta se asigna por heurística estructural (selección local, sin backtracking).
+- La etiqueta se asigna por selección local + señales semánticas (`semanticFacts.ts`). Las señales semánticas son identificadores como `sortByFinishTime`, `extractMin`, `prim`, `dijkstra`, `kruskal`, `fractionalKnapsack`, etc. Se comparan usando camelCase word-boundary matching para evitar falsos positivos (ej. `primo` no activa `prim`).
 - El análisis de complejidad corresponde al tipo técnico subyacente (iterativo o recursivo).
-- Regla: no debe ganar en algoritmos partition-like o stateful (como ordenamiento o búsqueda en espacio de estados).
+- Regla: no debe ganar en algoritmos partition-like o stateful SIN señal semántica.
 
 ### Backtracking
 - Detectado por patrón: asignación de estado → llamada recursiva → deshacer estado.
@@ -115,10 +129,13 @@ Estas técnicas son etiquetas pedagógicas. El motor de AALIE **no** tiene sopor
 
 - Divide and Conquer is modeled as k-way decomposition.
 - Recursive classification distinguishes co-executed calls from mutually exclusive calls.
-- Dynamic programming requires storage-shape evidence, not just any array access.
-- Greedy stays conservative and should not win on partition-like or stateful transitions.
-- Backtracking requires mutation plus recursive exploration plus undo.
-- Branch and Bound requires the above plus bound/prune evidence.
+- Dynamic programming requires `hasReturnFromIndexedRead` (early return from memoized state), not just any array access.
+- Backtracking Core: `choiceEnumeration && feasibilityCheck && mutationBeforeRecursion && undoAfterRecursion && hasSelfCall`.
+- Divide and Conquer Core: `structuralDecomposition && fractionalShrink && independentSubproblems && !undoAfterRecursion`.
+- Greedy uses semantic cues (identifier names) to distinguish from generic iterative code. Without semantic cues, greedy cannot compete with iterative.
+- Branch and Bound that matches Backtracking Core requires explicit bound/incumbent semantic cues to win over backtracking.
+- `semanticFacts.ts` provides identifier-based cues (`hasGreedyCue`, `hasBranchAndBoundCue`) using camelCase word-boundary matching.
+- `mutationFacts.ts` detects mutation/undo pairs by base name matching across the procedure, with fallback to global pairing when BFS ordering separates mutation from call site.
 
 ## Performance Goals
 
@@ -136,13 +153,17 @@ La detección de técnica es independiente del análisis de complejidad. Un algo
 
 ## Casos soportados
 
-1. **Bubble Sort**: técnico = `iterative`, pedagógico = `iterative` (sin etiqueta especial).
-2. **Merge Sort**: técnico = `recursive`, pedagógico = `divide_and_conquer`.
-3. **Fibonacci ingenuo**: técnico = `recursive`, pedagógico = `recursive` (linear_shift).
-4. **N-Queens**: técnico = `recursive`, pedagógico = `backtracking`.
-5. **Knapsack (greedy)**: técnico = `iterative`, pedagógico = `greedy`.
-6. **Knapsack (DP)**: técnico = `recursive` o `iterative`, pedagógico = `dynamic_programming`.
-7. **Branch and Bound (TSP)**: técnico = `recursive`, pedagógico = `branch_and_bound`.
+1. **Bubble/Insertion/Selection/Gnome/Cocktail/Comb/Shell Sort**: `iterative`.
+2. **Merge Sort / QuickSort / MaxSubarrayDC**: `divide_and_conquer`.
+3. **Binary Search / Ternary Search (recursivos)**: `divide_and_conquer`.
+4. **Fibonacci ingenuo / Hanoi / Climbing Stairs**: `decrease_and_get_conquered`.
+5. **Factorial / Fast Power / Euclides / Conteo Regresivo**: `decrease_and_conquer`.
+6. **N-Queens / Permutations / Graph Coloring / Sudoku / Maze / Subset Sum**: `backtracking`.
+7. **Knapsack B&B / Job Scheduling B&B / Traveling Salesman B&B**: `branch_and_bound`.
+8. **Activity Selection / Fractional Knapsack / Huffman / Kruskal / Prim / Dijkstra**: `greedy`.
+9. **Fibonacci DP bottom-up / LCS / Edit Distance / Matrix Chain / Floyd-Warshall**: `dp_bottom_up`.
+10. **Fibonacci memoized / Edit Distance top-down / Coin Change / Knapsack top-down**: `dp_top_down`.
+11. **Kadane / Sentinel Linear Search / Sieve / Prefix Sum / Counting Sort**: `iterative`.
 
 ## Casos no soportados
 

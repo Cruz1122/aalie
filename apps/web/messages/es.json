@@ -938,6 +938,9 @@
       "leavesDominate": "Dominan las hojas",
       "rootDominates": "Domina la raíz",
       "balancedWork": "Trabajo equilibrado",
+      "leavesDominateCopy": "La expansión geométrica hace que el último nivel concentre la mayor parte del costo",
+      "rootDominatesCopy": "La contracción geométrica hace que el primer nivel concentre la mayor parte del costo",
+      "balancedWorkCopy": "Cada nivel aporta el mismo costo, resultando en trabajo equilibrado",
       "dominantLevel": "Nivel dominante",
       "levelWithNumber": "Nivel {level}",
       "efficiencyEquation": "Ecuación de Eficiencia"

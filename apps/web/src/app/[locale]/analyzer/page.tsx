@@ -60,6 +60,7 @@ import {
 } from "@/lib/extract-core-data";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { buildLlmComparisonPayload } from "@/lib/llm-compare-payload";
+import { getApiErrorType } from "@/lib/api-error-translator";
 import { translateLlmError } from "@/lib/llm-error-translator";
 import {
   getNormalizedLlmStructured,
@@ -775,8 +776,10 @@ export default function AnalyzerPage() {
 
   // Handler para el clic del botón de análisis
   const handleAnalyze = async () => {
-    // Verificar que no esté ya analizando
     if (analyzing) return;
+    if (!source.trim()) return;
+    if (!localParseOk) return;
+    if (isExporting) return;
 
     const augmentedSource = resolveProcedureCalls(source);
 
@@ -808,6 +811,19 @@ export default function AnalyzerPage() {
       )) as ParseResponse;
 
       if (!parseRes.ok) {
+        if (getApiErrorType(parseRes as unknown as Record<string, unknown>) === "connection") {
+          handleAnalysisError(
+            tMessages("errorConnection"),
+            setAnalyzing,
+            setAnalysisProgress,
+            setAnalysisMessage,
+            setAlgorithmType,
+            setIsAnalysisComplete,
+            setAnalysisError,
+            getMessage,
+          );
+          return;
+        }
         console.error("Error en parse:", parseRes);
         const errorMsg = extractParseError(parseRes);
         handleAnalysisError(
@@ -986,8 +1002,20 @@ export default function AnalyzerPage() {
         errors?: Array<{ message: string; line?: number; column?: number }>;
       };
 
-      // Verificar errores
       if (!analyzeRes.ok) {
+        if (getApiErrorType(analyzeRes as unknown as Record<string, unknown>) === "connection") {
+          handleAnalysisError(
+            tMessages("errorConnection"),
+            setAnalyzing,
+            setAnalysisProgress,
+            setAnalysisMessage,
+            setAlgorithmType,
+            setIsAnalysisComplete,
+            setAnalysisError,
+            getMessage,
+          );
+          return;
+        }
         console.error("Error en análisis:", analyzeRes);
         const errorMsg = extractAnalysisError(analyzeRes);
         handleAnalysisError(

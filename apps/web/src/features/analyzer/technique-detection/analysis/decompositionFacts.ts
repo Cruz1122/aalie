@@ -1,3 +1,4 @@
+import type { MutationFacts } from "./mutationFacts";
 import type { PartitionFacts } from "./partitionFacts";
 import type { RecursionFacts } from "./recursionFacts";
 import type { ShrinkFacts } from "./shrinkFacts";
@@ -9,6 +10,7 @@ export type DecompositionFacts = {
   hasKWayDecomposition: boolean;
   hasStructuralDecomposition: boolean;
   hasPostRecursiveCombine: boolean;
+  hasIndependentSubproblems: boolean;
   evidenceNodeIds: string[];
 };
 
@@ -18,6 +20,7 @@ export function collectDecompositionFacts(
   recursion: RecursionFacts,
   shrink: ShrinkFacts,
   partition: PartitionFacts,
+  mutation: MutationFacts,
 ): DecompositionFacts {
   const branchCount = recursion.summary.maxSelfCallsOnAnyPath;
 
@@ -33,11 +36,16 @@ export function collectDecompositionFacts(
     recursion.summary.hasSelfCallsInSameExpression ||
     recursion.summary.hasCoExecutedSelfCalls;
 
+  const hasIndependentSubproblems =
+    recursion.summary.hasCoExecutedSelfCalls &&
+    !mutation.hasUndoAfterRecursiveCall;
+
   return {
     branchCount,
     hasKWayDecomposition,
     hasStructuralDecomposition,
     hasPostRecursiveCombine,
+    hasIndependentSubproblems,
     evidenceNodeIds: recursion.calls.map((call) => call.nodeId).slice(0, 8),
   };
 }

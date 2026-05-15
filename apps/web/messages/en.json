@@ -937,6 +937,9 @@
       "leavesDominate": "Leaves dominate",
       "rootDominates": "Root dominates",
       "balancedWork": "Balanced work",
+      "leavesDominateCopy": "Geometric expansion causes the last level to concentrate most of the cost",
+      "rootDominatesCopy": "Geometric contraction causes the first level to concentrate most of the cost",
+      "balancedWorkCopy": "Each level contributes the same cost, resulting in balanced work",
       "dominantLevel": "Dominant level",
       "levelWithNumber": "Level {level}",
       "efficiencyEquation": "Efficiency Equation"

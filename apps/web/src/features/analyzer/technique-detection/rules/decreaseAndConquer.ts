@@ -67,6 +67,15 @@ export const decreaseAndConquerRule: TechniqueRule = {
       );
     }
 
+    // If the algorithm has B&B semantic cues (bound, cota, mejor, etc.),
+    // it is likely B&B, not decrease and conquer
+    if (facts.semantic.hasBranchAndBoundCue) {
+      score -= 30;
+      diagnostics.push(
+        "Se detectaron señales semánticas de Branch and Bound (cota, bound, mejor, etc.).",
+      );
+    }
+
     return {
       technique: "decrease_and_conquer",
       matched: score >= 65,

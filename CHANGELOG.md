@@ -5,18 +5,25 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
-## [1.9.0] — 2026-05-14
+## [1.10.0] — 2026-05-15
 
 ### Added
-- Manejo mejorado de contexto del asistente LLM y lógica de selección de quizzes
-- Informe completo de investigación de modales (`docs/...`)
-- Tests: detección de métodos para algoritmos recursivos (`test_complex_recursive_algorithms.py`)
-- Tests: aceptación de `\mathcal{O}` en cota superior de árbol lineal
-- Documentación: `method_outcomes` en spec de recurrencia y límite snapshot
+- **Detección estructural de técnicas algorítmicas desde AST** — nuevo módulo `technique-detection/` con pipeline completo:
+  - Recolectores de hechos: `choiceFacts`, `collectFacts`, `decompositionFacts`, `mutationFacts`, `semanticFacts`
+  - Reglas de clasificación: `backtracking`, `branchAndBound`, `decreaseAndConquer`, `divideAndConquer`, `dpTopDown`, `greedy`
+  - Test suite: `catalogTechniqueDetection.test.ts` (validación contra catálogo completo) y `techniqueDetection.test.ts` (oráculos semánticos, 35+ tests)
+- **Catálogo de ejemplos**: campo `expectedTechnique` agregado a todos los ejemplos (35+ algoritmos) para validación automática
+- **Pseudocódigo corregido/mejorado**: Strassen (multiplicación matricial real con submatrices), Subset Sum (FOR + usado[]), Permutations (usado[] + perm[]), Maze Solver (FOR con direcciones), TSP B&B (visitado[] + bound), N-Queens B&B (bound + esSeguro), Least-Cost Path B&B (visitado[] + bound), MergeSort pedagógico (return values)
+- **Desbloqueo de ejemplos**: Strassen, TSP B&B, N-Queens B&B, Least-Cost Path B&B — eliminado `catalogTier: "blocked"`
+- **ADR-015**: Decisión arquitectónica sobre detección estructural de técnicas (reemplaza borrador `adr-xxx`)
+- **Spec y oráculos** actualizados: `technique-detection-spec.md` y `technique-detection-oracles.md` con core definitions, casos soportados (35+) y excepciones semánticas
+- **i18n**: Nuevos mensajes para detección de técnicas (en/es)
+- **Integración frontend**: `RecursiveAnalysisView` y `AnalyzerPage` conectados al detector de técnicas; `useRunAnalysis` hook extendido
+- **Manejo de errores**: `api-error-translator` extendido para cubrir detección de técnicas
+- **Catalog integrity test**: Suite que valida coherencia entre `expectedTechnique` y detección real
 
 ### Changed
 - README.md actualizado con descripción y features mejoradas
-- Layout y estilos en componentes de análisis (`bdb88ea`)
 - Limpieza de imports y legibilidad del análisis en múltiples módulos (`98a1a14`)
 - Eliminación de manejo no usado de method/technique badges en `ExampleCatalogCard` y `ExamplesHomeView`
 

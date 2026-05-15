@@ -1,6 +1,8 @@
 import type { TechniqueRule } from "./ruleTypes";
 import { confidenceFromScore } from "./score";
 
+const BT_CORE_PENALTY = 80;
+
 export const divideAndConquerRule: TechniqueRule = {
   id: "divide_and_conquer",
   priority: 70,
@@ -11,6 +13,86 @@ export const divideAndConquerRule: TechniqueRule = {
     const secondarySignals: string[] = [];
     const diagnostics: string[] = [];
 
+    const hasBacktrackingCore =
+      facts.choice.hasChoiceEnumeration &&
+      facts.choice.hasFeasibilityCheck &&
+      facts.mutation.hasMutationBeforeRecursiveCall &&
+      facts.mutation.hasUndoAfterRecursiveCall &&
+      facts.recursion.hasSelfCall;
+
+    const hasDivideAndConquerCore =
+      facts.decomposition.hasStructuralDecomposition &&
+      facts.shrink.hasFractionalShrink &&
+      facts.decomposition.hasIndependentSubproblems &&
+      !facts.mutation.hasUndoAfterRecursiveCall;
+
+    /**
+     * Backtracking is identified by reversible mutation of a partial
+     * solution around recursive exploration; Divide and Conquer is
+     * identified by structural decomposition into independent subproblems
+     * and post-recursive combination.
+     *
+     * Backtracking se identifica por mutaci�n reversible de una soluci�n
+     * parcial alrededor de la exploraci�n recursiva; Divide y Vencer�s
+     * se identifica por descomposici�n estructural en subproblemas
+     * independientes y combinaci�n posterior.
+     */
+    if (hasBacktrackingCore) {
+      score -= BT_CORE_PENALTY;
+      diagnostics.push(
+        "Backtracking core detected: reversible mutation + feasibility check around recursion.",
+      );
+    }
+
+    if (hasDivideAndConquerCore) {
+      score += 80;
+      secondarySignals.push("divide_and_conquer_core");
+      for (const call of facts.recursion.calls.slice(0, 6)) {
+        evidenceItems.push({
+          role: "recursive_call" as const,
+          nodeId: call.nodeId,
+          importance: "primary" as const,
+        });
+      }
+      diagnostics.push(
+        "Divide and Conquer core detected: structural decomposition into independent subproblems.",
+      );
+    }
+
+    /**
+     * Binary search / ternary search: search-by-partition over a
+     * fractionally reduced interval with mutually exclusive branches.
+     * This is a valid DyV pattern even without co-execution.
+     */
+    if (
+      facts.recursion.summary.hasMutuallyExclusiveSelfCalls &&
+      facts.shrink.hasFractionalShrink
+    ) {
+      score += 45;
+      for (const call of facts.recursion.calls) {
+        evidenceItems.push({
+          role: "recursive_call" as const,
+          nodeId: call.nodeId,
+          importance: "primary" as const,
+        });
+      }
+      secondarySignals.push("exclusive_interval_partition");
+      diagnostics.push(
+        "Search by partition over fractionally reduced interval.",
+      );
+
+      if (
+        facts.recursion.summary.maxSelfCallsOnAnyPath === 1
+      ) {
+        score += 25;
+        secondarySignals.push("single_branch_interval_partition");
+      }
+    }
+
+    /**
+     * Co-executed self-calls (merge-sort, quick-sort, etc.) are the
+     * classic DyV pattern.
+     */
     if (facts.recursion.summary.hasCoExecutedSelfCalls) {
       score += 30;
       secondarySignals.push("co_executed_recursive_calls");
@@ -22,74 +104,30 @@ export const divideAndConquerRule: TechniqueRule = {
           importance: "primary" as const,
         });
       }
-    } else {
-      diagnostics.push("No hay llamadas recursivas co-ejecutadas.");
     }
 
     if (facts.decomposition.branchCount >= 2) {
       score += 15;
-      secondarySignals.push(
-        `k_way_branch_count_${facts.decomposition.branchCount}`,
-      );
     }
 
+    /**
+     * Structural decomposition (K-way + shrink, or partition boundary)
+     * is a strong DyV signal. Apply it outside the core check so that
+     * algorithms like quicksort still get this bonus.
+     */
     if (facts.decomposition.hasStructuralDecomposition) {
-      score += 25;
+      score += 20;
       secondarySignals.push("structural_decomposition");
     }
 
     if (facts.partition.hasPartitionLikeLoop) {
       score += 10;
       secondarySignals.push("partition_like_split");
-      for (const id of facts.partition.evidenceNodeIds.slice(0, 2)) {
-        evidenceItems.push({
-          role: "partition" as const,
-          nodeId: id,
-          importance: "secondary" as const,
-        });
-      }
     }
 
     if (facts.shrink.hasStrongShrink) {
       score += 15;
       secondarySignals.push("subproblem_shrink");
-    }
-
-    if (
-      facts.recursion.summary.hasMutuallyExclusiveSelfCalls &&
-      facts.shrink.hasFractionalShrink
-    ) {
-      score += 45;
-      secondarySignals.push("exclusive_interval_partition");
-      for (const item of facts.shrink.items
-        .filter((item) => item.kind === "fractional_shrink")
-        .slice(0, 2)) {
-        evidenceItems.push({
-          role: "split" as const,
-          nodeId: item.callNodeId,
-          importance: "primary" as const,
-          note: item.kind,
-        });
-      }
-      for (const call of facts.recursion.calls.slice(0, 6)) {
-        evidenceItems.push({
-          role: "recursive_call" as const,
-          nodeId: call.nodeId,
-          importance: "primary" as const,
-        });
-      }
-      diagnostics.push(
-        "La recursión elige una sola rama, pero el intervalo se parte por cortes fraccionales típicos de búsqueda por partición.",
-      );
-    }
-
-    if (
-      facts.recursion.summary.maxSelfCallsOnAnyPath === 1 &&
-      facts.recursion.summary.hasMutuallyExclusiveSelfCalls &&
-      facts.shrink.hasFractionalShrink
-    ) {
-      score += 15;
-      secondarySignals.push("single_branch_after_interval_split");
     }
 
     if (
@@ -99,9 +137,6 @@ export const divideAndConquerRule: TechniqueRule = {
       !facts.partition.hasNonRecursiveHelperCall
     ) {
       score -= 35;
-      diagnostics.push(
-        "La reducción parece aditiva y sin partición; se parece más a expansión recursiva que a Divide y Vencerás.",
-      );
     }
 
     if (
@@ -112,17 +147,9 @@ export const divideAndConquerRule: TechniqueRule = {
       secondarySignals.push("external_partition_call");
     }
 
-    if (facts.decomposition.hasPostRecursiveCombine) {
+    if (facts.decomposition.hasPostRecursiveCombine && !hasBacktrackingCore) {
       score += 15;
       secondarySignals.push("post_recursive_combine");
-
-      for (const id of facts.decomposition.evidenceNodeIds.slice(0, 2)) {
-        evidenceItems.push({
-          role: "combine" as const,
-          nodeId: id,
-          importance: "secondary" as const,
-        });
-      }
     }
 
     if (
@@ -131,18 +158,21 @@ export const divideAndConquerRule: TechniqueRule = {
       !facts.shrink.hasFractionalShrink
     ) {
       score -= 35;
-      diagnostics.push(
-        "Las llamadas recursivas parecen estar en ramas alternativas.",
-      );
     }
 
+    /**
+     * Co-executed calls with choice from branches suggest B&B-style
+     * branching, not DyV. Penalize unless fractional shrink (binary
+     * search partition pattern).
+     */
     if (
       facts.recursion.summary.hasCoExecutedSelfCalls &&
-      facts.choice.hasChoiceEnumerationFromBranches
+      facts.choice.hasChoiceEnumerationFromBranches &&
+      !facts.shrink.hasFractionalShrink
     ) {
       score -= 35;
       diagnostics.push(
-        "Se detectan señales de poda/cota que no son típicas de Divide y Vencerás (posible Branch and Bound).",
+        "Llamadas co-ejecutadas con ramas de selecci�n; posible Branch and Bound, no Divide y Vencer�s.",
       );
     }
 
