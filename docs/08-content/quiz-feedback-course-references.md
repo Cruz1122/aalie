@@ -1,5 +1,9 @@
 # Quizzes: Schema, JSON esperado y referencias a curso para feedback
 
+**Estado:** reemplazado
+**Reemplazado por:** `adaptive-quizzes.md`
+**Nota:** Documento histórico. El modelo de feedback y referencias a curso migró a `adaptive-quizzes.md` (secciones Feedback model y ContentRef linking).
+
 **Tipo:** normativa + guía de implementación
 
 ## Objetivo

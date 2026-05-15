@@ -1,5 +1,9 @@
 ﻿# Auditoría implementación quizzes
 
+**Estado:** reemplazado
+**Reemplazado por:** `quizzes-quality.md` (pendiente)
+**Nota:** Documento histórico. Las observaciones de implementación migraron al reporte de calidad en `quizzes-quality.md`.
+
 ## Ya existe
 - Banco JSON canónico cargando desde `packages/content-data/quizzes/ada-quiz-bank.json`.
 - Taxonomía JSON cargando y validando `topic`, `tags`, `skillIds`.

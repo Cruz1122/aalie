@@ -1,5 +1,9 @@
 # Guia de correccion de quizzes y contentRefs
 
+**Estado:** reemplazado
+**Reemplazado por:** `authoring-guide.md`
+**Nota:** Documento histórico. La guía de contentRefs y corrección de bancos migró a `authoring-guide.md` (sección ContentRef linking).
+
 ## Estado actual
 
 - El flujo de inicio desde card de curso envia `moduleId` y `moduleTitle`.

@@ -13,7 +13,7 @@ const CATEGORY_TO_TECHNIQUE: Record<ExampleCategory, TechniqueId[]> = {
   decrease_and_conquer: ["decrease_and_conquer"],
   decrease_and_get_conquered: ["decrease_and_get_conquered"],
   dp_top_down: ["dp_top_down"],
-  dp_bottom_up: ["dp_bottom_up", "iterative"],
+  dp_bottom_up: ["dp_bottom_up"],
   greedy: ["greedy", "iterative"],
   backtracking: ["backtracking"],
   branch_and_bound: ["branch_and_bound"],
@@ -23,8 +23,6 @@ const KNOWN_MISMATCHES = new Set([
   "binary-search-recursiva",
   "ternary-search-recursiva",
   "strassen-matrix-multiplication",
-  "edit-distance-top-down",
-  "matrix-chain-top-down",
   "sudoku-solver",
   "subset-sum",
   "permutations",
@@ -68,6 +66,6 @@ describe("catalog technique detection", () => {
 
   it("reports detection coverage", () => {
     expect(passed).toBeGreaterThan(0);
-    expect(skipped).toBe(13);
+    expect(skipped).toBe(11);
   });
 });

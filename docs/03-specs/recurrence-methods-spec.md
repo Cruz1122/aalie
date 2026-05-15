@@ -1,134 +1,227 @@
 # Especificación de métodos de recurrencia
 
 **Tipo:** normativa
+**Estado:** final
+**Audiencia:** dev
+**Fuente de verdad:** `apps/api/app/modules/analysis/analyzers/recursive.py`, `apps/api/app/modules/analysis/analyzers/characteristic_steps.py`, `apps/api/app/modules/analysis/analyzers/iteration_steps.py`, `apps/api/app/modules/analysis/analyzers/master_steps.py`, `apps/api/app/modules/analysis/analyzers/recursion_tree_steps.py`, `apps/api/app/modules/analysis/analyzers/base.py`, `apps/api/app/modules/export/snapshot_builder.py`
+**Última revisión:** 2026-05-18
+**Relacionado con informe técnico:** Sección 4.3 — Análisis de recurrencias
 
 ## Propósito
 
-Definir qué métodos recursivos soporta AALIE, cómo se detectan y qué salida mínima debe producir cada uno.
+Definir qué métodos de resolución de recurrencias soporta AALIE, cómo se detectan, qué familias de recurrencia se reconocen, qué salida mínima debe producir cada método, y cómo se comporta el endpoint `detect-methods`.
 
 ## Alcance
 
-Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
+Aplica a `RecursiveAnalyzer.analyze()`, `RecursiveAnalyzer.detect_applicable_methods()`, los cuatro bundles paso a paso (`characteristic_steps`, `iteration_steps`, `master_steps`, `recursion_tree_steps`), y a la serialización de recurrencias en el snapshot de export.
 
-## Fuente de verdad
+## Fuera de alcance
 
-- `apps/api/app/modules/analysis/analyzers/recursive.py`
-- step bundles en `characteristic_steps.py`, `iteration_steps.py`, `master_steps.py`, `recursion_tree_steps.py`
-- tests contract/system de recursivos
+No cubre: análisis de WHILE loops iterativos, demostración general de propiedades de puntos fijos, análisis de recurrencias probabilísticas.
 
-## Estructura
+## Contenido
 
-### Métodos soportados
+### 1. Familias de recurrencia
 
-- `master`
-- `iteration`
-- `recursion_tree`
-- `characteristic_equation`
+AALIE reconoce dos familias canónicas:
 
-### Prioridades
+**`linear_shift`** (Resta y Vencerás / Resta y Serás Vencido):
+```
+T(n) = a·T(n-b) + f(n)
+```
+- Una o múltiples ramas recursivas con desplazamiento constante del argumento.
+- Si `a=1` y `f(n)=Θ(1)` → O(n) (Resta y Vencerás).
+- Si `a>1` o `f(n)` no constante → puede degradar a exponencial o peor (Resta y Serás Vencido).
+- Ejemplos: factorial `T(n) = T(n-1) + Θ(1)`, fibonacci `T(n) = T(n-1) + T(n-2) + Θ(1)`.
 
-- `linear_shift`: `characteristic_equation` > `iteration` > `recursion_tree`
-- `divide_conquer`: `master` > `recursion_tree` > `iteration`
-- la lista de `applicable_methods` no implica que todos sean igual de recomendables; `default_method` fija la prioridad contractual.
+**`divide_conquer`** (Divide y Vencerás):
+```
+T(n) = a·T(n/b) + f(n)
+```
+- Subproblemas de tamaño fraccional homogéneo, combinación separable.
+- `a ≥ 1`, `b > 1`.
+- Ejemplos: merge sort `T(n) = 2T(n/2) + Θ(n)`, binary search `T(n) = T(n/2) + Θ(1)`.
 
-### Detección contractual de familias
+**`divide_conquer_multi`**: variante con términos múltiples de diferentes `(a_i, b_i)`.
 
-- `linear_shift`: una sola rama recursiva dominante con desplazamiento del argumento por constante o transformación lineal equivalente defendible, más combinación algebraica local compatible.
-- `divide_conquer`: varias subllamadas recursivas homogéneas sobre subproblemas de tamaño fraccional o reducible multiplicativamente, con término no recursivo separable.
-- si la forma detectada no satisface ninguna familia con evidencia suficiente, el sistema no debe promover método principal concluyente.
-- la detección de familia precede a la selección de método; primero se clasifica la forma de recurrencia y después se aplica la prioridad.
+### 2. Métodos soportados
 
-### Salida mínima por método
+| Método | Familia primaria | Prioridad | Descripción |
+|--------|-----------------|-----------|-------------|
+| `characteristic_equation` | `linear_shift` | 1 (linear_shift) | Resuelve recurrencias lineales homogéneas + particular mediante ecuación característica, raíces y solución cerrada. |
+| `iteration` | Ambas | 2 (linear_shift), 3 (divide_conquer) | Expande la recurrencia iterativamente hasta detectar patrón; útil como alternativa pedagógica. |
+| `recursion_tree` | Ambas | 3 (linear_shift), 2 (divide_conquer) | Construye árbol de expansión; especialmente útil para divide-and-conquer. |
+| `master` | `divide_conquer` | 1 (divide_conquer) | Aplica el Teorema Maestro (3 casos) con verificación de regularidad. |
 
-- `recurrence`
-- `theta` o conclusión asintótica equivalente cuando aplique
-- `step_by_step` con `method`, `version`, `overallStatus`, `steps`
-- advertencias o razones de soporte parcial cuando la cobertura sea incompleta
+### 3. Prioridades por familia
 
-### Procedimiento general del método de iteración
+**`linear_shift`**: `characteristic_equation` > `iteration` > `recursion_tree`
+**`divide_conquer`**: `master` > `recursion_tree` > `iteration`
 
-El contrato de iteración debe poder describir el siguiente flujo, incluso cuando el cierre exacto no sea posible:
+La detección de familia precede a la selección de método: primero se clasifica la forma de recurrencia y después se aplica la prioridad.
 
-1. normalizar la recurrencia para aislar la dependencia recursiva y el costo local;
-2. expandir la recurrencia durante varias iteraciones hasta observar un patrón estable;
-3. generalizar la forma tras `k` pasos, separando término residual y acumulación;
-4. resolver `k` imponiendo el caso base cuando exista cierre exacto;
-5. si no hay cierre exacto, comparar la recurrencia con una auxiliar más simple que la domine o quede por debajo de ella para derivar una cota defendible;
-6. convertir la expansión en una sumatoria o expresión simbólica equivalente;
-7. simplificar la sumatoria cuando sea posible, o conservarla como forma parcial válida;
-8. concluir con `theta`, `O` o `Omega` según la fuerza del resultado obtenido y registrar el `bound_kind` correspondiente.
+### 4. Endpoint `detect-methods`
 
-Este procedimiento no exige que la recurrencia tenga una forma exacta del tipo `T(n)=T(n-a)+b`; lo esencial es que la expansión y la comparación sean matemáticamente defendibles.
+El método `RecursiveAnalyzer.detect_applicable_methods(ast)` retorna:
 
-### Alcance matemático por método
+```json
+{
+  "ok": true,
+  "applicable_methods": ["master", "recursion_tree", "iteration"],
+  "default_method": "master",
+  "recurrence_info": {
+    "type": "divide_conquer",
+    "form": "T(n) = 2T(n/2) + n",
+    "a": 2,
+    "b": 2,
+    "f": "n",
+    "method_outcomes": {
+      "characteristic_equation": {
+        "applicable": false,
+        "recommended": false,
+        "bound_kind": "partial",
+        "bound_strength": "partial",
+        "bound_symbol": "partial"
+      },
+      "iteration": {
+        "applicable": true,
+        "recommended": false,
+        "bound_kind": "upper",
+        "bound_strength": "partial",
+        "bound_symbol": "big_o"
+      },
+      "recursion_tree": {
+        "applicable": true,
+        "recommended": false,
+        "bound_kind": "equivalent",
+        "bound_strength": "strong",
+        "bound_symbol": "theta"
+      },
+      "master": {
+        "applicable": true,
+        "recommended": true,
+        "bound_kind": "equivalent",
+        "bound_strength": "strong",
+        "bound_symbol": "theta"
+      }
+    }
+  }
+}
+```
 
-- el contrato debe poder distinguir si un método aporta una `equivalent` result, una `upper` bound, una `lower` bound o una salida `partial`;
-- `applicable_methods` indica que el método puede seleccionarse, no que garantice la misma fuerza de conclusión que el método por defecto;
-- cuando un método sea aplicable pero solo produzca una cota parcial o una cota de un solo lado, el sistema debe explicitarlo en la metadata y en la explicación pedagógica.
+**`method_outcomes`** describe por cada método: `applicable` (bool), `recommended` (coincide con `default_method`), `bound_kind` (`equivalent` | `upper` | `lower` | `partial`), `bound_strength` (`strong` si `equivalent`, sino `partial`), `bound_symbol` (`theta` | `big_o` | `big_omega` | `partial`).
 
-## Inputs
+La detección de cada método es independiente:
+- `linear_shift` → evalúa `characteristic_equation`, `iteration`, y opcionalmente `recursion_tree` (solo si desplazamientos consecutivos).
+- `divide_conquer` → evalúa `master` (siempre), `recursion_tree` (si `b` válido), `iteration` (si `a=1` o trabajo polinomial manejable).
+- `divide_conquer_multi` → solo `recursion_tree` como `upper`.
 
-- AST recursivo válido;
-- `preferred_method` opcional;
-- `mode`;
-- metadata de recurrencia detectada.
+### 5. Step bundles por método
 
-## Outputs
+Cada método expone un bundle paso a paso con esta estructura:
 
-- `applicable_methods`
-- `default_method`
-- `recurrence_info`
-- detalle del método seleccionado dentro de `totals`
+**`master_steps`**:
+1. Detected recurrence — forma canónica
+2. Master-form validation — validación de aplicabilidad
+3. Extracted parameters — a, b, f(n)
+4. Critical exponent — log_b(a)
+5. Reference growth — comparación n^log_b(a) vs f(n)
+6. Growth comparison — límite f(n)/n^log_b(a)
+7. Case evaluation — Caso 1/2/3
+8. Regularity check — condición de regularidad (Caso 3)
+9. Applicability decision — decisión final
+10. Asymptotic conclusion — Θ
 
-### `method_outcomes` (metadata del selector)
+**`iteration_steps`**:
+1. Normalize recurrence
+2. Expand recurrence (k steps)
+3. Generalize after k steps
+4. Solve k with base case
+5. Compare with dominating recurrence (si no hay cierre exacto)
+6. Convert to summation
+7. Simplify summation
+8. Conclude with bound_kind
 
-Cuando el analizador la materialice, `recurrence_info` puede incluir `method_outcomes`: un mapa con claves fijas `characteristic_equation`, `iteration`, `recursion_tree` y `master`. Cada entrada describe cómo se debe presentar ese método para la recurrencia actual:
+**`recursion_tree_steps`**:
+1. Build tree structure
+2. Compute level costs
+3. Sum across levels
+4. Conclude asymptotic bound
 
-- `applicable` (bool): el usuario puede seleccionarlo.
-- `recommended` (bool): coincide con `default_method`.
-- `bound_kind`: `equivalent` | `upper` | `lower` | `partial` — fuerza de la conclusión asintótica que aporta ese método para esta forma (no confundir con “mismo Θ que el default”).
-- `bound_strength`: `strong` solo cuando `bound_kind` es `equivalent`; en otro caso `partial`.
-- `bound_symbol`: `theta` | `big_o` | `big_omega` | `partial` — guía de notación en UI y pasos.
+**`characteristic_equation_steps`**:
+1. Form characteristic equation
+2. Find roots
+3. Build homogeneous solution
+4. Find particular solution
+5. Combine general solution
+6. Apply base cases
+7. Conclude Θ
 
-En flujos que serializan una sola instancia de método aplicado, puede aparecer `method_outcome` (singular) con la misma semántica de cotas para ese método concreto.
+### 6. Estados de salida
 
-## Invariantes
+Cada bundle puede terminar en uno de estos estados:
 
-- `characteristic_equation` solo aplica a familias lineales con shift bajo cobertura;
-- `master` se reserva para divide-and-conquer de forma canónica;
-- `recursion_tree` y `iteration` pueden coexistir con el método por defecto;
-- si el método no aplica, el motor debe fallar de forma explícita o degradar a parcial, nunca fingir aplicabilidad.
-- `default_method` debe ser coherente con la familia detectada;
-- un método aplicable no puede publicarse si contradice la familia de recurrencia inferida.
+| Estado | Significado | Acción |
+|--------|-------------|--------|
+| `conclusive` | El método produjo un resultado exacto (Θ). | Se usa como salida principal. |
+| `partial` | El método produjo una cota de un lado (O/Ω) o una forma simbólica no cerrada. | Se señala explícitamente en metadata y explicación pedagógica. |
+| `unsupported` | El método no es aplicable a esta recurrencia. | Se falla explícitamente; no se finge aplicabilidad. |
 
-## Errores esperables
+### 7. Invariantes
 
-- procedimiento principal ausente;
-- recurrencia no extraible;
-- método preferido inválido o no aplicable;
-- forma recursiva fuera de cobertura.
+1. `characteristic_equation` solo aplica a familias `linear_shift` bajo cobertura.
+2. `master` se reserva para `divide_conquer` de forma canónica.
+3. `recursion_tree` e `iteration` pueden coexistir con el método por defecto.
+4. Si el método no aplica, el motor debe fallar de forma explícita o degradar a `partial`, nunca fingir aplicabilidad.
+5. `default_method` debe ser coherente con la familia detectada.
+6. Un método aplicable no puede publicarse si contradice la familia de recurrencia inferida.
+7. `method_outcomes` debe ser consistente: si `applicable=false`, `recommended` debe ser `false`.
+8. La detección de familia precede a la selección de método.
 
-## Ejemplos
+### 8. Errores esperables
 
-### Ejemplos validos
+- Procedimiento principal ausente → `errors: ["No se encontró un procedimiento principal"]`.
+- Recurrencia no extraíble → `errors: ["No se pudieron determinar los tamaños de los subproblemas"]`.
+- Método preferido inválido → `errors: ["Método preferido inválido: {name}"]`.
+- Forma recursiva fuera de cobertura → `errors: ["No aplicable: {reason}"]`.
+- Extracción de recurrencia falla → `errors: ["Error extrayendo recurrencia: {reason}"]`.
+- Ecuación característica falla → `errors: ["Error aplicando Método de Ecuación Característica: {reason}"]`.
+- Mezcla de tipos de subproblemas → `errors: ["Subproblemas de tipos distintos"]`.
 
-- `mergeSort`: `master`, `recursion_tree`, a veces `iteration`.
-- `factorial(n) = n * factorial(n-1)`: `iteration`, `characteristic_equation` según cobertura.
-- `fibonacci(n) = fibonacci(n-1) + fibonacci(n-2)`: `characteristic_equation` con validación DP.
+### 9. Casos soportados (canónicos)
 
-### Ejemplos no soportados
+1. **Merge Sort**: `T(n) = 2T(n/2) + Θ(n)` → Master Caso 2 → `Θ(n log n)`
+2. **Binary Search**: `T(n) = T(n/2) + Θ(1)` → Master Caso 2 → `Θ(log n)`
+3. **Factorial**: `T(n) = T(n-1) + Θ(1)` → Iteración → `Θ(n)`
+4. **Fibonacci (ingenuo)**: `T(n) = T(n-1) + T(n-2) + Θ(1)` → Ecuación característica → `Θ(φ^n)`
+5. **Fibonacci (PD)**: `T(n) = T(n-1) + Θ(1)` → Iteración → `Θ(n)`
+6. **Subset sum (ingenuo)**: llamada recursiva dentro de FOR → `T(n) = n·T(n-1) + Θ(1)` → `Θ(n!)` o `Θ(2^n)`
 
-- recurrencias no lineales o con tamaños de subproblema no inferibles;
-- formas que no puedan ubicarse en `divide_conquer` ni `linear_shift` bajo la cobertura actual.
+### 10. Casos no soportados
 
-## Limites conocidos
+1. **Recurrencias no lineales**: formas como `T(n) = T(n-1)^2 + Θ(1)`.
+2. **Tamaños de subproblema no inferibles**: cuando el análisis del AST no puede determinar el patrón de reducción.
+3. **Splits no uniformes**: `T(n) = T(n/3) + T(2n/3) + Θ(n)` — fuera del `divide_conquer` canónico (se requiere `divide_conquer_multi`).
+4. **`f(n)` no polinomial**: `T(n) = 2T(n/2) + Θ(n!)` — el Teorema Maestro no puede comparar crecimiento.
+5. **Recurrencias con acceso a campo de objeto sin heurística**: el motor aplica heurísticas conservadoras (`object_field_access_tree`, `object_field_access_list`) que pueden no capturar la forma exacta.
 
-- algunos bundles pueden terminar en `partial` o `unsupported` y aun así ser la salida correcta del sistema;
-- la metadata de PD es auxiliar y no reemplaza el método principal de complejidad.
-- el selector puede ofrecer métodos no recomendados siempre que su alcance matemático quede señalado como `equivalent`, `upper`, `lower` o `partial`.
+### 11. Evidencia
+
+- La detección de métodos en `recursive.py:detect_applicable_methods()` evalúa cada método independientemente por familia.
+- `_build_method_outcomes()` en `recursive.py` produce el mapa `method_outcomes` con `bound_kind`, `bound_strength`, `bound_symbol`.
+- `_normalize_recurrence()` en `snapshot_builder.py` normaliza la recurrencia para export (versiones `divide_conquer`, `divide_conquer_multi`, `linear_shift`).
+- Los step bundles (`master_steps.py`, `iteration_steps.py`, etc.) contienen el procedimiento pedagógico completo.
+
+### 12. Limitaciones
+
+- Algunos bundles pueden terminar en `partial` o `unsupported` y aun así ser la salida correcta del sistema.
+- La metadata de PD es auxiliar y no reemplaza el método principal de complejidad.
+- El selector puede ofrecer métodos no recomendados siempre que su alcance matemático quede señalado como `equivalent`, `upper`, `lower` o `partial`.
+- La reconstrucción de árbol de recurrencia simbólico completo no está implementada (`not_implemented` en snapshot).
 
 ## Archivos relacionados
 
 - `analysis-engine-spec.md`
 - `execution-trace-spec.md`
+- `report-snapshot-spec.md`
 - `../04-api/analysis-api.md`

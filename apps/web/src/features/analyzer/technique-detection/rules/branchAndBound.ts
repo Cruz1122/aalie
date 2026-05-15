@@ -78,6 +78,16 @@ export const branchAndBoundRule: TechniqueRule = {
       diagnostics.push("No se encontró poda clara antes de expandir ramas.");
     }
 
+    if (
+      facts.table.hasReturnFromIndexedRead &&
+      facts.table.hasSameStorageReadWrite
+    ) {
+      score -= 35;
+      diagnostics.push(
+        "Se detectó patrón de memoización típico de PD top-down; se descarta B&B.",
+      );
+    }
+
     return {
       technique: "branch_and_bound",
       matched: score >= 70,

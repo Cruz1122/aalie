@@ -1,9 +1,10 @@
+import type { MutableRefObject } from "react";
 import type * as Monaco from "monaco-editor";
 
 export function registerPseudocodeCommands(
   editor: Monaco.editor.IStandaloneCodeEditor,
   monaco: typeof Monaco,
-  onAnalyze?: () => void,
+  onAnalyzeRef?: MutableRefObject<(() => void) | undefined>,
 ) {
   editor.addCommand(monaco.KeyCode.Tab, () => {
     const suggestState = editor.getContribution(
@@ -56,7 +57,9 @@ export function registerPseudocodeCommands(
   });
 
   // Ctrl+Enter (or Cmd+Enter on Mac) to trigger analysis
-  if (onAnalyze) {
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, onAnalyze);
+  if (onAnalyzeRef) {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      onAnalyzeRef.current?.();
+    });
   }
 }

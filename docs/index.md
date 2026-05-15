@@ -1,120 +1,58 @@
 # Mapa de navegación de docs
 
 **Tipo:** descriptiva
+**Estado:** final
+**Audiencia:** dev | docente | evaluador | operador | autor-contenido
+**Fuente de verdad:** estructura actual de `/docs`, módulos del sistema en `apps/` y `packages/`
+**Última revisión:** 2026-05-18
+**Relacionado con informe técnico:** sección de documentación, mapa de referencias cruzadas
 
 ## Propósito
 
-Ofrecer un mapa rápido para localizar la documentación correcta según la tarea que se quiera resolver.
+Ofrecer un mapa rápido para localizar la documentación correcta según la tarea que se quiera resolver. Organiza la lectura por objetivo práctico, no por historia del proyecto ni por estructura de carpetas. Cada fila indica qué leer primero, qué leer después y cómo validar que el cambio sea correcto.
 
-## Alcance
+## Navegación por tarea
 
-Este archivo organiza la lectura por objetivo práctico, no por historia del proyecto.
+| Quiero... | Leer primero | Luego leer | Validar con |
+|---|---|---|---|
+| Entender el producto | `01-product/vision.md` + `01-product/final-scope.md` | `01-product/capability-map.md` | `README.md` (raíz) |
+| Presentar AALIE | `01-product/presentation-brief.md` | `01-product/generative-ai-usage.md` | — |
+| Cambiar parser / AST | `03-specs/pseudocode-grammar-spec.md` + `03-specs/ast-schema.md` | `04-api/parse-api.md` + `04-api/schemas/parse-schema.md` | `apps/api/tests/contract/oracles/` |
+| Cambiar análisis iterativo | `03-specs/analysis-engine-spec.md` + `03-specs/iterative-analysis-spec.md` | `04-api/analysis-api.md` + `04-api/schemas/analysis-schema.md` | `apps/api/tests/contract/oracles/test_iterative_*.py` |
+| Cambiar WHILE | `03-specs/while-heuristics-spec.md` | `03-specs/analysis-engine-spec.md` | `apps/api/tests/contract/oracles/test_while_*.py` |
+| Cambiar recurrencias | `03-specs/recurrence-methods-spec.md` | `03-specs/analysis-engine-spec.md` | `apps/api/tests/contract/oracles/test_recursive_*.py` |
+| Cambiar trace | `03-specs/execution-trace-spec.md` | `02-architecture/data-flow.md` + `02-architecture/execution-trace-architecture.md` | `apps/api/tests/contract/trace_contracts/` |
+| Cambiar export | `03-specs/report-snapshot-spec.md` + `03-specs/export-engine-spec.md` | `04-api/execution-api.md` + `04-api/schemas/export-report-schema.md` | `apps/api/tests/contract/export/` + `apps/api/tests/unit/export/` |
+| Cambiar LLM | `03-specs/llm-assistance-spec.md` | `04-api/llm-api.md` + `04-api/schemas/llm-schema.md` | `apps/api/tests/system/llm/` |
+| Cambiar contenido | `08-content/content-model.md` + `08-content/course-json-schema.md` | `08-content/authoring-guide.md` + `08-content/block-json-schema.md` + `08-content/inline-rich-text-schema.md` | `pnpm validate:content-catalog` |
+| Cambiar quizzes | `03-specs/quizzes-spec.md` + `08-content/quiz-json-schema.md` | `04-api/quizzes-api.md` | `python apps/api/scripts/validate_quiz_bank.py` |
+| Validar comportamiento | `05-quality/testing-strategy.md` + `05-quality/algorithm-oracles.md` | `05-quality/coverage-policy.md` + `05-quality/benchmarking.md` | `pnpm test:api:cov` (gate 70%) |
+| Operar localmente | `06-operations/local-development.md` | `06-operations/environment-variables.md` + `06-operations/deployment.md` | `pnpm -r build` |
+| Preparar Manual Técnico | `01-product/manual-tecnico-coverage-map.md` | Todos los CORE CONTRACTS (`03-specs/`) | `pnpm test:docs-contracts` |
+| Usar AALIE como estudiante | `07-user/user-guide.md` + `07-user/analyzer-workflows.md` | `07-user/recursive-analysis-guide.md` + `07-user/exports-guide.md` + `07-user/course-guide.md` | — |
+| Usar AALIE como docente | `07-user/user-guide.md` + `07-user/examples-guide.md` | `08-content/authoring-guide.md` + `07-user/faq.md` | — |
+| Revisar decisión arquitectónica | `09-decisions/` (ADR por tema) | `03-specs/` (especificación afectada) | ADR vinculante + tests contract asociados |
+| Integrar FE/BE | `04-api/endpoints-overview.md` | `04-api/analysis-api.md` + `04-api/execution-api.md` + `04-api/llm-api.md` | `apps/api/tests/system/` |
+| Diagnosticar problema en producción | `06-operations/troubleshooting.md` | `06-operations/environment-variables.md` + `05-quality/performance.md` | `apps/api/tests/contract/regression/` |
 
-## Fuente de verdad
+## Tareas específicas
 
-- estructura actual de `/docs`;
-- módulo real del sistema en `apps/` y `packages/`.
-
-## Estructura
-
-### Cómo leer este índice
-
-- `Lectura conceptual`: ayuda a ubicar el sistema y entender responsabilidades.
-- `Contrato obligatorio`: fuente de verdad que debe cambiar si cambia el comportamiento contractual.
-- si ambos aparecen juntos, el contrato obligatorio prevalece.
-
-### Entender el sistema
-
-Lectura conceptual:
-
-1. `01-product/vision.md`
-2. `02-architecture/system-architecture.md`
-3. `02-architecture/frontend-architecture.md`
-4. `02-architecture/backend-architecture.md`
-
-### Cambiar parser, AST o análisis
-
-Contrato obligatorio:
-
-1. `03-specs/pseudocode-grammar-spec.md`
-2. `03-specs/ast-schema.md`
-3. `03-specs/analysis-engine-spec.md`
-4. `03-specs/while-heuristics-spec.md`
-5. `03-specs/recurrence-methods-spec.md`
-
-Contrato secundario:
-
-6. `04-api/parse-api.md`
-7. `04-api/analysis-api.md`
-
-### Trazas, snapshot y export
-
-Lectura conceptual:
-
-1. `02-architecture/execution-trace-architecture.md`
-
-Contrato obligatorio:
-
-2. `03-specs/execution-trace-spec.md`
-3. `03-specs/report-snapshot-spec.md`
-4. `03-specs/export-engine-spec.md`
-
-### Integración FE/BE
-
-Contrato obligatorio:
-
-1. `04-api/endpoints-overview.md`
-2. `04-api/analysis-api.md`
-3. `04-api/execution-api.md`
-4. `04-api/llm-api.md`
-
-### Validar comportamiento
-
-Contrato obligatorio:
-
-1. `05-quality/testing-strategy.md`
-2. `05-quality/algorithm-oracles.md`
-3. `05-quality/coverage-policy.md`
-4. `05-quality/benchmarking.md`
-
-### Levantar y operar el proyecto
-
-1. `06-operations/local-development.md`
-2. `06-operations/environment-variables.md`
-3. `06-operations/deployment.md`
-4. `06-operations/troubleshooting.md`
-
-### Usar AALIE
-
-1. `07-user/user-guide.md`
-2. `07-user/analyzer-workflows.md`
-3. `07-user/recursive-analysis-guide.md`
-4. `07-user/exports-guide.md`
-5. `07-user/examples-guide.md`
-
-### Diseñar contenido y quizzes
-
-1. `08-content/content-model.md`
-2. `08-content/course-json-schema.md`
-3. `08-content/block-json-schema.md`
-4. `08-content/inline-rich-text-schema.md`
-5. `08-content/content-validation.md`
-6. `08-content/search-indexing.md`
-7. `08-content/progress-model.md`
-8. `08-content/quiz-json-schema.md`
-9. `08-content/authoring-guide.md`
-
-## Ejemplos
-
-- Si una ruta HTTP cambia, actualizar primero `04-api/` y luego validar `scripts/check_docs_contracts.py`.
-- Si una regla de WHILE cambia, actualizar `03-specs/while-heuristics-spec.md`, el ADR relevante si cambia una decisión, y los tests contract.
-- Si cambia el contrato de contenido, actualizar `08-content/`, `packages/content-catalog/` y el ADR `09-decisions/adr-008-unified-content-spaces.md`.
+- **Si una ruta HTTP cambia:** actualizar primero `04-api/` (endpoint + schema), luego validar con `scripts/check_docs_contracts.py` y correr `apps/api/tests/system/` para verificar el contrato contra el router real.
+- **Si una regla de WHILE cambia:** actualizar `03-specs/while-heuristics-spec.md`, el ADR relevante (`09-decisions/adr-003-conservative-while-heuristics.md`), y los tests contract en `apps/api/tests/contract/oracles/test_while_*.py`.
+- **Si cambia el contrato de contenido:** actualizar `08-content/` (modelo, schemas), `packages/content-catalog/` (validación e implementación), y el ADR `09-decisions/adr-008-unified-content-spaces.md`.
+- **Si cambia el snapshot de export:** actualizar `03-specs/report-snapshot-spec.md`, `04-api/schemas/snapshot-schema.md`, y verificar sincronización de versiones con `pnpm test:docs-contracts`.
+- **Si se agrega un módulo al monorepo:** actualizar `02-architecture/system-architecture.md`, agregar la entrada en `README.md` raíz, y verificar que `scripts/check_docs_contracts.py` no falle por estructura faltante.
+- **Si se añade un endpoint de quizzes:** actualizar `04-api/quizzes-api.md`, agregar el proxy BFF en `apps/web/src/app/api/` y verificar contra `python apps/api/scripts/validate_quiz_bank.py`.
 
 ## Límites conocidos
 
 - Este mapa no sustituye los contratos normativos de `03-specs/` y `04-api/`.
+- Varios archivos referenciados en las tablas son planificados pero aún no existen en el repositorio (ver informe de entrega).
+- Las rutas de validación que apuntan a `tests/contract/export/` asumen la creación de ese directorio; actualmente los tests de export residen en `apps/api/tests/unit/export/` y `apps/api/tests/benchmark/test_export_benchmark.py`.
 
 ## Archivos relacionados
 
-- `README.md`
-- `09-decisions/adr-001-docs-restructure.md`
+- `README.md` — gateway principal de documentación
+- `01-product/vision.md` — visión del producto
+- `09-decisions/adr-001-docs-restructure.md` — ADR que define la estructura actual de documentación
+- `scripts/check_docs_contracts.py` — script de validación de estructura documental

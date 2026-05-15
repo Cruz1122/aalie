@@ -70,8 +70,28 @@ function inspectLoopForTableTransition(loopNode: AstNode): {
   hasPreviousDependency: boolean;
   previousDependencyCount: number;
 } {
-  let hasIndexedWrite = false;
   let maxDependencyInSingleAssign = 0;
+  const varDeps: Map<string, Map<string, number>> = new Map();
+  const indexedWrites: Array<{ targetBase: string | null; value: AstNode | null }> = [];
+
+  function getVarBaseCount(name: string, base: string): number {
+    return varDeps.get(name)?.get(base) ?? 0;
+  }
+
+  function resolveDeps(value: AstNode | null, targetBase: string | null): number {
+    if (!value) return 0;
+    const direct = targetBase !== null
+      ? collectIndexedReadBases(value).filter((b) => b === targetBase).length
+      : 0;
+
+    if (kindOf(value) === "expr" && value.name) {
+      const varName = String(value.name);
+      return direct + getVarBaseCount(varName, targetBase ?? "");
+    }
+
+    return direct;
+  }
+
   const stack = getChildren(loopNode);
 
   while (stack.length > 0) {
@@ -79,20 +99,34 @@ function inspectLoopForTableTransition(loopNode: AstNode): {
     if (kindOf(node) === "assign") {
       const target = getAssignTarget(node);
       const value = getAssignValue(node);
+      const targetName = isSimpleIdentifier(target);
+
+      if (targetName && value) {
+        const readBases = collectIndexedReadBases(value);
+        if (readBases.length > 0) {
+          const deps = new Map<string, number>();
+          for (const base of readBases) {
+            deps.set(base, (deps.get(base) ?? 0) + 1);
+          }
+          varDeps.set(targetName, deps);
+        }
+      }
 
       if (isIndexedAccess(target)) {
-        hasIndexedWrite = true;
         const targetBase = getIndexedBaseName(target);
-        const count = collectIndexedReadBases(value).filter(
-          (base) => targetBase !== null && base === targetBase,
-        ).length;
-        if (count > maxDependencyInSingleAssign) {
-          maxDependencyInSingleAssign = count;
-        }
+        indexedWrites.push({ targetBase, value });
       }
     }
 
     stack.push(...getChildren(node));
+  }
+
+  const hasIndexedWrite = indexedWrites.length > 0;
+  for (const { targetBase, value } of indexedWrites) {
+    const count = resolveDeps(value, targetBase);
+    if (count > maxDependencyInSingleAssign) {
+      maxDependencyInSingleAssign = count;
+    }
   }
 
   return {
@@ -148,6 +182,15 @@ function inspectRecursiveMemoShape(
       hasIndexedReadBeforeRecursiveCall && hasIndexedWriteAfterRecursiveCall,
     hasReturnFromIndexedRead,
   };
+}
+
+function isSimpleIdentifier(value: unknown): string | null {
+  if (!value || typeof value !== "object") return null;
+  const node = value as AstNode;
+  if ((node.type ?? node.kind) === "Identifier" && node.name) {
+    return String(node.name);
+  }
+  return null;
 }
 
 function isIndexedAccess(value: unknown): boolean {

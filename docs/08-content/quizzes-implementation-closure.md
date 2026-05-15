@@ -1,5 +1,9 @@
 ﻿# Cierre de implementación quizzes
 
+**Estado:** reemplazado
+**Reemplazado por:** `../03-specs/quizzes-spec.md`
+**Nota:** Documento histórico. El cierre de implementación está cubierto en la especificación normativa `quizzes-spec.md`.
+
 ## Lo existente que se conservó
 - Contrato base de dataset JSON y taxonomía ADA.
 - Estructura del módulo backend `quizzes` (repository, validator, grading, router).

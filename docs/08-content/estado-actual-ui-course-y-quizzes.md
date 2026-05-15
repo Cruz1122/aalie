@@ -1,5 +1,9 @@
 # Estado actual UI: `course` y `quizzes`
 
+**Estado:** reemplazado
+**Reemplazado por:** `../03-specs/quizzes-spec.md` + `course-json-schema.md`
+**Nota:** Documento histórico. El estado de la UI de quizzes y course está cubierto en `quizzes-spec.md` (sección Frontend integration) y `course-json-schema.md` (estructura de módulos).
+
 Documento técnico del estado **actual implementado** en frontend (`apps/web`) para las secciones `/course` y `/quizzes`.
 
 ---

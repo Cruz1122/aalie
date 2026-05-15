@@ -116,6 +116,8 @@ export const AnalyzerEditor = forwardRef<
   const [techniqueModalOpen, setTechniqueModalOpen] = useState(false);
   const didRemountAfterZeroHeightRef = useRef(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const onAnalyzeRef = useRef(props.onAnalyze);
+  onAnalyzeRef.current = props.onAnalyze;
 
   useEffect(() => {
     const syncViewport = () => {
@@ -219,7 +221,7 @@ export const AnalyzerEditor = forwardRef<
     // Registrar lenguaje pseudocódigo
     registerPseudocodeLanguage(monaco);
     registerPseudocodeCompletionProvider(monaco, locale);
-    registerPseudocodeCommands(editor, monaco, props.onAnalyze);
+    registerPseudocodeCommands(editor, monaco, onAnalyzeRef);
 
     // Aplicar tema
     monaco.editor.setTheme("pseudocode-theme");
