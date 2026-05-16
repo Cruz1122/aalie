@@ -15,8 +15,15 @@ from .invariants import generate_loop_invariant
 from .invariants.schemas import empty_loop_invariant
 
 
-def analyze_algorithm(
-    source: str,
+def _normalize_locale(locale: Optional[str]) -> str:
+    locale_val = (locale or "en").lower()[:2]
+    if locale_val not in ("en", "es"):
+        return "en"
+    return locale_val
+
+
+def analyze_ast(
+    ast: Dict[str, Any],
     mode: str = "worst",
     api_key: Optional[str] = None,
     avg_model: Optional[Dict[str, Any]] = None,
@@ -24,47 +31,9 @@ def analyze_algorithm(
     preferred_method: Optional[str] = None,
     locale: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """
-    Analiza un algoritmo y devuelve el resultado.
-
-    Args:
-        source: Código fuente a analizar
-        mode: Modo de análisis ("worst", "best", "avg", "all")
-        api_key: API Key de Gemini (opcional, mantenido por compatibilidad)
-        avg_model: Modelo probabilístico para caso promedio
-        algorithm_kind: Tipo de algoritmo (opcional, se detecta automáticamente)
-        preferred_method: Método preferido para algoritmos recursivos
-        locale: Idioma para etiquetas del procedimiento ("en" | "es", default "en")
-
-    Returns:
-        Resultado del análisis con estructura AnalyzeOpenResponse o diccionario con worst/best/avg
-
-    Author: Juan Camilo Cruz Parra (@Cruz1122)
-
-    Example:
-        >>> result = analyze_algorithm("factorial(n) BEGIN RETURN 1; END", mode="all")
-        >>> print(result["ok"])
-        True
-    """
+    """Analiza un AST ya parseado para evitar trabajo duplicado."""
     try:
-        locale_val = (locale or "en").lower()[:2]  # "en" | "es"
-        if locale_val not in ("en", "es"):
-            locale_val = "en"
-
-        # 1) Parsear el código fuente
-        parse_result = parse_source(source)
-        if not parse_result.get("ok", False):
-            return {
-                "ok": False,
-                "errors": parse_result.get("errors", []),
-                "loopInvariant": empty_loop_invariant(
-                    locale=locale_val,
-                    status="unavailable",
-                    reason="no_supported_loop",
-                ),
-            }
-
-        ast = parse_result.get("ast")
+        locale_val = _normalize_locale(locale)
         if not ast:
             return {
                 "ok": False,
@@ -92,7 +61,7 @@ def analyze_algorithm(
                 reason="no_supported_loop",
             )
 
-        # 2) Determinar el tipo de algoritmo
+        # 1) Determinar el tipo de algoritmo
         if not algorithm_kind:
             algorithm_kind = detect_algorithm_kind(ast)
 
@@ -101,7 +70,7 @@ def analyze_algorithm(
         if not analyzer_class:
             analyzer_class = IterativeAnalyzer
 
-        # 3) Determinar si debemos analizar todos los casos
+        # 2) Determinar si debemos analizar todos los casos
         analyze_all = mode == "all"
 
         if analyze_all:
@@ -342,6 +311,79 @@ def analyze_algorithm(
                 reason="no_supported_loop",
             ),
         }
+
+
+def analyze_algorithm(
+    source: str,
+    mode: str = "worst",
+    api_key: Optional[str] = None,
+    avg_model: Optional[Dict[str, Any]] = None,
+    algorithm_kind: Optional[str] = None,
+    preferred_method: Optional[str] = None,
+    locale: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Analiza un algoritmo y devuelve el resultado.
+
+    Args:
+        source: Código fuente a analizar
+        mode: Modo de análisis ("worst", "best", "avg", "all")
+        api_key: API Key de Gemini (opcional, mantenido por compatibilidad)
+        avg_model: Modelo probabilístico para caso promedio
+        algorithm_kind: Tipo de algoritmo (opcional, se detecta automáticamente)
+        preferred_method: Método preferido para algoritmos recursivos
+        locale: Idioma para etiquetas del procedimiento ("en" | "es", default "en")
+
+    Returns:
+        Resultado del análisis con estructura AnalyzeOpenResponse o diccionario con worst/best/avg
+
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
+
+    Example:
+        >>> result = analyze_algorithm("factorial(n) BEGIN RETURN 1; END", mode="all")
+        >>> print(result["ok"])
+        True
+    """
+    locale_val = _normalize_locale(locale)
+    parse_result = parse_source(source)
+    if not parse_result.get("ok", False):
+        return {
+            "ok": False,
+            "errors": parse_result.get("errors", []),
+            "loopInvariant": empty_loop_invariant(
+                locale=locale_val,
+                status="unavailable",
+                reason="no_supported_loop",
+            ),
+        }
+
+    ast = parse_result.get("ast")
+    if not ast:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": "No se pudo obtener el AST del código",
+                    "line": None,
+                    "column": None,
+                }
+            ],
+            "loopInvariant": empty_loop_invariant(
+                locale=locale_val,
+                status="unavailable",
+                reason="no_supported_loop",
+            ),
+        }
+
+    return analyze_ast(
+        ast=ast,
+        mode=mode,
+        api_key=api_key,
+        avg_model=avg_model,
+        algorithm_kind=algorithm_kind,
+        preferred_method=preferred_method,
+        locale=locale_val,
+    )
 
 
 def detect_methods(source: str, algorithm_kind: Optional[str] = None) -> Dict[str, Any]:

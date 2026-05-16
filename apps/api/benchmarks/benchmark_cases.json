@@ -1,0 +1,133 @@
+[
+  {
+    "id": "for_lineal",
+    "name": "FOR lineal",
+    "family": "Iterativo",
+    "symbolicSize": "n=1000",
+    "sourceFile": "cases/for_lineal.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(n)"
+  },
+  {
+    "id": "for_anidado",
+    "name": "FOR anidado",
+    "family": "Iterativo",
+    "symbolicSize": "n=500",
+    "sourceFile": "cases/for_anidado.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(n^2)"
+  },
+  {
+    "id": "for_triangular",
+    "name": "FOR triangular",
+    "family": "Iterativo",
+    "symbolicSize": "n=500",
+    "sourceFile": "cases/for_triangular.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(n^2)"
+  },
+  {
+    "id": "while_lineal",
+    "name": "WHILE lineal",
+    "family": "Iterativo/WHILE",
+    "symbolicSize": "n=1000",
+    "sourceFile": "cases/while_lineal.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(n)"
+  },
+  {
+    "id": "while_logaritmico",
+    "name": "WHILE logaritmico",
+    "family": "Iterativo/WHILE",
+    "symbolicSize": "n=65536",
+    "sourceFile": "cases/while_logaritmico.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(\\log n)"
+  },
+  {
+    "id": "while_ambiguo",
+    "name": "WHILE ambiguo",
+    "family": "Iterativo/WHILE",
+    "symbolicSize": "n=100",
+    "sourceFile": "cases/while_ambiguo.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "No concluyente",
+    "expectedWhileStatus": "partial"
+  },
+  {
+    "id": "mergesort",
+    "name": "MergeSort",
+    "family": "Recursivo DyV",
+    "symbolicSize": "n=8192",
+    "sourceFile": "cases/mergesort.aalie",
+    "algorithm_kind": "recursive",
+    "preferred_method": "master",
+    "expectedTheta": "\\Theta(n \\log n)"
+  },
+  {
+    "id": "factorial",
+    "name": "Factorial",
+    "family": "Recursivo lineal",
+    "symbolicSize": "n=100",
+    "sourceFile": "cases/factorial.aalie",
+    "algorithm_kind": "recursive",
+    "preferred_method": "iteration",
+    "expectedTheta": "\\Theta(n)"
+  },
+  {
+    "id": "fibonacci",
+    "name": "Fibonacci",
+    "family": "Recursivo multiple",
+    "symbolicSize": "n=30",
+    "sourceFile": "cases/fibonacci.aalie",
+    "algorithm_kind": "recursive",
+    "preferred_method": "characteristic_equation",
+    "expectedTheta": "\\Theta(\\varphi^n)"
+  },
+  {
+    "id": "euclides",
+    "name": "Euclides",
+    "family": "WHILE especifico",
+    "symbolicSize": "n=10000",
+    "sourceFile": "cases/euclides.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(\\log(\\min(a,b)))"
+  },
+  {
+    "id": "binary_search",
+    "name": "Binary Search",
+    "family": "DyV / WHILE intervalo",
+    "symbolicSize": "n=65536",
+    "sourceFile": "cases/binary_search.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(\\log n)"
+  },
+  {
+    "id": "matrix_init",
+    "name": "Inicializacion matriz 3D",
+    "family": "Iterativo triple",
+    "symbolicSize": "n=100",
+    "sourceFile": "cases/matrix_init.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(n^3)"
+  },
+  {
+    "id": "selection_sort",
+    "name": "Selection Sort",
+    "family": "Iterativo cuadratico",
+    "symbolicSize": "n=500",
+    "sourceFile": "cases/selection_sort.aalie",
+    "algorithm_kind": "iterative",
+    "expectedTheta": "\\Theta(n^2)"
+  },
+  {
+    "id": "binary_tree_traversal",
+    "name": "Recorrido arbol binario",
+    "family": "Recursivo estructural",
+    "symbolicSize": "n=1000",
+    "sourceFile": "cases/binary_tree_traversal.aalie",
+    "algorithm_kind": "recursive",
+    "preferred_method": "recursion_tree",
+    "expectedTheta": "\\Theta(n)"
+  }
+]

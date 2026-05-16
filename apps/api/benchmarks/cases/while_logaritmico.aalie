@@ -1,0 +1,7 @@
+logLoop(n) BEGIN
+  i <- 1;
+  WHILE (i <= n) DO BEGIN
+    x <- 1;
+    i <- i * 2;
+  END
+END

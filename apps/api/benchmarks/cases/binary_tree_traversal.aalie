@@ -1,0 +1,6 @@
+contarNodos(raiz) BEGIN
+  IF (raiz = null) THEN BEGIN
+    RETURN 0;
+  END
+  RETURN 1 + contarNodos(raiz.izquierda) + contarNodos(raiz.derecha);
+END

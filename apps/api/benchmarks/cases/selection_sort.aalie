@@ -1,0 +1,15 @@
+selectionSort(A, n) BEGIN
+  FOR i <- 1 TO n - 1 DO BEGIN
+    min_idx <- i;
+    FOR j <- i + 1 TO n DO BEGIN
+      IF (A[j] < A[min_idx]) THEN BEGIN
+        min_idx <- j;
+      END
+    END
+    IF (min_idx != i) THEN BEGIN
+      temp <- A[i];
+      A[i] <- A[min_idx];
+      A[min_idx] <- temp;
+    END
+  END
+END

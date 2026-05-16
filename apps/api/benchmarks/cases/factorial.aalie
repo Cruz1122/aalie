@@ -1,0 +1,6 @@
+factorial(n) BEGIN
+  IF (n <= 1) THEN BEGIN
+    RETURN 1;
+  END
+  RETURN n * factorial(n - 1);
+END

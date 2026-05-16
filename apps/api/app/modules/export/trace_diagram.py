@@ -51,12 +51,21 @@ def _sanitize_node(node: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _sanitize_edge(edge: Dict[str, Any], index: int) -> Dict[str, Any]:
+    raw_type = str(edge.get("type") or "smoothstep")
+    label = str(edge.get("label") or "")
+    edge_id = str(edge.get("id") or f"edge_{index}")
+    if raw_type != "return" and (
+        label.strip().lower() == "return"
+        or edge_id.startswith("e_ret_")
+        or edge_id.startswith("return_")
+    ):
+        raw_type = "return"
     return {
-        "id": str(edge.get("id") or f"edge_{index}"),
+        "id": edge_id,
         "source": str(edge.get("source")),
         "target": str(edge.get("target")),
-        "label": str(edge.get("label") or ""),
-        "type": str(edge.get("type") or "smoothstep"),
+        "label": label,
+        "type": raw_type,
     }
 
 
@@ -71,6 +80,8 @@ def _detect_roots(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> L
 def build_depth_index(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> Dict[str, int]:
     by_source: Dict[str, List[str]] = {}
     for edge in edges:
+        if edge.get("type") == "return":
+            continue
         by_source.setdefault(edge["source"], []).append(edge["target"])
     for children in by_source.values():
         children.sort()

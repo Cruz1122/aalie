@@ -1,0 +1,8 @@
+ambiguousInterval(n, step) BEGIN
+  left <- 1;
+  right <- n;
+  WHILE (left <= right) DO BEGIN
+    delta <- (right - left) / step;
+    left <- left + delta;
+  END
+END
