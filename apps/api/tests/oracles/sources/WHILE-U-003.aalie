@@ -1,0 +1,11 @@
+contradictoryProgress(n)
+BEGIN
+  i <- 0;
+  total <- 0;
+  WHILE (i < n) DO
+  BEGIN
+    total <- total + 1;
+    i <- i - 1;
+  END;
+  RETURN total;
+END

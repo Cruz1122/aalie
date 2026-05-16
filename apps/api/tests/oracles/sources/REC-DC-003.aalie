@@ -1,0 +1,13 @@
+fullBinaryTraversalCost(n)
+BEGIN
+  IF (n <= 1) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    a <- fullBinaryTraversalCost(n / 2);
+    b <- fullBinaryTraversalCost(n / 2);
+    RETURN a + b + 1;
+  END;
+END

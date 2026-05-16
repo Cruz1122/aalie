@@ -1,0 +1,5 @@
+constantValue(n)
+BEGIN
+  x <- 1;
+  RETURN x;
+END

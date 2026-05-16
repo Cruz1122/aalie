@@ -1,0 +1,11 @@
+oneShotFlag(n)
+BEGIN
+  activo <- true;
+  pasos <- 0;
+  WHILE (activo = true) DO
+  BEGIN
+    pasos <- pasos + 1;
+    activo <- false;
+  END;
+  RETURN pasos;
+END

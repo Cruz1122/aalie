@@ -1,0 +1,535 @@
+[
+  {
+    "id": "REC-DC-001",
+    "title": "MergeSort recurrence",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "applicableMethods": [
+        "master",
+        "recursion_tree",
+        "iteration"
+      ],
+      "defaultMethod": "master",
+      "recurrence": "T(n)=2T(n/2)+n",
+      "bigTheta": "Theta(n log n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Master theorem case 2 via recursion_tree."
+    }
+  },
+  {
+    "id": "REC-DC-002",
+    "title": "Recursive binary search cost",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=T(n/2)+1",
+      "bigTheta": "Theta(log n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Single recursive subproblem with constant local work."
+    }
+  },
+  {
+    "id": "REC-DC-003",
+    "title": "Full binary traversal",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-003.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=2T(n/2)+1",
+      "bigTheta": "Theta(n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Master theorem case 1."
+    }
+  },
+  {
+    "id": "REC-DC-004",
+    "title": "Quadratic combine (documented gap)",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-004.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=2T(n/2)+n",
+      "bigTheta": "Theta(n log n)",
+      "expectationKind": "regression_characterization"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Engine cannot express f(n)=n^2 via nested loops inside recursion. Falls back to f(n)=n, giving n log n."
+    }
+  },
+  {
+    "id": "REC-DC-005",
+    "title": "Ternary balanced split",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-005.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=3T(n/3)+n",
+      "bigTheta": "Theta(n log n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Balanced ternary divide-and-conquer with linear combine."
+    }
+  },
+  {
+    "id": "REC-DC-006",
+    "title": "Four subproblems over half size",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-006.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=4T(n/2)+n",
+      "bigTheta": "Theta(n^{log_2 4})",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Master theorem: n^{log_2(4)} = n^2, engine uses log notation."
+    }
+  },
+  {
+    "id": "REC-DC-007",
+    "title": "Karatsuba-like abstract recurrence",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-007.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=3T(n/2)+n",
+      "bigTheta": "Theta(n^{log_2 3})",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Non-integer Master exponent."
+    }
+  },
+  {
+    "id": "REC-DC-008",
+    "title": "Strassen-like abstract recurrence",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-008.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=7T(n/2)+n",
+      "bigTheta": "Theta(n^{log_2 7})",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Non-integer exponent where recursive work dominates f(n)=n."
+    }
+  },
+  {
+    "id": "REC-DC-009",
+    "title": "One third shrink",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-009.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=T(n/3)+1",
+      "bigTheta": "Theta(log n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Single recursive subproblem with shrink factor three."
+    }
+  },
+  {
+    "id": "REC-DC-010",
+    "title": "Divide by two with logarithmic local work",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-010.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "expectationKind": "regression_characterization",
+      "recurrenceFamily": "divide_conquer",
+      "expectedEngineTheta": "Theta(n)",
+      "expectedMathTheta": "Theta((log n)^2)",
+      "bigTheta": "Theta(n)"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Engine overestimates log(n) local work as f(n)=n (not constant). Ideal: f(n)=log n -> Theta((log n)^2). Engine: f(n)=n -> Theta(n) via Master case 3."
+    }
+  },
+  {
+    "id": "REC-DC-011",
+    "title": "Nonlinear recursive argument (normalized to DC)",
+    "family": "recursive_divide_conquer",
+    "sourceFile": "sources/REC-DC-011.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "expectationKind": "strict_math",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=T(n/2)+1",
+      "bigTheta": "Theta(log n)"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "n - n/2 normalizes to n/2, yielding T(n)=T(n/2)+1. Reclassified from linear-shift."
+    }
+  },
+  {
+    "id": "REC-LS-001",
+    "title": "Factorial cost",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-1)+1",
+      "bigTheta": "Theta(n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Single recursive call decreasing by one."
+    }
+  },
+  {
+    "id": "REC-LS-002",
+    "title": "Recursive array sum",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-1)+1",
+      "bigTheta": "Theta(n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Same recurrence as factorial cost."
+    }
+  },
+  {
+    "id": "REC-LS-003",
+    "title": "Linear recursive power",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-003.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-1)+1",
+      "bigTheta": "Theta(n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Returned mathematical value does not define runtime recurrence."
+    }
+  },
+  {
+    "id": "REC-LS-004",
+    "title": "Fibonacci cost",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-004.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-1)+T(n-2)+1",
+      "bigTheta": "Theta((1/2 + sqrt(5)/2)^n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Second-order linear recurrence solved via characteristic equation."
+    }
+  },
+  {
+    "id": "REC-LS-005",
+    "title": "Double branch n minus one",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-005.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=2T(n-1)+1",
+      "bigTheta": "Theta(2^n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Exponential from two calls of size n-1."
+    }
+  },
+  {
+    "id": "REC-LS-006",
+    "title": "Decrement by two",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-006.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-2)+1",
+      "bigTheta": "Theta(n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Linear number of calls despite decrement by two."
+    }
+  },
+  {
+    "id": "REC-LS-007",
+    "title": "Recursive local linear work",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-007.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "hybrid",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-1)+n",
+      "bigTheta": "Theta(n^2)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Hybrid recursive/iterative case with linear local work."
+    }
+  },
+  {
+    "id": "REC-LS-008",
+    "title": "Recursive local quadratic work (gap)",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-008.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "hybrid",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-1)+n",
+      "bigTheta": "Theta(n^2)",
+      "expectationKind": "regression_characterization"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Engine sees f(n)=n not n^2 from nested FOR. Expected T(n-1)+n^2 -> Theta(n^3) if nested were modeled."
+    }
+  },
+  {
+    "id": "REC-LS-009",
+    "title": "Tribonacci-like recurrence",
+    "family": "recursive_linear_shift",
+    "sourceFile": "sources/REC-LS-009.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-1)+T(n-2)+T(n-3)+1",
+      "bigTheta": "Theta((1/3 + 4/(3 cbrt(3 sqrt(33) + 19)) + cbrt(3 sqrt(33) + 19)/3)^n)",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Third-order characteristic equation solved by engine. Exponential growth."
+    }
+  },
+  {
+    "id": "WHILE-U-001",
+    "title": "External condition",
+    "family": "while_unsupported",
+    "sourceFile": "sources/WHILE-U-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "unknown",
+      "mustNotInventTheta": true,
+      "mustHaveByLine": true,
+      "expectationKind": "expected_unsupported"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Guard is a function call not interpretable from local AST facts."
+    }
+  },
+  {
+    "id": "WHILE-U-002",
+    "title": "Missing control update",
+    "family": "while_unsupported",
+    "sourceFile": "sources/WHILE-U-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "unknown",
+      "mustNotInventTheta": true,
+      "mustHaveByLine": true,
+      "expectationKind": "expected_unsupported"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Loop guard references i but i is never updated in the body."
+    }
+  },
+  {
+    "id": "WHILE-U-003",
+    "title": "Contradictory progress",
+    "family": "while_unsupported",
+    "sourceFile": "sources/WHILE-U-003.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "unknown",
+      "mustNotInventTheta": true,
+      "mustHaveByLine": true,
+      "expectationKind": "expected_unsupported"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Update moves away from guard limit; engine correctly returns unknown."
+    }
+  },
+  {
+    "id": "WHILE-U-004",
+    "title": "Coupled OR guard",
+    "family": "while_unsupported",
+    "sourceFile": "sources/WHILE-U-004.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "unknown",
+      "mustNotInventTheta": true,
+      "mustHaveByLine": true,
+      "expectationKind": "expected_unsupported"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "OR guard with coupled variables and non-monotonic interaction."
+    }
+  },
+  {
+    "id": "WHILE-U-005",
+    "title": "Unknown update function",
+    "family": "while_unsupported",
+    "sourceFile": "sources/WHILE-U-005.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "unknown",
+      "mustNotInventTheta": true,
+      "mustHaveByLine": true,
+      "expectationKind": "expected_unsupported"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Update call cannot be interpreted as a monotonic arithmetic rule."
+    }
+  },
+  {
+    "id": "WHILE-U-006",
+    "title": "Two variables without dominant controller",
+    "family": "while_unsupported",
+    "sourceFile": "sources/WHILE-U-006.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "linear_counter",
+      "minimumEvidenceLevel": "weak",
+      "hasCaseVariability": true,
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Engine picks i as dominant controller; j growth does not prevent linear bound."
+    }
+  },
+  {
+    "id": "WHILE-U-007",
+    "title": "Variable multiplicative factor",
+    "family": "while_unsupported",
+    "sourceFile": "sources/WHILE-U-007.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "minimumEvidenceLevel": "medium",
+      "mustHaveByLine": true,
+      "expectationKind": "regression_characterization"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Engine incorrectly returns O(1) for i <- i * k; variable k not recognized as non-constant."
+    }
+  },
+  {
+    "id": "WHILE-U-008",
+    "title": "Non-parseable loop body",
+    "family": "while_unsupported",
+    "sourceFile": "sources/WHILE-U-008.aalie",
+    "expected": {
+      "parseOk": false,
+      "mustHaveParseErrors": true,
+      "expectationKind": "expected_unsupported"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Invalid syntax must stop before classification or analysis."
+    }
+  }
+]

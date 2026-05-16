@@ -1,0 +1,13 @@
+logCombineCost(n)
+BEGIN
+  IF (n <= 1) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    sub <- logCombineCost(n / 2);
+    local <- log(n);
+    RETURN sub + local;
+  END;
+END

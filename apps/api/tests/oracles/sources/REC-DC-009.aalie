@@ -1,0 +1,12 @@
+oneThirdShrinkCost(n)
+BEGIN
+  IF (n <= 1) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    sub <- oneThirdShrinkCost(n / 3);
+    RETURN sub + 1;
+  END;
+END

@@ -1,0 +1,17 @@
+threePasses(A, B, C, n)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    total <- total + A[i];
+  END;
+  FOR j <- 1 TO n DO
+  BEGIN
+    total <- total + B[j];
+  END;
+  FOR k <- 1 TO n DO
+  BEGIN
+    total <- total + C[k];
+  END;
+  RETURN total;
+END

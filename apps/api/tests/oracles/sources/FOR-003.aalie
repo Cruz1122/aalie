@@ -1,0 +1,9 @@
+countItems(A, n)
+BEGIN
+  contador <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    contador <- contador + 1;
+  END;
+  RETURN contador;
+END

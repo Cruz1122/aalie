@@ -1,0 +1,10 @@
+euclidModulo(a, b)
+BEGIN
+  WHILE (b <> 0) DO
+  BEGIN
+    r <- a MOD b;
+    a <- b;
+    b <- r;
+  END;
+  RETURN a;
+END

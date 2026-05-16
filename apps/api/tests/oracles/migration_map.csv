@@ -1,0 +1,2 @@
+old_id,new_id,old_family,new_family,reason
+REC-LS-010,REC-DC-011,recursive_linear_shift,recursive_divide_conquer,"n - n/2 normalizes to n/2, yielding T(n)=T(n/2)+1"

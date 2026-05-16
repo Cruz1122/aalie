@@ -1,0 +1,11 @@
+whileGeometricShrinkTwo(n)
+BEGIN
+  i <- n;
+  total <- 0;
+  WHILE (i > 1) DO
+  BEGIN
+    total <- total + 1;
+    i <- i / 2;
+  END;
+  RETURN total;
+END

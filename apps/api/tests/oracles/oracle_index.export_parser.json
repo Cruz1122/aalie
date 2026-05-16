@@ -1,0 +1,159 @@
+[
+  {
+    "id": "EXP-001",
+    "title": "Markdown export preserves iterative result",
+    "family": "snapshot_export",
+    "sourceFile": "sources/FOR-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTOpen": true,
+      "expectationKind": "pending_integration"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Iterative result must be preserved identically in export artifacts."
+    }
+  },
+  {
+    "id": "EXP-002",
+    "title": "PDF export preserves recursive method",
+    "family": "snapshot_export",
+    "sourceFile": "sources/REC-DC-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "divide_conquer",
+      "recurrence": "T(n)=2T(n/2)+n",
+      "bigTheta": "Theta(n log n)",
+      "mustHaveTOpen": true,
+      "expectationKind": "pending_integration"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Recurrence, method, and asymptotic result must survive PDF export."
+    }
+  },
+  {
+    "id": "EXP-003",
+    "title": "ZIP bundle includes snapshot and manifest",
+    "family": "snapshot_export",
+    "sourceFile": "sources/NEST-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n^2)",
+      "bigOmega": "Omega(n^2)",
+      "bigTheta": "Theta(n^2)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTOpen": true,
+      "expectationKind": "pending_integration"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Multi-artifact export must preserve consistent snapshot across formats."
+    }
+  },
+  {
+    "id": "EXP-004",
+    "title": "Export exposes unsupported WHILE warning",
+    "family": "snapshot_export",
+    "sourceFile": "sources/WHILE-U-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "expectationKind": "pending_integration",
+      "mustNotInventTheta": true,
+      "mustHaveByLine": true,
+      "mustHaveSnapshotId": true
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Export must report inconclusive WHILE instead of silently omitting or inventing a result."
+    }
+  },
+  {
+    "id": "EXP-005",
+    "title": "Iterative snapshot does not activate recursive details",
+    "family": "snapshot_export",
+    "sourceFile": "sources/FOR-008.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n + m)",
+      "bigOmega": "Omega(n + m)",
+      "bigTheta": "Theta(n + m)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTOpen": true,
+      "expectationKind": "pending_integration"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Iterative snapshot must not contain recursive section details or method resolution."
+    }
+  },
+  {
+    "id": "EXP-006",
+    "title": "Recursive snapshot does not invent iterative byLine as primary result",
+    "family": "snapshot_export",
+    "sourceFile": "sources/REC-LS-004.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "recursive",
+      "status": "available",
+      "recurrenceFamily": "linear_shift",
+      "recurrence": "T(n)=T(n-1)+T(n-2)+1",
+      "bigTheta": "Theta((1/2 + sqrt(5)/2)^n)",
+      "mustHaveTOpen": true,
+      "expectationKind": "pending_integration"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Recursive snapshot must not publish iterative byLine as primary result."
+    }
+  },
+  {
+    "id": "PARSE-001",
+    "title": "Missing END block",
+    "family": "parser_negative",
+    "sourceFile": "sources/PARSE-001.aalie",
+    "expected": {
+      "parseOk": false,
+      "mustHaveParseErrors": true,
+      "expectationKind": "expected_unsupported"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Malformed block structure must fail at parse stage."
+    }
+  },
+  {
+    "id": "PARSE-002",
+    "title": "Invalid assignment expression",
+    "family": "parser_negative",
+    "sourceFile": "sources/PARSE-002.aalie",
+    "expected": {
+      "parseOk": false,
+      "mustHaveParseErrors": true,
+      "expectationKind": "expected_unsupported"
+    },
+    "validation": {
+      "compare": "expected_failure",
+      "notes": "Assignment without right-hand expression must be rejected before analysis."
+    }
+  }
+]

@@ -1,0 +1,10 @@
+gcdModulo(x, y)
+BEGIN
+  WHILE (y <> 0) DO
+  BEGIN
+    temp <- x MOD y;
+    x <- y;
+    y <- temp;
+  END;
+  RETURN x;
+END

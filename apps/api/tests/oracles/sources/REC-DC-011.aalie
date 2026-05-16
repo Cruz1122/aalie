@@ -1,0 +1,12 @@
+nonlinearRecursiveArgument(n)
+BEGIN
+  IF (n <= 1) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    sub <- nonlinearRecursiveArgument(n - n / 2);
+    RETURN sub + 1;
+  END;
+END

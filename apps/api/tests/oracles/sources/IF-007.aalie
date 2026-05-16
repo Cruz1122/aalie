@@ -1,0 +1,19 @@
+nestedIfInsideFor(A, n)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    IF (A[i] > 0) THEN
+    BEGIN
+      FOR j <- 1 TO n DO
+      BEGIN
+        total <- total + A[j];
+      END;
+    END
+    ELSE
+    BEGIN
+      total <- total + 1;
+    END;
+  END;
+  RETURN total;
+END

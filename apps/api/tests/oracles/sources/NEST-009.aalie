@@ -1,0 +1,16 @@
+linearThenQuadratic(A, n)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    total <- total + A[i];
+  END;
+  FOR row <- 1 TO n DO
+  BEGIN
+    FOR col <- 1 TO n DO
+    BEGIN
+      total <- total + A[row][col];
+    END;
+  END;
+  RETURN total;
+END

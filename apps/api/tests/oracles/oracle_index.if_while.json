@@ -1,0 +1,658 @@
+[
+  {
+    "id": "IF-001",
+    "title": "Constant branches",
+    "family": "conditional",
+    "sourceFile": "sources/IF-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "cases": {
+        "worst": {
+          "bigO": "O(1)",
+          "bigOmega": "Omega(1)",
+          "bigTheta": "Theta(1)"
+        },
+        "best": "same_as_worst",
+        "avg": "same_as_worst"
+      },
+      "hasCaseVariability": false,
+      "mustHaveByLine": true,
+      "dominantTerm": "1",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates IF/ELSE where both branches are constant."
+    }
+  },
+  {
+    "id": "IF-002",
+    "title": "Linear then-branch, constant else-branch",
+    "family": "conditional",
+    "sourceFile": "sources/IF-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "cases": {
+        "worst": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        },
+        "best": {
+          "bigO": "O(1)",
+          "bigOmega": "Omega(1)",
+          "bigTheta": "Theta(1)"
+        },
+        "avg": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        }
+      },
+      "hasCaseVariability": true,
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates worst/best split when one branch is linear and the other is constant."
+    }
+  },
+  {
+    "id": "IF-003",
+    "title": "Constant then-branch, linear else-branch",
+    "family": "conditional",
+    "sourceFile": "sources/IF-003.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "cases": {
+        "worst": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        },
+        "best": {
+          "bigO": "O(1)",
+          "bigOmega": "Omega(1)",
+          "bigTheta": "Theta(1)"
+        },
+        "avg": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        }
+      },
+      "hasCaseVariability": true,
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Same complexity target as IF-002 but with branch order inverted."
+    }
+  },
+  {
+    "id": "IF-004",
+    "title": "Both branches linear",
+    "family": "conditional",
+    "sourceFile": "sources/IF-004.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "cases": {
+        "worst": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        },
+        "best": "same_as_worst",
+        "avg": "same_as_worst"
+      },
+      "hasCaseVariability": false,
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates same_as_worst when both branches have the same asymptotic class."
+    }
+  },
+  {
+    "id": "IF-005",
+    "title": "Quadratic then-branch, linear else-branch",
+    "family": "conditional",
+    "sourceFile": "sources/IF-005.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "cases": {
+        "worst": {
+          "bigO": "O(n^2)",
+          "bigOmega": "Omega(n^2)",
+          "bigTheta": "Theta(n^2)"
+        },
+        "best": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        },
+        "avg": {
+          "bigO": "O(n^2)",
+          "bigOmega": "Omega(n^2)",
+          "bigTheta": "Theta(n^2)"
+        }
+      },
+      "hasCaseVariability": true,
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates branch comparison where worst and average are dominated by the quadratic branch."
+    }
+  },
+  {
+    "id": "IF-006",
+    "title": "Constant IF inside linear FOR",
+    "family": "conditional",
+    "sourceFile": "sources/IF-006.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "cases": {
+        "worst": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        },
+        "best": "same_as_worst",
+        "avg": "same_as_worst"
+      },
+      "hasCaseVariability": false,
+      "mustHaveByLine": true,
+      "expectedLoopCount": "n",
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates that constant branch choice inside a loop remains linear."
+    }
+  },
+  {
+    "id": "IF-007",
+    "title": "Nested loop inside IF inside FOR",
+    "family": "conditional",
+    "sourceFile": "sources/IF-007.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "cases": {
+        "worst": {
+          "bigO": "O(n^2)",
+          "bigOmega": "Omega(n^2)",
+          "bigTheta": "Theta(n^2)"
+        },
+        "best": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        },
+        "avg": {
+          "bigO": "O(n^2)",
+          "bigOmega": "Omega(n^2)",
+          "bigTheta": "Theta(n^2)"
+        }
+      },
+      "hasCaseVariability": true,
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates multiplication of outer loop by branch-dependent inner loop."
+    }
+  },
+  {
+    "id": "IF-008",
+    "title": "Uniform average branch model",
+    "family": "conditional",
+    "sourceFile": "sources/IF-008.aalie",
+    "request": {
+      "mode": "all",
+      "avgModel": {
+        "mode": "uniform",
+        "predicates": {}
+      }
+    },
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "cases": {
+        "worst": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        },
+        "best": {
+          "bigO": "O(1)",
+          "bigOmega": "Omega(1)",
+          "bigTheta": "Theta(1)"
+        },
+        "avg": {
+          "bigO": "O(n)",
+          "bigOmega": "Omega(n)",
+          "bigTheta": "Theta(n)"
+        }
+      },
+      "hasCaseVariability": true,
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Explicitly validates avgModel=uniform over one linear and one constant branch."
+    }
+  },
+  {
+    "id": "WHILE-S-001",
+    "title": "Linear increment from zero",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "linear_counter",
+      "minimumEvidenceLevel": "weak",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "weak",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Canonical linear WHILE with monotonic increment toward upper bound."
+    }
+  },
+  {
+    "id": "WHILE-S-002",
+    "title": "Linear decrement to zero",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "minimumEvidenceLevel": "medium",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Decrement pattern without formal pattern match but correct linear result."
+    }
+  },
+  {
+    "id": "WHILE-S-003",
+    "title": "Linear increment by two",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-003.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "linear_counter",
+      "minimumEvidenceLevel": "weak",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "weak",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates that constant step greater than one remains linear."
+    }
+  },
+  {
+    "id": "WHILE-S-004",
+    "title": "Linear decrement by two",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-004.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "minimumEvidenceLevel": "medium",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Reverse decrement without formal pattern but correct linear result."
+    }
+  },
+  {
+    "id": "WHILE-S-005",
+    "title": "Geometric growth by two",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-005.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "geometric_growth",
+      "minimumEvidenceLevel": "weak",
+      "bigO": "O(log n)",
+      "bigOmega": "Omega(log n)",
+      "bigTheta": "Theta(log n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "weak",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Logarithmic WHILE by multiplicative growth."
+    }
+  },
+  {
+    "id": "WHILE-S-006",
+    "title": "Geometric shrink by two",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-006.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "minimumEvidenceLevel": "medium",
+      "bigO": "O(log n)",
+      "bigOmega": "Omega(log n)",
+      "bigTheta": "Theta(log n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Shrink by division without formal pattern but correct logarithmic result."
+    }
+  },
+  {
+    "id": "WHILE-S-007",
+    "title": "Geometric growth by three",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-007.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "geometric_growth",
+      "minimumEvidenceLevel": "weak",
+      "bigO": "O(log n)",
+      "bigOmega": "Omega(log n)",
+      "bigTheta": "Theta(log n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "weak",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Base-independent logarithmic classification."
+    }
+  },
+  {
+    "id": "WHILE-S-008",
+    "title": "Geometric shrink by three",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-008.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "minimumEvidenceLevel": "medium",
+      "bigO": "O(log n)",
+      "bigOmega": "Omega(log n)",
+      "bigTheta": "Theta(log n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Logarithmic shrink with factor three without formal pattern."
+    }
+  },
+  {
+    "id": "WHILE-S-009",
+    "title": "Binary search iterative",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-009.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "binary_search_interval",
+      "evidenceLevel": "strong",
+      "bigO": "O(log n)",
+      "bigOmega": "Omega(log n)",
+      "bigTheta": "Theta(log n)",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "strong",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Validates binary_search_interval pattern with strong evidence."
+    }
+  },
+  {
+    "id": "WHILE-S-010",
+    "title": "Binary lower bound",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-010.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "binary_search_interval",
+      "evidenceLevel": "strong",
+      "bigO": "O(log n)",
+      "bigOmega": "Omega(log n)",
+      "bigTheta": "Theta(log n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "strong",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Binary interval shrink without equality branch."
+    }
+  },
+  {
+    "id": "WHILE-S-011",
+    "title": "Euclidean algorithm by modulo",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-011.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "expectationKind": "regression_characterization",
+      "expectedMathTheta": "Theta(log min(a,b))",
+      "expectedEngineTheta": "\\infty",
+      "mustHaveByLine": true
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "euclid_mod is documented as a supported WHILE pattern, but the current engine returns infinity. This is a regression-characterization gap, not a correct unsupported rejection."
+    }
+  },
+  {
+    "id": "WHILE-S-012",
+    "title": "Euclidean algorithm normalized names",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-012.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "expectationKind": "regression_characterization",
+      "expectedMathTheta": "Theta(log min(x,y))",
+      "expectedEngineTheta": "\\infty",
+      "mustHaveByLine": true
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Same Euclid modulo gap under renamed variables. Confirms the failure is structural and not identifier-dependent."
+    }
+  },
+  {
+    "id": "WHILE-S-013",
+    "title": "One-shot flag kill",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-013.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "flag_kill",
+      "minimumEvidenceLevel": "weak",
+      "bigO": "O(1)",
+      "bigOmega": "Omega(1)",
+      "bigTheta": "Theta(1)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "weak",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Flag kill with deterministic guard disable."
+    }
+  },
+  {
+    "id": "WHILE-S-014",
+    "title": "Flag search with counter bound",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-014.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "hasCaseVariability": true,
+      "cases": {
+        "best": {
+          "bigO": "O(1)",
+          "bigOmega": "Omega(1)",
+          "bigTheta": "Theta(1)"
+        }
+      },
+      "mustHaveByLine": true,
+      "expectationKind": "regression_characterization"
+    },
+    "validation": {
+      "compare": "contract_shape",
+      "notes": "Engine correctly does NOT guess worst-case bound for compound flag+counter guard."
+    }
+  },
+  {
+    "id": "WHILE-S-015",
+    "title": "Logarithmic growth toward squared bound",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-015.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "geometric_growth",
+      "minimumEvidenceLevel": "weak",
+      "bigO": "O(log n)",
+      "bigOmega": "Omega(log n)",
+      "bigTheta": "Theta(log n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "weak",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Logarithmic simplification when the bound is n squared."
+    }
+  },
+  {
+    "id": "WHILE-S-016",
+    "title": "Linear counter with non-zero start",
+    "family": "while_supported",
+    "sourceFile": "sources/WHILE-S-016.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "whilePattern": "linear_counter",
+      "minimumEvidenceLevel": "weak",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "expectationKind": "strict_math",
+      "patternEvidenceLevel": "weak",
+      "boundConfidence": "high"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Linear counter when the initial value is a positive constant."
+    }
+  }
+]

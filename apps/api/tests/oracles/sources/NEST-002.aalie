@@ -1,0 +1,12 @@
+rectangularDoubleLoop(A, n, m)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    FOR j <- 1 TO m DO
+    BEGIN
+      total <- total + A[i][j];
+    END;
+  END;
+  RETURN total;
+END

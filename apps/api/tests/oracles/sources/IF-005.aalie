@@ -1,0 +1,22 @@
+quadraticThenLinear(A, n, flag)
+BEGIN
+  total <- 0;
+  IF (flag = true) THEN
+  BEGIN
+    FOR i <- 1 TO n DO
+    BEGIN
+      FOR j <- 1 TO n DO
+      BEGIN
+        total <- total + A[i][j];
+      END;
+    END;
+  END
+  ELSE
+  BEGIN
+    FOR k <- 1 TO n DO
+    BEGIN
+      total <- total + A[k];
+    END;
+  END;
+  RETURN total;
+END

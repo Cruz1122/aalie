@@ -1,0 +1,12 @@
+matrixRectangularSum(A, n, m)
+BEGIN
+  total <- 0;
+  FOR row <- 1 TO n DO
+  BEGIN
+    FOR col <- 1 TO m DO
+    BEGIN
+      total <- total + A[row][col];
+    END;
+  END;
+  RETURN total;
+END

@@ -1,0 +1,16 @@
+ifInsideForConstant(A, n)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    IF (A[i] > 0) THEN
+    BEGIN
+      total <- total + 1;
+    END
+    ELSE
+    BEGIN
+      total <- total + 2;
+    END;
+  END;
+  RETURN total;
+END

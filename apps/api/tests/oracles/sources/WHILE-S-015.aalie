@@ -1,0 +1,12 @@
+geometricTowardSquaredBound(n)
+BEGIN
+  i <- 1;
+  total <- 0;
+  limite <- n * n;
+  WHILE (i <= limite) DO
+  BEGIN
+    total <- total + 1;
+    i <- i * 2;
+  END;
+  RETURN total;
+END

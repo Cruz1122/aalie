@@ -1,0 +1,13 @@
+constantBranches(n, flag)
+BEGIN
+  x <- 0;
+  IF (flag = true) THEN
+  BEGIN
+    x <- 1;
+  END
+  ELSE
+  BEGIN
+    x <- 2;
+  END;
+  RETURN x;
+END

@@ -1,0 +1,11 @@
+linearHeavyBody(A, B, n)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    x <- A[i] + B[i];
+    y <- x * 2;
+    total <- total + y;
+  END;
+  RETURN total;
+END

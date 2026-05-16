@@ -1,0 +1,8 @@
+missingEndBlock(n)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    total <- total + i;
+  RETURN total;
+END
