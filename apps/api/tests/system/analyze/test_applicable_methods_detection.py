@@ -43,9 +43,9 @@ END""",
             "source": """mergeSort(A[n], inicio, fin) BEGIN
     IF (inicio < fin) THEN BEGIN
         medio <- (inicio + fin) DIV 2;
-        mergeSort(A, inicio, medio);
-        mergeSort(A, medio + 1, fin);
-        merge(A, inicio, medio, fin);
+        CALL mergeSort(A, inicio, medio);
+        CALL mergeSort(A, medio + 1, fin);
+        CALL merge(A, inicio, medio, fin);
     END
 END""",
         },
@@ -55,8 +55,8 @@ END""",
             "source": """quickSort(A[n], inicio, fin) BEGIN
     IF (inicio < fin) THEN BEGIN
         pi <- partition(A, inicio, fin);
-        quickSort(A, inicio, pi - 1);
-        quickSort(A, pi + 1, fin);
+        CALL quickSort(A, inicio, pi - 1);
+        CALL quickSort(A, pi + 1, fin);
     END
 END""",
         },
@@ -91,8 +91,8 @@ END""",
             "source": """matrixMultiply(A[n][n], B[n][n], C[n][n], inicio, fin) BEGIN
     IF (inicio < fin) THEN BEGIN
         medio <- (inicio + fin) DIV 2;
-        matrixMultiply(A, B, C, inicio, medio);
-        matrixMultiply(A, B, C, medio + 1, fin);
+        CALL matrixMultiply(A, B, C, inicio, medio);
+        CALL matrixMultiply(A, B, C, medio + 1, fin);
     END
 END""",
         },
@@ -105,7 +105,7 @@ END""",
     IF (n <= 1) THEN BEGIN
         RETURN 0;
     END
-    insertionSortRec(A, n - 1);
+    CALL insertionSortRec(A, n - 1);
     clave <- A[n];
     j <- n - 1;
     WHILE (j > 0 AND A[j] > clave) DO BEGIN
@@ -142,31 +142,24 @@ END""",
     RETURN x * power(x, n - 1);
 END""",
         },
-        # Exponential (Fast Exponentiation)
+        # Exponential (Fast Exponentiation simplificado)
         {
             "name": "Fast Exponentiation",
             "source": """fastExpo(x, n) BEGIN
     IF (n = 0) THEN BEGIN
         RETURN 1;
     END
-    IF (n MOD 2 = 0) THEN BEGIN
-        temp <- fastExpo(x, n / 2);
-        RETURN temp * temp;
-    END
     RETURN x * fastExpo(x, n - 1);
 END""",
         },
-        # String Search (KMP simplified)
+        # Sum of first n numbers
         {
-            "name": "String Search Recursiva",
-            "source": """stringSearchRec(texto[m], patron[n], pos) BEGIN
-    IF (pos > m - n) THEN BEGIN
-        RETURN -1;
+            "name": "Suma Recursiva",
+            "source": """sumaRec(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN n;
     END
-    IF (matchAt(texto, patron, pos)) THEN BEGIN
-        RETURN pos;
-    END
-    RETURN stringSearchRec(texto, patron, pos + 1);
+    RETURN n + sumaRec(n - 1);
 END""",
         },
     ],

@@ -72,7 +72,7 @@ def test_modal_appears_for_catalog_examples():
 
         # Paso 1: Parsear el código
         print("  1. Parseando código...", end=" ")
-        parse_response = client.post("/parse", json={"source": source})
+        parse_response = client.post("/grammar/parse", json={"input": source})
 
         if parse_response.status_code != 200:
             print(f"[FAIL] HTTP {parse_response.status_code}")
