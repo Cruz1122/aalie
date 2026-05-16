@@ -83,6 +83,11 @@ vi.mock("@/hooks/useContentProgress", () => ({
     useSectionCompletionTrackingMock(...args),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("@/components/Header", () => ({
   default: () => <div data-testid="header" />,
 }));

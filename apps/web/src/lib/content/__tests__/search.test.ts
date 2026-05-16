@@ -26,7 +26,7 @@ describe("searchContentIndex", () => {
       "sintaxis mínima",
     );
 
-    expect(results[0]?.entry.title).toBe("Sintaxis mínima para seguir la guía");
+    expect(results[0]?.entry.title).toBe("Sintaxis mínima de los ejemplos");
     expect(results[0]?.moduleTitle).toBe("Cómo se mide un algoritmo");
   });
 
@@ -37,7 +37,7 @@ describe("searchContentIndex", () => {
       "CALL",
     );
 
-    expect(results[0]?.entry.title).toBe("Sintaxis mínima para seguir la guía");
+    expect(results[0]?.entry.title).toBe("Sintaxis mínima de los ejemplos");
     expect(results[0]?.entry.route).toBe(
       "/user-guide/como-se-mide-un-algoritmo#sintaxis-minima",
     );

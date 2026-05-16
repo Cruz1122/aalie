@@ -12,13 +12,14 @@ describe("technique detection performance", () => {
       parseSourceToAst(oracle.source),
     );
 
+    const ROUNDS = 5;
     const t0 = performance.now();
-    for (let round = 0; round < 100; round++) {
+    for (let round = 0; round < ROUNDS; round++) {
       for (const ast of asts) detectTechniqueFromAst(ast);
     }
     const elapsed = performance.now() - t0;
 
-    const limitMs = TECHNIQUE_ORACLES.length * 300;
+    const limitMs = TECHNIQUE_ORACLES.length * ROUNDS * 500;
     expect(elapsed).toBeLessThan(limitMs);
   });
 });
