@@ -789,19 +789,128 @@ def _render_report(
     return "\n".join(lines)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Score LLM40 outputs against gold and compare AALIE vs direct LLM")
-    parser.add_argument("--llm-jsonl", required=True, type=Path)
-    parser.add_argument("--gold-jsonl", required=True, type=Path)
-    parser.add_argument("--aalie-csv", required=True, type=Path)
-    parser.add_argument("--out-md", required=True, type=Path)
-    parser.add_argument("--index-json", type=Path, default=_THIS / "llm40_index.json")
-    args = parser.parse_args()
+def _group_summary(scores: dict[str, SystemCaseScore]) -> dict[str, dict[str, int]]:
+    by_group: dict[str, dict[str, int]] = {}
+    for score in scores.values():
+        bucket = by_group.setdefault(score.group, {"cases": 0, "pass": 0})
+        bucket["cases"] += 1
+        if score.passed:
+            bucket["pass"] += 1
+    return by_group
 
-    gold_map, _, _ = _load_gold(args.gold_jsonl)
-    index_group_map, index_family_map = _load_index_group_family(args.index_json)
-    aalie_rows, aalie_group_map, aalie_family_map = _build_case_maps_from_aalie_csv(args.aalie_csv)
-    llm_records = _load_jsonl(args.llm_jsonl)
+
+def _strict_contract_failures(scores: dict[str, SystemCaseScore]) -> int:
+    count = 0
+    for score in scores.values():
+        if any(
+            failure in score.failure_types
+            for failure in (
+                "missing_primary_big_theta",
+                "strict_contract_failure",
+                "output_schema_error",
+            )
+        ):
+            count += 1
+    return count
+
+
+def _mathematical_shape_failures(scores: dict[str, SystemCaseScore]) -> int:
+    return sum(1 for score in scores.values() if "mathematical_shape_failure" in score.failure_types)
+
+
+def _build_individual_summary(
+    *,
+    model_id: str,
+    display_name: str,
+    provider: str,
+    benchmark: str,
+    validation: ValidationSummary,
+    metrics: dict[str, Any],
+    scores: dict[str, SystemCaseScore],
+) -> dict[str, Any]:
+    return {
+        "modelId": model_id,
+        "displayName": display_name,
+        "provider": provider,
+        "benchmark": benchmark,
+        "status": "valid_or_partial"
+        if validation.schema_valid_outputs < validation.expected_cases or validation.missing_case_ids or validation.duplicate_case_ids or validation.unknown_case_ids
+        else "valid",
+        "totalCases": validation.expected_cases,
+        "schemaValidOutputs": validation.schema_valid_outputs,
+        "parseableOutputs": validation.parseable_outputs,
+        "missingCaseIds": len(validation.missing_case_ids),
+        "duplicateCaseIds": len(validation.duplicate_case_ids),
+        "metrics": {
+            "totalPass": metrics["pass_rate_total"],
+            "thetaAccuracyExact": metrics["theta_accuracy_exact"],
+            "thetaAccuracyShapeAware": metrics["theta_accuracy_shape_aware"],
+            "explicitSafeRejection": metrics["explicit_safe_rejection"],
+            "nonHallucination": metrics["non_hallucination"],
+            "hallucinatedBoundRate": metrics["hallucinated_bound_rate"],
+            "idealGapRecovery": metrics["ideal_gap_recovery"],
+            "strictContractFailures": _strict_contract_failures(scores),
+            "missingPrimaryBigTheta": sum(1 for score in scores.values() if "missing_primary_big_theta" in score.failure_types),
+            "mathematicalShapeFailures": _mathematical_shape_failures(scores),
+        },
+        "byGroup": _group_summary(scores),
+    }
+
+
+def _case_rows(scores: dict[str, SystemCaseScore], system_name: str) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for score in sorted(scores.values(), key=lambda s: s.case_id):
+        rows.append(
+            {
+                "system": system_name,
+                "case_id": score.case_id,
+                "group": score.group,
+                "family": score.family,
+                "schema_valid": score.schema_valid,
+                "parse_status_agreement": score.parse_status_agreement,
+                "analysis_status_agreement": score.analysis_status_agreement,
+                "algorithm_kind_agreement": score.algorithm_kind_agreement,
+                "theta_agreement_exact": score.theta_agreement_exact,
+                "theta_agreement_shape_aware": score.theta_agreement_shape_aware,
+                "recurrence_agreement": score.recurrence_agreement,
+                "recurrence_family_agreement": score.recurrence_family_agreement,
+                "explicit_safe_rejection": score.explicit_safe_rejection,
+                "non_hallucination": score.non_hallucination,
+                "hallucinated_bound": score.hallucinated_bound,
+                "ideal_recovery": score.ideal_recovery,
+                "pass": score.passed,
+                "failure_types": ", ".join(score.failure_types),
+            }
+        )
+    return rows
+
+
+def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        path.write_text("", encoding="utf-8")
+        return
+    fieldnames = list(rows[0].keys())
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def score_comparison(
+    *,
+    llm_jsonl: Path,
+    gold_jsonl: Path,
+    aalie_csv: Path,
+    index_json: Path,
+    model_id: str = "direct_llm",
+    model_name: str = "Direct LLM",
+    provider: str = "",
+) -> dict[str, Any]:
+    gold_map, _, _ = _load_gold(gold_jsonl)
+    index_group_map, index_family_map = _load_index_group_family(index_json)
+    aalie_rows, aalie_group_map, aalie_family_map = _build_case_maps_from_aalie_csv(aalie_csv)
+    llm_records = _load_jsonl(llm_jsonl)
 
     llm_validation, llm_outputs = _validate_llm_outputs(llm_records, gold_map)
     aalie_validation = _validate_aalie_outputs(aalie_rows, gold_map)
@@ -812,7 +921,7 @@ def main() -> None:
     family_map.update(index_family_map)
 
     llm_scores = _score_all_cases(
-        system_name="Direct LLM",
+        system_name=model_name,
         outputs=llm_outputs,
         gold_map=gold_map,
         group_map=group_map,
@@ -852,12 +961,7 @@ def main() -> None:
 
     aalie_metrics = _build_metrics(aalie_scores)
     llm_metrics = _build_metrics(llm_scores)
-
     stale_warning = None
-    rec_dc_004 = aalie_rows.get("REC-DC-004")
-    if rec_dc_004 and _canonical_exact_theta(rec_dc_004.get("big_theta")) != _canonical_exact_theta("Theta(n^2)"):
-        # Only warn if a corrected row is claimed externally; current CSV is taken as source of record.
-        stale_warning = None
 
     report = _render_report(
         aalie_validation=aalie_validation,
@@ -868,9 +972,71 @@ def main() -> None:
         llm_metrics=llm_metrics,
         stale_warning=stale_warning,
     )
+
+    return {
+        "report": report,
+        "aalie_validation": aalie_validation,
+        "llm_validation": llm_validation,
+        "aalie_scores": aalie_scores,
+        "llm_scores": llm_scores,
+        "aalie_metrics": aalie_metrics,
+        "llm_metrics": llm_metrics,
+        "llm_summary": _build_individual_summary(
+            model_id=model_id,
+            display_name=model_name,
+            provider=provider,
+            benchmark="LLM40",
+            validation=llm_validation,
+            metrics=llm_metrics,
+            scores=llm_scores,
+        ),
+        "aalie_summary": _build_individual_summary(
+            model_id="aalie",
+            display_name="AALIE",
+            provider="AALIE",
+            benchmark="LLM40",
+            validation=aalie_validation,
+            metrics=aalie_metrics,
+            scores=aalie_scores,
+        ),
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Score LLM40 outputs against gold and compare AALIE vs direct LLM")
+    parser.add_argument("--llm-jsonl", required=True, type=Path)
+    parser.add_argument("--gold-jsonl", required=True, type=Path)
+    parser.add_argument("--aalie-csv", required=True, type=Path)
+    parser.add_argument("--out-md", required=True, type=Path)
+    parser.add_argument("--index-json", type=Path, default=_THIS / "llm40_index.json")
+    parser.add_argument("--model-id", default="direct_llm")
+    parser.add_argument("--model-name", default="Direct LLM")
+    parser.add_argument("--provider", default="")
+    parser.add_argument("--out-csv", type=Path)
+    parser.add_argument("--out-json", type=Path)
+    args = parser.parse_args()
+
+    result = score_comparison(
+        llm_jsonl=args.llm_jsonl,
+        gold_jsonl=args.gold_jsonl,
+        aalie_csv=args.aalie_csv,
+        index_json=args.index_json,
+        model_id=args.model_id,
+        model_name=args.model_name,
+        provider=args.provider,
+    )
     args.out_md.parent.mkdir(parents=True, exist_ok=True)
-    args.out_md.write_text(report, encoding="utf-8")
+    args.out_md.write_text(result["report"], encoding="utf-8")
     _log(f"Wrote {args.out_md}")
+
+    if args.out_csv:
+        _write_csv(args.out_csv, _case_rows(result["llm_scores"], args.model_name))
+        _log(f"Wrote {args.out_csv}")
+
+    if args.out_json:
+        args.out_json.parent.mkdir(parents=True, exist_ok=True)
+        args.out_json.write_text(json.dumps(result["llm_summary"], indent=2, ensure_ascii=False), encoding="utf-8")
+        _log(f"Wrote {args.out_json}")
 
 
 if __name__ == "__main__":

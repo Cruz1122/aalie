@@ -160,15 +160,13 @@ def _get_memory_info() -> str | None:
     try:
         if sys.platform == "win32":
             result = subprocess.run(
-                "wmic OS get TotalVisibleMemorySize",
-                capture_output=True, text=True, timeout=10, shell=True,
+                ["powershell", "-Command",
+                 "(Get-CimInstance Win32_OperatingSystem).TotalVisibleMemorySize / 1MB"],
+                capture_output=True, text=True, timeout=15,
             )
             if result.returncode == 0:
-                lines = [l.strip() for l in result.stdout.strip().splitlines() if l.strip()]
-                if len(lines) > 1:
-                    total_kb = int(lines[1])
-                    total_gb = total_kb / (1024 * 1024)
-                    return f"{total_gb:.1f} GB"
+                gb = result.stdout.strip().replace(",", ".")
+                return f"{float(gb):.0f} GB"
         else:
             result = subprocess.run(
                 "free -h", capture_output=True, text=True, timeout=10, shell=True
