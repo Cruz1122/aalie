@@ -4,17 +4,17 @@ La columna Tamaño simbolico es referencial para el caso pedagogico. El motor an
 
 | Caso | Familia | Tamaño simbolico | Parse mediana | Classify mediana | Analyze mediana | Analyze / Total | Total mediana | P95 total | Θ esperada | Θ obtenida | Estado |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
-| FOR lineal | Iterativo | n=1000 | 7.252 ms | 6.813 ms | 170.085 ms | 92.3% | 184.19 ms | 383.527 ms | $\Theta(n)$ | $\Theta(n)$ | OK |
-| FOR anidado | Iterativo | n=500 | 8.665 ms | 8.201 ms | 476.223 ms | 95.4% | 498.963 ms | 726.852 ms | $\Theta(n^2)$ | $\Theta(n^2)$ | OK |
-| FOR triangular | Iterativo | n=500 | 8.484 ms | 8.412 ms | 1105.237 ms | 98.4% | 1123.084 ms | 1268.205 ms | $\Theta(n^2)$ | $\Theta(n^2)$ | OK |
-| WHILE lineal | Iterativo/WHILE | n=1000 | 9.592 ms | 9.003 ms | 453.622 ms | 95.1% | 477.097 ms | 630.512 ms | $\Theta(n)$ | $\Theta(n)$ | OK |
-| WHILE logaritmico | Iterativo/WHILE | n=65536 | 9.707 ms | 8.787 ms | 228.277 ms | 92.0% | 248.067 ms | 421.956 ms | $\Theta(\log n)$ | $\Theta(\log n)$ | OK |
-| WHILE ambiguo | Iterativo/WHILE | n=100 | 11.616 ms | 11.395 ms | 189.985 ms | 88.5% | 214.611 ms | 356.25 ms | No concluyente | No concluyente | OK |
-| MergeSort | Recursivo DyV | n=8192 | 12.94 ms | 12.851 ms | 18.23 ms | 41.2% | 44.28 ms | 99.091 ms | $\Theta(n \log n)$ | $\Theta(n \log n)$ | OK |
-| Factorial | Recursivo lineal | n=100 | 8.763 ms | 8.266 ms | 17.608 ms | 50.1% | 35.112 ms | 112.219 ms | $\Theta(n)$ | $\Theta(n)$ | OK |
-| Fibonacci | Recursivo multiple | n=30 | 9.518 ms | 9.286 ms | 494.218 ms | 96.1% | 514.194 ms | 724.352 ms | $\Theta(\varphi^n)$ | $\Theta(\varphi^n)$ | OK |
-| Euclides | WHILE especifico | n=10000 | 11.217 ms | 11.004 ms | 667.432 ms | 96.2% | 693.993 ms | 932.672 ms | $\Theta(\log(\min(a,b)))$ | $\Theta(\log(\min(a,b)))$ | OK |
-| Binary Search | DyV / WHILE intervalo | n=65536 | 16.433 ms | 15.85 ms | 699.046 ms | 94.5% | 739.917 ms | 948.354 ms | $\Theta(\log n)$ | $\Theta(\log n)$ | OK |
-| Inicializacion matriz 3D | Iterativo triple | n=100 | 12.664 ms | 12.187 ms | 972.812 ms | 96.6% | 1007.205 ms | 1272.499 ms | $\Theta(n^3)$ | $\Theta(n^3)$ | OK |
-| Selection Sort | Iterativo cuadratico | n=500 | 12.514 ms | 12.242 ms | 1779.877 ms | 98.6% | 1804.703 ms | 2033.911 ms | $\Theta(n^2)$ | $\Theta(n^2)$ | OK |
-| Recorrido arbol binario | Recursivo estructural | n=1000 | 8.162 ms | 8.011 ms | 9.592 ms | 36.5% | 26.254 ms | 88.415 ms | $\Theta(n)$ | $\Theta(n)$ | OK |
+| FOR lineal | Iterativo | n=1000 | 4.216 ms | 3.956 ms | 94.168 ms | 91.6% | 102.84 ms | 158.287 ms | $\Theta(n)$ | $\Theta(n)$ | OK |
+| FOR anidado | Iterativo | n=500 | 4.849 ms | 4.706 ms | 237.306 ms | 96.3% | 246.453 ms | 358.805 ms | $\Theta(n^2)$ | $\Theta(n^2)$ | OK |
+| FOR triangular | Iterativo | n=500 | 4.933 ms | 4.913 ms | 568.803 ms | 98.2% | 578.946 ms | 657.982 ms | $\Theta(n^2)$ | $\Theta(n^2)$ | OK |
+| WHILE lineal | Iterativo/WHILE | n=1000 | 5.852 ms | 5.758 ms | 260.696 ms | 95.9% | 271.93 ms | 390.118 ms | $\Theta(n)$ | $\Theta(n)$ | OK |
+| WHILE logaritmico | Iterativo/WHILE | n=65536 | 6.256 ms | 5.844 ms | 138.367 ms | 91.7% | 150.873 ms | 240.866 ms | $\Theta(\log n)$ | $\Theta(\log n)$ | OK |
+| WHILE ambiguo | Iterativo/WHILE | n=100 | 7.146 ms | 6.955 ms | 114.32 ms | 88.5% | 129.186 ms | 222.049 ms | No concluyente | No concluyente | OK |
+| MergeSort | Recursivo DyV | n=8192 | 8.204 ms | 7.928 ms | 10.803 ms | 39.5% | 27.324 ms | 42.38 ms | $\Theta(n \log n)$ | $\Theta(n \log n)$ | OK |
+| Factorial | Recursivo lineal | n=100 | 5.431 ms | 5.427 ms | 10.574 ms | 48.6% | 21.779 ms | 33.989 ms | $\Theta(n)$ | $\Theta(n)$ | OK |
+| Fibonacci | Recursivo multiple | n=30 | 5.956 ms | 5.915 ms | 322.134 ms | 94.8% | 339.888 ms | 492.468 ms | $\Theta(\varphi^n)$ | $\Theta(\varphi^n)$ | OK |
+| Euclides | WHILE especifico | n=10000 | 7.084 ms | 7.21 ms | 410.141 ms | 96.1% | 426.613 ms | 548.487 ms | $\Theta(\log(\min(a,b)))$ | $\Theta(\log(\min(a,b)))$ | OK |
+| Binary Search | DyV / WHILE intervalo | n=65536 | 10.025 ms | 10.443 ms | 406.858 ms | 94.4% | 431.219 ms | 498.831 ms | $\Theta(\log n)$ | $\Theta(\log n)$ | OK |
+| Inicializacion matriz 3D | Iterativo triple | n=100 | 7.83 ms | 7.639 ms | 555.002 ms | 96.4% | 575.647 ms | 683.969 ms | $\Theta(n^3)$ | $\Theta(n^3)$ | OK |
+| Selection Sort | Iterativo cuadratico | n=500 | 10.404 ms | 10.572 ms | 1425.253 ms | 98.6% | 1445.738 ms | 1576.256 ms | $\Theta(n^2)$ | $\Theta(n^2)$ | OK |
+| Recorrido arbol binario | Recursivo estructural | n=1000 | 6.192 ms | 5.987 ms | 7.028 ms | 36.0% | 19.526 ms | 23.515 ms | $\Theta(n)$ | $\Theta(n)$ | OK |

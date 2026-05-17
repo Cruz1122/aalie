@@ -9,6 +9,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import platform
+import shutil
+import subprocess
+import sys
+
 ROOT = Path(__file__).parent
 PIPELINE_CASES_FILE = ROOT / "benchmark_cases.json"
 TRACE_CASES_FILE = ROOT / "trace_benchmark_cases.json"
@@ -111,3 +116,91 @@ def latex_cell(value: str) -> str:
     if value == "No concluyente":
         return value
     return f"${value}$"
+
+
+def _run_cmd(cmd: str, cwd: str | None = None, fallback: Any = None) -> str | None:
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=10, shell=True, cwd=cwd
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return fallback
+
+
+def _get_cpu_info() -> str | None:
+    cpu = platform.processor()
+    if cpu:
+        return cpu
+    try:
+        if sys.platform == "win32":
+            result = subprocess.run(
+                "wmic cpu get name", capture_output=True, text=True, timeout=10, shell=True
+            )
+            if result.returncode == 0:
+                lines = [l.strip() for l in result.stdout.strip().splitlines() if l.strip()]
+                if len(lines) > 1:
+                    return lines[1]
+        else:
+            result = subprocess.run(
+                "lscpu", capture_output=True, text=True, timeout=10, shell=True
+            )
+            if result.returncode == 0:
+                for line in result.stdout.splitlines():
+                    if "Model name" in line:
+                        return line.split(":", 1)[1].strip()
+    except Exception:
+        pass
+    return None
+
+
+def _get_memory_info() -> str | None:
+    try:
+        if sys.platform == "win32":
+            result = subprocess.run(
+                "wmic OS get TotalVisibleMemorySize",
+                capture_output=True, text=True, timeout=10, shell=True,
+            )
+            if result.returncode == 0:
+                lines = [l.strip() for l in result.stdout.strip().splitlines() if l.strip()]
+                if len(lines) > 1:
+                    total_kb = int(lines[1])
+                    total_gb = total_kb / (1024 * 1024)
+                    return f"{total_gb:.1f} GB"
+        else:
+            result = subprocess.run(
+                "free -h", capture_output=True, text=True, timeout=10, shell=True
+            )
+            if result.returncode == 0:
+                for line in result.stdout.splitlines():
+                    if line.startswith("Mem:"):
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            return parts[1]
+    except Exception:
+        pass
+    return None
+
+
+def gather_environment_metadata() -> dict[str, Any]:
+    git_cwd = str(ROOT.parent)
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "git_commit": _run_cmd("git rev-parse HEAD", cwd=git_cwd),
+        "git_status_short": _run_cmd("git status --short", cwd=git_cwd),
+        "python_version": sys.version,
+        "node_version": _run_cmd("node --version"),
+        "pnpm_version": _run_cmd("pnpm --version"),
+        "platform": sys.platform,
+        "uname": str(platform.uname()),
+        "cpu": _get_cpu_info(),
+        "memory": _get_memory_info(),
+        "pdflatex_version": _run_cmd("pdflatex --version"),
+        "warmup_runs": int(os.getenv("AALIE_BENCH_WARMUP", "5")),
+        "measured_runs": int(os.getenv("AALIE_BENCH_RUNS", "30")),
+        "benchmark_script": "apps/api/benchmarks/run_pipeline_benchmark.py",
+        "backend_mode": "http_in_process",
+        "timer": "time.perf_counter_ns",
+    }
