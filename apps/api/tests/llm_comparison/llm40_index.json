@@ -1,0 +1,1044 @@
+{
+  "version": "llm40-balanced-v1",
+  "description": "Balanced 40-case subset derived from the 80 oracle dataset for AALIE vs direct LLM comparison.",
+  "cases": [
+    {
+      "caseId": "FOR-002",
+      "oracleId": "FOR-002",
+      "group": "iterative_strict",
+      "family": "for_simple",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/FOR-002.aalie",
+      "source": "sumArray(A, n)\nBEGIN\n  suma <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    suma <- suma + A[i];\n  END;\n  RETURN suma;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n)",
+        "bigO": "O(n)",
+        "bigOmega": "Omega(n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "FOR-003",
+      "oracleId": "FOR-003",
+      "group": "iterative_strict",
+      "family": "for_simple",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/FOR-003.aalie",
+      "source": "countItems(A, n)\nBEGIN\n  contador <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    contador <- contador + 1;\n  END;\n  RETURN contador;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n)",
+        "bigO": "O(n)",
+        "bigOmega": "Omega(n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "FOR-008",
+      "oracleId": "FOR-008",
+      "group": "iterative_strict",
+      "family": "for_simple",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/FOR-008.aalie",
+      "source": "sumTwoArrays(A, B, n, m)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    total <- total + A[i];\n  END;\n  FOR j <- 1 TO m DO\n  BEGIN\n    total <- total + B[j];\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n + m)",
+        "bigO": "O(n + m)",
+        "bigOmega": "Omega(n + m)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "FOR-009",
+      "oracleId": "FOR-009",
+      "group": "iterative_strict",
+      "family": "for_simple",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/FOR-009.aalie",
+      "source": "threePasses(A, B, C, n)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    total <- total + A[i];\n  END;\n  FOR j <- 1 TO n DO\n  BEGIN\n    total <- total + B[j];\n  END;\n  FOR k <- 1 TO n DO\n  BEGIN\n    total <- total + C[k];\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n)",
+        "bigO": "O(n)",
+        "bigOmega": "Omega(n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "NEST-001",
+      "oracleId": "NEST-001",
+      "group": "iterative_strict",
+      "family": "for_nested",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/NEST-001.aalie",
+      "source": "squareDoubleLoop(A, n)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    FOR j <- 1 TO n DO\n    BEGIN\n      total <- total + A[i][j];\n    END;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n^2)",
+        "bigO": "O(n^2)",
+        "bigOmega": "Omega(n^2)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "NEST-002",
+      "oracleId": "NEST-002",
+      "group": "iterative_strict",
+      "family": "for_nested",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/NEST-002.aalie",
+      "source": "rectangularDoubleLoop(A, n, m)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    FOR j <- 1 TO m DO\n    BEGIN\n      total <- total + A[i][j];\n    END;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n*m)",
+        "bigO": "O(n*m)",
+        "bigOmega": "Omega(n*m)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "NEST-004",
+      "oracleId": "NEST-004",
+      "group": "iterative_strict",
+      "family": "for_nested",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/NEST-004.aalie",
+      "source": "lowerTriangular(A, n)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    FOR j <- 1 TO i DO\n    BEGIN\n      total <- total + A[i][j];\n    END;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n^2)",
+        "bigO": "O(n^2)",
+        "bigOmega": "Omega(n^2)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "NEST-005",
+      "oracleId": "NEST-005",
+      "group": "iterative_strict",
+      "family": "for_nested",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/NEST-005.aalie",
+      "source": "upperTriangular(A, n)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    FOR j <- i TO n DO\n    BEGIN\n      total <- total + A[i][j];\n    END;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n^2)",
+        "bigO": "O(n^2)",
+        "bigOmega": "Omega(n^2)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "NEST-010",
+      "oracleId": "NEST-010",
+      "group": "iterative_strict",
+      "family": "for_nested",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/NEST-010.aalie",
+      "source": "threeDimensionalRectangular(A, n, m)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    FOR j <- 1 TO n DO\n    BEGIN\n      FOR k <- 1 TO m DO\n      BEGIN\n        total <- total + A[i][j][k];\n      END;\n    END;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n^2*m)",
+        "bigO": "O(n^2*m)",
+        "bigOmega": "Omega(n^2*m)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "IF-002",
+      "oracleId": "IF-002",
+      "group": "iterative_strict",
+      "family": "conditional",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/IF-002.aalie",
+      "source": "linearThenConstant(A, n, flag)\nBEGIN\n  total <- 0;\n  IF (flag = true) THEN\n  BEGIN\n    FOR i <- 1 TO n DO\n    BEGIN\n      total <- total + A[i];\n    END;\n  END\n  ELSE\n  BEGIN\n    total <- total + 1;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false,
+        "cases": {
+          "worst": {
+            "bigO": "O(n)",
+            "bigOmega": "Omega(n)",
+            "bigTheta": "Theta(n)"
+          },
+          "best": {
+            "bigO": "O(1)",
+            "bigOmega": "Omega(1)",
+            "bigTheta": "Theta(1)"
+          },
+          "avg": {
+            "bigO": "O(n)",
+            "bigOmega": "Omega(n)",
+            "bigTheta": "Theta(n)"
+          }
+        }
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "IF-005",
+      "oracleId": "IF-005",
+      "group": "iterative_strict",
+      "family": "conditional",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/IF-005.aalie",
+      "source": "quadraticThenLinear(A, n, flag)\nBEGIN\n  total <- 0;\n  IF (flag = true) THEN\n  BEGIN\n    FOR i <- 1 TO n DO\n    BEGIN\n      FOR j <- 1 TO n DO\n      BEGIN\n        total <- total + A[i][j];\n      END;\n    END;\n  END\n  ELSE\n  BEGIN\n    FOR k <- 1 TO n DO\n    BEGIN\n      total <- total + A[k];\n    END;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n^2)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false,
+        "cases": {
+          "worst": {
+            "bigO": "O(n^2)",
+            "bigOmega": "Omega(n^2)",
+            "bigTheta": "Theta(n^2)"
+          },
+          "best": {
+            "bigO": "O(n)",
+            "bigOmega": "Omega(n)",
+            "bigTheta": "Theta(n)"
+          },
+          "avg": {
+            "bigO": "O(n^2)",
+            "bigOmega": "Omega(n^2)",
+            "bigTheta": "Theta(n^2)"
+          }
+        }
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "IF-007",
+      "oracleId": "IF-007",
+      "group": "iterative_strict",
+      "family": "conditional",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/IF-007.aalie",
+      "source": "nestedIfInsideFor(A, n)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    IF (A[i] > 0) THEN\n    BEGIN\n      FOR j <- 1 TO n DO\n      BEGIN\n        total <- total + A[j];\n      END;\n    END\n    ELSE\n    BEGIN\n      total <- total + 1;\n    END;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n^2)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false,
+        "cases": {
+          "worst": {
+            "bigO": "O(n^2)",
+            "bigOmega": "Omega(n^2)",
+            "bigTheta": "Theta(n^2)"
+          },
+          "best": {
+            "bigO": "O(n)",
+            "bigOmega": "Omega(n)",
+            "bigTheta": "Theta(n)"
+          },
+          "avg": {
+            "bigO": "O(n^2)",
+            "bigOmega": "Omega(n^2)",
+            "bigTheta": "Theta(n^2)"
+          }
+        }
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-DC-001",
+      "oracleId": "REC-DC-001",
+      "group": "recursive_strict",
+      "family": "recursive_divide_conquer",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-DC-001.aalie",
+      "source": "mergeSortCost(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    left <- mergeSortCost(n / 2);\n    right <- mergeSortCost(n / 2);\n    total <- 0;\n    FOR i <- 1 TO n DO\n    BEGIN\n      total <- total + 1;\n    END;\n    RETURN left + right + total;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(n log n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=2T(n/2)+n",
+        "recurrenceFamily": "divide_conquer",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-DC-002",
+      "oracleId": "REC-DC-002",
+      "group": "recursive_strict",
+      "family": "recursive_divide_conquer",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-DC-002.aalie",
+      "source": "binarySearchCost(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    sub <- binarySearchCost(n / 2);\n    RETURN sub + 1;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(log n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=T(n/2)+1",
+        "recurrenceFamily": "divide_conquer",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-DC-003",
+      "oracleId": "REC-DC-003",
+      "group": "recursive_strict",
+      "family": "recursive_divide_conquer",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-DC-003.aalie",
+      "source": "fullBinaryTraversalCost(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    a <- fullBinaryTraversalCost(n / 2);\n    b <- fullBinaryTraversalCost(n / 2);\n    RETURN a + b + 1;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=2T(n/2)+1",
+        "recurrenceFamily": "divide_conquer",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-DC-005",
+      "oracleId": "REC-DC-005",
+      "group": "recursive_strict",
+      "family": "recursive_divide_conquer",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-DC-005.aalie",
+      "source": "ternarySplitCost(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    a <- ternarySplitCost(n / 3);\n    b <- ternarySplitCost(n / 3);\n    c <- ternarySplitCost(n / 3);\n    total <- 0;\n    FOR i <- 1 TO n DO\n    BEGIN\n      total <- total + 1;\n    END;\n    RETURN a + b + c + total;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(n log n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=3T(n/3)+n",
+        "recurrenceFamily": "divide_conquer",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-DC-007",
+      "oracleId": "REC-DC-007",
+      "group": "recursive_strict",
+      "family": "recursive_divide_conquer",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-DC-007.aalie",
+      "source": "karatsubaLikeCost(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    a <- karatsubaLikeCost(n / 2);\n    b <- karatsubaLikeCost(n / 2);\n    c <- karatsubaLikeCost(n / 2);\n    total <- 0;\n    FOR i <- 1 TO n DO\n    BEGIN\n      total <- total + 1;\n    END;\n    RETURN a + b + c + total;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(n^{log_2 3})",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=3T(n/2)+n",
+        "recurrenceFamily": "divide_conquer",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-DC-011",
+      "oracleId": "REC-DC-011",
+      "group": "recursive_strict",
+      "family": "recursive_divide_conquer",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-DC-011.aalie",
+      "source": "nonlinearRecursiveArgument(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    sub <- nonlinearRecursiveArgument(n - n / 2);\n    RETURN sub + 1;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(log n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=T(n/2)+1",
+        "recurrenceFamily": "divide_conquer",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-LS-001",
+      "oracleId": "REC-LS-001",
+      "group": "recursive_strict",
+      "family": "recursive_linear_shift",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-LS-001.aalie",
+      "source": "factorialCost(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    sub <- factorialCost(n - 1);\n    RETURN n * sub;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=T(n-1)+1",
+        "recurrenceFamily": "linear_shift",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-LS-004",
+      "oracleId": "REC-LS-004",
+      "group": "recursive_strict",
+      "family": "recursive_linear_shift",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-LS-004.aalie",
+      "source": "fibonacciCost(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    a <- fibonacciCost(n - 1);\n    b <- fibonacciCost(n - 2);\n    RETURN a + b;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta((1/2 + sqrt(5)/2)^n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=T(n-1)+T(n-2)+1",
+        "recurrenceFamily": "linear_shift",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-LS-005",
+      "oracleId": "REC-LS-005",
+      "group": "recursive_strict",
+      "family": "recursive_linear_shift",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-LS-005.aalie",
+      "source": "doublePreviousCost(n)\nBEGIN\n  IF (n <= 0) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    a <- doublePreviousCost(n - 1);\n    b <- doublePreviousCost(n - 1);\n    RETURN a + b;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(2^n)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=2T(n-1)+1",
+        "recurrenceFamily": "linear_shift",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-LS-007",
+      "oracleId": "REC-LS-007",
+      "group": "recursive_strict",
+      "family": "recursive_linear_shift",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/REC-LS-007.aalie",
+      "source": "recursiveLinearLocalWork(n)\nBEGIN\n  IF (n <= 0) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    local <- 0;\n    FOR i <- 1 TO n DO\n    BEGIN\n      local <- local + 1;\n    END;\n    sub <- recursiveLinearLocalWork(n - 1);\n    RETURN sub + local;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "hybrid",
+        "bigTheta": "Theta(n^2)",
+        "bigO": null,
+        "bigOmega": null,
+        "recurrence": "T(n)=T(n-1)+n",
+        "recurrenceFamily": "linear_shift",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-S-001",
+      "oracleId": "WHILE-S-001",
+      "group": "while_strict",
+      "family": "while_supported",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/WHILE-S-001.aalie",
+      "source": "whileLinearIncrement(n)\nBEGIN\n  i <- 0;\n  total <- 0;\n  WHILE (i < n) DO\n  BEGIN\n    total <- total + 1;\n    i <- i + 1;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n)",
+        "bigO": "O(n)",
+        "bigOmega": "Omega(n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-S-002",
+      "oracleId": "WHILE-S-002",
+      "group": "while_strict",
+      "family": "while_supported",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/WHILE-S-002.aalie",
+      "source": "whileLinearDecrement(n)\nBEGIN\n  i <- n;\n  total <- 0;\n  WHILE (i > 0) DO\n  BEGIN\n    total <- total + 1;\n    i <- i - 1;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n)",
+        "bigO": "O(n)",
+        "bigOmega": "Omega(n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-S-005",
+      "oracleId": "WHILE-S-005",
+      "group": "while_strict",
+      "family": "while_supported",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/WHILE-S-005.aalie",
+      "source": "whileGeometricGrowthTwo(n)\nBEGIN\n  i <- 1;\n  total <- 0;\n  WHILE (i <= n) DO\n  BEGIN\n    total <- total + 1;\n    i <- i * 2;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(log n)",
+        "bigO": "O(log n)",
+        "bigOmega": "Omega(log n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-S-006",
+      "oracleId": "WHILE-S-006",
+      "group": "while_strict",
+      "family": "while_supported",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/WHILE-S-006.aalie",
+      "source": "whileGeometricShrinkTwo(n)\nBEGIN\n  i <- n;\n  total <- 0;\n  WHILE (i > 1) DO\n  BEGIN\n    total <- total + 1;\n    i <- i / 2;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(log n)",
+        "bigO": "O(log n)",
+        "bigOmega": "Omega(log n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-S-009",
+      "oracleId": "WHILE-S-009",
+      "group": "while_strict",
+      "family": "while_supported",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/WHILE-S-009.aalie",
+      "source": "binarySearchIterative(A, n, objetivo)\nBEGIN\n  low <- 1;\n  high <- n;\n  encontrado <- false;\n  WHILE (low <= high) DO\n  BEGIN\n    mid <- (low + high) DIV 2;\n    IF (A[mid] = objetivo) THEN\n    BEGIN\n      encontrado <- true;\n      low <- high + 1;\n    END\n    ELSE\n    BEGIN\n      IF (A[mid] < objetivo) THEN\n      BEGIN\n        low <- mid + 1;\n      END\n      ELSE\n      BEGIN\n        high <- mid - 1;\n      END;\n    END;\n  END;\n  RETURN encontrado;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(log n)",
+        "bigO": "O(log n)",
+        "bigOmega": "Omega(log n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-S-010",
+      "oracleId": "WHILE-S-010",
+      "group": "while_strict",
+      "family": "while_supported",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/WHILE-S-010.aalie",
+      "source": "binaryLowerBound(A, n, objetivo)\nBEGIN\n  low <- 1;\n  high <- n;\n  WHILE (low <= high) DO\n  BEGIN\n    mid <- (low + high) DIV 2;\n    IF (A[mid] < objetivo) THEN\n    BEGIN\n      low <- mid + 1;\n    END\n    ELSE\n    BEGIN\n      high <- mid - 1;\n    END;\n  END;\n  RETURN low;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(log n)",
+        "bigO": "O(log n)",
+        "bigOmega": "Omega(log n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-S-013",
+      "oracleId": "WHILE-S-013",
+      "group": "while_strict",
+      "family": "while_supported",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/WHILE-S-013.aalie",
+      "source": "oneShotFlag(n)\nBEGIN\n  activo <- true;\n  pasos <- 0;\n  WHILE (activo = true) DO\n  BEGIN\n    pasos <- pasos + 1;\n    activo <- false;\n  END;\n  RETURN pasos;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(1)",
+        "bigO": "O(1)",
+        "bigOmega": "Omega(1)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-S-016",
+      "oracleId": "WHILE-S-016",
+      "group": "while_strict",
+      "family": "while_supported",
+      "expectationKind": "strict_math",
+      "sourceFile": "sources/WHILE-S-016.aalie",
+      "source": "linearCounterNonZeroStart(n)\nBEGIN\n  i <- 5;\n  total <- 0;\n  WHILE (i <= n) DO\n  BEGIN\n    total <- total + 1;\n    i <- i + 1;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(n)",
+        "bigO": "O(n)",
+        "bigOmega": "Omega(n)",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-U-001",
+      "oracleId": "WHILE-U-001",
+      "group": "unsupported_parser",
+      "family": "while_unsupported",
+      "expectationKind": "expected_unsupported",
+      "sourceFile": "sources/WHILE-U-001.aalie",
+      "source": "unknownExternalCondition(n)\nBEGIN\n  total <- 0;\n  WHILE (condicionExterna()) DO\n  BEGIN\n    total <- total + 1;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "unsupported",
+        "algorithmKind": "iterative",
+        "bigTheta": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": true,
+        "mustNotInventTheta": true,
+        "unsupportedReason": "Guard is a function call not interpretable from local AST facts."
+      },
+      "scoring": {
+        "primary": "safe_rejection",
+        "acceptSafeRejection": true
+      }
+    },
+    {
+      "caseId": "WHILE-U-002",
+      "oracleId": "WHILE-U-002",
+      "group": "unsupported_parser",
+      "family": "while_unsupported",
+      "expectationKind": "expected_unsupported",
+      "sourceFile": "sources/WHILE-U-002.aalie",
+      "source": "missingControlUpdate(n)\nBEGIN\n  i <- 0;\n  total <- 0;\n  WHILE (i < n) DO\n  BEGIN\n    total <- total + 1;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "unsupported",
+        "algorithmKind": "iterative",
+        "bigTheta": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": true,
+        "mustNotInventTheta": true,
+        "unsupportedReason": "Loop guard references i but i is never updated in the body."
+      },
+      "scoring": {
+        "primary": "safe_rejection",
+        "acceptSafeRejection": true
+      }
+    },
+    {
+      "caseId": "WHILE-U-003",
+      "oracleId": "WHILE-U-003",
+      "group": "unsupported_parser",
+      "family": "while_unsupported",
+      "expectationKind": "expected_unsupported",
+      "sourceFile": "sources/WHILE-U-003.aalie",
+      "source": "contradictoryProgress(n)\nBEGIN\n  i <- 0;\n  total <- 0;\n  WHILE (i < n) DO\n  BEGIN\n    total <- total + 1;\n    i <- i - 1;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "unsupported",
+        "algorithmKind": "iterative",
+        "bigTheta": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": true,
+        "mustNotInventTheta": true,
+        "unsupportedReason": "Update moves away from guard limit; engine correctly returns unknown."
+      },
+      "scoring": {
+        "primary": "safe_rejection",
+        "acceptSafeRejection": true
+      }
+    },
+    {
+      "caseId": "WHILE-U-005",
+      "oracleId": "WHILE-U-005",
+      "group": "unsupported_parser",
+      "family": "while_unsupported",
+      "expectationKind": "expected_unsupported",
+      "sourceFile": "sources/WHILE-U-005.aalie",
+      "source": "unknownUpdateFunction(n)\nBEGIN\n  i <- 0;\n  total <- 0;\n  WHILE (i < n) DO\n  BEGIN\n    total <- total + 1;\n    i <- actualizar(i);\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "unsupported",
+        "algorithmKind": "iterative",
+        "bigTheta": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": true,
+        "mustNotInventTheta": true,
+        "unsupportedReason": "Update call cannot be interpreted as a monotonic arithmetic rule."
+      },
+      "scoring": {
+        "primary": "safe_rejection",
+        "acceptSafeRejection": true
+      }
+    },
+    {
+      "caseId": "PARSE-001",
+      "oracleId": "PARSE-001",
+      "group": "unsupported_parser",
+      "family": "parser_negative",
+      "expectationKind": "expected_unsupported",
+      "sourceFile": "sources/PARSE-001.aalie",
+      "source": "missingEndBlock(n)\nBEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO\n  BEGIN\n    total <- total + i;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "invalid",
+        "analysisStatus": "unsupported",
+        "algorithmKind": "unknown",
+        "bigTheta": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": true,
+        "mustNotInventTheta": true,
+        "unsupportedReason": "Malformed block structure must fail at parse stage."
+      },
+      "scoring": {
+        "primary": "parse_rejection",
+        "acceptSafeRejection": true
+      }
+    },
+    {
+      "caseId": "PARSE-002",
+      "oracleId": "PARSE-002",
+      "group": "unsupported_parser",
+      "family": "parser_negative",
+      "expectationKind": "expected_unsupported",
+      "sourceFile": "sources/PARSE-002.aalie",
+      "source": "invalidAssignmentExpression(n)\nBEGIN\n  total <- 0;\n  x <- ;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "invalid",
+        "analysisStatus": "unsupported",
+        "algorithmKind": "unknown",
+        "bigTheta": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": true,
+        "mustNotInventTheta": true,
+        "unsupportedReason": "Assignment without right-hand expression must be rejected before analysis."
+      },
+      "scoring": {
+        "primary": "parse_rejection",
+        "acceptSafeRejection": true
+      }
+    },
+    {
+      "caseId": "WHILE-S-011",
+      "oracleId": "WHILE-S-011",
+      "group": "regression_gaps",
+      "family": "while_supported",
+      "expectationKind": "regression_characterization",
+      "sourceFile": "sources/WHILE-S-011.aalie",
+      "source": "euclidModulo(a, b)\nBEGIN\n  WHILE (b <> 0) DO\n  BEGIN\n    r <- a MOD b;\n    a <- b;\n    b <- r;\n  END;\n  RETURN a;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "iterative",
+        "bigTheta": "Theta(log min(a,b))",
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "WHILE-U-007",
+      "oracleId": "WHILE-U-007",
+      "group": "regression_gaps",
+      "family": "while_unsupported",
+      "expectationKind": "regression_characterization",
+      "sourceFile": "sources/WHILE-U-007.aalie",
+      "source": "variableMultiplicativeFactor(n, k)\nBEGIN\n  i <- 1;\n  total <- 0;\n  WHILE (i < n) DO\n  BEGIN\n    total <- total + 1;\n    i <- i * k;\n  END;\n  RETURN total;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "unsupported",
+        "algorithmKind": "iterative",
+        "bigTheta": null,
+        "recurrence": null,
+        "recurrenceFamily": null,
+        "shouldReject": true,
+        "mustNotInventTheta": true,
+        "unsupportedReason": "Variable multiplier k is not proven to be a constant greater than one."
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-DC-004",
+      "oracleId": "REC-DC-004",
+      "group": "regression_gaps",
+      "family": "recursive_divide_conquer",
+      "expectationKind": "regression_characterization",
+      "sourceFile": "sources/REC-DC-004.aalie",
+      "source": "quadraticCombineCost(n)\nBEGIN\n  IF (n <= 1) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    a <- quadraticCombineCost(n / 2);\n    b <- quadraticCombineCost(n / 2);\n    total <- 0;\n    FOR i <- 1 TO n DO\n    BEGIN\n      FOR j <- 1 TO n DO\n      BEGIN\n        total <- total + 1;\n      END;\n    END;\n    RETURN a + b + total;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(n^2)",
+        "recurrence": "T(n)=2T(n/2)+n^2",
+        "recurrenceFamily": "divide_conquer",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    },
+    {
+      "caseId": "REC-LS-008",
+      "oracleId": "REC-LS-008",
+      "group": "regression_gaps",
+      "family": "recursive_linear_shift",
+      "expectationKind": "regression_characterization",
+      "sourceFile": "sources/REC-LS-008.aalie",
+      "source": "recursiveQuadraticLocalWork(n)\nBEGIN\n  IF (n <= 0) THEN\n  BEGIN\n    RETURN 1;\n  END\n  ELSE\n  BEGIN\n    local <- 0;\n    FOR i <- 1 TO n DO\n    BEGIN\n      FOR j <- 1 TO n DO\n      BEGIN\n        local <- local + 1;\n      END;\n    END;\n    sub <- recursiveQuadraticLocalWork(n - 1);\n    RETURN sub + local;\n  END;\nEND",
+      "gold": {
+        "parseStatus": "valid",
+        "analysisStatus": "available",
+        "algorithmKind": "recursive",
+        "bigTheta": "Theta(n^3)",
+        "recurrence": "T(n)=T(n-1)+n^2",
+        "recurrenceFamily": "linear_shift",
+        "shouldReject": false,
+        "mustNotInventTheta": false
+      },
+      "scoring": {
+        "primary": "theta",
+        "acceptSafeRejection": false
+      }
+    }
+  ]
+}

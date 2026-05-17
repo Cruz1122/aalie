@@ -1,0 +1,56 @@
+{
+  "version": "llm40-balanced-v1",
+  "description": "Balanced 40-case subset derived from the 80 oracle dataset for AALIE vs direct LLM comparison.",
+  "groups": {
+    "iterative_strict": [
+      "FOR-002",
+      "FOR-003",
+      "FOR-008",
+      "FOR-009",
+      "NEST-001",
+      "NEST-002",
+      "NEST-004",
+      "NEST-005",
+      "NEST-010",
+      "IF-002",
+      "IF-005",
+      "IF-007"
+    ],
+    "recursive_strict": [
+      "REC-DC-001",
+      "REC-DC-002",
+      "REC-DC-003",
+      "REC-DC-005",
+      "REC-DC-007",
+      "REC-DC-011",
+      "REC-LS-001",
+      "REC-LS-004",
+      "REC-LS-005",
+      "REC-LS-007"
+    ],
+    "while_strict": [
+      "WHILE-S-001",
+      "WHILE-S-002",
+      "WHILE-S-005",
+      "WHILE-S-006",
+      "WHILE-S-009",
+      "WHILE-S-010",
+      "WHILE-S-013",
+      "WHILE-S-016"
+    ],
+    "unsupported_parser": [
+      "WHILE-U-001",
+      "WHILE-U-002",
+      "WHILE-U-003",
+      "WHILE-U-005",
+      "PARSE-001",
+      "PARSE-002"
+    ],
+    "regression_gaps": [
+      "WHILE-S-011",
+      "WHILE-U-007",
+      "REC-DC-004",
+      "REC-LS-008"
+    ]
+  }
+}

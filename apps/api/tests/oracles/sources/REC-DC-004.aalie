@@ -11,7 +11,10 @@ BEGIN
     total <- 0;
     FOR i <- 1 TO n DO
     BEGIN
-      total <- total + 1;
+      FOR j <- 1 TO n DO
+      BEGIN
+        total <- total + 1;
+      END;
     END;
     RETURN a + b + total;
   END;

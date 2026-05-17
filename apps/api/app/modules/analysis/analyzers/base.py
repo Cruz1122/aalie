@@ -1140,6 +1140,27 @@ class BaseAnalyzer:
         if hasattr(self, "big_theta") and self.big_theta:
             totals["big_theta"] = self.big_theta
 
+        # Publicar un status agregado para que consumidores externos no asuman
+        # "available" cuando un WHILE quedó sin cierre exacto pero sí produjo
+        # whileBlocks con estado unknown/partial.
+        if self.while_blocks:
+            block_statuses = {
+                str(block.get("status") or "").strip()
+                for block in self.while_blocks
+                if isinstance(block, dict)
+            }
+            has_notation = bool(
+                totals.get("big_theta") or totals.get("big_o") or totals.get("big_omega")
+            )
+            if has_notation:
+                totals["status"] = "available"
+            elif "unknown" in block_statuses:
+                totals["status"] = "unknown"
+            elif "partial" in block_statuses:
+                totals["status"] = "partial"
+            elif "unbounded" in block_statuses:
+                totals["status"] = "unknown"
+
         # Limpiar filas: eliminar objetos SymPy y asegurar que todo sea serializable
         clean_rows = []
         for row in self.rows:
