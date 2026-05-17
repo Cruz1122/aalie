@@ -17,7 +17,7 @@ Cuatro capas de documentación:
 
 - **Producto y arquitectura** (01-product, 02-architecture): visión, glosario, limitaciones, mapas de capacidades y diagramas de la organización real del sistema.
 - **Contratos técnicos del núcleo** (03-specs, 09-decisions): especificaciones normativas del motor de análisis, parser, WHILE, recurrencias, trace, snapshot, export, quizzes, contenido y LLM. Los ADRs registran decisiones arquitectónicas vigentes.
-- **Calidad y operación** (05-quality, 06-operations): estrategia de pruebas, oráculos, cobertura, benchmarking, CI/CD, desarrollo local, despliegue, variables de entorno y troubleshooting.
+- **Calidad y operación** (05-quality, 06-operations): estrategia de pruebas, dataset de oráculos, benchmark balanceado `LLM40`, comparación AALIE vs Direct LLM, cobertura, CI/CD, desarrollo local, despliegue, variables de entorno y troubleshooting.
 - **Uso del sistema y contenido pedagógico** (07-user, 08-content): guías de usuario, flujos de trabajo en el analyzer, guías de exportación, FAQ, modelo de contenido, esquemas JSON, guía de autoría y sistema de quizzes.
 
 No incluye: informes académicos, actas de reunión, historiales de sprint, ni documentación de terceros no integrada al repositorio.
@@ -51,7 +51,7 @@ No incluye: informes académicos, actas de reunión, historiales de sprint, ni d
 |---|---|---|---|
 | Dev backend | `02-architecture/backend-architecture.md` | `03-specs/` (ruta crítica) + `04-api/` endpoints | `pnpm test:api:contract` |
 | Dev frontend | `02-architecture/frontend-architecture.md` | `04-api/` (contratos BFF) + `08-content/` schemas | `pnpm --filter web test` + `pnpm validate:content-catalog` |
-| QA / evaluador | `05-quality/testing-strategy.md` | `05-quality/algorithm-oracles.md` + `05-quality/coverage-policy.md` | `pnpm test:api:cov` (gate 70%) |
+| QA / evaluador | `05-quality/testing-strategy.md` | `05-quality/algorithm-oracles.md` + `05-quality/benchmarking.md` + `05-quality/coverage-policy.md` | `pnpm test:api:cov` (gate 70%) |
 | Operador / DevOps | `06-operations/local-development.md` | `06-operations/environment-variables.md` + `06-operations/deployment.md` | `pnpm -r build` |
 | Usuario / docente | `07-user/user-guide.md` | `07-user/analyzer-workflows.md` + `07-user/quizzes-guide.md` | — |
 | Autor de contenido | `08-content/content-model.md` | `08-content/authoring-guide.md` + `08-content/course-json-schema.md` | `pnpm validate:content-catalog` |

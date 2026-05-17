@@ -13,13 +13,16 @@ _THIS = Path(__file__).resolve().parent
 sys.path.insert(0, str(_THIS.parents[1]))
 sys.path.insert(0, str(_THIS.parent))
 
-from tests.oracles.oracle_schema import (
+from tests._support.assertions import infer_complexity_class  # noqa: E402
+from tests.llm_comparison.normalize_aalie_output import (  # noqa: E402
+    normalize_aalie_output,
+    normalize_theta,
+)
+from tests.oracles.oracle_schema import (  # noqa: E402
     AalieOracle,
     load_oracle_index,
     run_oracle,
 )
-from tests.llm_comparison.normalize_aalie_output import normalize_aalie_output, normalize_theta
-from tests._support.assertions import infer_complexity_class
 
 
 def _log(msg: str) -> None:

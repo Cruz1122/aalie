@@ -345,25 +345,52 @@ def analyze_algorithm(
         True
     """
     locale_val = _normalize_locale(locale)
-    parse_result = parse_source(source)
-    if not parse_result.get("ok", False):
-        return {
-            "ok": False,
-            "errors": parse_result.get("errors", []),
-            "loopInvariant": empty_loop_invariant(
-                locale=locale_val,
-                status="unavailable",
-                reason="no_supported_loop",
-            ),
-        }
+    try:
+        parse_result = parse_source(source)
+        if not parse_result.get("ok", False):
+            return {
+                "ok": False,
+                "errors": parse_result.get("errors", []),
+                "loopInvariant": empty_loop_invariant(
+                    locale=locale_val,
+                    status="unavailable",
+                    reason="no_supported_loop",
+                ),
+            }
 
-    ast = parse_result.get("ast")
-    if not ast:
+        ast = parse_result.get("ast")
+        if not ast:
+            return {
+                "ok": False,
+                "errors": [
+                    {
+                        "message": "No se pudo obtener el AST del código",
+                        "line": None,
+                        "column": None,
+                    }
+                ],
+                "loopInvariant": empty_loop_invariant(
+                    locale=locale_val,
+                    status="unavailable",
+                    reason="no_supported_loop",
+                ),
+            }
+
+        return analyze_ast(
+            ast=ast,
+            mode=mode,
+            api_key=api_key,
+            avg_model=avg_model,
+            algorithm_kind=algorithm_kind,
+            preferred_method=preferred_method,
+            locale=locale_val,
+        )
+    except Exception as e:
         return {
             "ok": False,
             "errors": [
                 {
-                    "message": "No se pudo obtener el AST del código",
+                    "message": f"Error en análisis: {str(e)}",
                     "line": None,
                     "column": None,
                 }
@@ -374,16 +401,6 @@ def analyze_algorithm(
                 reason="no_supported_loop",
             ),
         }
-
-    return analyze_ast(
-        ast=ast,
-        mode=mode,
-        api_key=api_key,
-        avg_model=avg_model,
-        algorithm_kind=algorithm_kind,
-        preferred_method=preferred_method,
-        locale=locale_val,
-    )
 
 
 def detect_methods(source: str, algorithm_kind: Optional[str] = None) -> Dict[str, Any]:

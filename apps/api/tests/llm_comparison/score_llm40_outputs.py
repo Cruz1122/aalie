@@ -5,7 +5,7 @@ import csv
 import json
 import re
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -15,8 +15,8 @@ _THIS = Path(__file__).resolve().parent
 sys.path.insert(0, str(_THIS.parents[1]))
 sys.path.insert(0, str(_THIS.parent))
 
-from tests._support.assertions import infer_complexity_class
-from tests.llm_comparison.normalize_aalie_output import normalize_theta
+from tests._support.assertions import infer_complexity_class  # noqa: E402
+from tests.llm_comparison.normalize_aalie_output import normalize_theta  # noqa: E402
 
 REGRESSION_GAP_CASE_IDS = {"WHILE-S-011", "WHILE-U-007", "REC-DC-004", "REC-LS-008"}
 LLM_REQUIRED_FIELDS = {
@@ -600,19 +600,19 @@ def _winner_sections(aalie: dict[str, SystemCaseScore], llm: dict[str, SystemCas
     both_fail: list[str] = []
     for case_id in sorted(aalie):
         a = aalie[case_id]
-        l = llm[case_id]
-        if a.passed and not l.passed:
+        llm_score = llm[case_id]
+        if a.passed and not llm_score.passed:
             aalie_wins.append(
-                f"- `{case_id}`: gold `{_gold_summary(a)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(l)}`; failure reason: `{_failure_reason(l)}`"
+                f"- `{case_id}`: gold `{_gold_summary(a)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(llm_score)}`; failure reason: `{_failure_reason(llm_score)}`"
             )
-        elif l.passed and not a.passed:
+        elif llm_score.passed and not a.passed:
             llm_wins.append(
-                f"- `{case_id}`: gold `{_gold_summary(l)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(l)}`; reason LLM wins: `{_failure_reason(a)}`"
+                f"- `{case_id}`: gold `{_gold_summary(llm_score)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(llm_score)}`; reason LLM wins: `{_failure_reason(a)}`"
             )
-        elif not a.passed and not l.passed:
-            shared = sorted(set(a.failure_types) & set(l.failure_types))
+        elif not a.passed and not llm_score.passed:
+            shared = sorted(set(a.failure_types) & set(llm_score.failure_types))
             both_fail.append(
-                f"- `{case_id}`: gold `{_gold_summary(a)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(l)}`; shared failure pattern: `{', '.join(shared) if shared else 'different failure modes'}`"
+                f"- `{case_id}`: gold `{_gold_summary(a)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(llm_score)}`; shared failure pattern: `{', '.join(shared) if shared else 'different failure modes'}`"
             )
     return aalie_wins, llm_wins, both_fail
 
@@ -625,18 +625,18 @@ def _shape_winner_sections(
     llm_wins: list[str] = []
     for case_id in sorted(aalie):
         a = aalie[case_id]
-        l = llm[case_id]
+        llm_score = llm[case_id]
         if a.gold.get("shouldReject", False):
             continue
         a_shape = a.theta_agreement_shape_aware
-        l_shape = l.theta_agreement_shape_aware
-        if a_shape and not l_shape:
+        llm_shape = llm_score.theta_agreement_shape_aware
+        if a_shape and not llm_shape:
             aalie_wins.append(
-                f"- `{case_id}`: gold `{_gold_summary(a)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(l)}`; reason: LLM misses mathematical shape agreement."
+                f"- `{case_id}`: gold `{_gold_summary(a)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(llm_score)}`; reason: LLM misses mathematical shape agreement."
             )
-        elif l_shape and not a_shape:
+        elif llm_shape and not a_shape:
             llm_wins.append(
-                f"- `{case_id}`: gold `{_gold_summary(l)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(l)}`; reason: LLM matches mathematical shape while AALIE does not."
+                f"- `{case_id}`: gold `{_gold_summary(llm_score)}`; AALIE `{_system_output_summary(a)}`; LLM `{_system_output_summary(llm_score)}`; reason: LLM matches mathematical shape while AALIE does not."
             )
     return aalie_wins, llm_wins
 

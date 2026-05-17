@@ -13,7 +13,7 @@ _OUT_DIR = _THIS
 sys.path.insert(0, str(_THIS.parents[1]))
 sys.path.insert(0, str(_THIS.parent))
 
-from tests.oracles.oracle_schema import (
+from tests.oracles.oracle_schema import (  # noqa: E402
     AalieOracle,
     ExpectationKind,
     load_oracle_index,

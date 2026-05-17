@@ -206,7 +206,6 @@ def normalize_theta(value: str | None) -> str | None:
     s = s.replace(" ", "")
 
     prefix = ""
-    wrapper = ""
     if s.startswith("Theta(") and s.endswith(")"):
         prefix = "Theta("
         inner = s[6:-1]

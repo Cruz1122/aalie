@@ -17,12 +17,9 @@ sys.path.insert(0, str(_API_DIR))
 sys.path.insert(0, str(_PROJECT_ROOT))
 os.environ.setdefault("PYTHONPATH", f"{_API_DIR}{os.pathsep}{os.environ.get('PYTHONPATH', '')}")
 
-from tests.oracles.oracle_schema import (
-    run_oracle,
-    assert_oracle,
-    run_oracle_with_metrics,
+from tests.oracles.oracle_schema import (  # noqa: E402
     load_oracle_index,
-    ExpectationKind,
+    run_oracle_with_metrics,
 )
 
 
@@ -223,12 +220,9 @@ def generate_report(metrics, summary, csv_path, gaps_path, out_path):
     assertion_pass = summary["assertion_pass"]
     by_kind = summary["by_expectation_kind"]
 
-    strict_total = by_kind["strict_math"]["executed"]
     strict_pass = by_kind["strict_math"]["full_pass"]
-    unsupp_exec = by_kind["expected_unsupported"]["executed"]
     unsupp_pass = by_kind["expected_unsupported"]["full_pass"]
     reg_exec = by_kind["regression_characterization"]["executed"]
-    reg_pass = by_kind["regression_characterization"]["full_pass"]
     pend_exec = by_kind["pending_integration"]["executed"]
     pend_partial = by_kind["pending_integration"]["partial_pass"]
     gm = summary["granular_metrics"]

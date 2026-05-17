@@ -8,7 +8,17 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.modules.analysis.trace_service import build_default_trace_inputs
 
-from .common import MEASURED_RUNS, ROOT, TRACE_CASES_FILE, WARMUP_RUNS, generated_at, load_cases, median, now_ms, p95
+from .common import (
+    MEASURED_RUNS,
+    ROOT,
+    TRACE_CASES_FILE,
+    WARMUP_RUNS,
+    generated_at,
+    load_cases,
+    median,
+    now_ms,
+    p95,
+)
 
 OUTPUT_JSON = ROOT / "trace-benchmark-results.json"
 OUTPUT_MD = ROOT / "trace-benchmark-results.md"

@@ -27,6 +27,7 @@ Ofrecer un mapa rápido para localizar la documentación correcta según la tare
 | Cambiar contenido | `08-content/content-model.md` + `08-content/course-json-schema.md` | `08-content/authoring-guide.md` + `08-content/block-json-schema.md` + `08-content/inline-rich-text-schema.md` | `pnpm validate:content-catalog` |
 | Cambiar quizzes | `03-specs/quizzes-spec.md` + `08-content/quiz-json-schema.md` | `04-api/quizzes-api.md` | `python apps/api/scripts/validate_quiz_bank.py` |
 | Validar comportamiento | `05-quality/testing-strategy.md` + `05-quality/algorithm-oracles.md` | `05-quality/coverage-policy.md` + `05-quality/benchmarking.md` | `pnpm test:api:cov` (gate 70%) |
+| Comparar AALIE vs LLM | `05-quality/benchmarking.md` | `apps/api/tests/llm_comparison/README.md` + `apps/api/tests/llm_comparison/out/llm40_aalie_vs_llm_report.md` | `python apps/api/tests/llm_comparison/score_llm40_outputs.py ...` |
 | Operar localmente | `06-operations/local-development.md` | `06-operations/environment-variables.md` + `06-operations/deployment.md` | `pnpm -r build` |
 | Preparar Manual Técnico | `01-product/manual-tecnico-coverage-map.md` | Todos los CORE CONTRACTS (`03-specs/`) | `pnpm test:docs-contracts` |
 | Usar AALIE como estudiante | `07-user/user-guide.md` + `07-user/analyzer-workflows.md` | `07-user/recursive-analysis-guide.md` + `07-user/exports-guide.md` + `07-user/course-guide.md` | — |

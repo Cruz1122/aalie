@@ -53,6 +53,12 @@ Aplica a backend, contratos, sistema, catálogo de contenido, quizzes y checks d
 - **Marcador:** `benchmark`
 - **Regla:** miden mediana sobre múltiples ejecuciones; no validan corrección profunda.
 
+### 7. Comparación AALIE vs Direct LLM (`tests/llm_comparison/`)
+- **Qué cubre:** benchmark semántico balanceado de 40 casos derivado del dataset de oráculos.
+- **Artefactos:** `llm40_index.json`, `llm40_gold.jsonl`, `llm40_prompt_dataset.jsonl`, `out/aalie40_results.csv`, `out/llm40_aalie_vs_llm_report.md`
+- **Regla:** AALIE y el LLM se puntúan por separado contra gold; ninguno juzga al otro.
+- **Métricas clave:** `theta_accuracy_exact`, `theta_accuracy_shape_aware`, `explicit_safe_rejection`, `non_hallucination`, `hallucinated_bound_rate`, `ideal_gap_recovery`.
+
 ## Oracle-based testing
 
 ### Definición
@@ -105,6 +111,13 @@ La diferencia clave: **"no explota"** (el análisis no lanza excepción) ≠ **"
 - **Medido sobre:** módulo `app/` (excluye tests, migrations, `__pycache__`).
 - **Comando:** `pytest tests/ -m "fast or oracle" --cov=app --cov-fail-under=70`.
 
+### LLM40 comparison
+
+- El benchmark `LLM40` no sustituye los oráculos de 80 casos.
+- Los oráculos responden “¿AALIE está correcto?”
+- `LLM40` responde “¿cómo se compara AALIE contra un LLM directo bajo el mismo gold?”
+- El scoring es estricto a nivel de contrato estructurado y además reporta una métrica shape-aware para notación asintótica.
+
 ## Cómo ejecutar
 
 ### Backend (API)
@@ -129,6 +142,14 @@ La diferencia clave: **"no explota"** (el análisis no lanza excepción) ≠ **"
 | `pnpm test:api:while` | solo while_domain |
 | `pnpm test:docs-contracts` | validación docs |
 
+### LLM40 comparison commands
+
+| Comando | Efecto |
+|---|---|
+| `python apps/api/tests/llm_comparison/select_llm40_cases.py` | genera index/gold/prompt del benchmark balanceado |
+| `python apps/api/tests/llm_comparison/run_aalie_outputs.py --index apps/api/tests/llm_comparison/llm40_index.json --out-dir apps/api/tests/llm_comparison/out` | genera baseline AALIE |
+| `python apps/api/tests/llm_comparison/score_llm40_outputs.py --llm-jsonl apps/api/tests/llm_comparison/llm40_llm_outputs.jsonl --gold-jsonl apps/api/tests/llm_comparison/llm40_gold.jsonl --aalie-csv apps/api/tests/llm_comparison/out/aalie40_results.csv --out-md apps/api/tests/llm_comparison/out/llm40_aalie_vs_llm_report.md` | genera comparación AALIE vs Direct LLM |
+
 ### CI lanes
 
 | Job | Marcador | Cobertura | Bloqueante |
@@ -143,6 +164,7 @@ La diferencia clave: **"no explota"** (el análisis no lanza excepción) ≠ **"
 - Cada test valida una hipótesis principal y usa la ruta mínima necesaria.
 - Queda prohibido mezclar corrección matemática + shape contractual + rendimiento + export en un solo test.
 - Los tests deben declarar si validan: igualdad exacta, equivalencia simbólica, presencia de campos requeridos o estado contractual.
+- Los resultados de `LLM40` deben distinguir explícitamente entre strict structured-output scoring y shape-aware mathematical agreement.
 
 ## Límites conocidos
 
