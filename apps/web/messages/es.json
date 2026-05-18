@@ -1443,7 +1443,11 @@
       "algorithmLabel": "Algoritmo",
       "progress": "Progreso",
       "analyzingRecurrence": "Analizando recurrencia...",
-      "pleaseWait": "Por favor, espera mientras se completa el análisis..."
+      "pleaseWait": "Por favor, espera mientras se completa el análisis...",
+      "importProgress": "Importando...",
+      "importPleaseWait": "Leyendo archivo y validando contenido...",
+      "importErrorTitle": "Error de importación",
+      "importBadge": "Importando algoritmo"
     },
     "exportModal": {
       "title": "Elige método de descarga",

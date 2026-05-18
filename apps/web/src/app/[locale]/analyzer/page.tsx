@@ -9,7 +9,7 @@ import type {
   Program,
 } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 
 import AAButton from "@/components/AAButton";
@@ -36,7 +36,6 @@ import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import RecursiveInvariantModal from "@/components/RecursiveInvariantModal";
 import RepairModal from "@/components/RepairModal";
 import TraceDedicatedView from "@/components/TraceDedicatedView";
-import TxtImportModal from "@/components/TxtImportModal";
 import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-support/parser/normalizeImportSuggestions";
 import { requestTraceRefresh } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
@@ -375,13 +374,6 @@ type ClassifyResponse = {
   kind: "iterative" | "recursive" | "hybrid" | "unknown";
 };
 type CaseType = "worst" | "average" | "best";
-type TxtImportModalState = {
-  title: string;
-  description: string;
-  details?: string[];
-  showRepairAction?: boolean;
-};
-
 export default function AnalyzerPage() {
   const locale = useLocale();
   const { animateProgress } = useAnalysisProgress();
@@ -401,6 +393,7 @@ export default function AnalyzerPage() {
   const tGpuCpuModal = useTranslations("analyzer.gpuCpuModal");
   const tMethodSelector = useTranslations("analyzer.methodSelector");
   const tCommon = useTranslations("common");
+  const tLoader = useTranslations("analyzer.loader");
   const getMessage = (key: string) => t(key);
 
   // Estados del flujo de análisis (inicial neutro para evitar hydration mismatch)
@@ -486,9 +479,14 @@ export default function AnalyzerPage() {
   const [parseErrors, setParseErrors] = useState<ParseError[] | undefined>(
     undefined,
   );
-  const [txtImportModal, setTxtImportModal] =
-    useState<TxtImportModalState | null>(null);
   const [isImportingTxt, setIsImportingTxt] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importMessage, setImportMessage] = useState("");
+  const [isImportComplete, setIsImportComplete] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importErrorActionLabel, setImportErrorActionLabel] = useState<
+    string | null
+  >(null);
   const txtInputRef = useRef<HTMLInputElement | null>(null);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<"tree" | "json">("tree");
@@ -627,47 +625,45 @@ export default function AnalyzerPage() {
       return;
     }
 
-    setTxtImportModal(null);
     setIsImportingTxt(true);
+    setImportProgress(0);
+    setImportMessage(tLoader("importPleaseWait"));
+    setIsImportComplete(false);
+    setImportError(null);
+    setImportErrorActionLabel(null);
 
+    setImportProgress(10);
+    setImportMessage("Validating file...");
     const validation = await readAndValidateTxtFile(file);
     if (!validation.ok) {
-      setIsImportingTxt(false);
+      let errorMsg: string;
       if (validation.reason === "invalidExtension") {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportOnlyTxt"),
-        });
+        errorMsg = tView("txtImportOnlyTxt");
       } else if (validation.reason === "empty") {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportEmpty"),
-        });
+        errorMsg = tView("txtImportEmpty");
       } else if (validation.reason === "tooLarge") {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportTooLarge", {
-            maxKb: Math.floor(MAX_TXT_IMPORT_BYTES / 1024),
-          }),
+        errorMsg = tView("txtImportTooLarge", {
+          maxKb: Math.floor(MAX_TXT_IMPORT_BYTES / 1024),
         });
       } else if (validation.reason === "invalidFormat") {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportInvalidFormat"),
-        });
+        errorMsg = tView("txtImportInvalidFormat");
       } else {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportReadError"),
-        });
+        errorMsg = tView("txtImportReadError");
       }
+      setImportProgress(100);
+      setImportError(errorMsg);
       return;
     }
 
+    setImportProgress(40);
+    setImportMessage("Parsing algorithm...");
     try {
       const parseRes = await GrammarApiService.parseCode(
         validation.normalizedSource,
       );
+
+      setImportProgress(90);
+      setImportMessage("Finalizing import...");
 
       if (parseRes.ok) {
         setSource(validation.normalizedSource);
@@ -675,17 +671,8 @@ export default function AnalyzerPage() {
         setLocalParseOk(true);
         setPendingImportSourceForRepair(null);
         setPendingImportErrorsForRepair(undefined);
-        const suggestions = getImportNormalizationSuggestions(
-          validation.normalizedSource,
-        );
-        setTxtImportModal({
-          title: tView("txtImportSuccessTitle"),
-          description: tView("txtImportSuccess"),
-          details:
-            suggestions.length > 0
-              ? suggestions.map((suggestion) => suggestion.reason)
-              : undefined,
-        });
+        setImportProgress(100);
+        setIsImportComplete(true);
       } else {
         const errors = parseRes.errors || undefined;
         setParseErrors(errors);
@@ -695,10 +682,8 @@ export default function AnalyzerPage() {
         );
 
         if (!looksAlgorithm) {
-          setTxtImportModal({
-            title: tView("txtImportInvalidAlgorithmTitle"),
-            description: tView("txtImportNotAlgorithm"),
-          });
+          setImportProgress(100);
+          setImportError(tView("txtImportNotAlgorithm"));
           return;
         }
 
@@ -710,31 +695,46 @@ export default function AnalyzerPage() {
           }),
         );
 
-        setTxtImportModal({
-          title: tView("txtImportGrammarTitle"),
-          description: tView("txtImportParseFailed"),
-          details: [
-            ...errorDetails,
-            ...getImportNormalizationSuggestions(
-              validation.normalizedSource,
-            ).map((suggestion) => suggestion.reason),
-          ],
-          showRepairAction: true,
-        });
+        const suggestionDetails = getImportNormalizationSuggestions(
+          validation.normalizedSource,
+        ).map((suggestion) => suggestion.reason);
+
+        const fullError = [
+          tView("txtImportParseFailed"),
+          "",
+          ...errorDetails,
+          ...(suggestionDetails.length > 0 ? ["", ...suggestionDetails] : []),
+        ].join("\n");
+
+        setImportProgress(100);
+        setImportError(fullError);
+        setImportErrorActionLabel(tView("repairWithAI"));
         setPendingImportSourceForRepair(validation.normalizedSource);
         setPendingImportErrorsForRepair(errors);
       }
     } catch {
       setPendingImportSourceForRepair(null);
       setPendingImportErrorsForRepair(undefined);
-      setTxtImportModal({
-        title: tView("txtImportInvalidFileTitle"),
-        description: tView("txtImportReadError"),
-      });
-    } finally {
-      setIsImportingTxt(false);
+      setImportProgress(100);
+      setImportError(tView("txtImportReadError"));
     }
   };
+
+  const handleImportRepair = useCallback(() => {
+    if (pendingImportSourceForRepair) {
+      setSource(pendingImportSourceForRepair);
+    }
+    setParseErrors(pendingImportErrorsForRepair);
+    setIsImportingTxt(false);
+    setImportProgress(0);
+    setImportMessage("");
+    setIsImportComplete(false);
+    setImportError(null);
+    setImportErrorActionLabel(null);
+    setPendingImportSourceForRepair(null);
+    setPendingImportErrorsForRepair(undefined);
+    setShowRepairModal(true);
+  }, [pendingImportSourceForRepair, pendingImportErrorsForRepair]);
 
   // Cleanup de timeouts al desmontar
   useEffect(() => {
@@ -3487,6 +3487,29 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         />
       )}
 
+      {/* Loader de importación .txt */}
+      {isImportingTxt && (
+        <AAProgressLoader
+          mode="import"
+          progress={importProgress}
+          message={importMessage}
+          isComplete={isImportComplete}
+          error={importError}
+          errorActionLabel={importErrorActionLabel ?? undefined}
+          onErrorAction={
+            importErrorActionLabel ? handleImportRepair : undefined
+          }
+          onClose={() => {
+            setIsImportingTxt(false);
+            setImportProgress(0);
+            setImportMessage("");
+            setIsImportComplete(false);
+            setImportError(null);
+            setImportErrorActionLabel(null);
+          }}
+        />
+      )}
+
       {/* Modal de exportación */}
       {showExportModal && (
         <ExportFormatSelector
@@ -3533,7 +3556,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             <div className="grid grid-cols-1 gap-6 max-lg:flex-none lg:flex-1 lg:basis-0 lg:min-h-0 lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)]">
               {/* Columna izquierda: código fuente (vertical) */}
               <section className="flex min-h-0 flex-col max-lg:min-h-[max(220px,min(42svh,360px))] lg:col-span-4 lg:h-full">
-                <div className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4" style={{ overflow: 'visible' }}>
+                <div
+                  className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4"
+                  style={{ overflow: "visible" }}
+                >
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-white font-semibold flex items-center">
                       <span className="material-symbols-outlined mr-2 text-blue-400">
@@ -3982,44 +4008,6 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         }}
         originalCode={pendingImportSourceForRepair ?? source}
         parseErrors={pendingImportErrorsForRepair ?? parseErrors}
-      />
-
-      <TxtImportModal
-        open={txtImportModal !== null}
-        title={txtImportModal?.title || ""}
-        description={txtImportModal?.description || ""}
-        details={txtImportModal?.details}
-        confirmLabel={
-          txtImportModal?.showRepairAction
-            ? tView("repairWithAI")
-            : tCommon("close")
-        }
-        cancelLabel={
-          txtImportModal?.showRepairAction ? tCommon("cancel") : undefined
-        }
-        onCancel={
-          txtImportModal?.showRepairAction
-            ? () => {
-                setTxtImportModal(null);
-                setPendingImportSourceForRepair(null);
-                setPendingImportErrorsForRepair(undefined);
-              }
-            : undefined
-        }
-        onConfirm={() => {
-          const mustRepair = txtImportModal?.showRepairAction === true;
-          setTxtImportModal(null);
-          if (mustRepair) {
-            if (pendingImportSourceForRepair) {
-              setSource(pendingImportSourceForRepair);
-            }
-            setParseErrors(pendingImportErrorsForRepair);
-            setShowRepairModal(true);
-          } else {
-            setPendingImportSourceForRepair(null);
-            setPendingImportErrorsForRepair(undefined);
-          }
-        }}
       />
 
       <ComparisonModal

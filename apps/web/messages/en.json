@@ -1443,7 +1443,11 @@
       "algorithmLabel": "Algorithm",
       "progress": "Progress",
       "analyzingRecurrence": "Analyzing recurrence...",
-      "pleaseWait": "Please wait while the analysis completes..."
+      "pleaseWait": "Please wait while the analysis completes...",
+      "importProgress": "Importing...",
+      "importPleaseWait": "Reading file and validating content...",
+      "importErrorTitle": "Import error",
+      "importBadge": "Importing algorithm"
     },
     "analysisSteps": {
       "title": "Step by step",
