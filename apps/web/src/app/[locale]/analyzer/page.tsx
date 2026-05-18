@@ -3533,7 +3533,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             <div className="grid grid-cols-1 gap-6 max-lg:flex-none lg:flex-1 lg:basis-0 lg:min-h-0 lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)]">
               {/* Columna izquierda: código fuente (vertical) */}
               <section className="flex min-h-0 flex-col max-lg:min-h-[max(220px,min(42svh,360px))] lg:col-span-4 lg:h-full">
-                <div className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4">
+                <div className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4" style={{ overflow: 'visible' }}>
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-white font-semibold flex items-center">
                       <span className="material-symbols-outlined mr-2 text-blue-400">
