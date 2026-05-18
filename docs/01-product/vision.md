@@ -27,7 +27,7 @@ Producto completo vigente a corte 2026-05-18: análisis determinista de compleji
 
 ### Nombre e identidad
 
-**AALIE** (Algorithmic Analysis Live Interaction Expert) se pronuncia como *"ally"* (aliado, en inglés). El nombre refleja su propósito: actuar como un aliado pedagógico para estudiantes y profesores en cursos de análisis de algoritmos. AALIE es el nombre de la asistente virtual de la plataforma.
+**AALIE** (Algorithm Analysis Learning Interactive Environment) se pronuncia como *"ally"* (aliado, en inglés). El nombre refleja su propósito: actuar como un aliado pedagógico para estudiantes y profesores en cursos de análisis de algoritmos. AALIE es el nombre de la asistente virtual de la plataforma.
 
 ### Problema que resuelve
 

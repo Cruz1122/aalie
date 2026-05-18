@@ -402,7 +402,7 @@
   },
   "metadata": {
     "title": "AALIE",
-    "description": "AALIE: live algorithmic complexity analysis with expert assistant (Algorithmic Analysis Live Interaction Expert)"
+    "description": "AALIE: live algorithmic complexity analysis with expert assistant (Algorithm Analysis Learning Interactive Environment)"
   },
   "errors": {
     "loadImage": "Error loading image",
@@ -1474,7 +1474,7 @@
   "home": {
     "modeAI": "AALIE",
     "modeManual": "Manual",
-    "welcome": "Hi! I'm AALIE (Algorithmic Analysis Live Interaction Expert), your assistant for algorithm analysis. How may I help you today?",
+    "welcome": "Hi! I'm AALIE (Algorithm Analysis Learning Interactive Environment), your assistant for algorithm analysis. How may I help you today?",
     "greeting": "Hi, I'm AALIE.",
     "greetingQuestion": "How may I help you?",
     "placeholder": "Describe the algorithm you need...",
@@ -1534,7 +1534,7 @@
     "contactName": "Camilo Cruz"
   },
   "chat": {
-    "assistantTitle": "Algorithmic Analysis Live Interaction Expert",
+    "assistantTitle": "Algorithm Analysis Learning Interactive Environment",
     "clearConversation": "Clear conversation",
     "backToHome": "Back to home",
     "closeAssistant": "Close assistant",
@@ -1581,7 +1581,7 @@
     "faq7Q": "How to contact for questions?",
     "faq7A": "For any privacy inquiries, suggestions or issues, you can contact us:",
     "contactName": "Camilo Cruz",
-    "metaDesc": "AALIE (Algorithmic Analysis Live Interaction Expert) privacy policy"
+    "metaDesc": "AALIE (Algorithm Analysis Learning Interactive Environment) privacy policy"
   },
   "examples": {
     "title": "Algorithm Catalog",

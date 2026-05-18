@@ -402,7 +402,7 @@
   },
   "metadata": {
     "title": "AALIE",
-    "description": "AALIE: análisis de complejidad algorítmica en vivo con asistente experto (Algorithmic Analysis Live Interaction Expert)"
+    "description": "AALIE: análisis de complejidad algorítmica en vivo con asistente experto (Algorithm Analysis Learning Interactive Environment)"
   },
   "errors": {
     "loadImage": "Error al cargar la imagen",
@@ -1495,7 +1495,7 @@
   "home": {
     "modeAI": "AALIE",
     "modeManual": "Manual",
-    "welcome": "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+    "welcome": "¡Hola! Soy AALIE (Algorithm Analysis Learning Interactive Environment), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
     "greeting": "Hola, soy AALIE.",
     "greetingQuestion": "¿En qué puedo ayudarte?",
     "placeholder": "Describe el algoritmo que necesitas...",
@@ -1602,7 +1602,7 @@
     "faq7Q": "¿Cómo contactar para dudas?",
     "faq7A": "Para cualquier consulta sobre privacidad, sugerencias o problemas, puedes contactarnos:",
     "contactName": "Camilo Cruz",
-    "metaDesc": "Política de privacidad de AALIE (Algorithmic Analysis Live Interaction Expert)"
+    "metaDesc": "Política de privacidad de AALIE (Algorithm Analysis Learning Interactive Environment)"
   },
   "examples": {
     "title": "Catálogo de Algoritmos",

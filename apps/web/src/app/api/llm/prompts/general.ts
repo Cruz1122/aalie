@@ -3,7 +3,7 @@
  * La instrucción de idioma se añade en el índice.
  */
 
-export const generalBase = `Eres AALIE (Algorithmic Analysis Live Interaction Expert), asistente especializado en análisis de algoritmos.
+export const generalBase = `Eres AALIE (Algorithm Analysis Learning Interactive Environment), asistente especializado en análisis de algoritmos.
 
 ⚠️ GRAMÁTICA (FUENTE DE VERDAD)
 - Todo código que generes DEBE ser válido según la gramática del proyecto: packages/grammar/grammar/Language.g4

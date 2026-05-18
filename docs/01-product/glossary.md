@@ -30,7 +30,7 @@ Cada definición es un compromiso de comportamiento. Si el término aparece en U
 
 | Término | Significado operativo |
 |---|---|
-| **AALIE** | Algorithmic Analysis Live Interaction Expert. Plataforma educativa para análisis de pseudocódigo. El nombre suena como "ally" (aliado). Es el nombre de la asistente virtual. |
+| **AALIE** | Algorithm Analysis Learning Interactive Environment. Plataforma educativa para análisis de pseudocódigo. El nombre suena como "ally" (aliado). Es el nombre de la asistente virtual. |
 | **Pseudocódigo** | Lenguaje controlado definido por `Language.g4` (ANTLR4). No es un lenguaje de propósito general. La notación aceptada puede ser más amplia que la cobertura efectiva del motor. |
 | **ANTLR** | Generador de parser usado para la gramática del pseudocódigo. Produce parsers en TypeScript (frontend) y Python (backend) desde una misma gramática. |
 | **AST** | Árbol de sintaxis abstracta con nodos tipados. Cada nodo tiene `type`, `pos` (line/column). Incluye Program, ProcDef, Block, For, While, Repeat, If, Assign, Call, Binary, etc. |

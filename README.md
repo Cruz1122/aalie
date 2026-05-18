@@ -3,7 +3,7 @@
 </p>
 
 <p align="center" style="font-size:2rem;"><strong>AALIE</strong></p>
-<p align="center" style="font-size:1.25rem; margin-top:-1em;"><em>Algorithmic Analysis Live Interaction Expert</em></p>
+<p align="center" style="font-size:1.25rem; margin-top:-1em;"><em>Algorithm Analysis Learning Interactive Environment</em></p>
 
 <p align="center">
   Plataforma educativa para analizar pseudocódigo, entender complejidad algorítmica y practicar con trazas, visualizaciones, contenido guiado y quizzes.

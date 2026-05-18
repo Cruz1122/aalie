@@ -9,7 +9,7 @@
 
 ## What is AALIE
 
-AALIE (Algorithmic Analysis Live Interaction Expert) is an educational platform for studying algorithm analysis and design. It lets you write pseudocode, analyze its complexity, watch step-by-step execution traces, and reinforce concepts through guided content, examples, and quizzes.
+AALIE (Algorithm Analysis Learning Interactive Environment) is an educational platform for studying algorithm analysis and design. It lets you write pseudocode, analyze its complexity, watch step-by-step execution traces, and reinforce concepts through guided content, examples, and quizzes.
 
 The core analysis engine is deterministic — it uses formal rules and contracts, not AI. Optional LLM features (assistant, comparison) exist only as pedagogical support and require a configured API key.
 
