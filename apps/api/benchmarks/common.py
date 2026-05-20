@@ -2,17 +2,15 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import re
 import statistics
+import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-
-import platform
-import shutil
-import subprocess
-import sys
 
 ROOT = Path(__file__).parent
 PIPELINE_CASES_FILE = ROOT / "benchmark_cases.json"
@@ -140,7 +138,7 @@ def _get_cpu_info() -> str | None:
                 "wmic cpu get name", capture_output=True, text=True, timeout=10, shell=True
             )
             if result.returncode == 0:
-                lines = [l.strip() for l in result.stdout.strip().splitlines() if l.strip()]
+                lines = [line.strip() for line in result.stdout.strip().splitlines() if line.strip()]
                 if len(lines) > 1:
                     return lines[1]
         else:

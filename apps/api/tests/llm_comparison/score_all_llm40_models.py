@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from pathlib import Path
@@ -13,13 +12,8 @@ sys.path.insert(0, str(_THIS.parents[1]))
 sys.path.insert(0, str(_THIS.parent))
 
 from tests.llm_comparison.score_llm40_outputs import (  # noqa: E402
-    _build_individual_summary,
-    _build_metrics,
     _case_rows,
-    _failure_taxonomy,
     _group_summary,
-    _strict_contract_failures,
-    _mathematical_shape_failures,
     _write_csv,
     score_comparison,
 )
@@ -106,7 +100,6 @@ def _ranking_rows(system_rows: list[dict[str, Any]]) -> list[tuple[str, str, str
 def _group_matrix(system_rows: list[dict[str, Any]]) -> list[tuple[str, int, list[int], str]]:
     groups = ["iterative_strict", "recursive_strict", "while_strict", "unsupported_parser", "regression_gaps"]
     rows = []
-    llm_systems = [row for row in system_rows if row["system"] != "AALIE"]
     for group in groups:
         cases = system_rows[0]["byGroup"][group]["cases"]
         passes = [row["byGroup"][group]["pass"] for row in system_rows]

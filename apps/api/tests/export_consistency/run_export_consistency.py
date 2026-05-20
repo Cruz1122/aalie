@@ -13,7 +13,6 @@ import csv
 import hashlib
 import io
 import json
-import os
 import sys
 import time
 import zipfile
@@ -24,10 +23,10 @@ from typing import Any
 API_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(API_ROOT))
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # noqa: E402
 
-from app.main import create_app
-from benchmarks.common import _run_cmd, theta_matches
+from app.main import create_app  # noqa: E402
+from benchmarks.common import _run_cmd, theta_matches  # noqa: E402
 
 
 def load_cases(path: Path) -> list[dict[str, Any]]:
