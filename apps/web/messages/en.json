@@ -1489,53 +1489,134 @@
     }
   },
   "about": {
-    "title": "About - AALIE",
-    "heroTitle": "About the Project",
-    "heroDesc": "A modern educational tool for analyzing algorithmic complexity of pseudocode with interactive visualizations and automatic calculations.",
-    "projectTitle": "Academic project - University of Caldas 2025-2",
-    "linksTitle": "Useful Links",
-    "gotoAALIE": "Go to AALIE",
-    "privacyPolicy": "Privacy Policy",
-    "apiStatus": "API Status",
-    "whatDoesTitle": "What does this analyzer do?",
-    "whatDoesDesc": "Takes your pseudocode, builds its structure with a formal grammar and automatically calculates the computational cost line by line. Generates T(n) formulas for best and worst case with control flow visualizations.",
-    "badgeAuto": "Automatic Analysis",
-    "badgeViz": "Visualizations",
-    "badgeLatex": "LaTeX Formulas",
-    "featuresTitle": "Implemented Features",
-    "featureRecursive": "Advanced Recursive Analysis",
-    "featureRecursiveDesc": "Master Theorem, Iteration Method, Recursion Tree and Characteristic Equation with automatic detection",
-    "featureTrace": "Execution Tracing",
-    "featureTraceDesc": "Step-by-step visualization with React Flow for iterative algorithms and tree diagrams for recursive ones",
-    "featureLlm": "LLM Comparison",
-    "featureLlmDesc": "Analysis validation with Gemini 2.5 Pro, independent comparison and discrepancy detection",
-    "featureGpu": "GPU vs CPU Analysis",
-    "featureGpuDesc": "Scoring system (0-100) that determines algorithm suitability for GPU or CPU based on parallelism and access patterns",
-    "featureViz": "Interactive Visualizations",
-    "featureVizDesc": "Flow diagrams with React Flow, recursion trees, interactive AST and detailed cost tables",
-    "featureMemo": "Memoization and Optimization",
-    "featureMemoDesc": "Intelligent AST analysis cache, nested loop optimization and computational complexity reduction",
-    "noSignup": "No Registration",
-    "noSignupDesc": "No accounts required, no personal data stored",
-    "educational": "Educational",
-    "educationalDesc": "Designed to learn algorithm analysis",
-    "realtime": "Real-time",
-    "realtimeDesc": "Instant analysis with immediate feedback",
-    "howWorksTitle": "How does it work?",
-    "step1Title": "Write Code",
-    "step1Desc": "Enter your pseudocode in the editor",
-    "step2Title": "AST Analysis",
-    "step2Desc": "We build the syntax tree",
-    "step3Title": "T(n) Calculation",
-    "step3Desc": "We generate complexity formulas",
-    "step4Title": "Visualization",
-    "step4Desc": "We display graphs and results",
-    "contactTitle": "Contact",
-    "contactDesc": "Have questions, suggestions or found an issue? Feel free to contact us",
-    "email": "Email",
-    "github": "GitHub",
-    "githubSub": "Repository and Issues",
-    "contactName": "Camilo Cruz"
+    "meta": {
+      "title": "About AALIE",
+      "description": "Learn more about AALIE, an educational platform for Algorithm Analysis and Design with visual support, step-by-step analysis, course content, and quizzes."
+    },
+    "hero": {
+      "eyebrow": "About AALIE",
+      "title": "Learn algorithms by seeing the process, not just the answer",
+      "subtitle": "We are an educational platform built to help you learn Algorithm Analysis and Design in a clearer, more visual, and more practical way.",
+      "body": "With AALIE, you can write pseudocode, analyze how it behaves, follow its execution step by step, and practice with course content and quizzes designed to reinforce what you learn in class.",
+      "primaryCta": "Start analyzing",
+      "secondaryCta": "View course"
+    },
+    "why": {
+      "title": "Learning complexity should not feel like guessing a formula",
+      "paragraph1": "In many algorithm exercises, the final answer is just a notation: O(n), Θ(n log n), O(n²). But if you cannot see the path, the answer does not teach much.",
+      "paragraph2": "AALIE was created to show that path: how each line is counted, how summations are formed, how recurrences are interpreted, and when a result cannot be stated safely."
+    },
+    "capabilities": {
+      "title": "What you can do with AALIE",
+      "items": {
+        "write": {
+          "title": "Write or upload pseudocode",
+          "description": "Use the editor to write your algorithms or import .txt files directly."
+        },
+        "analyze": {
+          "title": "Review the analysis step by step",
+          "description": "AALIE shows line costs, cost functions, and asymptotic notation when the analysis is supported."
+        },
+        "recursive": {
+          "title": "Explore recursive algorithms",
+          "description": "Study recurrences with methods such as the Master Theorem, recursion tree, iteration, and characteristic equation when they apply."
+        },
+        "trace": {
+          "title": "Follow an execution",
+          "description": "Use traces to understand what happens during a concrete run of an algorithm."
+        },
+        "quizzes": {
+          "title": "Practice with quizzes",
+          "description": "Reinforce concepts with topic-based questions and feedback."
+        },
+        "export": {
+          "title": "Export reports",
+          "description": "Generate Markdown, LaTeX, PDF, or ZIP reports for study, review, or submission."
+        }
+      }
+    },
+    "ai": {
+      "title": "AI can help, but it does not replace the analysis",
+      "paragraph1": "AALIE may include an AI assistant to explain results, help with syntax, or compare ideas. But the formal analysis does not depend on an AI model guessing the complexity.",
+      "paragraph2": "The main analysis is produced by the system using defined rules, pseudocode structure, and supported methods. That makes the result easier to review, repeat, and discuss in class.",
+      "microcopy": "The assistant is optional. If it is not configured, the analyzer, course, examples, quizzes, and exports still work."
+    },
+    "differentiators": {
+      "title": "What makes AALIE different",
+      "items": {
+        "path": {
+          "title": "It does not just give you an answer",
+          "description": "It shows how the answer is reached."
+        },
+        "conservative": {
+          "title": "It does not pretend to know what it cannot support",
+          "description": "If a case lacks enough evidence, AALIE should show it as partial, unsupported, or inconclusive."
+        },
+        "classroom": {
+          "title": "It is built for class",
+          "description": "It brings together an editor, analysis, examples, content, quizzes, and reports."
+        },
+        "bilingual": {
+          "title": "It works in Spanish and English",
+          "description": "The interface and core content are available in both languages."
+        }
+      }
+    },
+    "limits": {
+      "title": "What AALIE does not promise",
+      "intro": "AALIE is not designed to solve any program written in any language. It works with controlled pseudocode and with the types of analysis that the system currently supports.",
+      "items": {
+        "realCode": "It does not analyze real source code written in Python, Java, C++, or other languages.",
+        "teacher": "It does not replace the teacher or classroom explanation.",
+        "space": "It does not provide formal space complexity analysis.",
+        "average": "It does not claim a universal average case without a model.",
+        "truth": "It does not use AI as a source of mathematical truth.",
+        "advanced": "Some techniques, such as backtracking, branch and bound, or greedy algorithms, may appear as learning content, but they do not always have full formal analysis support."
+      }
+    },
+    "contact": {
+      "title": "Team and contact",
+      "intro": "AALIE was developed in an academic context at Universidad de Caldas to support teaching and learning in Algorithm Analysis and Design.",
+      "email": "Email",
+      "github": "GitHub",
+      "members": {
+        "luz": {
+          "name": "Luz Enith Guerrero",
+          "role": "Academic guidance",
+          "email": "luzenith_g@ucaldas.edu.co"
+        },
+        "camilo": {
+          "name": "Camilo Cruz",
+          "role": "Development and architecture",
+          "email": "juan.cruz37552@ucaldas.edu.co",
+          "github": "@Cruz1122"
+        },
+        "jhon": {
+          "name": "Jhon Hander Patiño",
+          "role": "Development and integration",
+          "email": "jhon.patino29550@ucaldas.edu.co",
+          "github": "@Jhonder18"
+        }
+      }
+    },
+    "cta": {
+      "title": "Start with a simple algorithm",
+      "body": "Write an algorithm, run it in the analyzer, and review how its cost changes line by line.",
+      "primary": "Open analyzer",
+      "secondary": "Explore examples"
+    },
+    "assistant": {
+      "features": {
+        "analyzerTitle": "Analyzer",
+        "analyzerDescription": "Write pseudocode, run the formal analysis, and review traces, costs, and step-by-step results.",
+        "courseTitle": "Course",
+        "courseDescription": "Browse organized modules to study theory, methods, and key concepts.",
+        "examplesTitle": "Examples",
+        "examplesDescription": "Explore ready-to-use algorithms to analyze and compare.",
+        "quizzesTitle": "Quizzes",
+        "quizzesDescription": "Practice with topic-based questions and review your progress."
+      }
+    }
   },
   "chat": {
     "assistantTitle": "Algorithm Analysis Learning Interactive Environment",
@@ -1553,39 +1634,179 @@
     "embeddedWelcome": "I'm AALIE. I can help explain what you're viewing, suggest next steps, and add context, but the app's formal analysis remains the source of truth."
   },
   "privacy": {
-    "title": "Privacy Policy - AALIE",
-    "heroTitle": "Privacy Policy",
-    "heroDesc": "Your privacy is our priority. This academic project requires no registration, stores no personal data, and processes your code temporarily.",
-    "lastUpdate": "Last updated: December 2025",
-    "card1Title": "No Personal Data",
-    "card1Item1": "No user registration",
-    "card1Item2": "No tracking cookies",
-    "card1Item3": "No third-party analytics",
-    "card2Title": "Temporary Processing",
-    "card2Item1": "In-memory analysis only",
-    "card2Item2": "No permanent storage",
-    "card2Item3": "Own backend (FastAPI + SymPy + ANTLR4)",
-    "card3Title": "Your Code is Yours",
-    "card3Item1": "Local validation in browser",
-    "card3Item2": "Automatic deletion after analysis",
-    "card3Item3": "External AI for AALIE, comparison and diagrams (Gemini)",
-    "faqTitle": "Frequently Asked Questions",
-    "faq1Q": "Is my code stored?",
-    "faq1A": "No. Your code is processed temporarily in memory and automatically deleted when the analysis is complete.",
-    "faq2Q": "Do I need to create an account?",
-    "faq2A": "No. The service works completely without registration. We do not request any personal data.",
-    "faq3Q": "Do you use external AI services?",
-    "faq3A": "Yes, we use Google Gemini for three specific features: (1) General assistance AALIE, (2) Analysis comparison with LLM (Gemini 2.5 Pro), and (3) Diagram generation for recursive algorithms (Gemini 2.0 Flash). The main complexity analysis is performed entirely with our own backend (FastAPI + ANTLR4 + SymPy) without AI. Data sent to Gemini is processed according to Google's privacy policy.",
-    "faq4Q": "How is my Gemini API Key handled?",
-    "faq4A": "If you provide your own Gemini API Key, it is stored only locally in your browser (localStorage). It is not sent or stored on our servers. The API key is used directly from your browser for calls to Gemini API (AALIE, LLM comparison, recursive diagrams). We recommend using API keys with limited permissions and monitoring their use in Google Cloud Console. You can remove your API key at any time from the application footer.",
-    "faq5Q": "What technical data is logged?",
-    "faq5A": "Only minimal server logs (IP, User-Agent, timestamps) for service diagnostics and monitoring. They are not linked to identities nor used commercially. AALIE messages and code sent for comparison/diagrams may be processed by Gemini API according to Google's terms of service. We do not store analysis history or processed code.",
-    "faq6Q": "Is it safe to analyze sensitive code?",
-    "faq6A": "The main complexity analysis is processed temporarily without storage. However, if you use LLM features (AALIE, comparison, recursive diagrams), your code may be sent to Gemini API. Avoid sending critical information, passwords, secrets or sensitive data. For confidential code, use only basic analysis without AI features.",
-    "faq7Q": "How to contact for questions?",
-    "faq7A": "For any privacy inquiries, suggestions or issues, you can contact us:",
-    "contactName": "Camilo Cruz",
-    "metaDesc": "AALIE (Algorithm Analysis Learning Interactive Environment) privacy policy"
+    "meta": {
+      "title": "Privacy Policy",
+      "description": "Learn what information AALIE uses, how it is processed, and which decisions remain under the user's control."
+    },
+    "hero": {
+      "eyebrow": "Privacy",
+      "title": "Privacy Policy",
+      "subtitle": "We want you to clearly know what information AALIE uses, why it uses it, what stays in your browser, what may be processed on the server, and what depends on your choices.",
+      "body": "AALIE is an educational platform for learning and practicing algorithm analysis. You can use its main features without creating an account: write pseudocode, analyze algorithms, browse content, review examples, and practice with quizzes. Some optional features, such as the AI assistant or using a personal API key, may involve sending additional information to an external provider. That is why this policy clearly separates basic platform use from AI-feature use.",
+      "lastUpdated": "Last updated: May 2026"
+    },
+    "summary": {
+      "title": "Quick summary",
+      "items": {
+        "account": {
+          "title": "No account required",
+          "description": "AALIE does not require registration to use its main features. You do not need to provide a name, email, password, or payment data to analyze algorithms or practice with available content."
+        },
+        "formal": {
+          "title": "Formal analysis does not depend on AI",
+          "description": "Complexity calculation is performed by the AALIE engine. The AI assistant, when available, serves as pedagogical support to explain, compare, or help with syntax, but it does not replace the formal analyzer result."
+        },
+        "browser": {
+          "title": "Your progress may stay in your browser",
+          "description": "Quiz progress, some preferences, and certain usage states may be stored locally in the browser of the device you are using. That progress does not amount to an institutional account or cross-device sync."
+        },
+        "ai": {
+          "title": "AI is optional",
+          "description": "If you use the AI assistant, part of the visible context may be sent to the configured provider to generate a response. If you do not use the assistant, AALIE's core analysis still works."
+        },
+        "sales": {
+          "title": "We do not sell your data",
+          "description": "AALIE is not designed to sell personal information, create commercial profiles, show personalized ads, or market student or teacher data."
+        }
+      }
+    },
+    "sections": {
+      "provided": {
+        "title": "Information you may provide or generate",
+        "intro": "Depending on how you use AALIE, the platform may work with the following information:",
+        "items": {
+          "pseudocode": "Pseudocode you write in the editor",
+          "files": ".txt files you choose to load into the editor",
+          "results": "Results produced by the analyzer",
+          "costs": "Line costs, cost functions, traces, recurrences, warnings, and generated reports",
+          "language": "Language preference",
+          "progress": "Quiz progress and answers stored locally",
+          "questions": "Questions you write in the AI assistant",
+          "context": "Visible page context when you use the AI assistant",
+          "key": "A personal API key, only if you choose to enter one to enable AI features"
+        },
+        "purpose": "This information is used so the platform can fulfill its educational purpose: analyze algorithms, show results, help you study, generate reports, and offer practice through quizzes."
+      },
+      "notCollected": {
+        "title": "Information AALIE does not seek to collect",
+        "items": {
+          "documents": "Personal documents unrelated to algorithm learning",
+          "payment": "Payment data",
+          "location": "Precise location",
+          "biometric": "Biometric data",
+          "passwords": "Passwords for external accounts",
+          "profiles": "Commercial profiles",
+          "sensitive": "Medical, political, religious, financial, or highly sensitive information",
+          "ads": "Data for personalized advertising",
+          "thirdParty": "Private third-party information"
+        },
+        "warning": "Do not write, paste, or load confidential information, private keys, tokens, passwords, real personal data, proprietary code, or material you are not authorized to share."
+      },
+      "analyzer": {
+        "title": "Analyzer use",
+        "paragraph1": "When you write or import pseudocode, AALIE processes it to show results such as: algorithm classification, line costs, cost function, O, Ω, and Θ notations when applicable, execution traces, recurrences and solution methods, analysis warnings or limits, and exportable reports.",
+        "paragraph2": "The formal analysis is performed by the AALIE engine. This part does not require you to use an AI assistant nor depend on entering an API key.",
+        "paragraph3": "AALIE may process the pseudocode on the backend to generate the result. That processing has an educational and technical purpose: interpret the input, produce the analysis, and return the results to the interface."
+      },
+      "txtFiles": {
+        "title": ".txt files",
+        "paragraph1": "AALIE may allow you to upload .txt files to bring their content into the editor. File upload exists to facilitate pseudocode analysis, not to store personal documents.",
+        "paragraph2": "Before uploading a file, check that it does not include confidential information, unnecessary personal data, credentials, access keys, or private code you do not want to share."
+      },
+      "quizzesProgress": {
+        "title": "Quizzes and progress",
+        "paragraph1": "AALIE quizzes are designed as educational practice. Question selection and evaluation are performed deterministically, with answers and criteria defined by the system.",
+        "paragraph2": "Quiz progress may be saved in the browser using local storage. This may include attempts, scores, selected answers, viewed modules, or progress status.",
+        "paragraph3": "That progress is not automatically synced between devices. If you switch browsers, use incognito mode, clear site data, or change devices, you may lose it.",
+        "paragraph4": "Quizzes are not an official certification, do not replace an institutional evaluation, and do not constitute an academic record."
+      },
+      "assistant": {
+        "title": "AI assistant",
+        "paragraph1": "The AI assistant is optional. It can help you understand a result, fix syntax, compare explanations, or ask questions about algorithm analysis.",
+        "paragraph2": "To respond, the assistant may receive information such as: your question, the visible pseudocode, the analysis result, warnings generated by AALIE, visible traces or recurrences, the panel or section you are using, and recent conversation history within the assistant.",
+        "paragraph3": "If the assistant is connected to an external provider, that information may be sent to that provider to generate the response. The provider may process it according to its own policies, terms, and technical configuration.",
+        "paragraph4": "Do not use the AI assistant with sensitive, private, confidential, secret information, or information belonging to third parties."
+      },
+      "apiKeys": {
+        "title": "Personal API keys",
+        "paragraph1": "Some AALIE deployments may allow you to enter your own API key to enable AI features. This is known as Bring Your Own Key.",
+        "paragraph2": "If you choose to use a personal API key: it may generate costs on your provider account, it may be subject to the provider's limits, quotas, and policies, it may be sent to the AALIE backend to make the request to the configured provider, it should not be used on shared computers, it should be removed when you finish, it should not be shared with others, and it should not be included inside pseudocode or inside questions to the assistant.",
+        "paragraph3": "Your API key is not used to calculate algorithm complexity. It only enables features associated with the AI assistant.",
+        "warning": "AALIE is not meant to be an enterprise secret manager. If a deployment saves the API key in the browser, that decision carries risks: extensions, malicious scripts, local machine access, or shared device use could expose it."
+      },
+      "localStorage": {
+        "title": "Local storage in the browser",
+        "paragraph1": "AALIE may use browser local storage to save preferences and progress. This storage resides on the device you are using.",
+        "paragraph2": "It may include, for example: selected language, module progress, quiz attempts, usage preferences, temporary interface states, and the personal API key only if the interface offers that option and you choose to save it.",
+        "paragraph3": "Do not use shared devices to store sensitive information. If you use AALIE on a public, lab, or someone else's computer, clear the site data when you finish."
+      },
+      "security": {
+        "title": "Security",
+        "paragraph1": "AALIE applies a minimization policy: use only the information necessary to provide its educational functions.",
+        "paragraph2": "However, no web system eliminates all risks. The main risks you should be aware of are:",
+        "items": {
+          "editor": "If you paste sensitive information in the editor, it could be included in results or reports.",
+          "assistant": "If you use the AI assistant, the context may be sent to an external provider.",
+          "key": "If you save an API key on a shared browser, someone else could access it.",
+          "report": "If you share a report, you will be sharing the content included in that file.",
+          "browser": "If you clear browser data, you could lose your local progress."
+        }
+      },
+      "exports": {
+        "title": "Reports and exports",
+        "paragraph1": "When you generate reports, AALIE may include information such as: original pseudocode, analysis results, line costs, traces, recurrences, warnings, technical metadata, snapshot identifiers, content hash, and institutional report information.",
+        "paragraph2": "The purpose of this data is to keep the report consistent with what you saw on screen.",
+        "paragraph3": "Before sharing a report, check that it does not include private pseudocode, sensitive data, keys, names, internal comments, or any information you do not want to disclose."
+      },
+      "providers": {
+        "title": "External providers",
+        "paragraph1": "AALIE may depend on external services for hosting, backend execution, report generation, or optional AI features.",
+        "paragraph2": "When you use the AI assistant, the information sent may be processed by the configured provider. That provider's privacy policies, terms of use, technical limits, and data processing rules may also apply.",
+        "paragraph3": "AALIE does not fully control how each external provider processes the information once sent. That is why you should avoid using AI features with sensitive or confidential information."
+      },
+      "rights": {
+        "title": "Rights and requests",
+        "paragraph1": "You can contact the team if you have questions about this policy or about the use of information in AALIE.",
+        "paragraph2": "Depending on the case, you may request information about data related to you, ask for correction, update, deletion, or clarification about the processing of personal information that may be under the team's responsibility.",
+        "paragraph3": "Keep in mind that many current AALIE features do not use user accounts or institutional progress storage. If the data is stored only in your browser, the team may not have technical access to it. In that case, you can delete it by clearing site data in your browser.",
+        "githubLabel": "Development GitHub"
+      },
+      "changes": {
+        "title": "Changes to this policy",
+        "paragraph1": "We may update this policy when AALIE features change, especially if the following are added: user accounts, analytics, server-side storage, new AI providers, progress sync, new export methods, integration with institutional services, or changes in API key handling.",
+        "paragraph2": "When the policy changes, the last modified date will be updated."
+      }
+    },
+    "contact": {
+      "members": {
+        "luz": {
+          "name": "Luz Enith Guerrero",
+          "email": "luzenith_g@ucaldas.edu.co"
+        },
+        "camilo": {
+          "name": "Camilo Cruz",
+          "email": "juan.cruz37552@ucaldas.edu.co",
+          "github": "@Cruz1122"
+        },
+        "jhon": {
+          "name": "Jhon Hander Patiño",
+          "email": "jhon.patino29550@ucaldas.edu.co",
+          "github": "@Jhonder18"
+        }
+      }
+    },
+    "assistant": {
+      "features": {
+        "analyzerTitle": "Analyzer",
+        "analyzerDescription": "Analyze pseudocode with line costs, traces, and step-by-step explanations.",
+        "courseTitle": "Course",
+        "courseDescription": "Review study content to better understand the concepts referenced in this policy.",
+        "quizzesTitle": "Quizzes",
+        "quizzesDescription": "Practice and keep local progress in your browser.",
+        "aboutTitle": "About AALIE",
+        "aboutDescription": "Understand the educational purpose of the project, its approach, and the team behind the platform."
+      }
+    }
   },
   "examples": {
     "title": "Algorithm Catalog",

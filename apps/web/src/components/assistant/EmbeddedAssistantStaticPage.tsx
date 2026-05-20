@@ -4,7 +4,12 @@ import { useLocale } from "next-intl";
 import { useMemo } from "react";
 
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
-import type { AssistantContext, AssistantSurface } from "@/lib/assistant/types";
+import type {
+  AssistantContext,
+  AssistantFeatureContext,
+  AssistantGuideSectionContext,
+  AssistantSurface,
+} from "@/lib/assistant/types";
 
 import { EmbeddedAssistantLauncher } from "./EmbeddedAssistantLauncher";
 
@@ -13,6 +18,9 @@ export interface EmbeddedAssistantStaticPageProps {
   route: string;
   title: string;
   description: string;
+  notes?: string[];
+  availableFeatures?: AssistantFeatureContext[];
+  guideSection?: AssistantGuideSectionContext;
 }
 
 export function EmbeddedAssistantStaticPage({
@@ -20,6 +28,9 @@ export function EmbeddedAssistantStaticPage({
   route,
   title,
   description,
+  notes,
+  availableFeatures,
+  guideSection,
 }: EmbeddedAssistantStaticPageProps) {
   const locale = useLocale();
   const { runAnalysis } = useRunAnalysis();
@@ -33,10 +44,21 @@ export function EmbeddedAssistantStaticPage({
         view: "static",
         title,
         description,
-        notes: [`page=${surface}`],
+        notes: [`page=${surface}`, ...(notes ?? [])],
       },
+      ...(availableFeatures?.length ? { availableFeatures } : {}),
+      ...(guideSection ? { guideSection } : {}),
     }),
-    [surface, locale, route, title, description],
+    [
+      surface,
+      locale,
+      route,
+      title,
+      description,
+      notes,
+      availableFeatures,
+      guideSection,
+    ],
   );
 
   return (
