@@ -26,8 +26,8 @@ test("discoverSpaces loads published spaces and modules from filesystem", () => 
 
   assert.equal(spaces.length, 4);
   assert.deepEqual(spaceKeys.sort(), ["course:en", "course:es", "user-guide:en", "user-guide:es"]);
-  assert.equal(getSpaceBundle("user-guide", "es").modules.length, 7);
-  assert.equal(getSpaceBundle("user-guide", "en").modules.length, 7);
+  assert.equal(getSpaceBundle("user-guide", "es").modules.length, 9);
+  assert.equal(getSpaceBundle("user-guide", "en").modules.length, 9);
 });
 
 test("routes are derived from space and module slugs without manual mapping", () => {
@@ -42,7 +42,7 @@ test("routes are derived from space and module slugs without manual mapping", ()
   assert.equal(deriveSpaceRoute(guideBundle.space), "/user-guide");
   assert.equal(
     deriveModuleRoute(guideBundle.space, guideBundle.modules[0].module),
-    "/user-guide/como-se-mide-un-algoritmo",
+    "/user-guide/getting-started",
   );
 });
 
@@ -70,38 +70,33 @@ test("resolveTarget finds internal sections, terms and blocks by neutral target 
 
   const section = resolveTarget(guideBundle, {
     kind: "section",
-    ref: "sec-operaciones-y-n",
-  });
-  const term = resolveTarget(guideBundle, {
-    kind: "term",
-    ref: "term-tamano-entrada",
+    ref: "sec-que-es-aalie",
   });
   const block = resolveTarget(guideBundle, {
     kind: "block",
-    ref: "blk-m1-s2-p1",
+    ref: "blk-m01-s01-p01",
   });
 
   assert.equal(
     section?.title,
-    "Iteraciones, suma de costos y ejemplo en el analizador",
+    "Qué encontrarás en la plataforma",
   );
-  assert.equal(term?.title, "tamaño de entrada");
   assert.equal(block?.kind, "block");
 });
 
 test("space helpers resolve bundles, module slugs, and aggregate search across modules", () => {
   const guideBundle = getSpaceBundle("user-guide", "en");
-  const module = getModuleBySlug(guideBundle, "measuring-an-algorithm");
+  const module = getModuleBySlug(guideBundle, "getting-started");
   const entries = buildSpaceSearchIndex(guideBundle, {
-    moduleId: "mod-user-guide-measure",
+    moduleId: "mod-user-guide-getting-started",
   });
 
-  assert.equal(module?.module.moduleId, "mod-user-guide-measure");
+  assert.equal(module?.module.moduleId, "mod-user-guide-getting-started");
   assert.ok(
-    entries.some((entry) => entry.sectionId === "sec-que-es-eficiencia"),
+    entries.some((entry) => entry.sectionId === "sec-que-es-aalie"),
   );
   assert.ok(
-    entries.every((entry) => entry.moduleId === "mod-user-guide-measure"),
+    entries.every((entry) => entry.moduleId === "mod-user-guide-getting-started"),
   );
 });
 

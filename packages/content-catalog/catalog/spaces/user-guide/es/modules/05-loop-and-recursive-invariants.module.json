@@ -1,0 +1,253 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-loop-and-recursive-invariants",
+  "slug": "loop-and-recursive-invariants",
+  "title": "Invariantes y correctitud de algoritmos",
+  "shortTitle": "Invariantes",
+  "order": 5,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Complementa el análisis con invariantes de ciclo y correctitud inductiva para obtener una lectura formal del comportamiento del algoritmo.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 28,
+  "tags": [
+    "invariante",
+    "correctitud",
+    "iterativo",
+    "recursivo"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "loop invariant",
+      "invariante recursivo",
+      "correctitud inductiva"
+    ],
+    "keywords": [
+      "inicialización",
+      "mantenimiento",
+      "finalización",
+      "caso base"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-examples-bubble-sort",
+        "kind": "recommended"
+      },
+      {
+        "id": "mod-user-guide-recursive-fibonacci",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-recursive-fibonacci"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-distinguir-correctitud",
+      "text": "Distinguir análisis de complejidad y razonamiento de correctitud."
+    },
+    {
+      "objectiveId": "obj-leer-invariantes",
+      "text": "Leer invariantes iterativos y recursivos como apoyo pedagógico revisable."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-05-loop-invariant-bubble",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/05-loop-invariant-bubble.webp"
+        },
+        "alt": "Modal de loop invariant para Burbuja, con inicialización, mantenimiento y finalización.",
+        "caption": "Modal de loop invariant para Burbuja."
+      },
+      {
+        "resourceId": "img-05-recursive-invariant-fibonacci",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/05-recursive-invariant-fibonacci.webp"
+        },
+        "alt": "Análisis de invariante recursivo o correctitud inductiva para Fibonacci.",
+        "caption": "Correctitud inductiva para Fibonacci."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-invariantes",
+      "slug": "invariantes",
+      "title": "Invariantes y correctitud",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-invariante-ciclo",
+          "slug": "invariante-de-ciclo",
+          "title": "Loop invariant en algoritmos iterativos",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m05-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El análisis de complejidad responde cuánto crece el costo de un algoritmo. La correctitud responde otra pregunta: si el algoritmo realmente produce el resultado que promete. Los invariantes ayudan a estudiar esa segunda dimensión, especialmente en algoritmos iterativos."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Después de "
+            },
+            {
+              "type": "link",
+              "text": "analizar",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " un algoritmo como Bubble Sort, AALIE puede mostrar una sección de loop invariant. Un invariante de ciclo es una propiedad que se mantiene verdadera antes de iniciar el ciclo y después de cada iteración relevante. Esa propiedad permite razonar sobre por qué el algoritmo progresa correctamente."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s01-img01",
+              "type": "image",
+              "resourceRef": "img-05-loop-invariant-bubble",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m05-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La lectura formal se organiza normalmente en tres partes: inicialización, mantenimiento y finalización. La inicialización verifica que la propiedad sea verdadera antes de comenzar. El mantenimiento comprueba que siga siendo verdadera después de una iteración. La finalización conecta el estado al terminar con el objetivo del algoritmo."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s01-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    { "type": "text", "text": "Inicialización: el invariante debe cumplirse antes de ejecutar el ciclo." }
+                  ]
+                },
+                {
+                  "content": [
+                    { "type": "text", "text": "Mantenimiento: si el invariante era cierto antes de una iteración, debe seguir siéndolo después." }
+                  ]
+                },
+                {
+                  "content": [
+                    { "type": "text", "text": "Finalización: cuando el ciclo termina, el invariante debe permitir concluir que el resultado es correcto." }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s01-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "No es decoración",
+              "blocks": [
+                {
+                  "id": "blk-m05-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Un invariante no es una frase decorativa. Decir \"el arreglo queda ordenado\" no explica el proceso. Un buen invariante describe qué parte del arreglo ya está controlada y por qué cada iteración conserva esa propiedad."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-invariante-recursivo",
+          "slug": "correctitud-recursiva",
+          "title": "Correctitud inductiva en algoritmos recursivos",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m05-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En algoritmos recursivos no se habla de loop invariant en sentido tradicional. En su lugar, se usa una lectura basada en hipótesis inductiva, caso base, pasos recursivos y terminación. Esta idea permite razonar sobre por qué una función recursiva produce resultados correctos para entradas cada vez mayores."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s02-img01",
+              "type": "image",
+              "resourceRef": "img-05-recursive-invariant-fibonacci",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m05-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Para Fibonacci, la correctitud inductiva revisa que el caso base esté definido, que las llamadas recursivas avancen hacia valores menores y que la combinación de resultados respete la definición matemática de la sucesión. Si alguna de estas partes falla, el algoritmo puede terminar mal o no terminar."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "concept",
+              "icon": "school",
+              "title": "Relación con el análisis de complejidad",
+              "blocks": [
+                {
+                  "id": "blk-m05-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La sección de invariantes no busca reemplazar una demostración formal escrita por el estudiante. Su función es servir como guía para construir el argumento: qué propiedad se conserva, cómo se conserva y qué permite concluir al final."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

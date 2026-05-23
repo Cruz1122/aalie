@@ -930,7 +930,22 @@
       "comparingWithLlm": "Comparing with LLM",
       "progress": "Progress",
       "pleaseWait": "Please wait while the comparison completes...",
-      "close": "Close"
+      "close": "Close",
+      "contacting": "Contacting LLM...",
+      "preparingData": "Preparing data...",
+      "sendingToModel": "Sending request to Gemini 2.5 Pro...",
+      "waitingResponse": "Waiting for LLM response...",
+      "analyzingAlgorithm": "Analyzing algorithm...",
+      "calculatingComplexity": "Calculating complexity...",
+      "comparingAnalysis": "Comparing analysis...",
+      "generatingObservations": "Generating observations...",
+      "finalizingComparison": "Finalizing comparison...",
+      "processingResponse": "Processing response...",
+      "generatingComparison": "Generating comparison...",
+      "comparisonComplete": "Comparison complete",
+      "noCoreData": "Could not extract the core analysis data",
+      "noLlmResponse": "No LLM response was received",
+      "unexpectedError": "Unexpected error during comparison"
     },
     "recursionTree": {
       "dominatingLevel": "Dominating Level",

@@ -136,9 +136,7 @@ SYSTEM_PROMPTS = {
             "Compara el analisis formal recibido con tu estimacion independiente. "
             "Responde solo JSON valido con analysis y note."
         ),
-        "explain": (
-            "Explica conceptos de analisis de complejidad con enfoque pedagico."
-        ),
+        "explain": ("Explica conceptos de analisis de complejidad con enfoque pedagico."),
     },
     "en": {
         "parser_assist": (
@@ -174,7 +172,9 @@ SYSTEM_PROMPTS = {
 def get_job_config(job: str, locale: str | None) -> JobConfig:
     locale_code = _normalize_locale(locale)
     prompts = SYSTEM_PROMPTS[locale_code]
-    selected_job = job if job in {"parser_assist", "general", "repair", "compare", "explain"} else "general"
+    selected_job = (
+        job if job in {"parser_assist", "general", "repair", "compare", "explain"} else "general"
+    )
 
     model_env = {
         "parser_assist": "LLM_MODEL_PARSER_ASSIST",

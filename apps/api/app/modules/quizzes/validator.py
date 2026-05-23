@@ -62,7 +62,9 @@ def _validate_question_answer(question: QuizQuestion, report: ValidationReport) 
     for idx, option in enumerate(question.options):
         if not option.feedback.blocks:
             report.errors.append(
-                _issue(question.questionId, f"options[{idx}].feedback", "Toda opcion requiere feedback")
+                _issue(
+                    question.questionId, f"options[{idx}].feedback", "Toda opcion requiere feedback"
+                )
             )
 
     if question.type in {"single_choice", "multiple_choice", "true_false"}:
@@ -171,7 +173,9 @@ def validate_dataset(dataset: QuizDataset) -> ValidationReport:
             )
 
         if not validate_topic(question.topic):
-            report.errors.append(_issue(question.questionId, "topic", f"Topic invalido: {question.topic}"))
+            report.errors.append(
+                _issue(question.questionId, "topic", f"Topic invalido: {question.topic}")
+            )
 
         for idx, tag in enumerate(question.tags):
             if not validate_tag(tag):
@@ -188,10 +192,14 @@ def validate_dataset(dataset: QuizDataset) -> ValidationReport:
                 )
 
         if not question.prompt.blocks:
-            report.errors.append(_issue(question.questionId, "prompt.blocks", "No puede estar vacio"))
+            report.errors.append(
+                _issue(question.questionId, "prompt.blocks", "No puede estar vacio")
+            )
 
         if not question.explanation.blocks:
-            report.errors.append(_issue(question.questionId, "explanation.blocks", "No puede estar vacio"))
+            report.errors.append(
+                _issue(question.questionId, "explanation.blocks", "No puede estar vacio")
+            )
 
         if question.status == "active" and not question.contentRefs:
             report.errors.append(_issue(question.questionId, "contentRefs", "No puede estar vacio"))
@@ -246,14 +254,24 @@ def validate_dataset(dataset: QuizDataset) -> ValidationReport:
         if est is not None:
             if question.difficulty == "basic" and est > 120:
                 report.warnings.append(
-                    _issue(question.questionId, "selectionMeta.estimatedTimeSec", "Tiempo alto para dificultad basic")
+                    _issue(
+                        question.questionId,
+                        "selectionMeta.estimatedTimeSec",
+                        "Tiempo alto para dificultad basic",
+                    )
                 )
             if question.difficulty == "advanced" and est < 30:
                 report.warnings.append(
-                    _issue(question.questionId, "selectionMeta.estimatedTimeSec", "Tiempo bajo para dificultad advanced")
+                    _issue(
+                        question.questionId,
+                        "selectionMeta.estimatedTimeSec",
+                        "Tiempo bajo para dificultad advanced",
+                    )
                 )
 
-        explanation_text_len = sum(len(block.content.strip()) for block in question.explanation.blocks)
+        explanation_text_len = sum(
+            len(block.content.strip()) for block in question.explanation.blocks
+        )
         if explanation_text_len < 20:
             report.warnings.append(
                 _issue(question.questionId, "explanation.blocks", "Explicacion demasiado corta")

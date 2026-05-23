@@ -1,0 +1,312 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-quizzes",
+  "slug": "quizzes",
+  "title": "Quizzes, diagnosis, and history",
+  "shortTitle": "Quizzes",
+  "order": 9,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Take diagnostic and course-linked quizzes, review feedback, check history, and use recommendations to guide review.",
+  "difficulty": "basic",
+  "estimatedMinutes": 42,
+  "tags": [
+    "quizzes",
+    "diagnosis",
+    "feedback",
+    "history",
+    "progress"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "quizzes",
+      "diagnostic quiz",
+      "attempt history"
+    ],
+    "keywords": [
+      "diagnosis",
+      "score",
+      "feedback",
+      "history"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-courses-progress",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-ai-assistant"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-realizar-quices",
+      "text": "Take diagnostic and course-linked quizzes."
+    },
+    {
+      "objectiveId": "obj-usar-feedback",
+      "text": "Use feedback and history to decide what to review."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-09-quizzes-dashboard-diagnostic",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/09-quizzes-dashboard-diagnostic.webp"
+        },
+        "alt": "Quizzes page with the diagnostic quiz invitation.",
+        "caption": "Quizzes page with the diagnostic quiz invitation."
+      },
+      {
+        "resourceId": "img-09-quiz-attempt",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/09-quiz-attempt.webp"
+        },
+        "alt": "Quiz attempt in progress with one question and answer options.",
+        "caption": "Quiz attempt in progress with one question and answer options."
+      },
+      {
+        "resourceId": "img-09-quiz-results-review",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/09-quiz-results-review.webp"
+        },
+        "alt": "Quiz results with question-by-question review and feedback.",
+        "caption": "Quiz results with question-by-question review and feedback."
+      },
+      {
+        "resourceId": "img-09-quiz-history-stats",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/09-quiz-history-stats.webp"
+        },
+        "alt": "Quiz history with general statistics and recommendations.",
+        "caption": "Quiz history with general statistics and recommendations."
+      },
+      {
+        "resourceId": "img-09-course-quiz-modal",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/09-course-quiz-modal.webp"
+        },
+        "alt": "Course- or module-linked quiz showing score in a modal.",
+        "caption": "Course- or module-linked quiz showing score in a modal."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-quices",
+      "slug": "quizzes",
+      "title": "Practice with quizzes",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-diagnostico",
+          "slug": "diagnostic-quiz",
+          "title": "Take a diagnostic quiz",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m09-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "When you first enter "
+            },
+            {
+              "type": "link",
+              "text": "Quizzes",
+              "target": { "kind": "external", "ref": "/quizzes" }
+            },
+            {
+              "type": "text",
+              "text": ", the system may invite you to take a diagnostic quiz. This attempt is meant to identify prior knowledge and guide later practice."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s01-img01",
+              "type": "image",
+              "resourceRef": "img-09-quizzes-dashboard-diagnostic",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m09-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Select the available number of questions for the flow, for example five questions, and answer. To practice review, you may use random answers, but in real use you should answer with reasoning."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s01-img02",
+              "type": "image",
+              "resourceRef": "img-09-quiz-attempt",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resultados-quiz",
+          "slug": "results-and-feedback",
+          "title": "Review results and feedback",
+          "order": 2,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 16,
+          "blocks": [
+            {
+              "id": "blk-m09-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When the attempt finishes, AALIE shows the score, how many answers were correct and incorrect, and an individual review by question. This review is the most important part of the flow."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s02-img01",
+              "type": "image",
+              "resourceRef": "img-09-quiz-results-review",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m09-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Read the feedback and study recommendations. The system may suggest specific modules to review the concepts where you had the most difficulty."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "lightbulb",
+              "blocks": [
+                {
+                  "id": "blk-m09-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Do not close the result as soon as you see the score. Review the failed questions and identify which concept you confused. That is where the real learning from the quiz happens."
+                    }
+                  ]
+                }
+              ],
+              "title": "How to use feedback"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-historial",
+          "slug": "history-and-course-quizzes",
+          "title": "History and course-linked quizzes",
+          "order": 3,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m09-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The interface keeps an attempt history with general statistics, average performance, practice level, and recommendations. This helps you see progression, not only isolated results."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s03-img01",
+              "type": "image",
+              "resourceRef": "img-09-quiz-history-stats",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m09-s03-p02",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "link",
+              "text": "Course",
+              "target": { "kind": "external", "ref": "/course" }
+            },
+            {
+              "type": "text",
+              "text": "-linked quizzes use a similar interface. At the end, a modal shows the score and answer breakdown, and the attempt is added to the user history."
+
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s03-img02",
+              "type": "image",
+              "resourceRef": "img-09-course-quiz-modal",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m09-s03-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Local persistence",
+              "blocks": [
+                {
+                  "id": "blk-m09-s03-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Progress and history may be stored in the browser. If you change device, browser, or clear local data, that history may not be available."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

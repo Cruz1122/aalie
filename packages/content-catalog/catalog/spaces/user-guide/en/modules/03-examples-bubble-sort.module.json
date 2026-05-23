@@ -1,0 +1,253 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-examples-bubble-sort",
+  "slug": "examples-bubble-sort",
+  "title": "Analyze from the examples section",
+  "shortTitle": "Examples",
+  "order": 3,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Load algorithms from the examples catalog and analyze Improved Bubble Sort to see costs, scenarios, and iterative classification.",
+  "difficulty": "basic",
+  "estimatedMinutes": 22,
+  "tags": [
+    "examples",
+    "bubble sort",
+    "iterative",
+    "while",
+    "for"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "examples catalog",
+      "improved bubble sort"
+    ],
+    "keywords": [
+      "examples",
+      "categories",
+      "iterative",
+      "bubble sort"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-linear-search-analyzer",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-loop-and-recursive-invariants"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-cargar-ejemplos",
+      "text": "Load algorithms from the Examples section."
+    },
+    {
+      "objectiveId": "obj-comparar-escenarios",
+      "text": "Relate the Improved Bubble Sort analysis to its execution scenarios."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-03-examples-categories",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/03-examples-categories.webp"
+        },
+        "alt": "Examples page with categories by technique or paradigm.",
+        "caption": "Examples page with categories by technique or paradigm."
+      },
+      {
+        "resourceId": "img-03-example-bubble-sort-improved",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/03-example-bubble-sort-improved.webp"
+        },
+        "alt": "Improved Bubble Sort example selected and loaded in the analyzer.",
+        "caption": "Improved Bubble Sort example selected and loaded in the analyzer."
+      },
+      {
+        "resourceId": "img-03-example-results",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/03-example-results.webp"
+        },
+        "alt": "Improved Bubble Sort results, including costs and asymptotic behavior.",
+        "caption": "Improved Bubble Sort results, including costs and asymptotic behavior."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-ejemplos",
+      "slug": "examples",
+      "title": "Use guided examples",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-categorias",
+          "slug": "categories",
+          "title": "Choose a category",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "blocks": [
+            {
+              "id": "blk-m03-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "The "
+            },
+            {
+              "type": "link",
+              "text": "Examples",
+              "target": { "kind": "external", "ref": "/examples" }
+            },
+            {
+              "type": "text",
+              "text": " section lets you load algorithms without writing them from scratch. Examples are organized by technique or paradigm so users can connect code structure with the type of analysis they should expect."
+                }
+              ]
+            },
+            {
+              "id": "blk-m03-s01-img01",
+              "type": "image",
+              "resourceRef": "img-03-examples-categories",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m03-s01-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Recommended use",
+              "blocks": [
+                {
+                  "id": "blk-m03-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+              "type": "text",
+              "text": "Use "
+            },
+            {
+              "type": "link",
+              "text": "Examples",
+              "target": { "kind": "external", "ref": "/examples" }
+            },
+            {
+              "type": "text",
+              "text": " to study representative patterns. Use the "
+            },
+            {
+              "type": "link",
+              "text": "General Analyzer",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " when you want to test your own variants of an algorithm."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-bubble",
+          "slug": "improved-bubble-sort",
+          "title": "Example: improved Bubble Sort",
+          "order": 2,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m03-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "For this flow, select the "
+            },
+            {
+              "type": "link",
+              "text": "iterative algorithms category",
+              "target": { "kind": "external", "ref": "/examples/iterative" }
+            },
+            {
+              "type": "text",
+              "text": " and load Improved Bubble Sort. This example is useful because it combines a WHILE loop with an internal FOR loop, making the counts richer than in a simple linear traversal."
+                }
+              ]
+            },
+            {
+              "id": "blk-m03-s02-img01",
+              "type": "image",
+              "resourceRef": "img-03-example-bubble-sort-improved",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m03-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "After loading it, run the analysis. AALIE will display line costs and asymptotic behavior for the supported scenarios. It will also identify the main paradigm of the algorithm as iterative."
+                }
+              ]
+            },
+            {
+              "id": "blk-m03-s02-img02",
+              "type": "image",
+              "resourceRef": "img-03-example-results",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m03-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "systemEvidence",
+              "icon": "analytics",
+              "blocks": [
+                {
+                  "id": "blk-m03-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Compare the WHILE condition with the internal FOR. If the best case stops early and the worst case runs more phases, that difference should appear in the counts and explanation, not only in a final label."
+                    }
+                  ]
+                }
+              ],
+              "title": "What to observe"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

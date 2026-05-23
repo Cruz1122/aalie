@@ -1,0 +1,356 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-linear-search-analyzer",
+  "slug": "linear-search-analyzer",
+  "title": "Analyze an algorithm manually",
+  "shortTitle": "Analyzer",
+  "order": 2,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Use the analyzer with linear search: write code, import .txt, validate syntax, read line costs, inspect the AST, and run a step-by-step trace.",
+  "difficulty": "basic",
+  "estimatedMinutes": 44,
+  "tags": [
+    "analyzer",
+    "linear search",
+    "AST",
+    "trace",
+    ".txt"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "general analyzer",
+      "linear search",
+      "import txt"
+    ],
+    "keywords": [
+      "editor",
+      "autocomplete",
+      "line costs",
+      "AST",
+      "trace"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-getting-started",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-examples-bubble-sort",
+    "mod-user-guide-export-pdf"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-analizar-manual",
+      "text": "Run a manual analysis from written or imported code."
+    },
+    {
+      "objectiveId": "obj-leer-evidencia",
+      "text": "Interpret line costs, asymptotic results, AST, and trace without confusing their roles."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-02-analyzer-editor-linear-search",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/02-analyzer-editor-linear-search.webp"
+        },
+        "alt": "Analyzer with the linear search algorithm loaded in the editor.",
+        "caption": "Analyzer with the linear search algorithm loaded in the editor."
+      },
+      {
+        "resourceId": "img-02-syntax-autocomplete",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/02-syntax-autocomplete.webp"
+        },
+        "alt": "Editor showing autocomplete and/or real-time syntax diagnostics.",
+        "caption": "Editor showing autocomplete and/or real-time syntax diagnostics."
+      },
+      {
+        "resourceId": "img-02-txt-import-dialog",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/02-txt-import-dialog.webp"
+        },
+        "alt": "Import .txt action or loaded pseudocode after import.",
+        "caption": "Import .txt action or loaded pseudocode after import."
+      },
+      {
+        "resourceId": "img-02-analysis-results-by-line",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/02-analysis-results-by-line.webp"
+        },
+        "alt": "Analysis results with the line-by-line cost table visible.",
+        "caption": "Analysis results with the line-by-line cost table visible."
+      },
+      {
+        "resourceId": "img-02-asymptotic-summary",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/02-asymptotic-summary.webp"
+        },
+        "alt": "Lower summary for best, average, worst case, and asymptotic notation.",
+        "caption": "Lower summary for best, average, worst case, and asymptotic notation."
+      },
+      {
+        "resourceId": "img-02-ast-view",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/02-ast-view.webp"
+        },
+        "alt": "AST panel or modal generated for the algorithm.",
+        "caption": "AST panel or modal generated for the algorithm."
+      },
+      {
+        "resourceId": "img-02-step-trace-linear-search",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/02-step-trace-linear-search.webp"
+        },
+        "alt": "Step-by-step trace for linear search with defined input values.",
+        "caption": "Step-by-step trace for linear search with defined input values."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-analizador-lineal",
+      "slug": "linear-search-analyzer",
+      "title": "Analyze linear search",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-escribir-importar",
+          "slug": "write-and-import",
+          "title": "Write, autocomplete, and import code",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m02-s01-p01",
+              "type": "paragraph",
+              "content": [
+            {
+              "type": "text",
+              "text": "The "
+            },
+            {
+              "type": "link",
+              "text": "analyzer",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " is where you write the pseudocode that AALIE will process. In this flow we use linear search because it clearly shows execution cases: finding the element at the beginning, finding it after several positions, or not finding it."
+            }
+              ]
+            },
+            {
+              "id": "blk-m02-s01-img01",
+              "type": "image",
+              "resourceRef": "img-02-analyzer-editor-linear-search",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The editor helps you write pseudocode with autocomplete and real-time syntax diagnostics. If an error appears, fix the structure before pressing Analyze; analyzing invalid code is not meaningful."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s01-img02",
+              "type": "image",
+              "resourceRef": "img-02-syntax-autocomplete",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "You can also import a .txt file from your computer. The content is loaded into the editor and validated with the same rule as manually written code."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s01-img03",
+              "type": "image",
+              "resourceRef": "img-02-txt-import-dialog",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resultados",
+          "slug": "analysis-results",
+          "title": "Read the analysis results",
+          "order": 2,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "blocks": [
+            {
+              "id": "blk-m02-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When the code is ready, press Analyze. AALIE processes the pseudocode and displays a line-by-line cost table. This table is not decorative: it is the evidence that connects each instruction with the total cost."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s02-img01",
+              "type": "image",
+              "resourceRef": "img-02-analysis-results-by-line",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The table shows what happens on each line, how many times it executes, and how it contributes to the best, average, and worst case when the engine has enough evidence. In linear search, scenarios change according to the position of the searched value."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s02-img02",
+              "type": "image",
+              "resourceRef": "img-02-asymptotic-summary",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "analytics",
+              "blocks": [
+                {
+                  "id": "blk-m02-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Review the dominant line and the execution count first. Then read the asymptotic notation. If you do it the other way around, you are only copying a label without understanding the analysis."
+                    }
+                  ]
+                }
+              ],
+              "title": "What to review first"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ast-trace",
+          "slug": "ast-and-step-trace",
+          "title": "AST and step-by-step trace",
+          "order": 3,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m02-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The AST, or abstract syntax tree, shows the internal structure that AALIE builds from the pseudocode. It is not mandatory for every user, but it helps explain why the system can analyze the algorithm structurally."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s03-img01",
+              "type": "image",
+              "resourceRef": "img-02-ast-view",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s03-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The step-by-step trace runs the algorithm with concrete data. This view lets you observe decisions, variable changes, and execution progress. It helps you understand practical behavior; it does not replace the general asymptotic analysis."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s03-img02",
+              "type": "image",
+              "resourceRef": "img-02-step-trace-linear-search",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s03-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Do not confuse a trace with a general proof",
+              "blocks": [
+                {
+                  "id": "blk-m02-s03-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "A trace shows one concrete execution. To justify complexity, combine that observation with the cost table and the growth explanation as a function of n."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

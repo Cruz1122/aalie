@@ -1,0 +1,234 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-courses-progress",
+  "slug": "courses-progress",
+  "title": "Cursos y seguimiento del progreso",
+  "shortTitle": "Cursos",
+  "order": 8,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Recorre los cursos, completa los módulos y entiende cómo el progreso desbloquea los quices asociados al contenido académico.",
+  "difficulty": "basic",
+  "estimatedMinutes": 32,
+  "tags": [
+    "cursos",
+    "progreso",
+    "módulos",
+    "quices"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "cursos",
+      "progreso del curso",
+      "desbloquear quiz"
+    ],
+    "keywords": [
+      "curso",
+      "módulo",
+      "progreso",
+      "90%"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-getting-started",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-quizzes"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-recorrer-cursos",
+      "text": "Navegar por cursos y módulos de forma secuencial."
+    },
+    {
+      "objectiveId": "obj-entender-desbloqueo",
+      "text": "Comprender cómo el progreso habilita los quices asociados."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-08-courses-dashboard",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/08-courses-dashboard.webp"
+        },
+        "alt": "Dashboard de Cursos con progreso visible.",
+        "caption": "Dashboard de Cursos con progreso visible."
+      },
+      {
+        "resourceId": "img-08-course-module-content",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/08-course-module-content.webp"
+        },
+        "alt": "Módulo de curso abierto con avance secuencial.",
+        "caption": "Módulo de curso abierto."
+      },
+      {
+        "resourceId": "img-08-course-progress-unlock",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/08-course-progress-unlock.webp"
+        },
+        "alt": "Curso con quiz desbloqueado y otro bloqueado por progreso insuficiente.",
+        "caption": "Quiz desbloqueado y bloqueado según progreso."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-cursos",
+      "slug": "cursos",
+      "title": "Estudiar desde Cursos",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-dashboard-cursos",
+          "slug": "dashboard-cursos",
+          "title": "Ver cursos y progreso",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m08-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "La sección "
+            },
+            {
+              "type": "link",
+              "text": "Cursos",
+              "target": { "kind": "external", "ref": "/course" }
+            },
+            {
+              "type": "text",
+              "text": " organiza el contenido académico relacionado con Análisis y Diseño de Algoritmos. Cada curso o módulo presenta temas de forma secuencial, con explicaciones diseñadas para acompañar el uso del analizador y reforzar los conceptos vistos en clase."
+                }
+              ]
+            },
+            {
+              "id": "blk-m08-s01-img01",
+              "type": "image",
+              "resourceRef": "img-08-courses-dashboard",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m08-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Al ingresar a un curso, puedes avanzar por el contenido en orden. Cada sección está pensada para explicar una parte del proceso: conceptos básicos, estructuras iterativas, algoritmos recursivos, interpretación de resultados, invariantes, límites del análisis y otros temas relacionados."
+                }
+              ]
+            },
+            {
+              "id": "blk-m08-s01-img02",
+              "type": "image",
+              "resourceRef": "img-08-course-module-content",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m08-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El progreso se actualiza a medida que completas secciones. Esto permite saber qué parte del curso ya recorriste y qué contenidos siguen pendientes. También ayuda a que la plataforma relacione tu avance con las actividades de práctica."
+                }
+              ]
+            },
+            {
+              "id": "blk-m08-s01-ev",
+              "type": "evidenceBlock",
+              "variant": "systemEvidence",
+              "icon": "school",
+              "title": "Función del progreso",
+              "blocks": [
+                {
+                  "id": "blk-m08-s01-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "El progreso no debe verse como una simple barra visual. Su función es guiar el recorrido de aprendizaje y evitar que el usuario salte directamente a los quices sin haber revisado primero el contenido mínimo necesario."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m08-s01-p04",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Algunos "
+            },
+            {
+              "type": "link",
+              "text": "quices",
+              "target": { "kind": "external", "ref": "/quizzes" }
+            },
+            {
+              "type": "text",
+              "text": " asociados a cursos se desbloquean cuando alcanzas un porcentaje mínimo de progreso. Por ejemplo, si un curso requiere al menos 90%, debes completar la mayor parte del contenido antes de acceder a la evaluación correspondiente."
+                }
+              ]
+            },
+            {
+              "id": "blk-m08-s01-img03",
+              "type": "image",
+              "resourceRef": "img-08-course-progress-unlock",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m08-s01-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Quiz bloqueado",
+              "blocks": [
+                {
+                  "id": "blk-m08-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Si un quiz aparece bloqueado, revisa el progreso del curso asociado. Lo más probable es que todavía falten secciones por completar."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

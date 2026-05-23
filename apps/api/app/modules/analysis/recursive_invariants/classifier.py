@@ -45,8 +45,7 @@ def classify_recursion_pattern(facts: RecursiveFacts) -> ClassificationResult:
 
     # If only one recursive call can execute per path, prefer single-branch divide-and-conquer.
     if getattr(facts, "calls_are_mutually_exclusive", False) or (
-        getattr(facts, "max_recursive_calls_per_path", 0) <= 1
-        and facts.recursive_call_count >= 2
+        getattr(facts, "max_recursive_calls_per_path", 0) <= 1 and facts.recursive_call_count >= 2
     ):
         reasons = [
             "Detected recursive calls in mutually exclusive branches",
@@ -86,9 +85,7 @@ def classify_recursion_pattern(facts: RecursiveFacts) -> ClassificationResult:
         )
 
     # Detect linear recursion (n-k pattern, single call with shifts)
-    if param_patterns == {"subtraction"} or (
-        param_patterns <= {"subtraction", "unknown"}
-    ):
+    if param_patterns == {"subtraction"} or (param_patterns <= {"subtraction", "unknown"}):
         reasons = [
             "Parameters consistently decrease by constants (e.g., n-1, n-2)",
             "Single recursion branch or linear shift pattern detected",

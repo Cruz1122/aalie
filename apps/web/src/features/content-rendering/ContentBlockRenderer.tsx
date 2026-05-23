@@ -388,14 +388,16 @@ export function ContentBlockRenderer({
       return (
         <figure id={block.id} className="space-y-3">
           {source ? (
-            <Image
-              src={source}
-              alt={resource.alt}
-              width={1600}
-              height={900}
-              unoptimized
-              className="w-full rounded-2xl border border-white/10 object-cover"
-            />
+            <div className="overflow-hidden rounded-2xl border-2 border-dashed border-white/15 p-1">
+              <Image
+                src={source}
+                alt={resource.alt}
+                width={1600}
+                height={900}
+                unoptimized
+                className="w-full rounded-xl object-cover"
+              />
+            </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-white/15 bg-slate-900/80 px-4 py-10 text-center text-sm text-slate-400">
               {resource.caption ?? resource.alt}

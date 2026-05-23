@@ -80,7 +80,7 @@ export function EditorSupportPanel({
   }, [cancelPendingClear]);
 
   return (
-    <aside className="flex h-full min-h-0 flex-col rounded-xl border border-white/10 bg-slate-950/45">
+    <aside className="flex h-full min-h-0 flex-col rounded-xl border border-white/10 bg-[rgba(24,36,49,0.94)]">
       <div
         className="shrink-0 overflow-hidden border-b border-white/10 px-4 py-4"
         style={{

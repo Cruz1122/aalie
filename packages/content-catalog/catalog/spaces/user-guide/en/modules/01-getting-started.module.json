@@ -1,0 +1,416 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-getting-started",
+  "slug": "getting-started",
+  "title": "First tour of AALIE",
+  "shortTitle": "Start",
+  "order": 1,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Recognize AALIE’s main sections, language switch, and the purpose of each route before using the analyzer.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 24,
+  "tags": [
+    "start",
+    "navigation",
+    "language",
+    "manual"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "first tour",
+      "main features"
+    ],
+    "keywords": [
+      "language",
+      "manual",
+      "analyzer",
+      "courses",
+      "quizzes"
+    ]
+  },
+  "prerequisites": {
+    "modules": [],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-linear-search-analyzer"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-identificar-secciones",
+      "text": "Identify AALIE’s main sections and when to use each one."
+    },
+    {
+      "objectiveId": "obj-preparar-uso",
+      "text": "Prepare the interface before starting analysis, courses, or quizzes."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-01-home-language-switch",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/01-home-language-switch.webp"
+        },
+        "alt": "AALIE home page with the language switch visible in English.",
+        "caption": "AALIE home page with the language switch visible in English."
+      },
+      {
+        "resourceId": "img-01-navigation-main-sections",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/01-navigation-main-sections.webp"
+        },
+        "alt": "Main navigation showing Manual, Analyzer, How to use, Examples, Courses, Quizzes, and About.",
+        "caption": "Main navigation showing Manual, Analyzer, How to use, Examples, Courses, Quizzes, and About."
+      },
+      {
+        "resourceId": "img-01-manual-templates-panel",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/01-manual-templates-panel.webp"
+        },
+        "alt": "Manual section with templates or predefined algorithms visible.",
+        "caption": "Manual section with templates or predefined algorithms visible."
+      },
+      {
+        "resourceId": "img-01-about-page",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/01-about-page.webp"
+        },
+        "alt": "About page with project purpose, technologies, contact, and links.",
+        "caption": "About page with project purpose, technologies, contact, and links."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-recorrido-inicial",
+      "slug": "first-tour",
+      "title": "First tour of AALIE",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-que-es-aalie",
+          "slug": "what-aalie-is",
+          "title": "What you will find in the platform",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "blocks": [
+            {
+              "id": "blk-m01-s01-p01",
+              "type": "paragraph",
+              "content": [
+            {
+              "type": "text",
+              "text": "AALIE is an educational platform for learning and practicing algorithm analysis and design. Instead of showing only a final answer, it organizes the work into several tools: pseudocode writing, "
+            },
+            {
+              "type": "link",
+              "text": "complexity analysis",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": ", guided examples, courses, quizzes, exports, and optional artificial-intelligence assistance."
+            }
+              ]
+            },
+            {
+              "id": "blk-m01-s01-img01",
+              "type": "image",
+              "resourceRef": "img-01-home-language-switch",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m01-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "From the "
+            },
+            {
+              "type": "link",
+              "text": "main interface",
+              "target": { "kind": "external", "ref": "/" }
+            },
+            {
+              "type": "text",
+              "text": ", you can switch between Spanish and English. This affects navigation, help text, and available content, so select the language before starting a long activity."
+                }
+              ]
+            },
+            {
+              "id": "blk-m01-s01-img02",
+              "type": "image",
+              "resourceRef": "img-01-navigation-main-sections",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-rutas-principales",
+          "slug": "main-routes",
+          "title": "Main usage routes",
+          "order": 2,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m01-s02-table",
+              "type": "table",
+              "title": "Main sections in AALIE",
+              "columns": [
+                {
+                  "key": "section",
+                  "label": "Section"
+                },
+                {
+                  "key": "use",
+                  "label": "Main use"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Manual"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Lets you write algorithms directly, use templates, and work with predefined examples such as Merge Sort, Quick Sort, or traversal algorithms."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "General Analyzer"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Lets you paste or write free pseudocode, validate syntax, and run the analysis."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "How to use"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Explains the basic platform workflows and helps users become familiar with the interface."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Examples"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Groups algorithms by technique or paradigm: iterative, divide and conquer, decrease and conquer, greedy, backtracking, branch and bound, and others."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Courses"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Organizes the academic content of Algorithm Analysis and Design into sequential modules."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Quizzes"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Lets users practice, receive feedback, and review attempt history."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "About"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Presents the project purpose, technologies used, contact information, and useful links."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m01-s02-img01",
+              "type": "image",
+              "resourceRef": "img-01-manual-templates-panel",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m01-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "lightbulb",
+              "blocks": [
+                {
+                  "id": "blk-m01-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Use Manual and Examples when you want to start from known algorithms. Use the "
+                    },
+                    {
+                      "type": "link",
+                      "text": "General Analyzer",
+                      "target": { "kind": "external", "ref": "/analyzer" }
+                    },
+                    {
+                      "type": "text",
+                      "text": " when you want to test your own code. Use "
+                    },
+                    {
+                      "type": "link",
+                      "text": "Courses",
+                      "target": { "kind": "external", "ref": "/course" }
+                    },
+                    {
+                      "type": "text",
+                      "text": " and "
+                    },
+                    {
+                      "type": "link",
+                      "text": "Quizzes",
+                      "target": { "kind": "external", "ref": "/quizzes" }
+                    },
+                    {
+                      "type": "text",
+                      "text": " when the goal is sequential study."
+                    }
+                  ]
+                }
+              ],
+              "title": "Recommended reading of the interface"
+            },
+            {
+              "id": "blk-m01-s02-img02",
+              "type": "image",
+              "resourceRef": "img-01-about-page",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-como-leer-la-guia",
+          "slug": "how-to-read-this-guide",
+          "title": "How to use this guide",
+          "order": 3,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "blocks": [
+            {
+              "id": "blk-m01-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Each module in this guide corresponds to a real usage flow. The goal is not to memorize buttons, but to understand what problem each part of the platform solves and what result the user should expect."
+                }
+              ]
+            },
+            {
+              "id": "blk-m01-s03-note",
+              "type": "note",
+              "variant": "info",
+              "title": "How to use this guide",
+              "blocks": [
+                {
+                  "id": "blk-m01-s03-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Use this guide as a practical walkthrough. Each module corresponds to a real AALIE feature and is designed so you can repeat the flow directly in the platform."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

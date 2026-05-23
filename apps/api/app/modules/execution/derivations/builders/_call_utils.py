@@ -102,7 +102,7 @@ def build_recursive_node_data(
     }
 
     if execution_order is not None:
-         data["executionOrder"] = execution_order
+        data["executionOrder"] = execution_order
 
     if return_order is not None:
         data["returnOrder"] = return_order

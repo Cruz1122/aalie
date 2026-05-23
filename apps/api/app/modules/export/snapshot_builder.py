@@ -521,7 +521,7 @@ def _build_recursive_presentation(step_by_step: Any) -> Optional[Dict[str, Any]]
     )
     support_reason = next(
         (
-            str((((step.get("derivation") or {}).get("supportReason")))).strip()
+            str(((step.get("derivation") or {}).get("supportReason"))).strip()
             for step in steps
             if isinstance(step, dict)
             and isinstance(step.get("derivation"), dict)

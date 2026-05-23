@@ -1,0 +1,255 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-examples-bubble-sort",
+  "slug": "examples-bubble-sort",
+  "title": "Explora y analiza desde los ejemplos",
+  "shortTitle": "Ejemplos",
+  "order": 3,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Carga algoritmos desde el catálogo de ejemplos y analiza Bubble Sort mejorado para comprender costos, escenarios y clasificación iterativa.",
+  "difficulty": "basic",
+  "estimatedMinutes": 22,
+  "tags": [
+    "ejemplos",
+    "bubble sort",
+    "iterativo",
+    "while",
+    "for"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "catálogo de ejemplos",
+      "bubble sort mejorado"
+    ],
+    "keywords": [
+      "ejemplos",
+      "categorías",
+      "iterativo",
+      "bubble sort"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-linear-search-analyzer",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-loop-and-recursive-invariants"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-cargar-ejemplos",
+      "text": "Cargar algoritmos desde la sección Ejemplos."
+    },
+    {
+      "objectiveId": "obj-comparar-escenarios",
+      "text": "Relacionar el análisis de Bubble Sort mejorado con sus escenarios de ejecución."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-03-examples-categories",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/03-examples-categories.webp"
+        },
+        "alt": "Página de Ejemplos con categorías visibles.",
+        "caption": "Página de Ejemplos con categorías por técnica o paradigma."
+      },
+      {
+        "resourceId": "img-03-example-bubble-sort-improved",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/03-example-bubble-sort-improved.webp"
+        },
+        "alt": "Bubble Sort mejorado seleccionado y cargado en el analizador.",
+        "caption": "Bubble Sort mejorado seleccionado."
+      },
+      {
+        "resourceId": "img-03-example-results",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/03-example-results.webp"
+        },
+        "alt": "Resultados del análisis de Bubble Sort mejorado con costos y comportamiento asintótico.",
+        "caption": "Resultados del análisis de Bubble Sort mejorado."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-ejemplos",
+      "slug": "ejemplos",
+      "title": "Analizar desde los ejemplos",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-categorias",
+          "slug": "categorias",
+          "title": "Elegir una categoría",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "blocks": [
+            {
+              "id": "blk-m03-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "La sección "
+            },
+            {
+              "type": "link",
+              "text": "Ejemplos",
+              "target": { "kind": "external", "ref": "/examples" }
+            },
+            {
+              "type": "text",
+              "text": " permite cargar algoritmos ya preparados sin escribirlos manualmente. Es útil cuando quieres estudiar un caso conocido, comparar técnicas o ver cómo AALIE analiza algoritmos de diferentes familias. Los ejemplos están organizados por categorías como iterativos, divide y vencerás, reduce y vencerás, algoritmos voraces, backtracking y branch and bound, entre otros."
+                }
+              ]
+            },
+            {
+              "id": "blk-m03-s01-img01",
+              "type": "image",
+              "resourceRef": "img-03-examples-categories",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m03-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Para este flujo, selecciona la categoría de "
+            },
+            {
+              "type": "link",
+              "text": "algoritmos iterativos",
+              "target": { "kind": "external", "ref": "/examples/iterative" }
+            },
+            {
+              "type": "text",
+              "text": " y elige Bubble Sort mejorado. Este algoritmo es interesante porque combina un ciclo WHILE con un ciclo FOR interno, lo que permite observar cómo el análisis trata repeticiones anidadas y condiciones de parada."
+                }
+              ]
+            },
+            {
+              "id": "blk-m03-s01-img02",
+              "type": "image",
+              "resourceRef": "img-03-example-bubble-sort-improved",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m03-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Al seleccionar un ejemplo, AALIE carga automáticamente el pseudocódigo y la información asociada. Después puedes ejecutarlo en el analizador igual que si lo hubieras escrito manualmente. Esta continuidad es importante: los ejemplos no son capturas estáticas, sino entradas reales que se pueden analizar."
+                }
+              ]
+            },
+            {
+              "id": "blk-m03-s01-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Uso recomendado",
+              "blocks": [
+                {
+                  "id": "blk-m03-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Usa los ejemplos como punto de partida. Después de analizarlos, modifica condiciones, límites o instrucciones para observar cómo cambia el resultado. Esa experimentación controlada suele ser más útil que leer la respuesta final de forma pasiva."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-bubble",
+          "slug": "bubble-sort-mejorado",
+          "title": "Ejemplo: Bubble Sort mejorado",
+          "order": 2,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m03-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Una vez ejecutado el análisis, revisa la tabla de costos por línea. En Bubble Sort mejorado, el comportamiento depende de si el arreglo ya está ordenado o si requiere múltiples pasadas. Por eso resulta útil comparar mejor caso, caso promedio y peor caso."
+                }
+              ]
+            },
+            {
+              "id": "blk-m03-s02-img01",
+              "type": "image",
+              "resourceRef": "img-03-example-results",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m03-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "analytics",
+              "title": "Qué debes observar",
+              "blocks": [
+                {
+                  "id": "blk-m03-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "En algoritmos con ciclos anidados, el error típico es mirar solo un ciclo y olvidar el efecto acumulado del ciclo interno. La tabla de costos ayuda a evitar esa simplificación. Observa qué instrucciones se repiten dentro de cada nivel y qué estructura domina el crecimiento total."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m03-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "AALIE también identifica el paradigma o técnica principal del algoritmo. En este caso, Bubble Sort mejorado se clasifica como algoritmo iterativo. Esta clasificación ayuda a ubicar el ejemplo dentro del curso, pero no reemplaza el análisis de sus costos."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

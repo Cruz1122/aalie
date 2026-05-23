@@ -1678,7 +1678,7 @@ def _build_recursive_step_explanation(
 
 
 def _normalize_execution_trace_graph_payload(
-    trace_case: Optional[Dict[str, Any]]
+    trace_case: Optional[Dict[str, Any]],
 ) -> Optional[Dict[str, Any]]:
     report_trace = (
         (trace_case or {}).get("reportTraceGraph")

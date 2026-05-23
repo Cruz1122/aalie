@@ -931,7 +931,22 @@
       "comparingWithLlm": "Comparando con LLM",
       "progress": "Progreso",
       "pleaseWait": "Por favor, espera mientras se completa la comparación...",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "contacting": "Contactando con LLM...",
+      "preparingData": "Preparando datos...",
+      "sendingToModel": "Enviando solicitud a Gemini 2.5 Pro...",
+      "waitingResponse": "Esperando respuesta del LLM...",
+      "analyzingAlgorithm": "Analizando algoritmo...",
+      "calculatingComplexity": "Calculando complejidad...",
+      "comparingAnalysis": "Comparando análisis...",
+      "generatingObservations": "Generando observaciones...",
+      "finalizingComparison": "Finalizando comparación...",
+      "processingResponse": "Procesando respuesta...",
+      "generatingComparison": "Generando comparación...",
+      "comparisonComplete": "Comparación completada",
+      "noCoreData": "No se pudieron extraer los datos core del análisis",
+      "noLlmResponse": "No se recibió respuesta del LLM",
+      "unexpectedError": "Error inesperado durante la comparación"
     },
     "recursionTree": {
       "dominatingLevel": "Nivel Dominante",

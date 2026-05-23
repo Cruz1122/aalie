@@ -1,0 +1,344 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-recursive-fibonacci",
+  "slug": "recursive-fibonacci",
+  "title": "Analyze a recursive algorithm",
+  "shortTitle": "Recursion",
+  "order": 4,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Analyze Fibonacci with recurrence methods, tree visualization, and step-by-step tracing to understand recursive calls and returns.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 60,
+  "tags": [
+    "recursion",
+    "fibonacci",
+    "recurrences",
+    "tree",
+    "characteristic equation"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "fibonacci",
+      "recursive analysis",
+      "recurrence methods"
+    ],
+    "keywords": [
+      "fibonacci",
+      "master theorem",
+      "recursion tree",
+      "characteristic equation"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-linear-search-analyzer",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-loop-and-recursive-invariants"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-seleccionar-metodos",
+      "text": "Recognize which recurrence methods apply to Fibonacci and which do not."
+    },
+    {
+      "objectiveId": "obj-interpretar-llamadas",
+      "text": "Interpret recursive trees and traces without confusing concrete visualization with a general proof."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-04-fibonacci-method-modal",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/04-fibonacci-method-modal.webp"
+        },
+        "alt": "Recurrence-method selection modal for Fibonacci.",
+        "caption": "Recurrence-method selection modal for Fibonacci."
+      },
+      {
+        "resourceId": "img-04-fibonacci-recursion-tree-method",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/04-fibonacci-recursion-tree-method.webp"
+        },
+        "alt": "Recursion-tree method for Fibonacci, with steps and visualization.",
+        "caption": "Recursion-tree method for Fibonacci, with steps and visualization."
+      },
+      {
+        "resourceId": "img-04-fibonacci-iteration-method",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/04-fibonacci-iteration-method.webp"
+        },
+        "alt": "Iteration method applied to Fibonacci.",
+        "caption": "Iteration method applied to Fibonacci."
+      },
+      {
+        "resourceId": "img-04-fibonacci-characteristic-equation",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/04-fibonacci-characteristic-equation.webp"
+        },
+        "alt": "Characteristic-equation method applied to Fibonacci.",
+        "caption": "Characteristic-equation method applied to Fibonacci."
+      },
+      {
+        "resourceId": "img-04-fibonacci-real-call-tree",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/04-fibonacci-real-call-tree.webp"
+        },
+        "alt": "Real Fibonacci call tree shown by trace or visualization.",
+        "caption": "Real Fibonacci call tree shown by trace or visualization."
+      },
+      {
+        "resourceId": "img-04-fibonacci-step-trace-n4",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/04-fibonacci-step-trace-n4.webp"
+        },
+        "alt": "Interactive Fibonacci trace with n = 4.",
+        "caption": "Interactive Fibonacci trace with n = 4."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-fibonacci",
+      "slug": "recursive-fibonacci",
+      "title": "Analyze recursive Fibonacci",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-metodos",
+          "slug": "method-selection",
+          "title": "Select recurrence methods",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m04-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Recursive algorithms generate recurrences. For Fibonacci, AALIE can show several "
+            },
+            {
+              "type": "link",
+              "text": "analysis methods",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": ", but not all of them have the same strength for this recurrence form."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s01-alg",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Recursive Fibonacci",
+              "code": "fibonacci(n) BEGIN\n  IF n <= 1 THEN BEGIN\n    RETURN n;\n  END\n  RETURN fibonacci(n - 1) + fibonacci(n - 2);\nEND",
+              "caption": "Reference algorithm for recursive analysis."
+            },
+            {
+              "id": "blk-m04-s01-img01",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-method-modal",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s01-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Not every method applies equally",
+              "blocks": [
+                {
+                  "id": "blk-m04-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The Master Theorem is not suitable for classic Fibonacci because the recurrence does not have the form T(n)=aT(n/b)+f(n). If the system marks it as incompatible, that is a correct signal, not a UI failure."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-arbol-iteracion",
+          "slug": "tree-and-iteration",
+          "title": "Recursion tree and iteration",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "blocks": [
+            {
+              "id": "blk-m04-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The recursion-tree method lets you observe how calls expand. In Fibonacci, the dominant work appears in the number of leaves and repeated calls, not in a simple balanced tree."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s02-img01",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-recursion-tree-method",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The iteration method expands the recurrence step by step. In this case it may produce an approximation or upper bound if the method cannot close an exact solution with enough support."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s02-img02",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-iteration-method",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ecuacion-caracteristica",
+          "slug": "characteristic-equation",
+          "title": "Characteristic equation and optimization",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 15,
+          "blocks": [
+            {
+              "id": "blk-m04-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The characteristic equation is better suited for linear-shift recurrences such as Fibonacci. It gives a more precise reading of growth and connects the problem with a possible dynamic-programming optimization."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s03-img01",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-characteristic-equation",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s03-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "lightbulb",
+              "blocks": [
+                {
+                  "id": "blk-m04-s03-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Recursive Fibonacci repeats subproblems. The dynamic-programming recommendation does not change the analysis of the current code; it indicates a possible transformation to avoid redundant calls."
+                    }
+                  ]
+                }
+              ],
+              "title": "Key idea"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-trace-recursivo",
+          "slug": "recursive-trace",
+          "title": "Real call tree and trace",
+          "order": 4,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 15,
+          "blocks": [
+            {
+              "id": "blk-m04-s04-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The real call-tree visualization shows the concrete behavior of the algorithm during one execution. This view is different from the theoretical tree used as an analysis method: here you see the real calls generated by a specific input."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s04-img01",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-real-call-tree",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s04-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "To observe it in a controlled way, run Fibonacci with n = 4. Use autoplay or manual navigation to see calls, returns, and the disappearance of each call when its result has been computed."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s04-img02",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-step-trace-n4",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

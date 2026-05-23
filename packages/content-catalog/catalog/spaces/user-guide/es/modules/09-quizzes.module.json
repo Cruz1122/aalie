@@ -1,0 +1,326 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-quizzes",
+  "slug": "quizzes",
+  "title": "Quices, diagnóstico y seguimiento",
+  "shortTitle": "Quices",
+  "order": 9,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Realiza quices diagnósticos y de curso, revisa la retroalimentación, consulta tu historial y usa las recomendaciones para orientar el repaso.",
+  "difficulty": "basic",
+  "estimatedMinutes": 42,
+  "tags": [
+    "quices",
+    "diagnóstico",
+    "feedback",
+    "historial",
+    "progreso"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "quizzes",
+      "quices",
+      "quiz diagnóstico",
+      "historial de intentos"
+    ],
+    "keywords": [
+      "diagnóstico",
+      "calificación",
+      "retroalimentación",
+      "historial"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-courses-progress",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-ai-assistant"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-realizar-quices",
+      "text": "Realizar quices diagnósticos y asociados a cursos."
+    },
+    {
+      "objectiveId": "obj-usar-feedback",
+      "text": "Usar la retroalimentación y el historial para decidir qué repasar."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-09-quizzes-dashboard-diagnostic",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/09-quizzes-dashboard-diagnostic.webp"
+        },
+        "alt": "Dashboard de Quices con invitación al quiz diagnóstico.",
+        "caption": "Dashboard de Quices con diagnóstico disponible."
+      },
+      {
+        "resourceId": "img-09-quiz-attempt",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/09-quiz-attempt.webp"
+        },
+        "alt": "Intento de quiz en curso con pregunta y opciones de respuesta.",
+        "caption": "Intento de quiz en curso."
+      },
+      {
+        "resourceId": "img-09-quiz-results-review",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/09-quiz-results-review.webp"
+        },
+        "alt": "Resultados del quiz con revisión pregunta por pregunta y retroalimentación.",
+        "caption": "Resultados con revisión pregunta por pregunta."
+      },
+      {
+        "resourceId": "img-09-quiz-history-stats",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/09-quiz-history-stats.webp"
+        },
+        "alt": "Historial de quices con estadísticas generales y recomendaciones.",
+        "caption": "Historial de quices con estadísticas y recomendaciones."
+      },
+      {
+        "resourceId": "img-09-course-quiz-modal",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/09-course-quiz-modal.webp"
+        },
+        "alt": "Modal de resultado de quiz asociado a curso.",
+        "caption": "Modal de resultado de quiz asociado a curso."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-quices",
+      "slug": "quices",
+      "title": "Practicar con quices",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-diagnostico",
+          "slug": "quiz-diagnostico",
+          "title": "Realizar un quiz diagnóstico",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m09-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "La sección "
+            },
+            {
+              "type": "link",
+              "text": "Quices",
+              "target": { "kind": "external", "ref": "/quizzes" }
+            },
+            {
+              "type": "text",
+              "text": " permite practicar los conceptos del curso mediante preguntas. No está pensada solo para obtener una calificación, sino para identificar qué temas entiendes bien, cuáles necesitas repasar y qué errores aparecen con más frecuencia."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Al ingresar por primera vez, el sistema puede ofrecer un quiz diagnóstico. Este intento ayuda a reconocer tu punto de partida. Puedes seleccionar la cantidad de preguntas disponible y responderlas para obtener una primera lectura de tu desempeño."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s01-img01",
+              "type": "image",
+              "resourceRef": "img-09-quizzes-dashboard-diagnostic",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m09-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Durante el intento, lee cada pregunta con cuidado antes de responder. Algunas preguntas evalúan definiciones; otras requieren interpretar pseudocódigo, reconocer una notación, ordenar pasos o relacionar conceptos. No todas se resuelven memorizando una frase."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s01-img02",
+              "type": "image",
+              "resourceRef": "img-09-quiz-attempt",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resultados-quiz",
+          "slug": "resultados-y-feedback",
+          "title": "Revisar resultados y retroalimentación",
+          "order": 2,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 16,
+          "blocks": [
+            {
+              "id": "blk-m09-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Al finalizar, AALIE muestra la calificación obtenida y resume cuántas respuestas fueron correctas o incorrectas. Después puedes revisar cada pregunta individualmente para entender el motivo de los errores."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s02-img01",
+              "type": "image",
+              "resourceRef": "img-09-quiz-results-review",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m09-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "lightbulb",
+              "title": "Valor de la retroalimentación",
+              "blocks": [
+                {
+                  "id": "blk-m09-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La retroalimentación es más importante que el número final. Una respuesta incorrecta puede revelar una confusión específica: confundir O con Θ, olvidar el caso base, interpretar mal un ciclo anidado o asumir un caso promedio sin modelo."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El sistema también puede recomendar módulos de estudio relacionados con los errores cometidos. Estas recomendaciones sirven para volver al contenido adecuado en lugar de repasar todo el curso sin dirección."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-historial",
+          "slug": "historial-y-quices-de-curso",
+          "title": "Historial y quices asociados a cursos",
+          "order": 3,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m09-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La interfaz conserva un historial de intentos. Allí puedes ver estadísticas generales, desempeño promedio, nivel de práctica y temas que conviene fortalecer. Este historial ayuda a observar progreso a lo largo del tiempo."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s03-img01",
+              "type": "image",
+              "resourceRef": "img-09-quiz-history-stats",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m09-s03-p02",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Los quices asociados a "
+            },
+            {
+              "type": "link",
+              "text": "cursos",
+              "target": { "kind": "external", "ref": "/course" }
+            },
+            {
+              "type": "text",
+              "text": " tienen una interfaz similar al diagnóstico. Al finalizar, se muestra una ventana con resultados, respuestas correctas e incorrectas y retroalimentación detallada. Ese intento queda registrado en el historial para seguimiento posterior."
+                }
+              ]
+            },
+            {
+              "id": "blk-m09-s03-img02",
+              "type": "image",
+              "resourceRef": "img-09-course-quiz-modal",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m09-s03-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "No es un juego de adivinanzas",
+              "blocks": [
+                {
+                  "id": "blk-m09-s03-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Responder al azar puede servir para una demostración rápida, pero no para aprender. Para uso real, revisa cada retroalimentación y vuelve al módulo recomendado antes de repetir el quiz."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

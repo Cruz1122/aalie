@@ -16,9 +16,8 @@ export const COURSE_FALLBACK_LOCALE = "es";
 const ensureValidCatalog = cache(() => {
   const report = validateCatalog();
   if (!report.valid) {
-    const firstError = report.errors[0];
     throw new Error(
-      `Content catalog is invalid: ${firstError?.code ?? "UNKNOWN"} ${firstError?.message ?? "unknown error"}`,
+      `[catalog] Validation errors:\n${report.errors.map((e) => `  [${e.code}] ${e.message} (${e.path ?? "?"})`).join("\n")}`,
     );
   }
   return report;

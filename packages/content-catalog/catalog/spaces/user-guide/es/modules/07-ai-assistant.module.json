@@ -1,0 +1,344 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-ai-assistant",
+  "slug": "ai-assistant",
+  "title": "Asistente de inteligencia artificial",
+  "shortTitle": "IA",
+  "order": 7,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Activa y usa el asistente opcional para generar código, pedir explicaciones, comparar resultados con LLM y revisar errores de quiz sin reemplazar el motor determinista.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 44,
+  "tags": [
+    "IA",
+    "LLM",
+    "Gemini",
+    "asistente",
+    "comparación"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "asistente virtual",
+      "comparar con llm",
+      "api key"
+    ],
+    "keywords": [
+      "Gemini",
+      "API key",
+      "LLM",
+      "asistente contextual"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-linear-search-analyzer",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-quizzes"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-activar-ia",
+      "text": "Reconocer cuándo se necesita API Key y qué funciones habilita."
+    },
+    {
+      "objectiveId": "obj-usar-ia-criticamente",
+      "text": "Usar el asistente como apoyo pedagógico, no como juez matemático."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-07-ai-api-key-modal",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/07-ai-api-key-modal.webp"
+        },
+        "alt": "Modal o panel solicitando API Key de Gemini para activar el asistente.",
+        "caption": "Modal solicitando API Key de Gemini."
+      },
+      {
+        "resourceId": "img-07-ai-generate-fibonacci",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/07-ai-generate-fibonacci.webp"
+        },
+        "alt": "Asistente generando Fibonacci y opción de enviarlo al analizador.",
+        "caption": "Asistente generando Fibonacci."
+      },
+      {
+        "resourceId": "img-07-ai-contextual-assistant",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/07-ai-contextual-assistant.webp"
+        },
+        "alt": "Asistente contextual después de analizar un algoritmo.",
+        "caption": "Asistente contextual abierto."
+      },
+      {
+        "resourceId": "img-07-ai-compare-llm",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/07-ai-compare-llm.webp"
+        },
+        "alt": "Comparación con LLM mostrando contraste entre AALIE y el modelo externo.",
+        "caption": "Comparación con LLM."
+      },
+      {
+        "resourceId": "img-07-ai-quiz-assistant",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/07-ai-quiz-assistant.webp"
+        },
+        "alt": "Asistente contextual explicando una respuesta de quiz.",
+        "caption": "Asistente en resultados de quiz."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-ia",
+      "slug": "asistente-ia",
+      "title": "Usar las funciones de inteligencia artificial",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-intro",
+          "slug": "introduccion-ia",
+          "title": "Introducción al asistente",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m07-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "AALIE incluye funciones de inteligencia artificial como apoyo pedagógico opcional. Esto significa que puedes usar un asistente para generar ejemplos, pedir explicaciones o comparar resultados, pero el análisis formal de complejidad sigue dependiendo del motor determinista de la plataforma."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "La primera vez que uses el asistente, el sistema puede solicitar una API Key de Gemini. Esta clave permite conectar la plataforma con el proveedor externo. Si no configuras una clave válida, las funciones de IA no estarán disponibles, pero el "
+            },
+            {
+              "type": "link",
+              "text": "analizador principal",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " seguirá funcionando."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s01-img01",
+              "type": "image",
+              "resourceRef": "img-07-ai-api-key-modal",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m07-s01-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Privacidad",
+              "blocks": [
+                {
+                  "id": "blk-m07-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "No pegues información sensible dentro del asistente. Si usas IA, parte del contexto puede enviarse al proveedor configurado. Usa esta función para apoyo académico, no para manejar datos privados o confidenciales."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-generar-codigo",
+          "slug": "generar-codigo",
+          "title": "Generar código y usar el asistente contextual",
+          "order": 2,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m07-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Una vez activada la clave, puedes pedir al asistente que genere un algoritmo. Por ejemplo, puedes solicitar una versión de Fibonacci en pseudocódigo compatible con AALIE. Si la respuesta es útil, el sistema puede permitir enviarla directamente al analizador."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s02-img01",
+              "type": "image",
+              "resourceRef": "img-07-ai-generate-fibonacci",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m07-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Después de analizar el algoritmo, puede aparecer un asistente contextual asociado al resultado. Este asistente tiene acceso al contexto del análisis y puede ayudarte a entender una tabla, una cota, un método de recurrencia o una explicación específica."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s02-img02",
+              "type": "image",
+              "resourceRef": "img-07-ai-contextual-assistant",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-comparar-llm",
+          "slug": "comparar-con-llm",
+          "title": "Comparar con LLM",
+          "order": 3,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m07-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La función Comparar con LLM envía el algoritmo a un modelo externo para obtener una lectura independiente y contrastarla con el resultado de AALIE. Esta comparación puede ser útil para discutir diferencias, detectar explicaciones incompletas o reforzar el razonamiento."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s03-img01",
+              "type": "image",
+              "resourceRef": "img-07-ai-compare-llm",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m07-s03-ev",
+              "type": "evidenceBlock",
+              "variant": "warning",
+              "icon": "error_outline",
+              "title": "Validación",
+              "blocks": [
+                {
+                  "id": "blk-m07-s03-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "La comparación con un LLM no es una validación formal. Si el modelo coincide con AALIE, eso no demuestra automáticamente que el resultado sea correcto. Si no coincide, tampoco significa que AALIE esté mal. La referencia principal debe seguir siendo el análisis trazable del sistema."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-asistente-quiz",
+          "slug": "asistente-en-quices",
+          "title": "Asistente contextual en quices",
+          "order": 4,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m07-s04-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "El asistente también puede aparecer después de un "
+            },
+            {
+              "type": "link",
+              "text": "quiz",
+              "target": { "kind": "external", "ref": "/quizzes" }
+            },
+            {
+              "type": "text",
+              "text": ". En ese contexto, su función es ayudarte a comprender errores, explicar por qué una respuesta era incorrecta y orientar el repaso de conceptos relacionados."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s04-img01",
+              "type": "image",
+              "resourceRef": "img-07-ai-quiz-assistant",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m07-s04-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Uso recomendado",
+              "blocks": [
+                {
+                  "id": "blk-m07-s04-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Usa la IA para preguntar \"por qué\", \"cómo se justifica\" o \"qué concepto debo repasar\". Si solo la usas para obtener respuestas, desperdicias la parte más útil de la herramienta."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

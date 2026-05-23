@@ -1,0 +1,361 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-recursive-fibonacci",
+  "slug": "recursive-fibonacci",
+  "title": "Analiza un algoritmo recursivo con Fibonacci",
+  "shortTitle": "Recursión",
+  "order": 4,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Analiza Fibonacci con métodos de recurrencia, visualización de árbol y seguimiento paso a paso para entender las llamadas recursivas y los retornos.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 60,
+  "tags": [
+    "recursión",
+    "fibonacci",
+    "recurrencias",
+    "árbol",
+    "ecuación característica"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "fibonacci",
+      "análisis recursivo",
+      "métodos de recurrencia"
+    ],
+    "keywords": [
+      "fibonacci",
+      "teorema maestro",
+      "árbol de recursión",
+      "ecuación característica"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-linear-search-analyzer",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-loop-and-recursive-invariants"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-seleccionar-metodos",
+      "text": "Reconocer qué métodos de recurrencia aplican a Fibonacci y cuáles no."
+    },
+    {
+      "objectiveId": "obj-interpretar-llamadas",
+      "text": "Interpretar árboles y trazas recursivas sin confundir visualización concreta con prueba general."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-04-fibonacci-method-modal",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/04-fibonacci-method-modal.webp"
+        },
+        "alt": "Modal de selección de métodos de recurrencia para Fibonacci.",
+        "caption": "Modal de selección de métodos de recurrencia para Fibonacci."
+      },
+      {
+        "resourceId": "img-04-fibonacci-recursion-tree-method",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/04-fibonacci-recursion-tree-method.webp"
+        },
+        "alt": "Método de árbol de recursión aplicado a Fibonacci.",
+        "caption": "Método de árbol de recursión aplicado a Fibonacci."
+      },
+      {
+        "resourceId": "img-04-fibonacci-iteration-method",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/04-fibonacci-iteration-method.webp"
+        },
+        "alt": "Método de iteración aplicado a Fibonacci.",
+        "caption": "Método de iteración aplicado a Fibonacci."
+      },
+      {
+        "resourceId": "img-04-fibonacci-characteristic-equation",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/04-fibonacci-characteristic-equation.webp"
+        },
+        "alt": "Ecuación característica aplicada a Fibonacci.",
+        "caption": "Ecuación característica aplicada a Fibonacci."
+      },
+      {
+        "resourceId": "img-04-fibonacci-real-call-tree",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/04-fibonacci-real-call-tree.webp"
+        },
+        "alt": "Árbol real de llamadas de Fibonacci.",
+        "caption": "Árbol real de llamadas de Fibonacci."
+      },
+      {
+        "resourceId": "img-04-fibonacci-step-trace-n4",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/04-fibonacci-step-trace-n4.webp"
+        },
+        "alt": "Seguimiento paso a paso de Fibonacci con n = 4.",
+        "caption": "Seguimiento paso a paso de Fibonacci con n = 4."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-fibonacci",
+      "slug": "fibonacci-recursivo",
+      "title": "Analizar Fibonacci recursivo",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-intro",
+          "slug": "introduccion-recursion",
+          "title": "Introducción al análisis recursivo",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m04-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Los algoritmos recursivos requieren una lectura distinta a los algoritmos iterativos. En lugar de contar únicamente repeticiones de ciclos, se analiza cómo una función se llama a sí misma, qué tamaño tienen los subproblemas y cuándo se llega al caso base. En este módulo se usará Fibonacci como ejemplo."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s01-alg",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Fibonacci recursivo",
+              "code": "fibonacci(n) BEGIN\n  IF n <= 1 THEN BEGIN\n    RETURN n;\n  END\n  RETURN fibonacci(n - 1) + fibonacci(n - 2);\nEND",
+              "caption": "Algoritmo de referencia para el análisis recursivo."
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-metodos",
+          "slug": "seleccion-metodos",
+          "title": "Seleccionar métodos de recurrencia",
+          "order": 2,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m04-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Al presionar "
+            },
+            {
+              "type": "link",
+              "text": "Analizar",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": ", AALIE puede abrir una ventana para seleccionar métodos de análisis de recurrencias. No todos los métodos sirven para todas las recurrencias. Por ejemplo, el Teorema Maestro no es adecuado para Fibonacci clásico porque la recurrencia no tiene la forma estándar T(n) = aT(n/b) + f(n)."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s02-img01",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-method-modal",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s02-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Selección cuidadosa",
+              "blocks": [
+                {
+                  "id": "blk-m04-s02-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "No fuerces un método solo porque lo conoces. Primero revisa si la recurrencia cumple las condiciones necesarias. Un método no aplicable puede llevar a una explicación elegante pero matemáticamente incorrecta."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El método de árbol de recursión permite visualizar cómo se expanden las llamadas recursivas. En Fibonacci, cada llamada genera dos nuevas llamadas, salvo cuando se llega al caso base. Esto produce una expansión amplia, donde gran parte del trabajo se concentra hacia las hojas del árbol."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s02-img02",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-recursion-tree-method",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s02-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El método de iteración expande la recurrencia paso a paso para observar su patrón de crecimiento. En casos como Fibonacci, puede ofrecer una aproximación o una lectura útil, pero no siempre entrega una forma exacta tan limpia como otros métodos."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s02-img03",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-iteration-method",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s02-p04",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La ecuación característica es más adecuada para recurrencias lineales con desplazamientos constantes, como ocurre en Fibonacci. Este método permite obtener una descripción más precisa del crecimiento y conectar el resultado con la estructura algebraica de la recurrencia."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s02-img04",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-characteristic-equation",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "lightbulb",
+              "title": "Idea clave",
+              "blocks": [
+                {
+                  "id": "blk-m04-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Fibonacci recursivo es un buen ejemplo para mostrar por qué una solución correcta puede ser ineficiente. La función calcula repetidamente subproblemas que ya había resuelto antes. Por eso la plataforma puede sugerir una lectura relacionada con programación dinámica: guardar resultados evita recomputar las mismas llamadas."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-trace-recursivo",
+          "slug": "seguimiento-recursivo",
+          "title": "Árbol real y seguimiento",
+          "order": 3,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 15,
+          "blocks": [
+            {
+              "id": "blk-m04-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "AALIE también puede mostrar un árbol real de llamadas. Esta vista no es exactamente lo mismo que el árbol teórico usado para razonar sobre la recurrencia. El árbol real representa la ejecución concreta del algoritmo con un valor específico de entrada."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s03-img01",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-real-call-tree",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s03-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Para observar la ejecución de forma controlada, usa el seguimiento paso a paso con n = 4. Avanza manualmente o usa reproducción automática. Durante la simulación verás cómo se crean llamadas recursivas, cómo llegan al caso base y cómo retornan valores hacia las llamadas anteriores."
+                }
+              ]
+            },
+            {
+              "id": "blk-m04-s03-img02",
+              "type": "image",
+              "resourceRef": "img-04-fibonacci-step-trace-n4",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m04-s03-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Claves de la recursión",
+              "blocks": [
+                {
+                  "id": "blk-m04-s03-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "En recursión, siempre identifica cuatro elementos antes de confiar en una conclusión: caso base, reducción del problema, número de llamadas recursivas y trabajo adicional fuera de las llamadas."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

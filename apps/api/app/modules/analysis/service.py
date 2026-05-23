@@ -249,7 +249,9 @@ def analyze_ast(
                     "best": "same_as_worst",
                     "avg": "same_as_worst",  # Determinístico: avg = worst (no modelo probabilístico)
                     "loopInvariant": loop_invariant,
-                    "recursiveInvariant": analyzer_worst.recursive_invariant if isinstance(analyzer_worst, RecursiveAnalyzer) else None,
+                    "recursiveInvariant": analyzer_worst.recursive_invariant
+                    if isinstance(analyzer_worst, RecursiveAnalyzer)
+                    else None,
                 }
             else:
                 response = {
@@ -258,7 +260,9 @@ def analyze_ast(
                     "worst": result_worst,
                     "best": result_best,
                     "loopInvariant": loop_invariant,
-                    "recursiveInvariant": analyzer_worst.recursive_invariant if isinstance(analyzer_worst, RecursiveAnalyzer) else None,
+                    "recursiveInvariant": analyzer_worst.recursive_invariant
+                    if isinstance(analyzer_worst, RecursiveAnalyzer)
+                    else None,
                 }
                 if result_avg:
                     response["avg"] = result_avg
@@ -291,7 +295,9 @@ def analyze_ast(
             if isinstance(result, dict):
                 result["loopInvariant"] = loop_invariant
                 # Add recursiveInvariant for recursive algorithms
-                if isinstance(analyzer, RecursiveAnalyzer) and hasattr(analyzer, 'recursive_invariant'):
+                if isinstance(analyzer, RecursiveAnalyzer) and hasattr(
+                    analyzer, "recursive_invariant"
+                ):
                     result["recursiveInvariant"] = analyzer.recursive_invariant
             return result
 

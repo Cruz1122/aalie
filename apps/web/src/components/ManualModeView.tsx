@@ -641,7 +641,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                   onChange={handleTxtImport}
                 />
               </div>
-              <div className="hidden min-h-0 shrink-0 overflow-hidden md:flex md:h-full md:min-h-0 md:w-[360px] md:flex-col md:self-stretch lg:w-[500px] xl:w-[500px]">
+              <div className="hidden min-h-0 shrink-0 overflow-hidden md:flex md:min-h-0 md:w-[360px] md:flex-col md:self-stretch lg:w-[500px] xl:w-[500px]">
                 <EditorSupportPanel
                   onInsert={(snippet: SnippetDefinition) => {
                     editorRef.current?.insertSnippet(snippet);

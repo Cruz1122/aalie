@@ -150,7 +150,9 @@ def build_invariant_text(
         "base_result": facts.base_results[0] if facts.base_results else "result",
         "num_recursive_calls": max(facts.subproblems_per_call or facts.recursive_call_count, 1),
         # num_subproblems reflects actual subproblems resolved (1 if mutually exclusive branches)
-        "num_subproblems": getattr(facts, "subproblems_per_call", max(facts.recursive_call_count, 2)),
+        "num_subproblems": getattr(
+            facts, "subproblems_per_call", max(facts.recursive_call_count, 2)
+        ),
         "divisor": 2,  # Default for divide-and-conquer; can be overridden
         # work_term describes local per-call work; total complexity depends on branching
         "work_term": getattr(facts, "local_work_term", "O(1)"),
@@ -177,21 +179,11 @@ def build_invariant_text(
     )
 
     # Substitute variables
-    base_property = _substitute_variables(
-        base_property_template or "", context
-    )
-    inductive_hypothesis = _substitute_variables(
-        inductive_hypothesis_template or "", context
-    )
-    recursive_step = _substitute_variables(
-        recursive_step_template or "", context
-    )
-    termination_guarantee = _substitute_variables(
-        termination_guarantee_template or "", context
-    )
-    didactic_summary = _substitute_variables(
-        didactic_summary_template or "", context
-    )
+    base_property = _substitute_variables(base_property_template or "", context)
+    inductive_hypothesis = _substitute_variables(inductive_hypothesis_template or "", context)
+    recursive_step = _substitute_variables(recursive_step_template or "", context)
+    termination_guarantee = _substitute_variables(termination_guarantee_template or "", context)
+    didactic_summary = _substitute_variables(didactic_summary_template or "", context)
 
     return InvariantText(
         base_property=base_property,

@@ -1,0 +1,316 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-getting-started",
+  "slug": "getting-started",
+  "title": "Primer recorrido por AALIE",
+  "shortTitle": "Inicio",
+  "order": 1,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Familiarízate con las secciones principales de AALIE: descubre cómo cambiar de idioma, explora cada ruta de navegación y prepárate para usar el analizador.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 24,
+  "tags": [
+    "inicio",
+    "navegación",
+    "idioma",
+    "manual"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "primer recorrido",
+      "funcionalidades principales"
+    ],
+    "keywords": [
+      "idioma",
+      "manual",
+      "analizador",
+      "cursos",
+      "quices"
+    ]
+  },
+  "prerequisites": {
+    "modules": [],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-linear-search-analyzer"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-identificar-secciones",
+      "text": "Identificar las secciones principales de AALIE y cuándo usar cada una."
+    },
+    {
+      "objectiveId": "obj-preparar-uso",
+      "text": "Preparar la interfaz antes de iniciar análisis, cursos o quices."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-01-home-language-switch",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/01-home-language-switch.webp"
+        },
+        "alt": "Página principal de AALIE con el selector de idioma visible.",
+        "caption": "Página principal de AALIE con el selector de idioma visible."
+      },
+      {
+        "resourceId": "img-01-navigation-main-sections",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/01-navigation-main-sections.webp"
+        },
+        "alt": "Barra de navegación principal con las secciones Manual, Analizador General, Cómo usar, Ejemplos, Cursos, Quices y Acerca de.",
+        "caption": "Barra de navegación principal con las secciones visibles."
+      },
+      {
+        "resourceId": "img-01-manual-templates-panel",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/01-manual-templates-panel.webp"
+        },
+        "alt": "Sección Manual con plantillas o algoritmos predefinidos.",
+        "caption": "Sección Manual con plantillas o algoritmos predefinidos."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-recorrido-inicial",
+      "slug": "recorrido-inicial",
+      "title": "Primer recorrido por AALIE",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-que-es-aalie",
+          "slug": "que-es-aalie",
+          "title": "Qué encontrarás en la plataforma",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "blocks": [
+            {
+              "id": "blk-m01-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "AALIE es una plataforma educativa diseñada para ayudarte a aprender análisis y diseño de algoritmos de forma visual, guiada e interactiva. En lugar de mostrar únicamente una respuesta final como \"O(n)\" o \"Θ(n²)\", la plataforma busca que entiendas de dónde sale ese resultado: qué líneas se ejecutan, cuántas veces se repiten, qué estructuras dominan el costo y cómo se interpreta el comportamiento del algoritmo."
+                }
+              ]
+            },
+            {
+              "id": "blk-m01-s01-p02",
+              "type": "paragraph",
+              "content": [
+            {
+              "type": "text",
+              "text": "Desde la "
+            },
+            {
+              "type": "link",
+              "text": "pantalla principal",
+              "target": { "kind": "external", "ref": "/" }
+            },
+            {
+              "type": "text",
+              "text": " puedes cambiar el idioma entre español e inglés. Esto permite que la misma experiencia pueda ser usada por estudiantes, docentes o usuarios que prefieran trabajar en otro idioma. El cambio de idioma afecta la interfaz, las páginas informativas, los cursos, los quices y las explicaciones disponibles dentro de la plataforma."
+            }
+              ]
+            },
+            {
+              "id": "blk-m01-s01-img01",
+              "type": "image",
+              "resourceRef": "img-01-home-language-switch",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m01-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La navegación principal reúne las secciones más importantes del sistema: Manual, Analizador General, Cómo usar, Ejemplos, Cursos, Quices y Acerca de. Cada una cumple un propósito distinto dentro del aprendizaje. Algunas se enfocan en escribir y analizar algoritmos; otras sirven para estudiar contenido, practicar con preguntas o consultar información general del proyecto."
+                }
+              ]
+            },
+            {
+              "id": "blk-m01-s01-table",
+              "type": "table",
+              "title": "Secciones principales de AALIE",
+              "columns": [
+                {
+                  "key": "section",
+                  "label": "Sección"
+                },
+                {
+                  "key": "use",
+                  "label": "Descripción"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      { "type": "text", "text": "Manual" }
+                    ],
+                    [
+                      { "type": "text", "text": "Permite escribir algoritmos directamente, usar plantillas y trabajar de forma personalizada." }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      { "type": "text", "text": "Analizador General" }
+                    ],
+                    [
+                      { "type": "text", "text": "Permite cargar código propio y obtener el análisis completo de complejidad." }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      { "type": "text", "text": "Cómo usar" }
+                    ],
+                    [
+                      { "type": "text", "text": "Explica el funcionamiento de la plataforma mediante una guía organizada por módulos." }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      { "type": "text", "text": "Ejemplos" }
+                    ],
+                    [
+                      { "type": "text", "text": "Ofrece algoritmos ya preparados, agrupados por técnica o paradigma." }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      { "type": "text", "text": "Cursos" }
+                    ],
+                    [
+                      { "type": "text", "text": "Presenta contenido académico organizado para la asignatura." }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      { "type": "text", "text": "Quices" }
+                    ],
+                    [
+                      { "type": "text", "text": "Permite practicar, revisar errores y reforzar temas específicos." }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      { "type": "text", "text": "Acerca de" }
+                    ],
+                    [
+                      { "type": "text", "text": "Muestra información del proyecto, propósito, tecnologías, contacto y enlaces relevantes." }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m01-s01-img02",
+              "type": "image",
+              "resourceRef": "img-01-navigation-main-sections",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m01-s01-p04",
+              "type": "paragraph",
+              "content": [
+            {
+              "type": "text",
+              "text": "La sección "
+            },
+            {
+              "type": "link",
+              "text": "Manual",
+              "target": { "kind": "external", "ref": "/" }
+            },
+            {
+              "type": "text",
+              "text": " es útil cuando quieres construir o modificar un algoritmo desde cero. Allí puedes escribir pseudocódigo, cargar plantillas y explorar algoritmos conocidos como Merge Sort, Quick Sort, búsqueda lineal, recorridos y otros ejemplos frecuentes en análisis de algoritmos."
+            }
+              ]
+            },
+            {
+              "id": "blk-m01-s01-img03",
+              "type": "image",
+              "resourceRef": "img-01-manual-templates-panel",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m01-s01-ev",
+              "type": "evidenceBlock",
+              "variant": "systemEvidence",
+              "icon": "analytics",
+              "title": "Cómo interpretar esta guía",
+              "blocks": [
+                {
+                  "id": "blk-m01-s01-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "AALIE no funciona como una caja negra. La plataforma intenta mostrar evidencia del análisis: costos por línea, comportamiento por casos, estructuras detectadas, árboles, trazas e información adicional. El objetivo es que puedas contrastar el resultado con el razonamiento que se enseña en clase."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m01-s01-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Cómo usar esta guía",
+              "blocks": [
+                {
+                  "id": "blk-m01-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Usa esta guía como recorrido práctico. Cada módulo corresponde a una funcionalidad real de AALIE y está pensado para que puedas repetir el flujo directamente en la plataforma."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

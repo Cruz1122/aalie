@@ -141,7 +141,7 @@ def select_questions(
     desired_count = max(1, request.sessionPreferences.questionCount)
 
     active = [question for question in questions if question.status == "active"]
-    
+
     prefs = request.sessionPreferences
     filtered_active = active
     has_explicit_filters = False
@@ -149,11 +149,11 @@ def select_questions(
     if prefs.moduleId:
         has_explicit_filters = True
         filtered_active = [q for q in filtered_active if _module_matches(q, prefs.moduleId)]
-    
+
     if prefs.topicIds:
         has_explicit_filters = True
         filtered_active = [q for q in filtered_active if q.topic in prefs.topicIds]
-        
+
     if prefs.skillIds:
         has_explicit_filters = True
         filtered_active = [q for q in filtered_active if set(q.skillIds) & set(prefs.skillIds)]

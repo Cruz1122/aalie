@@ -1,0 +1,223 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-export-pdf",
+  "slug": "export-pdf",
+  "title": "Exporta resultados a PDF",
+  "shortTitle": "Exportar",
+  "order": 6,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Genera un PDF del análisis para conservar, compartir o revisar los resultados sin volver a ejecutar el algoritmo.",
+  "difficulty": "basic",
+  "estimatedMinutes": 18,
+  "tags": [
+    "export",
+    "pdf",
+    "reporte",
+    "análisis"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "exportar pdf",
+      "reporte de análisis"
+    ],
+    "keywords": [
+      "exportación",
+      "PDF",
+      "reporte"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-linear-search-analyzer",
+        "kind": "required"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-linear-search-analyzer"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-exportar-pdf",
+      "text": "Exportar un análisis en formato PDF desde el analizador."
+    },
+    {
+      "objectiveId": "obj-leer-reporte",
+      "text": "Leer el reporte exportado como registro estructurado del análisis generado."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-06-export-menu-pdf",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/06-export-menu-pdf.webp"
+        },
+        "alt": "Menú de exportación con opción PDF visible.",
+        "caption": "Menú de exportación con opción PDF."
+      },
+      {
+        "resourceId": "img-06-export-save-dialog",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/06-export-save-dialog.webp"
+        },
+        "alt": "Diálogo de guardado del PDF exportado.",
+        "caption": "Diálogo de guardado del PDF."
+      },
+      {
+        "resourceId": "img-06-exported-pdf-report",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/06-exported-pdf-report.webp"
+        },
+        "alt": "PDF generado abierto con portada o sección de resultados.",
+        "caption": "PDF generado abierto."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-export",
+      "slug": "exportar",
+      "title": "Exportar resultados",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-exportar-pdf",
+          "slug": "exportar-pdf",
+          "title": "Exportar un análisis en PDF",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "blocks": [
+            {
+              "id": "blk-m06-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Después de "
+            },
+            {
+              "type": "link",
+              "text": "analizar",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " un algoritmo, puedes exportar los resultados para conservarlos, compartirlos o revisarlos fuera de la plataforma. Esta función es útil para informes, evidencias de clase, documentación de ejercicios o revisión posterior sin volver a ejecutar el análisis."
+                }
+              ]
+            },
+            {
+              "id": "blk-m06-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Para exportar, usa el menú ubicado en la parte superior del editor o de la sección de resultados. Selecciona la opción PDF. AALIE generará un documento con la información principal del análisis, organizada en un formato más cómodo para lectura."
+                }
+              ]
+            },
+            {
+              "id": "blk-m06-s01-img01",
+              "type": "image",
+              "resourceRef": "img-06-export-menu-pdf",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m06-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El navegador o el sistema operativo solicitará una ubicación para guardar el archivo. Elige una carpeta reconocible y usa un nombre claro, preferiblemente relacionado con el algoritmo analizado. Esto evita perder reportes o confundir versiones."
+                }
+              ]
+            },
+            {
+              "id": "blk-m06-s01-img02",
+              "type": "image",
+              "resourceRef": "img-06-export-save-dialog",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m06-s01-p04",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Al abrir el PDF, encontrarás el pseudocódigo original, los resultados de complejidad, el análisis por línea, las explicaciones relevantes y las conclusiones generadas por el sistema. La idea es que el documento funcione como una evidencia completa del análisis realizado."
+                }
+              ]
+            },
+            {
+              "id": "blk-m06-s01-img03",
+              "type": "image",
+              "resourceRef": "img-06-exported-pdf-report",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m06-s01-ev",
+              "type": "evidenceBlock",
+              "variant": "systemEvidence",
+              "icon": "analytics",
+              "title": "Lectura del reporte",
+              "blocks": [
+                {
+                  "id": "blk-m06-s01-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "El reporte debe leerse como una captura estructurada del análisis. Si el algoritmo tenía advertencias, límites o información no disponible, esas condiciones también deben aparecer. Un buen export no debe ocultar incertidumbre ni presentar como definitivo algo que el sistema no pudo cerrar con evidencia suficiente."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m06-s01-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Antes de compartir",
+              "blocks": [
+                {
+                  "id": "blk-m06-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Antes de entregar o compartir un PDF, revisa que corresponda al algoritmo correcto y que el resultado sea coherente con lo que viste en pantalla. Exportar no convierte automáticamente un análisis incompleto en una conclusión válida."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
