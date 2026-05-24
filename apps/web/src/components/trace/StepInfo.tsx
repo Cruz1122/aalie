@@ -108,11 +108,11 @@ export default function StepInfo({
           role="region"
           aria-live="polite"
           aria-atomic="true"
-          aria-label={t("stepShows", { line: stepData.line })}
+          aria-label={t("stepShows", { line: stepData.line ?? 0 })}
         >
           {/* Microcopy: qué muestra este paso */}
           <p className="text-xs text-slate-400">
-            {t("stepShows", { line: stepData.line })}
+            {t("stepShows", { line: stepData.line ?? 0 })}
           </p>
           {/* Grid for Line, Type, Cost, Microseconds, Tokens - max 3 cols para que no se aprieten */}
           <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">

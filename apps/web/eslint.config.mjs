@@ -37,6 +37,14 @@ const eslintConfig = [
         { argsIgnorePattern: "^_" },
       ],
     },
+    settings: {
+      "import/resolver": {
+        node: {
+          extensions: [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"],
+          paths: [__dirname],
+        },
+      },
+    },
   },
   {
     ignores: [

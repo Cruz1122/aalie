@@ -8,23 +8,22 @@ import {
 } from "@/lib/content/course";
 
 interface CourseChapterPageProps {
-  params: {
+  params: Promise<{
     locale: string;
     moduleSlug: string;
     chapterSlug: string;
-  };
+  }>;
 }
 
 export function generateStaticParams() {
   return getCourseChapterStaticParams(routing.locales);
 }
 
-export default function CourseChapterPage({ params }: CourseChapterPageProps) {
-  const data = getCourseChapterData(
-    params.locale,
-    params.moduleSlug,
-    params.chapterSlug,
-  );
+export default async function CourseChapterPage({
+  params,
+}: CourseChapterPageProps) {
+  const { locale, moduleSlug, chapterSlug } = await params;
+  const data = getCourseChapterData(locale, moduleSlug, chapterSlug);
 
   if (!data) {
     notFound();

@@ -35,6 +35,12 @@ RUN pnpm install --no-frozen-lockfile
 # Copiar el código fuente del paquete web
 COPY apps/web/ apps/web/
 
+# Copiar código fuente de packages workspace necesarios en runtime
+COPY packages/grammar/ packages/grammar/
+COPY packages/types/ packages/types/
+COPY packages/content-catalog/ packages/content-catalog/
+COPY packages/content-data/ packages/content-data/
+
 # Exponer puerto dev de Next
 EXPOSE 3000
 

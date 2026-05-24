@@ -3,13 +3,16 @@ import { Suspense } from "react";
 import { ExamplesHomeView } from "@/components/examples/ExamplesHomeView";
 
 interface ExamplesPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     page?: string;
-  };
+  }>;
 }
 
-export default function ExamplesPage({ searchParams }: ExamplesPageProps) {
-  const page = Number(searchParams?.page ?? "1");
+export default async function ExamplesPage({
+  searchParams,
+}: ExamplesPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page ?? "1");
 
   return (
     <Suspense fallback={null}>
