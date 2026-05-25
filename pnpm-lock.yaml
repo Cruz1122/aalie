@@ -152,9 +152,6 @@ importers:
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
-      rimraf:
-        specifier: 6.1.3
-        version: 6.1.3
       tailwindcss:
         specifier: 3.4.19
         version: 3.4.19
