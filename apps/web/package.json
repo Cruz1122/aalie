@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "node -e \"try{require('fs').rmSync('.next/export',{recursive:true,force:true})}catch(e){}\" && next build",
+    "prebuild": "node scripts/prebuild.mjs",
+    "build": "next build",
     "start": "next start -p 3000",
     "test": "vitest run",
     "test:trace-cache": "node --import tsx --test --test-reporter=spec src/lib/__tests__/trace-cache-utils.test.ts",
