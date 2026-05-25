@@ -1,9 +1,6 @@
 import type { RuleMatch } from "../rules/ruleTypes";
 
-type TranslationValues = Record<
-  string,
-  string | number | boolean | Date | null | undefined
->;
+type TranslationValues = Record<string, string | number | Date>;
 
 type TechniqueTranslator = (key: string, values?: TranslationValues) => string;
 

@@ -16,7 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-fonts-recommended \
     texlive-lang-english \
     texlive-lang-spanish \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && mktexlsr \
+  && fmtutil-sys --all 2>/dev/null || true
 
 # Python dependencies
 WORKDIR /usr/src/app/apps/api

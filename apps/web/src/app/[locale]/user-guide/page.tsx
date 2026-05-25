@@ -2,12 +2,13 @@ import { UserGuideLandingView } from "@/components/user-guide/UserGuideLandingVi
 import { getUserGuideLandingData } from "@/lib/content/user-guide";
 
 interface UserGuidePageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
-export default function UserGuidePage({ params }: UserGuidePageProps) {
-  const data = getUserGuideLandingData(params.locale);
+export default async function UserGuidePage({ params }: UserGuidePageProps) {
+  const { locale } = await params;
+  const data = getUserGuideLandingData(locale);
   return <UserGuideLandingView data={data} />;
 }

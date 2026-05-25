@@ -10,10 +10,10 @@ import {
 } from "@/lib/examples/catalog";
 
 interface CategoryPageProps {
-  params: {
+  params: Promise<{
     locale: string;
     category: string;
-  };
+  }>;
 }
 
 export function generateStaticParams() {
@@ -22,14 +22,17 @@ export function generateStaticParams() {
   }));
 }
 
-export default function ExampleCategoryPage({ params }: CategoryPageProps) {
-  const legacyRedirect = LEGACY_CATEGORY_REDIRECTS[params.category];
+export default async function ExampleCategoryPage({
+  params,
+}: CategoryPageProps) {
+  const { locale, category: categorySlug } = await params;
+  const legacyRedirect = LEGACY_CATEGORY_REDIRECTS[categorySlug];
 
   if (legacyRedirect) {
-    redirect(`/${params.locale}/examples/${legacyRedirect}`);
+    redirect(`/${locale}/examples/${legacyRedirect}`);
   }
 
-  const category = getCategoryBySlug(params.category);
+  const category = getCategoryBySlug(categorySlug);
 
   if (!category) {
     notFound();

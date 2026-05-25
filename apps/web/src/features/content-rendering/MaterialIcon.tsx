@@ -1,35 +1,52 @@
 "use client";
 
 import type { PedagogyIconName } from "@aa/content-catalog";
-import Analytics from "@mui/icons-material/Analytics";
-import ArrowForward from "@mui/icons-material/ArrowForward";
-import ErrorOutline from "@mui/icons-material/ErrorOutline";
-import Lightbulb from "@mui/icons-material/Lightbulb";
-import School from "@mui/icons-material/School";
-import Science from "@mui/icons-material/Science";
-import Warning from "@mui/icons-material/Warning";
-import type { SvgIconProps } from "@mui/material/SvgIcon";
-import type { ComponentType } from "react";
+import type { CSSProperties, HTMLAttributes } from "react";
 
-const ICON_COMPONENTS: Record<PedagogyIconName, ComponentType<SvgIconProps>> = {
-  school: School,
-  science: Science,
-  analytics: Analytics,
-  lightbulb: Lightbulb,
-  warning: Warning,
-  error_outline: ErrorOutline,
-  arrow_forward: ArrowForward,
+const ICON_TEXT: Record<PedagogyIconName, string> = {
+  school: "school",
+  science: "science",
+  analytics: "analytics",
+  lightbulb: "lightbulb",
+  warning: "warning",
+  error_outline: "error_outline",
+  arrow_forward: "arrow_forward",
 };
 
-export interface MaterialIconProps extends SvgIconProps {
+type MaterialIconFontSize = "inherit" | "small" | "medium" | "large";
+
+export interface MaterialIconProps extends HTMLAttributes<HTMLSpanElement> {
   name: PedagogyIconName;
+  fontSize?: MaterialIconFontSize;
 }
 
 export function MaterialIcon({
   name,
   fontSize = "small",
+  className,
+  style,
   ...rest
 }: MaterialIconProps) {
-  const Icon = ICON_COMPONENTS[name] ?? ICON_COMPONENTS.warning;
-  return <Icon fontSize={fontSize} {...rest} />;
+  const iconText = ICON_TEXT[name] ?? ICON_TEXT.warning;
+  const resolvedFontSize: CSSProperties["fontSize"] =
+    fontSize === "inherit"
+      ? "inherit"
+      : fontSize === "small"
+        ? 20
+        : fontSize === "large"
+          ? 32
+          : 24;
+
+  return (
+    <span
+      aria-hidden="true"
+      className={["material-symbols-outlined", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={{ fontSize: resolvedFontSize, lineHeight: 1, ...style }}
+      {...rest}
+    >
+      {iconText}
+    </span>
+  );
 }

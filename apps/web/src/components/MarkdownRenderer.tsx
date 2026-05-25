@@ -223,7 +223,7 @@ function extractInlineCodeText(children: React.ReactNode): string {
     return children.map((child) => extractInlineCodeText(child)).join("");
   }
 
-  if (React.isValidElement(children)) {
+  if (React.isValidElement<{ children?: React.ReactNode }>(children)) {
     return extractInlineCodeText(children.props.children);
   }
 
