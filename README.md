@@ -14,12 +14,12 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-14.2-555555?labelColor=000000&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Next.js-15.5-555555?labelColor=000000&logo=next.js&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/TypeScript-5.5-555555?labelColor=3178c6&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-555555?labelColor=06b6d4&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Monaco_Editor-0.54-555555?labelColor=007acc&logo=visualstudiocode&logoColor=white" alt="Monaco Editor" />
-  <img src="https://img.shields.io/badge/KaTeX-0.16-555555?labelColor=008080&logo=katex&logoColor=white" alt="KaTeX" />
-  <img src="https://img.shields.io/badge/React_Flow-12.10-555555?labelColor=111827&logo=react&logoColor=61dafb" alt="React Flow" />
+  <img src="https://img.shields.io/badge/Monaco_Editor-0.55-555555?labelColor=007acc&logo=visualstudiocode&logoColor=white" alt="Monaco Editor" />
+  <img src="https://img.shields.io/badge/KaTeX-0.16.21-555555?labelColor=008080&logo=katex&logoColor=white" alt="KaTeX" />
+  <img src="https://img.shields.io/badge/React_Flow-12.10.1-555555?labelColor=111827&logo=react&logoColor=61dafb" alt="React Flow" />
   <img src="https://img.shields.io/badge/next--intl-i18n-555555?labelColor=111827&logo=nextdotjs&logoColor=white" alt="next-intl" />
 </p>
 
@@ -41,7 +41,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/pnpm-9.15-555555?labelColor=f69220&logo=pnpm&logoColor=white" alt="pnpm" />
+  <img src="https://img.shields.io/badge/pnpm-9.15.0-555555?labelColor=f69220&logo=pnpm&logoColor=white" alt="pnpm" />
   <img src="https://img.shields.io/badge/GitHub_Actions-CI-555555?labelColor=2088ff&logo=githubactions&logoColor=white" alt="GitHub Actions" />
   <img src="https://img.shields.io/badge/Docker-Compose-555555?labelColor=2496ed&logo=docker&logoColor=white" alt="Docker Compose" />
   <img src="https://img.shields.io/badge/LaTeX-PDF_Export-555555?labelColor=008080&logo=latex&logoColor=white" alt="LaTeX" />
@@ -282,8 +282,8 @@ AALIE está organizado como monorepo:
 
 ### Frontend
 
-- Next.js 14.2
-- React 18
+- Next.js 15.5
+- React 19.2
 - TypeScript 5.5
 - Tailwind CSS 3.4
 - Monaco Editor
