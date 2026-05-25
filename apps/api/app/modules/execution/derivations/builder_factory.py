@@ -121,7 +121,7 @@ def _apply_layout_linear(
             source=e.source,
             target=e.target,
             label=e.label,
-            type="default",
+            type="return" if (e.label or "").strip().lower() == "return" else "default",
         )
         for e in edges
     ]
@@ -232,7 +232,7 @@ def _apply_layout_tree(
                 source=e.source,
                 target=e.target,
                 label=e.label,
-                type="default",
+                type="return" if (e.label or "").strip().lower() == "return" else "default",
             )
         )
 

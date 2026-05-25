@@ -14,20 +14,21 @@ def locale_key(locale: str) -> str:
 def get_asymptotic_notation(bound_kind: str, result: str) -> str:
     """
     Convierte resultado a notación asintótica correcta según bound_kind.
-    
+
     Args:
         bound_kind: "equivalent" | "upper" | "lower" | "partial"
         result: Expresión asintótica (ej. φⁿ, n², n)
-    
+
     Returns:
         Notación asintótica (ej. Θ(φⁿ), O(n²), Ω(n))
     """
+
     def _unwrap(expression: str) -> str:
         expression = str(expression).strip()
         expression = re.sub(r"^T\(n\)\s*=\s*", "", expression).strip()
         for prefix in ("\\Theta(", "O(", "\\Omega("):
             if expression.startswith(prefix) and expression.endswith(")"):
-                expression = expression[len(prefix):-1].strip()
+                expression = expression[len(prefix) : -1].strip()
                 break
         return expression
 
@@ -38,7 +39,7 @@ def get_asymptotic_notation(bound_kind: str, result: str) -> str:
         if unwrapped == result:
             break
         result = unwrapped
-    
+
     if bound_kind == "equivalent":
         return f"\\Theta({result})"
     elif bound_kind == "upper":

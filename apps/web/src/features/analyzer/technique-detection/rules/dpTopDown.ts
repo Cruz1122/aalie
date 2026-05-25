@@ -1,4 +1,5 @@
 import type { TechniqueRule } from "./ruleTypes";
+import type { EvidenceItem } from "../types";
 import { confidenceFromScore } from "./score";
 
 export const dpTopDownRule: TechniqueRule = {
@@ -7,9 +8,16 @@ export const dpTopDownRule: TechniqueRule = {
 
   evaluate(facts) {
     let score = 0;
-    const evidenceItems = [];
+    const evidenceItems: EvidenceItem[] = [];
     const secondarySignals: string[] = [];
     const diagnostics: string[] = [];
+
+    const hasBacktrackingCore =
+      facts.choice.hasChoiceEnumeration &&
+      facts.choice.hasFeasibilityCheck &&
+      facts.mutation.hasMutationBeforeRecursiveCall &&
+      facts.mutation.hasUndoAfterRecursiveCall &&
+      facts.recursion.hasSelfCall;
 
     if (facts.recursion.hasSelfCall) score += 20;
 
@@ -31,26 +39,32 @@ export const dpTopDownRule: TechniqueRule = {
     if (facts.table.hasSameStorageReadWrite) {
       score += 20;
       secondarySignals.push("same_storage_read_write_shape");
-    } else {
+    }
+
+    /**
+     * Memo pattern bonus: early return from indexed storage +
+     * indexed write + same storage + recursion. This is the classic
+     * DP top-down memoization pattern.
+     */
+    if (
+      facts.table.hasReturnFromIndexedRead &&
+      facts.table.hasIndexedWriteAfterRecursiveCall &&
+      facts.table.hasSameStorageReadWrite
+    ) {
+      score += 20;
+      secondarySignals.push("memo_pattern");
+    }
+
+    /**
+     * Backtracking core: reversible mutation around recursion with
+     * feasibility checks. Indexed read/write on M[fila][col] looks
+     * like memoization but is actually visited marking with undo.
+     */
+    if (hasBacktrackingCore) {
+      score -= 80;
       diagnostics.push(
-        "No se logró probar que lectura y escritura pertenezcan al mismo estado.",
+        "Indexed read/write with backtracking core: visited marking with rollback, not memoization.",
       );
-    }
-
-    for (const id of facts.table.evidenceNodeIds.slice(0, 2)) {
-      evidenceItems.push({
-        role: "memo_read" as const,
-        nodeId: id,
-        importance: "primary" as const,
-      });
-    }
-
-    for (const id of facts.table.evidenceNodeIds.slice(2, 4)) {
-      evidenceItems.push({
-        role: "memo_write" as const,
-        nodeId: id,
-        importance: "secondary" as const,
-      });
     }
 
     return {

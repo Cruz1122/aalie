@@ -1,0 +1,247 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-courses-progress",
+  "slug": "courses-progress",
+  "title": "Courses and progress",
+  "shortTitle": "Courses",
+  "order": 8,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Move through courses, complete modules, and understand how progress unlocks quizzes linked to academic content.",
+  "difficulty": "basic",
+  "estimatedMinutes": 32,
+  "tags": [
+    "courses",
+    "progress",
+    "modules",
+    "quizzes"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "courses",
+      "course progress",
+      "unlock quiz"
+    ],
+    "keywords": [
+      "course",
+      "module",
+      "progress",
+      "90%"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-getting-started",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-quizzes"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-recorrer-cursos",
+      "text": "Navigate through courses and modules sequentially."
+    },
+    {
+      "objectiveId": "obj-entender-desbloqueo",
+      "text": "Understand how progress enables linked quizzes."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-08-courses-dashboard",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/08-courses-dashboard.webp"
+        },
+        "alt": "Courses page with available courses and progress percentages.",
+        "caption": "Courses page with available courses and progress percentages."
+      },
+      {
+        "resourceId": "img-08-course-module-content",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/08-course-module-content.webp"
+        },
+        "alt": "Opened module content, with sequential progress visible.",
+        "caption": "Opened module content, with sequential progress visible."
+      },
+      {
+        "resourceId": "img-08-course-progress-unlock",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/08-course-progress-unlock.webp"
+        },
+        "alt": "Progress state where one quiz is unlocked after exceeding 90% and another remains locked.",
+        "caption": "Progress state where one quiz is unlocked after exceeding 90% and another remains locked."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-cursos",
+      "slug": "courses",
+      "title": "Study from Courses",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-dashboard-cursos",
+          "slug": "courses-dashboard",
+          "title": "View courses and progress",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m08-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "The "
+            },
+            {
+              "type": "link",
+              "text": "Courses",
+              "target": { "kind": "external", "ref": "/course" }
+            },
+            {
+              "type": "text",
+              "text": " section organizes academic content related to Algorithm Analysis and Design. From the main view, you can review which courses are available and what progress percentage you have in each one."
+                }
+              ]
+            },
+            {
+              "id": "blk-m08-s01-img01",
+              "type": "image",
+              "resourceRef": "img-08-courses-dashboard",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m08-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Progress updates as you complete sections. This lets you resume studying without relying on memory or repeating already completed content."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-recorrer-modulo",
+          "slug": "go-through-module",
+          "title": "Go through sequential content",
+          "order": 2,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m08-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When you enter a course, move through its modules in order. Each section presents content, examples, or explanations designed to prepare the student before evaluated practice."
+                }
+              ]
+            },
+            {
+              "id": "blk-m08-s02-img01",
+              "type": "image",
+              "resourceRef": "img-08-course-module-content",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m08-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When a section is completed, the system lets you continue to the next topic. The structure prevents learning from being reduced to answering quizzes without reviewing the conceptual base."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-desbloqueo-quiz",
+          "slug": "quiz-unlock",
+          "title": "Unlock quizzes through progress",
+          "order": 3,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m08-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Course-linked "
+            },
+            {
+              "type": "link",
+              "text": "quizzes",
+              "target": { "kind": "external", "ref": "/quizzes" }
+            },
+            {
+              "type": "text",
+              "text": " become available when the required progress threshold is reached. In this flow, a course completed at 100% can already show its quiz, while another below 90% remains locked."
+                }
+              ]
+            },
+            {
+              "id": "blk-m08-s03-img01",
+              "type": "image",
+              "resourceRef": "img-08-course-progress-unlock",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m08-s03-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Practical rule",
+              "blocks": [
+                {
+                  "id": "blk-m08-s03-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If the quiz is not available, first check the course progress percentage. You probably still need to complete content before formal practice."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

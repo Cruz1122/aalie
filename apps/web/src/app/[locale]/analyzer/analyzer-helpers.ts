@@ -21,7 +21,10 @@ export interface AnalysisError {
 /**
  * Extrae el mensaje de error de una respuesta de parseo.
  */
-export function extractParseError(parseRes: ParseResponse): string {
+export function extractParseError(
+  parseRes: ParseResponse & { error?: string },
+): string {
+  if (parseRes.error) return "Error al conectar con el servidor";
   if (!parseRes.errors) {
     return "Error al parsear el código";
   }
@@ -35,7 +38,9 @@ export function extractParseError(parseRes: ParseResponse): string {
  */
 export function extractAnalysisError(analyzeRes: {
   errors?: AnalysisError[];
+  error?: string;
 }): string {
+  if (analyzeRes.error) return "Error al conectar con el servidor";
   if (!analyzeRes.errors) {
     return "Error al analizar el algoritmo";
   }

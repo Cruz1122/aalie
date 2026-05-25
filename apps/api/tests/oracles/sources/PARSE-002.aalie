@@ -1,0 +1,6 @@
+invalidAssignmentExpression(n)
+BEGIN
+  total <- 0;
+  x <- ;
+  RETURN total;
+END

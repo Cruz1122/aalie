@@ -1,0 +1,12 @@
+factorialCost(n)
+BEGIN
+  IF (n <= 1) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    sub <- factorialCost(n - 1);
+    RETURN n * sub;
+  END;
+END

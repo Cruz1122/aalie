@@ -6,7 +6,7 @@ import { vi } from "vitest";
 import { ExamplesCategoryView } from "@/components/examples/ExamplesCategoryView";
 import { ExamplesHomeView } from "@/components/examples/ExamplesHomeView";
 
-const runAnalysisMock = vi.fn();
+const runAnalysisMock = vi.fn().mockResolvedValue(undefined);
 const finishNavigationMock = vi.fn();
 const pushMock = vi.fn();
 const embeddedAssistantLauncherMock = vi.fn();
@@ -150,7 +150,7 @@ vi.mock("@/components/assistant/EmbeddedAssistantLauncher", () => ({
 
 describe("Examples views", () => {
   beforeEach(() => {
-    runAnalysisMock.mockReset();
+    runAnalysisMock.mockReset().mockResolvedValue(undefined);
     finishNavigationMock.mockReset();
     pushMock.mockReset();
     embeddedAssistantLauncherMock.mockReset();

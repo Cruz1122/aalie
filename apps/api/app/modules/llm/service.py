@@ -69,7 +69,9 @@ def _validate_api_key(key: str | None) -> bool:
     return API_KEY_REGEX.match(key.strip()) is not None
 
 
-def _append_context(prompt: str, context: str | None, assistant_context: Dict[str, Any] | None) -> str:
+def _append_context(
+    prompt: str, context: str | None, assistant_context: Dict[str, Any] | None
+) -> str:
     blocks: List[str] = []
     if assistant_context:
         safe_ctx = _redact_assistant_context_for_llm(assistant_context)
@@ -81,7 +83,9 @@ def _append_context(prompt: str, context: str | None, assistant_context: Dict[st
     return "\n\n".join(blocks)
 
 
-def _build_messages(user_prompt: str, chat_history: List[Dict[str, str]] | None) -> List[Dict[str, str]]:
+def _build_messages(
+    user_prompt: str, chat_history: List[Dict[str, str]] | None
+) -> List[Dict[str, str]]:
     messages: List[Dict[str, str]] = []
     if chat_history:
         messages.extend(chat_history[-10:])
@@ -241,7 +245,9 @@ def get_status_payload() -> Dict[str, Any]:
     }
 
 
-def _normalize_response(job: str, provider_name: str, provider_response: Dict[str, Any]) -> Dict[str, Any]:
+def _normalize_response(
+    job: str, provider_name: str, provider_response: Dict[str, Any]
+) -> Dict[str, Any]:
     text = _extract_provider_text(provider_name, provider_response)
     structured = _extract_json_object(text) if text else None
 
@@ -349,7 +355,9 @@ def execute_llm_request(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     job_config = get_job_config(job, locale)
     user_prompt = _append_context(prompt.strip(), context, assistant_context)
-    messages = _build_messages(user_prompt, chat_history if isinstance(chat_history, list) else None)
+    messages = _build_messages(
+        user_prompt, chat_history if isinstance(chat_history, list) else None
+    )
 
     provider = create_provider()
 

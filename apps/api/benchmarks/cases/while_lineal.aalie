@@ -1,0 +1,7 @@
+linear(n) BEGIN
+  i <- 0;
+  WHILE (i < n) DO BEGIN
+    x <- 1;
+    i <- i + 1;
+  END
+END

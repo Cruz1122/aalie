@@ -1,0 +1,110 @@
+[
+  {
+    "caseId": "FOR-002",
+    "family": "for_simple",
+    "sourcePath": "tests/oracles/sources/FOR-002.aalie",
+    "expectedTheta": "Theta(n)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "iterative",
+    "notes": "Linear array sum - baseline FOR export consistency"
+  },
+  {
+    "caseId": "NEST-001",
+    "family": "for_nested",
+    "sourcePath": "tests/oracles/sources/NEST-001.aalie",
+    "expectedTheta": "Theta(n^2)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "iterative",
+    "notes": "Square double loop - baseline nested FOR export consistency"
+  },
+  {
+    "caseId": "WHILE-S-001",
+    "family": "while_supported",
+    "sourcePath": "tests/oracles/sources/WHILE-S-001.aalie",
+    "expectedTheta": "Theta(n)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "iterative",
+    "notes": "Linear counter WHILE - supported pattern export consistency"
+  },
+  {
+    "caseId": "WHILE-S-005",
+    "family": "while_supported",
+    "sourcePath": "tests/oracles/sources/WHILE-S-005.aalie",
+    "expectedTheta": "Theta(log n)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "iterative",
+    "notes": "Geometric growth WHILE - logarithmic export consistency"
+  },
+  {
+    "caseId": "WHILE-U-002",
+    "family": "while_unsupported",
+    "sourcePath": "tests/oracles/sources/WHILE-U-002.aalie",
+    "expectedTheta": "",
+    "expectedStatus": "unknown",
+    "expectedAlgorithmKind": "iterative",
+    "notes": "Missing control update - mustNotInventTheta, expected unsupported"
+  },
+  {
+    "caseId": "WHILE-U-001",
+    "family": "while_unsupported",
+    "sourcePath": "tests/oracles/sources/WHILE-U-001.aalie",
+    "expectedTheta": "",
+    "expectedStatus": "unknown",
+    "expectedAlgorithmKind": "iterative",
+    "notes": "External condition - mustNotInventTheta, expected unsupported"
+  },
+  {
+    "caseId": "REC-DC-001",
+    "family": "recursive_divide_conquer",
+    "sourcePath": "tests/oracles/sources/REC-DC-001.aalie",
+    "expectedTheta": "Theta(n log n)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "recursive",
+    "notes": "MergeSort recurrence - baseline DC export consistency"
+  },
+  {
+    "caseId": "REC-DC-002",
+    "family": "recursive_divide_conquer",
+    "sourcePath": "tests/oracles/sources/REC-DC-002.aalie",
+    "expectedTheta": "Theta(log n)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "recursive",
+    "notes": "Binary search recurrence - logarithmic DC export consistency"
+  },
+  {
+    "caseId": "REC-LS-001",
+    "family": "recursive_linear_shift",
+    "sourcePath": "tests/oracles/sources/REC-LS-001.aalie",
+    "expectedTheta": "Theta(n)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "recursive",
+    "notes": "Factorial cost - linear shift export consistency"
+  },
+  {
+    "caseId": "REC-LS-004",
+    "family": "recursive_linear_shift",
+    "sourcePath": "tests/oracles/sources/REC-LS-004.aalie",
+    "expectedTheta": "Theta((1/2 + sqrt(5)/2)^n)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "recursive",
+    "notes": "Fibonacci cost - exponential linear shift export consistency"
+  },
+  {
+    "caseId": "PARSE-001",
+    "family": "parser_negative",
+    "sourcePath": "tests/oracles/sources/PARSE-001.aalie",
+    "expectedTheta": "",
+    "expectedStatus": "parse_failed",
+    "expectedAlgorithmKind": "unknown",
+    "notes": "Missing END block - parser negative export consistency"
+  },
+  {
+    "caseId": "REC-DC-004",
+    "family": "recursive_divide_conquer",
+    "sourcePath": "tests/oracles/sources/REC-DC-004.aalie",
+    "expectedTheta": "Theta(n log n)",
+    "expectedStatus": "available",
+    "expectedAlgorithmKind": "recursive",
+    "notes": "Quadratic combine documented gap - regression characterization export consistency"
+  }
+]

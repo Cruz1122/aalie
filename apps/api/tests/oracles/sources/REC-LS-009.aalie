@@ -1,0 +1,14 @@
+tribonacciCost(n)
+BEGIN
+  IF (n <= 2) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    a <- tribonacciCost(n - 1);
+    b <- tribonacciCost(n - 2);
+    c <- tribonacciCost(n - 3);
+    RETURN a + b + c;
+  END;
+END

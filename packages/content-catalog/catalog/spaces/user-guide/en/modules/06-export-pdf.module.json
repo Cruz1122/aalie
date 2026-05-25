@@ -1,0 +1,194 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-export-pdf",
+  "slug": "export-pdf",
+  "title": "Export results as PDF",
+  "shortTitle": "Export",
+  "order": 6,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Generate a PDF report of the analysis to keep, share, or review results without running the algorithm again.",
+  "difficulty": "basic",
+  "estimatedMinutes": 18,
+  "tags": [
+    "export",
+    "pdf",
+    "report",
+    "analysis"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "export pdf",
+      "analysis report"
+    ],
+    "keywords": [
+      "export",
+      "PDF",
+      "report"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-linear-search-analyzer",
+        "kind": "required"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-linear-search-analyzer"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-exportar-pdf",
+      "text": "Export an analysis as a PDF from the analyzer."
+    },
+    {
+      "objectiveId": "obj-leer-reporte",
+      "text": "Read the exported report as a structured record of the generated analysis."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-06-export-menu-pdf",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/06-export-menu-pdf.webp"
+        },
+        "alt": "Analyzer export menu with the PDF option visible.",
+        "caption": "Analyzer export menu with the PDF option visible."
+      },
+      {
+        "resourceId": "img-06-export-save-dialog",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/06-export-save-dialog.webp"
+        },
+        "alt": "Browser or system save dialog for the exported PDF.",
+        "caption": "Browser or system save dialog for the exported PDF."
+      },
+      {
+        "resourceId": "img-06-exported-pdf-report",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/06-exported-pdf-report.webp"
+        },
+        "alt": "Generated PDF report opened, with cover or results section visible.",
+        "caption": "Generated PDF report opened, with cover or results section visible."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-export",
+      "slug": "export",
+      "title": "Export results",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-exportar-pdf",
+          "slug": "export-pdf",
+          "title": "Export an analysis as PDF",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "blocks": [
+            {
+              "id": "blk-m06-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "After "
+            },
+            {
+              "type": "link",
+              "text": "analyzing",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " an algorithm, use the export menu at the top of the editor. For this flow, select PDF."
+                }
+              ]
+            },
+            {
+              "id": "blk-m06-s01-img01",
+              "type": "image",
+              "resourceRef": "img-06-export-menu-pdf",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m06-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The browser or operating system will ask for a location to save the file. Keep a descriptive name, especially if you will share the report with an instructor or work group."
+                }
+              ]
+            },
+            {
+              "id": "blk-m06-s01-img02",
+              "type": "image",
+              "resourceRef": "img-06-export-save-dialog",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m06-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When you open the PDF, you will find the analysis organized into sections: pseudocode, complexity results, asymptotic behavior, explanations, and conclusions. The purpose of export is to preserve the analysis without running the platform again."
+                }
+              ]
+            },
+            {
+              "id": "blk-m06-s01-img03",
+              "type": "image",
+              "resourceRef": "img-06-exported-pdf-report",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m06-s01-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Reading warning",
+              "blocks": [
+                {
+                  "id": "blk-m06-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The PDF documents what the engine was able to analyze. If the result has warnings or limits, those warnings must remain. Do not use the export to hide mathematical uncertainty."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

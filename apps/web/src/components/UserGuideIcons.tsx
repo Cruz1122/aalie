@@ -1,13 +1,16 @@
 "use client";
 
+import Image from "next/image";
+
 const ICON_MAP: Record<string, string> = {
-  "mod-user-guide-measure": "straighten",
-  "mod-user-guide-building-cost": "functions",
-  "mod-user-guide-iterative": "repeat",
-  "mod-user-guide-recursive": "account_tree",
-  "mod-user-guide-interpreting": "analytics",
-  "mod-user-guide-loop-invariant": "verified_user",
-  "mod-user-guide-analysis-limits": "warning",
+  "mod-user-guide-linear-search-analyzer": "manage_search",
+  "mod-user-guide-examples-bubble-sort": "view_list",
+  "mod-user-guide-recursive-fibonacci": "account_tree",
+  "mod-user-guide-loop-and-recursive-invariants": "verified_user",
+  "mod-user-guide-export-pdf": "picture_as_pdf",
+  "mod-user-guide-ai-assistant": "smart_toy",
+  "mod-user-guide-courses-progress": "school",
+  "mod-user-guide-quizzes": "quiz",
   "mod-complejidad-temporal-espacial": "timer",
   "mod-loop-invariant": "verified_user",
   "mod-algoritmos-iterativos-patrones-costos": "repeat",
@@ -41,6 +44,24 @@ export function UserGuideIcon({
   size = 36,
   className = "",
 }: UserGuideIconProps) {
+  if (moduleId === "mod-user-guide-getting-started") {
+    return (
+      <div
+        className={`inline-flex items-center justify-center rounded-xl border border-slate-500/30 bg-slate-500/20 ${className}`}
+        style={{ width: size + 24, height: size + 24 }}
+      >
+        <Image
+          src="/aalie.svg"
+          alt="AALIE"
+          width={size}
+          height={size}
+          className="brightness-0 invert"
+          unoptimized
+        />
+      </div>
+    );
+  }
+
   const iconName = ICON_MAP[moduleId] ?? "menu_book";
 
   return (

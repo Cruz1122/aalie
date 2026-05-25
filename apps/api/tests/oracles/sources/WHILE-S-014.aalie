@@ -1,0 +1,17 @@
+flagSearchBounded(A, n, objetivo)
+BEGIN
+  i <- 1;
+  activo <- true;
+  WHILE (activo = true AND i <= n) DO
+  BEGIN
+    IF (A[i] = objetivo) THEN
+    BEGIN
+      activo <- false;
+    END
+    ELSE
+    BEGIN
+      i <- i + 1;
+    END;
+  END;
+  RETURN activo;
+END

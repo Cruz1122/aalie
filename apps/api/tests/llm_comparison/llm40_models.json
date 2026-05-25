@@ -1,0 +1,30 @@
+{
+  "benchmark": "LLM40",
+  "version": "llm40-balanced-v1",
+  "models": [
+    {
+      "modelId": "gpt_5_5_extended_thinking",
+      "displayName": "GPT-5.5 Extended Thinking",
+      "provider": "OpenAI",
+      "reasoningMode": "Extended Thinking",
+      "outputsFile": "models/gpt_5_5_extended_thinking/llm40_llm_outputs.jsonl",
+      "reportDir": "out/models/gpt_5_5_extended_thinking"
+    },
+    {
+      "modelId": "gemini_3_1_pro_high",
+      "displayName": "Gemini 3.1 Pro High",
+      "provider": "Google",
+      "reasoningMode": "High",
+      "outputsFile": "models/gemini_3_1_pro_high/llm40_llm_outputs.jsonl",
+      "reportDir": "out/models/gemini_3_1_pro_high"
+    },
+    {
+      "modelId": "claude_opus_4_7_xhigh",
+      "displayName": "Claude Opus 4.7 XHigh",
+      "provider": "Anthropic",
+      "reasoningMode": "XHigh",
+      "outputsFile": "models/claude_opus_4_7_xhigh/llm40_llm_outputs.jsonl",
+      "reportDir": "out/models/claude_opus_4_7_xhigh"
+    }
+  ]
+}

@@ -8,20 +8,21 @@ import {
 } from "@/lib/content/user-guide";
 
 interface UserGuideModulePageProps {
-  params: {
+  params: Promise<{
     locale: string;
     moduleSlug: string;
-  };
+  }>;
 }
 
 export function generateStaticParams() {
   return getUserGuideStaticParams(routing.locales);
 }
 
-export default function UserGuideModulePage({
+export default async function UserGuideModulePage({
   params,
 }: UserGuideModulePageProps) {
-  const data = getUserGuideModuleData(params.locale, params.moduleSlug);
+  const { locale, moduleSlug } = await params;
+  const data = getUserGuideModuleData(locale, moduleSlug);
 
   if (!data) {
     notFound();

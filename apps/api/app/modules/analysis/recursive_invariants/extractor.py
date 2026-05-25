@@ -55,7 +55,7 @@ def extract_recursive_facts(ast: Optional[Dict[str, Any]]) -> RecursiveFacts:
 
     # Get procedure name for recursive call matching
     proc_name = main_proc.get("name", "f")
-    
+
     proc_body = main_proc.get("body", [])
     # Normalize proc_body: some parsers wrap procedure body in a Block node
     if isinstance(proc_body, dict):
@@ -97,7 +97,7 @@ def extract_recursive_facts(ast: Optional[Dict[str, Any]]) -> RecursiveFacts:
                     k += 1
                 if k < minlen:
                     # if they differ at same depth and one is 'T' other 'F', they are mutually exclusive
-                    if (p[k] == 'T' and q[k] == 'F') or (p[k] == 'F' and q[k] == 'T'):
+                    if (p[k] == "T" and q[k] == "F") or (p[k] == "F" and q[k] == "T"):
                         mutually_exclusive = True
                         break
             if mutually_exclusive:
@@ -124,9 +124,7 @@ def extract_recursive_facts(ast: Optional[Dict[str, Any]]) -> RecursiveFacts:
     facts.size_parameters = size_params
 
     # Analyze parameter decrease
-    facts.parameters_strictly_decrease = _analyze_parameter_decrease(
-        recursive_calls, size_params
-    )
+    facts.parameters_strictly_decrease = _analyze_parameter_decrease(recursive_calls, size_params)
 
     # Classify recursion type
     facts.recursion_type = _classify_recursion_type(recursive_calls, base_conditions)
@@ -184,7 +182,9 @@ def _extract_base_results(body: List[Dict[str, Any]]) -> List[str]:
     return results
 
 
-def _find_recursive_calls(body: List[Dict[str, Any]], proc_name: str = "f") -> List[RecursiveCallInfo]:
+def _find_recursive_calls(
+    body: List[Dict[str, Any]], proc_name: str = "f"
+) -> List[RecursiveCallInfo]:
     """Find all recursive call sites in procedure body, tracking branch path."""
     calls = []
 
@@ -270,14 +270,14 @@ def _find_recursive_calls_in_stmt(
             elif isinstance(v, list):
                 for item in v:
                     if isinstance(item, dict) and "type" in item:
-                        calls.extend(_find_recursive_calls_in_stmt(item, proc_name, path=list(path)))
+                        calls.extend(
+                            _find_recursive_calls_in_stmt(item, proc_name, path=list(path))
+                        )
 
     return calls
 
 
-def _analyze_execution_path_call_counts(
-    body: List[Dict[str, Any]], proc_name: str
-) -> List[int]:
+def _analyze_execution_path_call_counts(body: List[Dict[str, Any]], proc_name: str) -> List[int]:
     """Return recursive-call counts across possible execution paths.
 
     This models sequential statements, conditional branches, and early returns.
@@ -374,7 +374,6 @@ def _count_recursive_calls_in_node(node: Any, proc_name: str) -> int:
     return count
 
 
-
 def _extract_size_parameters(proc_def: Dict[str, Any]) -> List[str]:
     """Extract size parameters (usually the first parameter)."""
     params = proc_def.get("params", [])
@@ -391,9 +390,7 @@ def _extract_size_parameters(proc_def: Dict[str, Any]) -> List[str]:
     return []
 
 
-def _analyze_parameter_decrease(
-    calls: List[RecursiveCallInfo], size_params: List[str]
-) -> bool:
+def _analyze_parameter_decrease(calls: List[RecursiveCallInfo], size_params: List[str]) -> bool:
     """Check if parameters strictly decrease in recursive calls."""
     if not calls or not size_params:
         return False
@@ -407,9 +404,7 @@ def _analyze_parameter_decrease(
     return True
 
 
-def _classify_recursion_type(
-    calls: List[RecursiveCallInfo], base_conditions: List[str]
-) -> str:
+def _classify_recursion_type(calls: List[RecursiveCallInfo], base_conditions: List[str]) -> str:
     """Classify recursion type based on call patterns."""
     if not calls:
         return "unknown"
@@ -434,9 +429,7 @@ def _classify_recursion_type(
         return "linear_recursive" if len(calls) == 1 else "unknown"
 
 
-def _analyze_termination(
-    base_conditions: List[str], calls: List[RecursiveCallInfo]
-) -> bool:
+def _analyze_termination(base_conditions: List[str], calls: List[RecursiveCallInfo]) -> bool:
     """Analyze if termination is clear."""
     return len(base_conditions) > 0 and len(calls) > 0
 
@@ -550,7 +543,7 @@ def _stringify_expr(expr: Any) -> Optional[str]:
         else:
             name = callee
         args = expr.get("args", [])
-        params = [ _stringify_expr(a) or "?" for a in args ]
+        params = [_stringify_expr(a) or "?" for a in args]
         return f"{name}({', '.join(params)})" if name else None
     elif expr_type == "Binary":
         left = _stringify_expr(expr.get("left", {}))

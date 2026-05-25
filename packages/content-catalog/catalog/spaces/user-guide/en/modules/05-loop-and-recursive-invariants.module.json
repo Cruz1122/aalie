@@ -1,0 +1,221 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-loop-and-recursive-invariants",
+  "slug": "loop-and-recursive-invariants",
+  "title": "Invariants and correctness",
+  "shortTitle": "Invariants",
+  "order": 5,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Use loop invariants and inductive correctness to complement analysis with a formal reading of algorithm behavior.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 28,
+  "tags": [
+    "invariant",
+    "correctness",
+    "iterative",
+    "recursive"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "loop invariant",
+      "recursive invariant",
+      "inductive correctness"
+    ],
+    "keywords": [
+      "initialization",
+      "maintenance",
+      "finalization",
+      "base case"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-examples-bubble-sort",
+        "kind": "recommended"
+      },
+      {
+        "id": "mod-user-guide-recursive-fibonacci",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-recursive-fibonacci"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-distinguir-correctitud",
+      "text": "Distinguish complexity analysis from correctness reasoning."
+    },
+    {
+      "objectiveId": "obj-leer-invariantes",
+      "text": "Read iterative and recursive invariants as reviewable pedagogical support."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-05-loop-invariant-bubble",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/05-loop-invariant-bubble.webp"
+        },
+        "alt": "Loop invariant modal for Bubble Sort, with initialization, maintenance, and finalization.",
+        "caption": "Loop invariant modal for Bubble Sort, with initialization, maintenance, and finalization."
+      },
+      {
+        "resourceId": "img-05-recursive-invariant-fibonacci",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/05-recursive-invariant-fibonacci.webp"
+        },
+        "alt": "Recursive invariant or inductive-correctness analysis for Fibonacci.",
+        "caption": "Recursive invariant or inductive-correctness analysis for Fibonacci."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-invariantes",
+      "slug": "invariants",
+      "title": "Invariants and correctness",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-invariante-ciclo",
+          "slug": "loop-invariant",
+          "title": "Loop invariant in iterative algorithms",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m05-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "After "
+            },
+            {
+              "type": "link",
+              "text": "analyzing",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " an iterative algorithm such as Bubble Sort, AALIE may show the Loop Invariant option. This view helps reason about correctness: which property remains true before and after each iteration."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s01-img01",
+              "type": "image",
+              "resourceRef": "img-05-loop-invariant-bubble",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m05-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The formal reading uses three ideas: initialization, maintenance, and finalization. Initialization checks that the property is true at the start; maintenance checks that it remains true after each step; finalization connects the property with the correct result."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s01-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Not magic and not automatic certification",
+              "blocks": [
+                {
+                  "id": "blk-m05-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "An invariant suggested by the tool is pedagogical support. Review it with edge cases and with the real goal of the algorithm before presenting it as a proof."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-invariante-recursivo",
+          "slug": "recursive-correctness",
+          "title": "Inductive correctness in recursive algorithms",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m05-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Recursive algorithms do not have a traditional loop invariant. Instead, AALIE can organize an inductive-correctness reading: base case, inductive hypothesis, recursive steps, and termination."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s02-img01",
+              "type": "image",
+              "resourceRef": "img-05-recursive-invariant-fibonacci",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m05-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "For Fibonacci, this reading checks that calls move toward the base case and that each return combines valid results. The core idea is to show that the function is well defined for smaller sizes before claiming the general case."
+                }
+              ]
+            },
+            {
+              "id": "blk-m05-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "concept",
+              "icon": "school",
+              "blocks": [
+                {
+                  "id": "blk-m05-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Correctness explains why the algorithm produces the expected result. Complexity explains how much work it needs. These are different questions and should not be mixed."
+                    }
+                  ]
+                }
+              ],
+              "title": "Relation to complexity analysis"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

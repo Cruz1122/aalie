@@ -83,6 +83,11 @@ vi.mock("@/hooks/useContentProgress", () => ({
     useSectionCompletionTrackingMock(...args),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("@/components/Header", () => ({
   default: () => <div data-testid="header" />,
 }));
@@ -127,47 +132,46 @@ describe("User guide views", () => {
 
     useContentProgressMock.mockReturnValue({
       moduleProgressById: {
-        "mod-user-guide-measure": 40,
-        "mod-user-guide-building-cost": 50,
-        "mod-user-guide-iterative": 33,
-        "mod-user-guide-recursive": 0,
-        "mod-user-guide-interpreting": 0,
-        "mod-user-guide-loop-invariant": 0,
-        "mod-user-guide-analysis-limits": 20,
+        "mod-user-guide-getting-started": 40,
+        "mod-user-guide-linear-search-analyzer": 50,
+        "mod-user-guide-examples-bubble-sort": 33,
+        "mod-user-guide-recursive-fibonacci": 0,
+        "mod-user-guide-loop-and-recursive-invariants": 0,
+        "mod-user-guide-export-pdf": 20,
+        "mod-user-guide-ai-assistant": 0,
+        "mod-user-guide-courses-progress": 10,
+        "mod-user-guide-quizzes": 0,
       },
       spaceProgress: 20,
     });
 
     useSectionCompletionTrackingMock.mockReturnValue({
-      activeSectionId: "sec-lineal-y-log",
-      completedSectionIds: ["sec-lineal-y-log", "sec-anidados"],
+      activeSectionId: "sec-escribir-importar",
+      completedSectionIds: ["sec-escribir-importar"],
       percentage: 33,
     });
   });
 
-  it("renders seven guide modules from catalog metadata and navigates from the grid", () => {
+  it("renders nine guide modules from catalog metadata and navigates from the grid", () => {
     render(<UserGuideLandingView data={getUserGuideLandingFixture("es")} />);
 
     expect(
       screen.getAllByRole("link", { name: "Entrar al módulo" }),
-    ).toHaveLength(7);
-    expect(screen.getAllByRole("progressbar")).toHaveLength(7);
-    expect(screen.getByText("Algoritmos iterativos")).toBeInTheDocument();
+    ).toHaveLength(9);
+    expect(screen.getAllByRole("progressbar")).toHaveLength(9);
+    expect(screen.getByText("Primer recorrido por AALIE")).toBeInTheDocument();
     expect(finishNavigationMock).toHaveBeenCalled();
 
-    const limitsArticle = screen
+    const firstArticle = screen
       .getByRole("heading", {
-        name: /Cuándo el análisis no es suficiente/i,
+        name: /Primer recorrido por AALIE/i,
       })
       .closest("article");
-    expect(limitsArticle).toBeTruthy();
-    const enterLink = within(limitsArticle as HTMLElement).getByRole("link", {
+    expect(firstArticle).toBeTruthy();
+    const enterLink = within(firstArticle as HTMLElement).getByRole("link", {
       name: "Entrar al módulo",
     });
-    expect(enterLink).toHaveAttribute(
-      "href",
-      "/user-guide/limites-del-analisis",
-    );
+    expect(enterLink).toHaveAttribute("href", "/user-guide/getting-started");
 
     fireEvent.click(enterLink);
 
@@ -187,31 +191,33 @@ describe("User guide views", () => {
   it("renders a full module page with sections, blocks and prev/next navigation", () => {
     render(
       <UserGuideModuleView
-        data={getUserGuideModuleFixture("algoritmos-iterativos", "es")}
+        data={getUserGuideModuleFixture("linear-search-analyzer", "es")}
       />,
     );
 
-    expect(screen.queryByText("Algoritmos iterativos")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Analiza un algoritmo paso a paso"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Tabla de contenidos")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("buscar en módulo")).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Búsqueda lineal/i).length).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(/Patrones de bucles y la aplicación/i).length,
+      screen.getAllByText(/escribir|autocompletar|importar/i).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(/Recorridos lineales y pasos/i).length,
+      screen.getAllByText(/tabla de costos por línea/i).length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText(/Patrones frecuentes/)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: /WHILE: qué es en pseudocódigo y qué hace el analizador/i,
+        name: /AST y seguimiento paso a paso/i,
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Módulo anterior/ }),
-    ).toHaveAttribute("href", "/user-guide/como-se-construye-el-costo");
+    ).toHaveAttribute("href", "/user-guide/getting-started");
     expect(
       screen.getByRole("link", { name: /Siguiente módulo/ }),
-    ).toHaveAttribute("href", "/user-guide/algoritmos-recursivos");
+    ).toHaveAttribute("href", "/user-guide/examples-bubble-sort");
 
     const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(
       -1,
@@ -225,10 +231,33 @@ describe("User guide views", () => {
       "module-page",
     );
     expect(launcherProps.assistantContext.guideSection?.id).toBe(
-      "sec-lineal-y-log",
+      "sec-escribir-importar",
     );
     expect(launcherProps.assistantContext.guideSection?.title).toBe(
-      "Recorridos lineales y pasos que «saltan» de tamaño",
+      "Escribir, autocompletar e importar código",
     );
+
+    // Embedded content links
+    const analyzerLink = screen.getByRole("link", {
+      name: "Analizador General",
+    });
+    expect(analyzerLink).toHaveAttribute("href", "/analyzer");
+  });
+
+  it("renders embedded content links in English module", () => {
+    render(
+      <UserGuideModuleView
+        data={getUserGuideModuleFixture("linear-search-analyzer", "en")}
+      />,
+    );
+
+    // ES link should NOT be present
+    expect(
+      screen.queryByRole("link", { name: "Analizador General" }),
+    ).not.toBeInTheDocument();
+
+    // EN embedded link: "analyzer" points to /analyzer
+    const analyzerLink = screen.getByRole("link", { name: "analyzer" });
+    expect(analyzerLink).toHaveAttribute("href", "/analyzer");
   });
 });

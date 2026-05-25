@@ -1,4 +1,5 @@
 import type { TechniqueRule } from "./ruleTypes";
+import type { EvidenceItem } from "../types";
 import { confidenceFromScore } from "./score";
 
 export const recursiveExpansionRule: TechniqueRule = {
@@ -7,7 +8,7 @@ export const recursiveExpansionRule: TechniqueRule = {
 
   evaluate(facts) {
     let score = 0;
-    const evidenceItems = [];
+    const evidenceItems: EvidenceItem[] = [];
     const secondarySignals: string[] = [];
     const diagnostics: string[] = [];
 

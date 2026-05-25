@@ -1,0 +1,16 @@
+linearThenConstant(A, n, flag)
+BEGIN
+  total <- 0;
+  IF (flag = true) THEN
+  BEGIN
+    FOR i <- 1 TO n DO
+    BEGIN
+      total <- total + A[i];
+    END;
+  END
+  ELSE
+  BEGIN
+    total <- total + 1;
+  END;
+  RETURN total;
+END

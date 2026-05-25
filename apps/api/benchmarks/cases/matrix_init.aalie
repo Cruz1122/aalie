@@ -1,0 +1,11 @@
+matrixMult(n) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    FOR j <- 1 TO n DO BEGIN
+      sum <- 0;
+      FOR k <- 1 TO n DO BEGIN
+        sum <- sum + 1;
+      END
+      result <- sum;
+    END
+  END
+END

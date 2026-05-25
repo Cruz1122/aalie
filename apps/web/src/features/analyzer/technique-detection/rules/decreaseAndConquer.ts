@@ -1,4 +1,5 @@
 import type { TechniqueRule } from "./ruleTypes";
+import type { EvidenceItem } from "../types";
 import { confidenceFromScore } from "./score";
 
 export const decreaseAndConquerRule: TechniqueRule = {
@@ -7,7 +8,7 @@ export const decreaseAndConquerRule: TechniqueRule = {
 
   evaluate(facts) {
     let score = 0;
-    const evidenceItems = [];
+    const evidenceItems: EvidenceItem[] = [];
     const secondarySignals: string[] = [];
     const diagnostics: string[] = [];
 
@@ -64,6 +65,15 @@ export const decreaseAndConquerRule: TechniqueRule = {
       score -= 40;
       diagnostics.push(
         "Se detectan señales de backtracking (elección + mutación + rollback).",
+      );
+    }
+
+    // If the algorithm has B&B semantic cues (bound, cota, mejor, etc.),
+    // it is likely B&B, not decrease and conquer
+    if (facts.semantic.hasBranchAndBoundCue) {
+      score -= 30;
+      diagnostics.push(
+        "Se detectaron señales semánticas de Branch and Bound (cota, bound, mejor, etc.).",
       );
     }
 

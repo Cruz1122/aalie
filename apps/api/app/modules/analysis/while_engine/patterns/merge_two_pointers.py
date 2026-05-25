@@ -47,8 +47,7 @@ class MergeTwoPointersPattern(WhilePattern):
             # Si ambos punteros tienen incremento MUST en el mismo ciclo, es más bien
             # un contador lineal compuesto (ej. i<-i+1 y j<-j+1 simultáneamente).
             has_must_inc = any(
-                u.get("type") == "num" and u.get("operator") == "+"
-                for u in (su.must_updates or [])
+                u.get("type") == "num" and u.get("operator") == "+" for u in (su.must_updates or [])
             )
             if has_must_inc:
                 return False

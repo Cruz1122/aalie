@@ -1,0 +1,23 @@
+strassenLikeCost(n)
+BEGIN
+  IF (n <= 1) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    a <- strassenLikeCost(n / 2);
+    b <- strassenLikeCost(n / 2);
+    c <- strassenLikeCost(n / 2);
+    d <- strassenLikeCost(n / 2);
+    e <- strassenLikeCost(n / 2);
+    subf <- strassenLikeCost(n / 2);
+    g <- strassenLikeCost(n / 2);
+    total <- 0;
+    FOR i <- 1 TO n DO
+    BEGIN
+      total <- total + 1;
+    END;
+    RETURN a + b + c + d + e + subf + g + total;
+  END;
+END

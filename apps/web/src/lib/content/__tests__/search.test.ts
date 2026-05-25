@@ -6,44 +6,48 @@ import { getUserGuideLandingFixture } from "@/test/user-guide-fixtures";
 describe("searchContentIndex", () => {
   const landing = getUserGuideLandingFixture("es");
 
-  it("finds the analysis limits module by partial keyword", () => {
+  it("finds the analyzer module by relevant keyword", () => {
     const results = searchContentIndex(
       landing.searchIndex,
       landing.modules,
-      "parcial",
+      "analizador",
     );
 
-    expect(results[0]?.entry.title.toLowerCase()).toContain("parcial");
+    expect(results[0]?.moduleTitle).toBe("Analiza un algoritmo paso a paso");
     expect(results[0]?.entry.route).toMatch(
-      /\/user-guide\/limites-del-analisis#/,
+      /\/user-guide\/linear-search-analyzer/,
     );
   });
 
-  it("finds the minimal syntax section by distinctive phrase", () => {
+  it("finds the linear search section by distinctive phrase", () => {
     const results = searchContentIndex(
       landing.searchIndex,
       landing.modules,
-      "sintaxis mínima",
+      "búsqueda lineal",
     );
 
-    expect(results[0]?.entry.title).toBe("Sintaxis mínima para seguir la guía");
-    expect(results[0]?.moduleTitle).toBe("Cómo se mide un algoritmo");
+    expect(results[0]?.moduleTitle).toBe("Analiza un algoritmo paso a paso");
+    expect(results[0]?.entry.route).toMatch(
+      /\/user-guide\/linear-search-analyzer/,
+    );
   });
 
-  it("resolves CALL to the first module syntax section", () => {
+  it("resolves Fibonacci to the recursive module", () => {
     const results = searchContentIndex(
       landing.searchIndex,
       landing.modules,
-      "CALL",
+      "Fibonacci",
     );
 
-    expect(results[0]?.entry.title).toBe("Sintaxis mínima para seguir la guía");
-    expect(results[0]?.entry.route).toBe(
-      "/user-guide/como-se-mide-un-algoritmo#sintaxis-minima",
+    expect(results[0]?.moduleTitle).toBe(
+      "Analiza un algoritmo recursivo con Fibonacci",
+    );
+    expect(results[0]?.entry.route).toMatch(
+      /\/user-guide\/recursive-fibonacci/,
     );
   });
 
-  it("finds recursive module from a natural query", () => {
+  it("finds recurrencia content from a natural query", () => {
     const results = searchContentIndex(
       landing.searchIndex,
       landing.modules,
@@ -51,19 +55,19 @@ describe("searchContentIndex", () => {
     );
 
     expect(results[0]?.entry.title.toLowerCase()).toContain("recurrencia");
-    expect(results[0]?.moduleTitle).toBe("Algoritmos recursivos");
+    expect(results[0]?.moduleTitle).toBe(
+      "Analiza un algoritmo recursivo con Fibonacci",
+    );
   });
 
-  it("keeps troubleshooting-style sections discoverable for warnings", () => {
+  it("finds PDF export module by file type keyword", () => {
     const results = searchContentIndex(
       landing.searchIndex,
       landing.modules,
-      "advertencias",
+      "PDF",
     );
 
-    expect(results[0]?.entry.title.toLowerCase()).toContain("advertencias");
-    expect(results[0]?.entry.route).toMatch(
-      /\/user-guide\/limites-del-analisis#/,
-    );
+    expect(results[0]?.moduleTitle).toBe("Exporta resultados a PDF");
+    expect(results[0]?.entry.route).toMatch(/\/user-guide\/export-pdf/);
   });
 });

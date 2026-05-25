@@ -1,7 +1,6 @@
 "use client";
 
-import { Tooltip, Box, Typography, Link as MuiLink } from "@mui/material";
-import React from "react";
+import React, { useId, useState } from "react";
 
 import { Link } from "@/i18n/navigation";
 
@@ -18,89 +17,54 @@ interface TermInlineProps {
 }
 
 export function TermInline({ text, term, display, href }: TermInlineProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const tooltipId = useId();
   const resolvedClassName =
     display === "highlight"
       ? "rounded bg-sky-400/15 px-1 py-0.5 text-sky-100 font-medium"
       : "border-b border-dashed border-sky-400/60 text-sky-100 cursor-help transition-colors hover:border-sky-400/90 hover:bg-sky-400/5 px-0.5";
 
-  const tooltipContent = (
-    <Box sx={{ p: 1.5, maxWidth: 280 }}>
-      <Typography
-        variant="subtitle2"
-        component="div"
-        sx={{ fontWeight: 600, color: "white", mb: 0.5 }}
-      >
-        {term.label}
-      </Typography>
-      <Typography
-        variant="body2"
-        component="div"
-        sx={{
-          color: "rgba(255, 255, 255, 0.8)",
-          fontSize: "0.85rem",
-          lineHeight: 1.6,
-        }}
-      >
-        {term.definition}
-      </Typography>
-      {href && (
-        <Box
-          sx={{
-            mt: 1.5,
-            pt: 1,
-            borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-          }}
-        >
-          <MuiLink
-            component={Link}
-            href={href}
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 0.5,
-              fontSize: "0.75rem",
-              color: "#7dd3fc",
-              textDecoration: "none",
-              "&:hover": { textDecoration: "underline" },
-            }}
-          >
-            Ver explicación detallada
-            <MaterialIcon name="arrow_forward" style={{ fontSize: 14 }} />
-          </MuiLink>
-        </Box>
-      )}
-    </Box>
-  );
-
   return (
-    <Tooltip
-      title={tooltipContent}
-      arrow
-      placement="top"
-      enterTouchDelay={0}
-      leaveTouchDelay={3000}
-      componentsProps={{
-        tooltip: {
-          sx: {
-            bgcolor: "#0f172a",
-            color: "white",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.4)",
-            p: 0,
-          },
-        },
-        arrow: {
-          sx: {
-            color: "#0f172a",
-            "&::before": {
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-            },
-          },
-        },
-      }}
+    <span
+      className="relative inline-flex"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
     >
-      <span className={resolvedClassName}>{text}</span>
-    </Tooltip>
+      <span
+        className={resolvedClassName}
+        tabIndex={0}
+        aria-describedby={tooltipId}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setIsOpen(false)}
+      >
+        {text}
+      </span>
+      {isOpen ? (
+        <span
+          id={tooltipId}
+          role="tooltip"
+          className="absolute bottom-full left-1/2 z-20 mb-2 w-72 max-w-[min(18rem,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-white/10 bg-slate-950 p-4 text-left text-white shadow-2xl"
+        >
+          <span className="block text-sm font-semibold text-white">
+            {term.label}
+          </span>
+          <span className="mt-2 block text-[0.85rem] leading-6 text-white/80">
+            {term.definition}
+          </span>
+          {href ? (
+            <span className="mt-3 block border-t border-white/10 pt-3">
+              <Link
+                href={href}
+                className="inline-flex items-center gap-1 text-xs text-sky-300 no-underline hover:underline"
+              >
+                Ver explicación detallada
+                <MaterialIcon name="arrow_forward" style={{ fontSize: 14 }} />
+              </Link>
+            </span>
+          ) : null}
+          <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-white/10 bg-slate-950" />
+        </span>
+      ) : null}
+    </span>
   );
 }

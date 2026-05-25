@@ -843,6 +843,14 @@ const renderRecursionTreeCards = (
     if (typeof level === "number") return tRT("levelWithNumber", { level });
     return tRT("dominantLevel");
   };
+  const getDominatingLevelCopy = (
+    level: string | number | undefined,
+  ): string => {
+    if (level === "leaves") return tRT("leavesDominateCopy");
+    if (level === "root") return tRT("rootDominatesCopy");
+    if (level === "all") return tRT("balancedWorkCopy");
+    return "";
+  };
 
   return (
     <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:items-stretch">
@@ -855,19 +863,16 @@ const renderRecursionTreeCards = (
             </span>
             <span>{tRT("dominatingLevel")}</span>
           </h3>
-          <div className="flex min-h-[120px] min-w-0 flex-1 flex-col items-stretch justify-between gap-2 overflow-hidden rounded border border-white/10 bg-slate-800/60 p-3">
-            <div className="shrink-0 text-center text-base font-semibold text-cyan-300">
+          <div className="flex min-h-[120px] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded border border-white/10 bg-slate-800/60 p-3">
+            <div className="text-center text-base font-semibold text-cyan-300">
               {getDominatingLevelText(
                 props.recursionTree?.dominating_level?.level,
               )}
             </div>
-            <div className={`${KATEX_IN_CARD} flex-1 text-center`}>
-              <Formula
-                latex={props.translateReason(
-                  props.recursionTree?.dominating_level?.reason || "",
-                )}
-                display
-              />
+            <div className="text-center text-xs italic text-slate-400">
+              {getDominatingLevelCopy(
+                props.recursionTree?.dominating_level?.level,
+              )}
             </div>
           </div>
         </div>

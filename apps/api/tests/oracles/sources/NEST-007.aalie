@@ -1,0 +1,12 @@
+outerLinearInnerConstant(A, n)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    FOR j <- 1 TO 10 DO
+    BEGIN
+      total <- total + A[i];
+    END;
+  END;
+  RETURN total;
+END

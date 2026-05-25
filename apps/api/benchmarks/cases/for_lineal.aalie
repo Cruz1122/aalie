@@ -1,0 +1,5 @@
+linear(n) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    x <- i;
+  END
+END

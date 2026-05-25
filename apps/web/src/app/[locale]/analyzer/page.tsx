@@ -9,7 +9,7 @@ import type {
   Program,
 } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 
 import AAButton from "@/components/AAButton";
@@ -36,11 +36,11 @@ import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import RecursiveInvariantModal from "@/components/RecursiveInvariantModal";
 import RepairModal from "@/components/RepairModal";
 import TraceDedicatedView from "@/components/TraceDedicatedView";
-import TxtImportModal from "@/components/TxtImportModal";
 import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-support/parser/normalizeImportSuggestions";
 import { requestTraceRefresh } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import { getApiErrorType } from "@/lib/api-error-translator";
 import {
   buildBundleDetailNotes,
   normalizeAssistantLocale,
@@ -374,13 +374,6 @@ type ClassifyResponse = {
   kind: "iterative" | "recursive" | "hybrid" | "unknown";
 };
 type CaseType = "worst" | "average" | "best";
-type TxtImportModalState = {
-  title: string;
-  description: string;
-  details?: string[];
-  showRepairAction?: boolean;
-};
-
 export default function AnalyzerPage() {
   const locale = useLocale();
   const { animateProgress } = useAnalysisProgress();
@@ -400,7 +393,10 @@ export default function AnalyzerPage() {
   const tGpuCpuModal = useTranslations("analyzer.gpuCpuModal");
   const tMethodSelector = useTranslations("analyzer.methodSelector");
   const tCommon = useTranslations("common");
+  const tLoader = useTranslations("analyzer.loader");
+  const tComparison = useTranslations("analyzer.comparisonLoader");
   const getMessage = (key: string) => t(key);
+  const safeLocale = locale === "es" ? "es" : "en";
 
   // Estados del flujo de análisis (inicial neutro para evitar hydration mismatch)
   const [source, setSource] = useState<string>("");
@@ -485,9 +481,14 @@ export default function AnalyzerPage() {
   const [parseErrors, setParseErrors] = useState<ParseError[] | undefined>(
     undefined,
   );
-  const [txtImportModal, setTxtImportModal] =
-    useState<TxtImportModalState | null>(null);
   const [isImportingTxt, setIsImportingTxt] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importMessage, setImportMessage] = useState("");
+  const [isImportComplete, setIsImportComplete] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importErrorActionLabel, setImportErrorActionLabel] = useState<
+    string | null
+  >(null);
   const txtInputRef = useRef<HTMLInputElement | null>(null);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<"tree" | "json">("tree");
@@ -502,7 +503,7 @@ export default function AnalyzerPage() {
   const [isComparing, setIsComparing] = useState(false);
   const [comparisonProgress, setComparisonProgress] = useState(0);
   const [comparisonMessage, setComparisonMessage] = useState(
-    "Contactando con LLM...",
+    tComparison("contacting"),
   );
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [llmAnalysisData, setLlmAnalysisData] = useState<{
@@ -626,47 +627,45 @@ export default function AnalyzerPage() {
       return;
     }
 
-    setTxtImportModal(null);
     setIsImportingTxt(true);
+    setImportProgress(0);
+    setImportMessage(tLoader("importPleaseWait"));
+    setIsImportComplete(false);
+    setImportError(null);
+    setImportErrorActionLabel(null);
 
+    setImportProgress(10);
+    setImportMessage("Validating file...");
     const validation = await readAndValidateTxtFile(file);
     if (!validation.ok) {
-      setIsImportingTxt(false);
+      let errorMsg: string;
       if (validation.reason === "invalidExtension") {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportOnlyTxt"),
-        });
+        errorMsg = tView("txtImportOnlyTxt");
       } else if (validation.reason === "empty") {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportEmpty"),
-        });
+        errorMsg = tView("txtImportEmpty");
       } else if (validation.reason === "tooLarge") {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportTooLarge", {
-            maxKb: Math.floor(MAX_TXT_IMPORT_BYTES / 1024),
-          }),
+        errorMsg = tView("txtImportTooLarge", {
+          maxKb: Math.floor(MAX_TXT_IMPORT_BYTES / 1024),
         });
       } else if (validation.reason === "invalidFormat") {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportInvalidFormat"),
-        });
+        errorMsg = tView("txtImportInvalidFormat");
       } else {
-        setTxtImportModal({
-          title: tView("txtImportInvalidFileTitle"),
-          description: tView("txtImportReadError"),
-        });
+        errorMsg = tView("txtImportReadError");
       }
+      setImportProgress(100);
+      setImportError(errorMsg);
       return;
     }
 
+    setImportProgress(40);
+    setImportMessage("Parsing algorithm...");
     try {
       const parseRes = await GrammarApiService.parseCode(
         validation.normalizedSource,
       );
+
+      setImportProgress(90);
+      setImportMessage("Finalizing import...");
 
       if (parseRes.ok) {
         setSource(validation.normalizedSource);
@@ -674,17 +673,8 @@ export default function AnalyzerPage() {
         setLocalParseOk(true);
         setPendingImportSourceForRepair(null);
         setPendingImportErrorsForRepair(undefined);
-        const suggestions = getImportNormalizationSuggestions(
-          validation.normalizedSource,
-        );
-        setTxtImportModal({
-          title: tView("txtImportSuccessTitle"),
-          description: tView("txtImportSuccess"),
-          details:
-            suggestions.length > 0
-              ? suggestions.map((suggestion) => suggestion.reason)
-              : undefined,
-        });
+        setImportProgress(100);
+        setIsImportComplete(true);
       } else {
         const errors = parseRes.errors || undefined;
         setParseErrors(errors);
@@ -694,10 +684,8 @@ export default function AnalyzerPage() {
         );
 
         if (!looksAlgorithm) {
-          setTxtImportModal({
-            title: tView("txtImportInvalidAlgorithmTitle"),
-            description: tView("txtImportNotAlgorithm"),
-          });
+          setImportProgress(100);
+          setImportError(tView("txtImportNotAlgorithm"));
           return;
         }
 
@@ -709,31 +697,46 @@ export default function AnalyzerPage() {
           }),
         );
 
-        setTxtImportModal({
-          title: tView("txtImportGrammarTitle"),
-          description: tView("txtImportParseFailed"),
-          details: [
-            ...errorDetails,
-            ...getImportNormalizationSuggestions(
-              validation.normalizedSource,
-            ).map((suggestion) => suggestion.reason),
-          ],
-          showRepairAction: true,
-        });
+        const suggestionDetails = getImportNormalizationSuggestions(
+          validation.normalizedSource,
+        ).map((suggestion) => suggestion.reason);
+
+        const fullError = [
+          tView("txtImportParseFailed"),
+          "",
+          ...errorDetails,
+          ...(suggestionDetails.length > 0 ? ["", ...suggestionDetails] : []),
+        ].join("\n");
+
+        setImportProgress(100);
+        setImportError(fullError);
+        setImportErrorActionLabel(tView("repairWithAI"));
         setPendingImportSourceForRepair(validation.normalizedSource);
         setPendingImportErrorsForRepair(errors);
       }
     } catch {
       setPendingImportSourceForRepair(null);
       setPendingImportErrorsForRepair(undefined);
-      setTxtImportModal({
-        title: tView("txtImportInvalidFileTitle"),
-        description: tView("txtImportReadError"),
-      });
-    } finally {
-      setIsImportingTxt(false);
+      setImportProgress(100);
+      setImportError(tView("txtImportReadError"));
     }
   };
+
+  const handleImportRepair = useCallback(() => {
+    if (pendingImportSourceForRepair) {
+      setSource(pendingImportSourceForRepair);
+    }
+    setParseErrors(pendingImportErrorsForRepair);
+    setIsImportingTxt(false);
+    setImportProgress(0);
+    setImportMessage("");
+    setIsImportComplete(false);
+    setImportError(null);
+    setImportErrorActionLabel(null);
+    setPendingImportSourceForRepair(null);
+    setPendingImportErrorsForRepair(undefined);
+    setShowRepairModal(true);
+  }, [pendingImportSourceForRepair, pendingImportErrorsForRepair]);
 
   // Cleanup de timeouts al desmontar
   useEffect(() => {
@@ -775,8 +778,10 @@ export default function AnalyzerPage() {
 
   // Handler para el clic del botón de análisis
   const handleAnalyze = async () => {
-    // Verificar que no esté ya analizando
     if (analyzing) return;
+    if (!source.trim()) return;
+    if (!localParseOk) return;
+    if (isExporting) return;
 
     const augmentedSource = resolveProcedureCalls(source);
 
@@ -808,6 +813,22 @@ export default function AnalyzerPage() {
       )) as ParseResponse;
 
       if (!parseRes.ok) {
+        if (
+          getApiErrorType(parseRes as unknown as Record<string, unknown>) ===
+          "connection"
+        ) {
+          handleAnalysisError(
+            tMessages("errorConnection"),
+            setAnalyzing,
+            setAnalysisProgress,
+            setAnalysisMessage,
+            setAlgorithmType,
+            setIsAnalysisComplete,
+            setAnalysisError,
+            getMessage,
+          );
+          return;
+        }
         console.error("Error en parse:", parseRes);
         const errorMsg = extractParseError(parseRes);
         handleAnalysisError(
@@ -986,8 +1007,23 @@ export default function AnalyzerPage() {
         errors?: Array<{ message: string; line?: number; column?: number }>;
       };
 
-      // Verificar errores
       if (!analyzeRes.ok) {
+        if (
+          getApiErrorType(analyzeRes as unknown as Record<string, unknown>) ===
+          "connection"
+        ) {
+          handleAnalysisError(
+            tMessages("errorConnection"),
+            setAnalyzing,
+            setAnalysisProgress,
+            setAnalysisMessage,
+            setAlgorithmType,
+            setIsAnalysisComplete,
+            setAnalysisError,
+            getMessage,
+          );
+          return;
+        }
         console.error("Error en análisis:", analyzeRes);
         const errorMsg = extractAnalysisError(analyzeRes);
         handleAnalysisError(
@@ -1138,7 +1174,7 @@ export default function AnalyzerPage() {
     try {
       setIsComparing(true);
       setComparisonProgress(0);
-      setComparisonMessage("Contactando con LLM...");
+      setComparisonMessage(tComparison("contacting"));
 
       // Determinar tipo de algoritmo y datos core
       const bestForAnalysis = data.best === "same_as_worst" ? null : data.best;
@@ -1163,7 +1199,7 @@ export default function AnalyzerPage() {
       const ownCoreData = isRecursive ? ownCoreDataWorst : ownCoreDataWorst;
 
       if (!ownCoreData) {
-        throw new Error("No se pudieron extraer los datos core del análisis");
+        throw new Error(tComparison("noCoreData"));
       }
 
       // Preparar todos los datos del análisis para enviar al LLM
@@ -1189,7 +1225,7 @@ export default function AnalyzerPage() {
       }
 
       // Preparación rápida inicial
-      setComparisonMessage("Preparando datos...");
+      setComparisonMessage(tComparison("preparingData"));
       await animateProgress(0, 5, 200, setComparisonProgress);
 
       // Construir instrucción sobre el método a usar
@@ -1202,21 +1238,33 @@ export default function AnalyzerPage() {
           recursion_tree: tMethods("recursionTree"),
         };
         const methodDisplayName = methodNames[ownMethod] || ownMethod;
-        methodInstruction = `\n**MÉTODO A USAR (CRÍTICO):**
+        methodInstruction = panelText(
+          safeLocale,
+          `\n**MÉTODO A USAR (CRÍTICO):**
 - El análisis propio utilizó el método "${methodDisplayName}" (${ownMethod})
 - **DEBES usar el MISMO método** en tu análisis para poder comparar correctamente
 - Si el análisis propio usó "${ownMethod}", tu análisis también debe usar "${ownMethod}" y proporcionar todos los campos requeridos para ese método
-- Solo si el método usado en el análisis propio no es aplicable o es incorrecto, puedes usar un método alternativo, pero debes justificarlo en tu nota`;
+- Solo si el método usado en el análisis propio no es aplicable o es incorrecto, puedes usar un método alternativo, pero debes justificarlo en tu nota`,
+          `\n**METHOD TO USE (CRITICAL):**
+- The formal analysis used the method "${methodDisplayName}" (${ownMethod})
+- **YOU MUST use the SAME method** in your analysis to compare correctly
+- If the formal analysis used "${ownMethod}", your analysis must also use "${ownMethod}" and provide all required fields for that method
+- Only if the method used by the formal analysis is not applicable or is incorrect may you use an alternative method, but you must justify it in your note`,
+        );
       }
 
-      const prompt = `Analiza el siguiente algoritmo y proporciona un análisis de complejidad detallado.
+      const prompt = `${panelText(
+        safeLocale,
+        "Analiza el siguiente algoritmo y proporciona un análisis de complejidad detallado.",
+        "Analyze the following algorithm and provide a detailed complexity analysis.",
+      )}
 
-**CÓDIGO DEL ALGORITMO:**
+**${panelText(safeLocale, "CÓDIGO DEL ALGORITMO", "ALGORITHM CODE")}:**
 \`\`\`pseudocode
 ${source}
 \`\`\`
 
-**ANÁLISIS PROPIO COMPLETO (para que puedas dar una observación real):**
+**${panelText(safeLocale, "ANÁLISIS PROPIO COMPLETO (para que puedas dar una observación real)", "COMPLETE FORMAL ANALYSIS (so you can provide a real observation)")}:**
 ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         // Detectar si hay variabilidad de casos en el análisis propio
         const hasVariability = data.has_case_variability === true;
@@ -1224,7 +1272,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         const hasAvgCase = data.avg !== null && data.avg !== undefined;
 
         if (hasVariability && (hasBestCase || hasAvgCase)) {
-          return `\n\n**⚠️ CRÍTICO - VARIABILIDAD DE CASOS (LEE ESTO CON ATENCIÓN):**
+          return panelText(
+            safeLocale,
+            `\n\n**⚠️ CRÍTICO - VARIABILIDAD DE CASOS (LEE ESTO CON ATENCIÓN):**
 - El análisis propio tiene variabilidad entre worst, best y average case (has_case_variability: true)
 - **OBLIGATORIO: DEBES proporcionar los 3 casos (worst, best, avg) en tu respuesta**, NO solo worst
 - **ESTRUCTURA REQUERIDA**: Tu respuesta DEBE tener esta estructura:
@@ -1239,37 +1289,66 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 - Si el análisis propio muestra diferentes complejidades para worst/best/avg, tu análisis también debe mostrar los 3 casos
 - El campo "analysis" DEBE contener objetos separados para "worst", "best" y "avg" cuando hay variabilidad
 - NO omitas los casos best y avg cuando el análisis propio los tiene
-- Si el análisis propio tiene worst, best y avg, tu respuesta DEBE tener worst, best y avg también`;
+- Si el análisis propio tiene worst, best y avg, tu respuesta DEBE tener worst, best y avg también`,
+            `\n\n**⚠️ CRITICAL - CASE VARIABILITY (READ THIS CAREFULLY):**
+- The formal analysis has variability between worst, best, and average case (has_case_variability: true)
+- **REQUIRED: YOU MUST provide all 3 cases (worst, best, avg) in your response**, not just worst
+- **REQUIRED STRUCTURE**: Your response MUST have this structure:
+  {
+    "analysis": {
+      "worst": { ... all fields for worst-case analysis ... },
+      "best": { ... all fields for best-case analysis ... },
+      "avg": { ... all fields for average-case analysis ... }
+    },
+    "note": "..."
+  }
+- If the formal analysis shows different complexities for worst/best/avg, your analysis must also show all 3 cases
+- The "analysis" field MUST contain separate objects for "worst", "best", and "avg" when variability exists
+- DO NOT omit best and avg when the formal analysis includes them
+- If the formal analysis has worst, best, and avg, your response MUST include worst, best, and avg as well`,
+          );
         }
         return "";
       })()}
 
-**INSTRUCCIONES:**
-1. Analiza el algoritmo proporcionado
-2. Determina si es iterativo o recursivo
-3. Calcula la complejidad temporal y espacial
-4. ${ownMethod && isRecursive ? `**USA EL MISMO MÉTODO QUE EL ANÁLISIS PROPIO** (${ownMethod})` : "Aplica los métodos apropiados (Teorema Maestro, Iteración, Árbol de Recursión, Ecuación Característica, etc.)"}
-5. **Haz que tu salida coincida con el sistema paso a paso de AALIE**:
-   - Si reportas un caso iterativo, incluye \`step_by_step\` con el walkthrough del caso (\`method: "iterative_case"\`)
-   - Si reportas un método recursivo (\`characteristic_equation\`, \`iteration\`, \`master\`, \`recursion_tree\`), ese objeto DEBE incluir su \`step_by_step\`
-   - Respeta la estructura de \`steps\`, \`overallStatus\`, \`summary\`, \`conceptNote\`, \`math.primaryLatex\` y \`math.items\`
-6. Proporciona todos los datos core del análisis en formato JSON
-7. **IMPORTANTE**: Compara tu análisis con el análisis propio proporcionado y da una observación REAL y específica (máx. 150 caracteres) sobre:
-   - La precisión del análisis propio
-   - Si hay diferencias o coincidencias
-   - Si hay aspectos que podrían mejorarse
-   - Un adjetivo calificativo breve
-   La nota debe comenzar con un emoji de cara (😊, 😐, 😕, etc.) seguido de tu observación
+**${panelText(safeLocale, "INSTRUCCIONES", "INSTRUCTIONS")}:**
+1. ${panelText(safeLocale, "Analiza el algoritmo proporcionado", "Analyze the provided algorithm")}
+2. ${panelText(safeLocale, "Determina si es iterativo o recursivo", "Determine whether it is iterative or recursive")}
+3. ${panelText(safeLocale, "Calcula la complejidad temporal y espacial", "Calculate the time and space complexity")}
+4. ${
+        ownMethod && isRecursive
+          ? panelText(
+              safeLocale,
+              `**USA EL MISMO MÉTODO QUE EL ANÁLISIS PROPIO** (${ownMethod})`,
+              `**USE THE SAME METHOD AS THE FORMAL ANALYSIS** (${ownMethod})`,
+            )
+          : panelText(
+              safeLocale,
+              "Aplica los métodos apropiados (Teorema Maestro, Iteración, Árbol de Recursión, Ecuación Característica, etc.)",
+              "Apply the appropriate methods (Master Theorem, Iteration, Recursion Tree, Characteristic Equation, etc.)",
+            )
+      }
+5. **${panelText(safeLocale, "Haz que tu salida coincida con el sistema paso a paso de AALIE", "Make your output match AALIE's step-by-step system")}**:
+   - ${panelText(safeLocale, 'Si reportas un caso iterativo, incluye `step_by_step` con el walkthrough del caso (`method: "iterative_case"`)', 'If you report an iterative case, include `step_by_step` with the case walkthrough (`method: "iterative_case"`)')}
+   - ${panelText(safeLocale, "Si reportas un método recursivo (`characteristic_equation`, `iteration`, `master`, `recursion_tree`), ese objeto DEBE incluir su `step_by_step`", "If you report a recursive method (`characteristic_equation`, `iteration`, `master`, `recursion_tree`), that object MUST include its `step_by_step`")}
+   - ${panelText(safeLocale, "Respeta la estructura de `steps`, `overallStatus`, `summary`, `conceptNote`, `math.primaryLatex` y `math.items`", "Preserve the structure of `steps`, `overallStatus`, `summary`, `conceptNote`, `math.primaryLatex`, and `math.items`")}
+6. ${panelText(safeLocale, "Proporciona todos los datos core del análisis en formato JSON", "Provide all core analysis data in JSON format")}
+7. **${panelText(safeLocale, "IMPORTANTE", "IMPORTANT")}**: ${panelText(safeLocale, "Compara tu análisis con el análisis propio proporcionado y da una observación REAL y específica (máx. 150 caracteres) sobre:", "Compare your analysis with the provided formal analysis and give a REAL and specific observation (max. 150 characters) about:")}
+   - ${panelText(safeLocale, "La precisión del análisis propio", "The accuracy of the formal analysis")}
+   - ${panelText(safeLocale, "Si hay diferencias o coincidencias", "Whether there are differences or matches")}
+   - ${panelText(safeLocale, "Si hay aspectos que podrían mejorarse", "Whether there are aspects that could be improved")}
+   - ${panelText(safeLocale, "Un adjetivo calificativo breve", "A short evaluative adjective")}
+   ${panelText(safeLocale, "La nota debe comenzar con un emoji de cara (😊, 😐, 😕, etc.) seguido de tu observación", "The note must begin with a face emoji (😊, 😐, 😕, etc.) followed by your observation")}
 
-**IMPORTANTE:**
-- Usa formato LaTeX para todas las expresiones matemáticas
-- La nota debe ser una observación REAL comparando tu análisis con el proporcionado, no genérica
-- Devuelve SOLO un objeto JSON válido según el schema definido`;
+**${panelText(safeLocale, "IMPORTANTE", "IMPORTANT")}:**
+- ${panelText(safeLocale, "Usa formato LaTeX para todas las expresiones matemáticas", "Use LaTeX format for all mathematical expressions")}
+- ${panelText(safeLocale, "La nota debe ser una observación REAL comparando tu análisis con el proporcionado, no genérica", "The note must be a REAL observation comparing your analysis with the provided one, not a generic one")}
+- ${panelText(safeLocale, "Devuelve SOLO un objeto JSON válido según el schema definido", "Return ONLY a valid JSON object according to the defined schema")}`;
 
       // Llamar al LLM
       const apiKey = getApiKey();
 
-      setComparisonMessage("Enviando solicitud a Gemini 2.5 Pro...");
+      setComparisonMessage(tComparison("sendingToModel"));
       await animateProgress(5, 10, 200, setComparisonProgress);
 
       // Progreso variable durante la petición: más lento al inicio, más rápido en el medio, lento al final
@@ -1280,12 +1359,12 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
       // Mensajes que cambian secuencialmente durante la espera (no se repiten)
       const waitingMessages = [
-        "Esperando respuesta del LLM...",
-        "Analizando algoritmo...",
-        "Calculando complejidad...",
-        "Comparando análisis...",
-        "Generando observaciones...",
-        "Finalizando comparación...",
+        tComparison("waitingResponse"),
+        tComparison("analyzingAlgorithm"),
+        tComparison("calculatingComplexity"),
+        tComparison("comparingAnalysis"),
+        tComparison("generatingObservations"),
+        tComparison("finalizingComparison"),
       ];
 
       let messageIndex = 0;
@@ -1356,7 +1435,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       }
 
       // Cuando recibimos la respuesta, ir de 95% a 100%
-      setComparisonMessage("Procesando respuesta...");
+      setComparisonMessage(tComparison("processingResponse"));
       await animateProgress(95, 100, 300, setComparisonProgress);
 
       const result = await response.json();
@@ -1365,13 +1444,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         throw new Error(result.error || tMessages("llmResponseError"));
       }
 
-      setComparisonMessage("Generando comparación...");
+      setComparisonMessage(tComparison("generatingComparison"));
 
       const structuredPayload =
         getNormalizedLlmStructured<Record<string, unknown>>(result);
       const llmResponseText = getNormalizedLlmText(result);
       if (!llmResponseText && !structuredPayload) {
-        throw new Error("No se recibió respuesta del LLM");
+        throw new Error(tComparison("noLlmResponse"));
       }
 
       // Parsear JSON de la respuesta
@@ -2589,10 +2668,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         });
       }
 
-      setLlmNote(llmResponse.note || "😐 Sin observaciones");
+      setLlmNote(
+        llmResponse.note ||
+          panelText(safeLocale, "😐 Sin observaciones", "😐 No observations"),
+      );
 
       setComparisonProgress(100);
-      setComparisonMessage("Comparación completada");
+      setComparisonMessage(tComparison("comparisonComplete"));
 
       // Esperar un momento antes de cerrar el loader y abrir el modal
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -2603,21 +2685,21 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       // Resetear estados después
       setTimeout(() => {
         setComparisonProgress(0);
-        setComparisonMessage("Contactando con LLM...");
+        setComparisonMessage(tComparison("contacting"));
       }, 300);
     } catch (error) {
       console.error("[Comparison] Error:", error);
       const rawMsg =
-        error instanceof Error
-          ? error.message
-          : "Error inesperado durante la comparación";
-      setComparisonMessage("Error: " + tMessages(translateLlmError(rawMsg)));
+        error instanceof Error ? error.message : tComparison("unexpectedError");
+      setComparisonMessage(
+        `${tCommon("error")}: ${tMessages(translateLlmError(rawMsg))}`,
+      );
       setComparisonProgress(0);
 
       setTimeout(() => {
         setIsComparing(false);
         setComparisonProgress(0);
-        setComparisonMessage("Contactando con LLM...");
+        setComparisonMessage(tComparison("contacting"));
       }, 3000);
     }
   };
@@ -3453,6 +3535,29 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         />
       )}
 
+      {/* Loader de importación .txt */}
+      {isImportingTxt && (
+        <AAProgressLoader
+          mode="import"
+          progress={importProgress}
+          message={importMessage}
+          isComplete={isImportComplete}
+          error={importError}
+          errorActionLabel={importErrorActionLabel ?? undefined}
+          onErrorAction={
+            importErrorActionLabel ? handleImportRepair : undefined
+          }
+          onClose={() => {
+            setIsImportingTxt(false);
+            setImportProgress(0);
+            setImportMessage("");
+            setIsImportComplete(false);
+            setImportError(null);
+            setImportErrorActionLabel(null);
+          }}
+        />
+      )}
+
       {/* Modal de exportación */}
       {showExportModal && (
         <ExportFormatSelector
@@ -3499,7 +3604,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             <div className="grid grid-cols-1 gap-6 max-lg:flex-none lg:flex-1 lg:basis-0 lg:min-h-0 lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)]">
               {/* Columna izquierda: código fuente (vertical) */}
               <section className="flex min-h-0 flex-col max-lg:min-h-[max(220px,min(42svh,360px))] lg:col-span-4 lg:h-full">
-                <div className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4">
+                <div
+                  className="glass-card flex min-h-0 flex-1 flex-col rounded-lg p-4"
+                  style={{ overflow: "visible" }}
+                >
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-white font-semibold flex items-center">
                       <span className="material-symbols-outlined mr-2 text-blue-400">
@@ -3507,8 +3615,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                       </span>{" "}
                       {tView("sourceCode")}
                     </h2>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between overflow-visible">
+                      <div className="flex items-center gap-2 overflow-visible">
                         <button
                           type="button"
                           onClick={() => txtInputRef.current?.click()}
@@ -3529,7 +3637,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                               upload
                             </span>
                           )}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border border-slate-600">
                             {tView("importTxt")}
                           </div>
                         </button>
@@ -3548,7 +3656,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                           <span className="material-symbols-outlined text-[18px]">
                             download
                           </span>
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border border-slate-600">
                             {tView("exportReport")}
                           </div>
                         </button>
@@ -3948,44 +4056,6 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         }}
         originalCode={pendingImportSourceForRepair ?? source}
         parseErrors={pendingImportErrorsForRepair ?? parseErrors}
-      />
-
-      <TxtImportModal
-        open={txtImportModal !== null}
-        title={txtImportModal?.title || ""}
-        description={txtImportModal?.description || ""}
-        details={txtImportModal?.details}
-        confirmLabel={
-          txtImportModal?.showRepairAction
-            ? tView("repairWithAI")
-            : tCommon("close")
-        }
-        cancelLabel={
-          txtImportModal?.showRepairAction ? tCommon("cancel") : undefined
-        }
-        onCancel={
-          txtImportModal?.showRepairAction
-            ? () => {
-                setTxtImportModal(null);
-                setPendingImportSourceForRepair(null);
-                setPendingImportErrorsForRepair(undefined);
-              }
-            : undefined
-        }
-        onConfirm={() => {
-          const mustRepair = txtImportModal?.showRepairAction === true;
-          setTxtImportModal(null);
-          if (mustRepair) {
-            if (pendingImportSourceForRepair) {
-              setSource(pendingImportSourceForRepair);
-            }
-            setParseErrors(pendingImportErrorsForRepair);
-            setShowRepairModal(true);
-          } else {
-            setPendingImportSourceForRepair(null);
-            setPendingImportErrorsForRepair(undefined);
-          }
-        }}
       />
 
       <ComparisonModal

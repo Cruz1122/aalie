@@ -1,0 +1,574 @@
+[
+  {
+    "id": "FOR-001",
+    "title": "Constant assignment and return",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(1)",
+      "bigOmega": "Omega(1)",
+      "bigTheta": "Theta(1)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "dominantTerm": "1",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates constant-time baseline without loops."
+    }
+  },
+  {
+    "id": "FOR-002",
+    "title": "Linear array sum",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCount": "n",
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates one FOR loop with accumulator update."
+    }
+  },
+  {
+    "id": "FOR-003",
+    "title": "Linear counter",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-003.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCount": "n",
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates linear loop independent of array access."
+    }
+  },
+  {
+    "id": "FOR-004",
+    "title": "Array copy",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-004.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCount": "n",
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates assignment with indexed array reads and writes."
+    }
+  },
+  {
+    "id": "FOR-005",
+    "title": "Linear scan without early exit",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-005.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCount": "n",
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates IF inside FOR without early return or break."
+    }
+  },
+  {
+    "id": "FOR-006",
+    "title": "Maximum of array",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-006.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCount": "n - 1",
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates FOR starting at 2 and IF branch inside loop."
+    }
+  },
+  {
+    "id": "FOR-007",
+    "title": "Vector initialization",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-007.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCount": "n",
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates simple indexed assignment over n elements."
+    }
+  },
+  {
+    "id": "FOR-008",
+    "title": "Two independent sequential loops",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-008.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n + m)",
+      "bigOmega": "Omega(n + m)",
+      "bigTheta": "Theta(n + m)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "n",
+        "m"
+      ],
+      "dominantTerm": "n + m",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates additive composition of independent input sizes."
+    }
+  },
+  {
+    "id": "FOR-009",
+    "title": "Three sequential loops over same size",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-009.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "n",
+        "n",
+        "n"
+      ],
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates constant-factor elimination in asymptotic notation."
+    }
+  },
+  {
+    "id": "FOR-010",
+    "title": "Linear loop with heavier constant body",
+    "family": "for_simple",
+    "sourceFile": "sources/FOR-010.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCount": "n",
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates that multiple constant-cost statements inside the loop remain linear."
+    }
+  },
+  {
+    "id": "NEST-001",
+    "title": "Square double loop",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-001.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n^2)",
+      "bigOmega": "Omega(n^2)",
+      "bigTheta": "Theta(n^2)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "n",
+        "n"
+      ],
+      "dominantTerm": "n^2",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates multiplicative nesting n by n."
+    }
+  },
+  {
+    "id": "NEST-002",
+    "title": "Rectangular double loop",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-002.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n*m)",
+      "bigOmega": "Omega(n*m)",
+      "bigTheta": "Theta(n*m)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "n",
+        "m"
+      ],
+      "dominantTerm": "n*m",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates product of independent dimensions."
+    }
+  },
+  {
+    "id": "NEST-003",
+    "title": "Cubic triple loop",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-003.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n^3)",
+      "bigOmega": "Omega(n^3)",
+      "bigTheta": "Theta(n^3)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "n",
+        "n",
+        "n"
+      ],
+      "dominantTerm": "n^3",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates triple multiplicative nesting."
+    }
+  },
+  {
+    "id": "NEST-004",
+    "title": "Lower triangular loop",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-004.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n^2)",
+      "bigOmega": "Omega(n^2)",
+      "bigTheta": "Theta(n^2)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedSummationShape": "sum_{i=1}^{n} i",
+      "dominantTerm": "n^2",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates dependent inner bound j <= i and triangular summation."
+    }
+  },
+  {
+    "id": "NEST-005",
+    "title": "Upper triangular loop",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-005.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n^2)",
+      "bigOmega": "Omega(n^2)",
+      "bigTheta": "Theta(n^2)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedSummationShape": "sum_{i=1}^{n} (n - i + 1)",
+      "dominantTerm": "n^2",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates dependent inner bound j from i to n."
+    }
+  },
+  {
+    "id": "NEST-006",
+    "title": "Matrix rectangular sum",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-006.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n*m)",
+      "bigOmega": "Omega(n*m)",
+      "bigTheta": "Theta(n*m)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "n",
+        "m"
+      ],
+      "dominantTerm": "n*m",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Same asymptotic target as NEST-002 but with different identifiers to test parser robustness."
+    }
+  },
+  {
+    "id": "NEST-007",
+    "title": "Outer n, inner constant",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-007.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "n",
+        "10"
+      ],
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates that constant nested work does not become quadratic."
+    }
+  },
+  {
+    "id": "NEST-008",
+    "title": "Outer constant, inner n",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-008.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n)",
+      "bigOmega": "Omega(n)",
+      "bigTheta": "Theta(n)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "10",
+        "n"
+      ],
+      "dominantTerm": "n",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates constant outer loop multiplying a linear inner loop."
+    }
+  },
+  {
+    "id": "NEST-009",
+    "title": "Sequential linear plus quadratic",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-009.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n^2)",
+      "bigOmega": "Omega(n^2)",
+      "bigTheta": "Theta(n^2)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedComponents": [
+        "n",
+        "n^2"
+      ],
+      "dominantTerm": "n^2",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates dominance of quadratic term over preceding linear pass."
+    }
+  },
+  {
+    "id": "NEST-010",
+    "title": "Three-dimensional rectangular loop",
+    "family": "for_nested",
+    "sourceFile": "sources/NEST-010.aalie",
+    "expected": {
+      "parseOk": true,
+      "algorithmKind": "iterative",
+      "status": "available",
+      "bigO": "O(n^2*m)",
+      "bigOmega": "Omega(n^2*m)",
+      "bigTheta": "Theta(n^2*m)",
+      "best": "same_as_worst",
+      "avg": "same_as_worst",
+      "mustHaveByLine": true,
+      "mustHaveTotals": true,
+      "mustHaveTOpen": true,
+      "mustHaveAsymptoticNotation": true,
+      "expectedLoopCounts": [
+        "n",
+        "n",
+        "m"
+      ],
+      "dominantTerm": "n^2*m",
+      "expectationKind": "strict_math"
+    },
+    "validation": {
+      "compare": "asymptotic_class",
+      "notes": "Validates mixed-dimensional multiplicative nesting."
+    }
+  }
+]

@@ -128,7 +128,7 @@ function autoEnhanceTextWithTerms(
   termsIndex: TermIndexEntry[],
   targetMap: ContentTargetMap,
   shouldAutoLink: (termId: string) => boolean,
-): (string | JSX.Element)[] {
+): Array<string | React.ReactElement> {
   if (!text || termsIndex.length === 0) return [text];
 
   const patterns = termsIndex.flatMap((entry) =>
@@ -139,10 +139,10 @@ function autoEnhanceTextWithTerms(
   );
   patterns.sort((a, b) => b.pattern.length - a.pattern.length);
 
-  let parts: (string | JSX.Element)[] = [text];
+  let parts: Array<string | React.ReactElement> = [text];
 
   for (const { pattern, entry } of patterns) {
-    const newParts: (string | JSX.Element)[] = [];
+    const newParts: Array<string | React.ReactElement> = [];
 
     for (const part of parts) {
       if (typeof part !== "string") {

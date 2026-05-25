@@ -1,0 +1,9 @@
+invalidWhileBody(n)
+BEGIN
+  i <- 0;
+  WHILE (i < n) DO
+  BEGIN
+    i <-
+  END;
+  RETURN i;
+END

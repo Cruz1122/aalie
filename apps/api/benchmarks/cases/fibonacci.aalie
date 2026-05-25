@@ -1,0 +1,6 @@
+fibonacci(n) BEGIN
+  IF (n <= 1) THEN BEGIN
+    RETURN n;
+  END
+  RETURN fibonacci(n - 1) + fibonacci(n - 2);
+END

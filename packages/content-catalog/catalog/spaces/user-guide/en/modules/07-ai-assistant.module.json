@@ -1,0 +1,326 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-ai-assistant",
+  "slug": "ai-assistant",
+  "title": "Artificial-intelligence features",
+  "shortTitle": "AI",
+  "order": 7,
+  "locale": "en",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Enable and use the optional assistant to generate code, request explanations, compare with an LLM, and review quiz mistakes without replacing the deterministic engine.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 44,
+  "tags": [
+    "AI",
+    "LLM",
+    "Gemini",
+    "assistant",
+    "comparison"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "virtual assistant",
+      "compare with llm",
+      "api key"
+    ],
+    "keywords": [
+      "Gemini",
+      "API key",
+      "LLM",
+      "contextual assistant"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-linear-search-analyzer",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-quizzes"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-activar-ia",
+      "text": "Recognize when an API key is needed and which features it enables."
+    },
+    {
+      "objectiveId": "obj-usar-ia-criticamente",
+      "text": "Use the assistant as pedagogical support, not as a mathematical judge."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-07-ai-api-key-modal",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/07-ai-api-key-modal.webp"
+        },
+        "alt": "Modal or panel requesting a Gemini API key to enable the assistant.",
+        "caption": "Modal or panel requesting a Gemini API key to enable the assistant."
+      },
+      {
+        "resourceId": "img-07-ai-generate-fibonacci",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/07-ai-generate-fibonacci.webp"
+        },
+        "alt": "Assistant generating the Fibonacci algorithm and the option to send it to the analyzer.",
+        "caption": "Assistant generating the Fibonacci algorithm and the option to send it to the analyzer."
+      },
+      {
+        "resourceId": "img-07-ai-contextual-assistant",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/07-ai-contextual-assistant.webp"
+        },
+        "alt": "Contextual assistant opened after analyzing an algorithm.",
+        "caption": "Contextual assistant opened after analyzing an algorithm."
+      },
+      {
+        "resourceId": "img-07-ai-compare-llm",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/07-ai-compare-llm.webp"
+        },
+        "alt": "Compare with LLM feature showing the contrast between AALIE and the external model.",
+        "caption": "Compare with LLM feature showing the contrast between AALIE and the external model."
+      },
+      {
+        "resourceId": "img-07-ai-quiz-assistant",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/en/07-ai-quiz-assistant.webp"
+        },
+        "alt": "Contextual assistant in quiz results, explaining an incorrect answer.",
+        "caption": "Contextual assistant in quiz results, explaining an incorrect answer."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-ia",
+      "slug": "ai-assistant",
+      "title": "Use artificial-intelligence features",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-api-key",
+          "slug": "api-key",
+          "title": "Enable the assistant with an API key",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m07-s01-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Artificial-intelligence features are optional. If the user tries to use them for the first time, AALIE may request a Gemini API key. Without that key, the deterministic analysis engine still works."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s01-img01",
+              "type": "image",
+              "resourceRef": "img-07-ai-api-key-modal",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m07-s01-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Important boundary",
+              "blocks": [
+                {
+                  "id": "blk-m07-s01-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "AI is not AALIE’s mathematical source of truth. It is used to explain, guide, or compare. The formal analysis is produced by the deterministic engine."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-generar-codigo",
+          "slug": "generate-code",
+          "title": "Generate code and send it to the analyzer",
+          "order": 2,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m07-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "Once the key is active, you can ask the assistant to generate an algorithm, for example Fibonacci. If the result is compatible with the grammar, the system can send it directly to the "
+            },
+            {
+              "type": "link",
+              "text": "analyzer",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " for processing."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s02-img01",
+              "type": "image",
+              "resourceRef": "img-07-ai-generate-fibonacci",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m07-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "After the analysis, a contextual assistant appears for that result. Use it to ask for explanations about a complexity result, dominant line, recurrence, or specific warning."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s02-img02",
+              "type": "image",
+              "resourceRef": "img-07-ai-contextual-assistant",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-comparar-llm",
+          "slug": "compare-with-llm",
+          "title": "Compare with LLM",
+          "order": 3,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m07-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The Compare with LLM option sends the algorithm to an external model and contrasts its answer with AALIE’s result. This comparison can support discussion of agreements or differences, but it is not formal validation."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s03-img01",
+              "type": "image",
+              "resourceRef": "img-07-ai-compare-llm",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m07-s03-ev",
+              "type": "evidenceBlock",
+              "variant": "warning",
+              "icon": "error_outline",
+              "blocks": [
+                {
+                  "id": "blk-m07-s03-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If the LLM agrees with AALIE, that does not automatically prove both are correct. If it differs, review the evidence: line costs, recurrence, warnings, and applied method."
+                    }
+                  ]
+                }
+              ],
+              "title": "Honest reading of the comparison"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-asistente-quiz",
+          "slug": "quiz-assistant",
+          "title": "Contextual assistant in quizzes",
+          "order": 4,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 10,
+          "blocks": [
+            {
+              "id": "blk-m07-s04-p01",
+              "type": "paragraph",
+              "content": [
+                {
+              "type": "text",
+              "text": "After finishing a "
+            },
+            {
+              "type": "link",
+              "text": "quiz",
+              "target": { "kind": "external", "ref": "/quizzes" }
+            },
+            {
+              "type": "text",
+              "text": ", the assistant can help review mistakes. You can ask why an answer was incorrect, which concept to review, or how to distinguish similar options."
+                }
+              ]
+            },
+            {
+              "id": "blk-m07-s04-img01",
+              "type": "image",
+              "resourceRef": "img-07-ai-quiz-assistant",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m07-s04-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Use this support to learn, not to skip reasoning. The value is in comparing the explanation with the quiz feedback and the recommended content module."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

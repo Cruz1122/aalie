@@ -1,9 +1,6 @@
 import type { RuleMatch } from "../rules/ruleTypes";
 
-type TranslationValues = Record<
-  string,
-  string | number | boolean | Date | null | undefined
->;
+type TranslationValues = Record<string, string | number | Date>;
 
 type TechniqueTranslator = (key: string, values?: TranslationValues) => string;
 
@@ -47,6 +44,20 @@ const EVIDENCE_FACTS_FALLBACK_EN: Record<string, string> = {
     "Comparisons with a bound-like or threshold form are detected.",
   external_partition_call:
     "A non-recursive call partitions the problem while recursive self-calls solve subproblems.",
+  divide_and_conquer_core:
+    "The problem is decomposed into independent subproblems of roughly equal size.",
+  single_branch_interval_partition:
+    "The interval is partitioned and only one branch is explored further.",
+  greedy_semantic_cue:
+    "A greedy strategy or locally optimal choice semantic is detected.",
+  memo_pattern:
+    "Memoization pattern: the result is stored and retrieved before recomputing.",
+  backtracking_core:
+    "Backtracking core: reversible mutation of partial solutions with feasibility checks.",
+  branch_and_bound_semantic_cue:
+    "Explicit bound, incumbent, or branch-and-bound semantic cues are present.",
+  backtracking_with_bound_semantics:
+    "Backtracking structure with explicit bound/incumbent semantics for pruning.",
 };
 
 const INSUFFICIENT_EVIDENCE_FALLBACK_EN =

@@ -15,20 +15,22 @@ def build_fibonacci_ast():
                 "type": "ProcDef",
                 "name": "fibonacci",
                 "params": [{"name": "n"}],
-                "body": [
-                    {
-                        "type": "If",
-                        "test": {
-                            "type": "Binary",
-                            "op": "<=",
-                            "left": {"type": "Identifier", "name": "n"},
-                            "right": {"type": "Literal", "value": 1},
+                "body": {
+                    "type": "Block",
+                    "body": [
+                        {
+                            "type": "If",
+                            "test": {
+                                "type": "Binary",
+                                "op": "<=",
+                                "left": {"type": "Identifier", "name": "n"},
+                                "right": {"type": "Literal", "value": 1},
+                            },
+                            "consequent": [
+                                {"type": "Return", "value": {"type": "Literal", "value": 1}}
+                            ],
+                            "alternate": [],
                         },
-                        "consequent": [
-                            {"type": "Return", "value": {"type": "Literal", "value": 1}}
-                        ],
-                        "alternate": [],
-                    },
                     {
                         "type": "Return",
                         "value": {
@@ -36,7 +38,7 @@ def build_fibonacci_ast():
                             "op": "+",
                             "left": {
                                 "type": "Call",
-                                "func": {"type": "Identifier", "name": "fibonacci"},
+                                "name": "fibonacci",
                                 "args": [
                                     {
                                         "type": "Binary",
@@ -48,7 +50,7 @@ def build_fibonacci_ast():
                             },
                             "right": {
                                 "type": "Call",
-                                "func": {"type": "Identifier", "name": "fibonacci"},
+                                "name": "fibonacci",
                                 "args": [
                                     {
                                         "type": "Binary",
@@ -60,7 +62,8 @@ def build_fibonacci_ast():
                             },
                         },
                     },
-                ],
+                    ],
+                },
             }
         ],
     }
@@ -77,11 +80,12 @@ def test_fibonacci_recursion_tree_uses_big_o_notation():
     analyze_result = analyzer.analyze(ast, preferred_method="recursion_tree")
     assert analyze_result["ok"], f"Analyze error: {analyze_result.get('errors', [])}"
 
-    step_bundle = analyze_result.get("recursion_tree", {}).get("step_by_step")
+    totals = analyze_result.get("totals", {})
+    step_bundle = totals.get("recursion_tree", {}).get("step_by_step")
     assert step_bundle is not None, "No step_by_step bundle found"
 
     steps = step_bundle.get("steps", [])
-    asymptotic_step = next((step for step in steps if step.get("step_id") == "rt_s11"), None)
+    asymptotic_step = next((step for step in steps if step.get("id") == "rt_s11"), None)
 
     assert asymptotic_step is not None, "No asymptotic conclusion step found"
 
@@ -108,11 +112,12 @@ def test_fibonacci_characteristic_equation_uses_theta_notation():
     analyze_result = analyzer.analyze(ast, preferred_method="characteristic_equation")
     assert analyze_result["ok"], f"Analyze error: {analyze_result.get('errors', [])}"
 
-    step_bundle = analyze_result.get("characteristic_equation", {}).get("step_by_step")
+    totals = analyze_result.get("totals", {})
+    step_bundle = totals.get("characteristic_equation", {}).get("step_by_step")
     assert step_bundle is not None, "No step_by_step bundle found"
 
     steps = step_bundle.get("steps", [])
-    asymptotic_step = next((step for step in steps if step.get("step_id") == "ceq_s12"), None)
+    asymptotic_step = next((step for step in steps if step.get("id") == "ceq_s12"), None)
 
     assert asymptotic_step is not None, "No asymptotic conclusion step found"
 

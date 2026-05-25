@@ -1,0 +1,27 @@
+binarySearchIterative(A, n, objetivo)
+BEGIN
+  low <- 1;
+  high <- n;
+  encontrado <- false;
+  WHILE (low <= high) DO
+  BEGIN
+    mid <- (low + high) DIV 2;
+    IF (A[mid] = objetivo) THEN
+    BEGIN
+      encontrado <- true;
+      low <- high + 1;
+    END
+    ELSE
+    BEGIN
+      IF (A[mid] < objetivo) THEN
+      BEGIN
+        low <- mid + 1;
+      END
+      ELSE
+      BEGIN
+        high <- mid - 1;
+      END;
+    END;
+  END;
+  RETURN encontrado;
+END

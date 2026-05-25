@@ -188,7 +188,10 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 summary_key="tree.recurrence_detected.linear_shift",
                 concept_key="concept.tree.recurrence_detected",
                 primary_latex=ctx.recurrence_form,
-                payload={"sourceExpression": ctx.recurrence_form, "recurrenceType": ctx.recurrence_type},
+                payload={
+                    "sourceExpression": ctx.recurrence_form,
+                    "recurrenceType": ctx.recurrence_type,
+                },
             )
         )
         steps.append(
@@ -241,7 +244,9 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 summary_key="tree.level_model.linear_shift",
                 concept_key="concept.tree.level_model_built",
                 primary_latex=f"N_i\\approx {branch_factor}^i,\\;n_i\\approx n-i,\\;c_i=1",
-                payload={"derivedExpression": f"N_i\\approx {branch_factor}^i,\\;n_i\\approx n-i,\\;c_i=1"},
+                payload={
+                    "derivedExpression": f"N_i\\approx {branch_factor}^i,\\;n_i\\approx n-i,\\;c_i=1"
+                },
             )
         )
         steps.append(
@@ -323,7 +328,9 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 summary_key="tree.total_sum.linear_shift_simplified",
                 concept_key="concept.tree.total_tree_sum_simplified",
                 primary_latex=f"\\sum_{{i=0}}^{{n}} {branch_factor}^i = \\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}",
-                payload={"simplifiedExpression": f"\\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}"},
+                payload={
+                    "simplifiedExpression": f"\\frac{{{branch_factor}^{{n+1}}-1}}{{{branch_factor}-1}}"
+                },
             )
         )
         upper_latex = get_asymptotic_notation("upper", f"{branch_factor}^n")
@@ -653,9 +660,13 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
         else "tree.asymptotic_conclusion.complete"
     )
     step11_warning = "warning.tree.asymptotic_partial" if step11_status == "partial" else None
-    
+
     # Convertir a notación correcta basada en bound_kind
-    theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta_latex) if ctx.theta_latex else ctx.theta_latex
+    theta_with_notation = (
+        get_asymptotic_notation(ctx.bound_kind, ctx.theta_latex)
+        if ctx.theta_latex
+        else ctx.theta_latex
+    )
     primary_display = theta_with_notation
     if primary_display and not str(primary_display).lstrip().lower().startswith("t(n)"):
         primary_display = f"T(n) = {theta_with_notation}"

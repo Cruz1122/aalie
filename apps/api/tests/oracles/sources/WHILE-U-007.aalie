@@ -1,0 +1,11 @@
+variableMultiplicativeFactor(n, k)
+BEGIN
+  i <- 1;
+  total <- 0;
+  WHILE (i < n) DO
+  BEGIN
+    total <- total + 1;
+    i <- i * k;
+  END;
+  RETURN total;
+END

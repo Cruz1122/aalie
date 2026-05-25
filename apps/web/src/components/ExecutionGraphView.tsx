@@ -262,7 +262,7 @@ const TraceNode = ({
             className="text-[10px] uppercase tracking-wide font-semibold px-2 py-1 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/40"
             style={iterationBadgeStyle}
           >
-            {t("iterationBadge", { id: data.iterationPath })}
+            {t("iterationBadge", { id: data.iterationPath ?? "" })}
           </span>
         </div>
       )}

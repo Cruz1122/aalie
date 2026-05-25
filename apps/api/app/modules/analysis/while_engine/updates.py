@@ -97,7 +97,13 @@ def _parse_update(
                     # Si el identificador fue asignado dentro del mismo WHILE
                     # (p.ej. delta <- f(left,right)), no lo tratamos como constante.
                     const_is_param = str(const).strip() not in local_assigned_vars
-                if is_simple_constant(const) or const_is_param:
+
+                # Para incrementos/decrementos lineales aceptamos parámetros simbólicos
+                # (p.ej. i <- i + step). Para crecimiento/reducción multiplicativa no:
+                # i <- i * k solo es seguro si k es una constante numérica demostrable.
+                allow_symbolic_param = op_norm in ("+", "-") and const_is_param
+
+                if is_simple_constant(const) or allow_symbolic_param:
                     if op_norm == "+":
                         return {
                             "type": "num",

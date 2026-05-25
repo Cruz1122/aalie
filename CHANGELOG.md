@@ -5,13 +5,48 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Unreleased] - 2026-05-09
+## [1.10.0] — 2026-05-15
 
 ### Added
-- **Invariante Recursivo - Completitud 100%**: Artefacto pedagógico completo con arquitectura formal, tests E2E, y ejemplos de algoritmos reales.
+- **Detección estructural de técnicas algorítmicas desde AST** — nuevo módulo `technique-detection/` con pipeline completo:
+  - Recolectores de hechos: `choiceFacts`, `collectFacts`, `decompositionFacts`, `mutationFacts`, `semanticFacts`
+  - Reglas de clasificación: `backtracking`, `branchAndBound`, `decreaseAndConquer`, `divideAndConquer`, `dpTopDown`, `greedy`
+  - Test suite: `catalogTechniqueDetection.test.ts` (validación contra catálogo completo) y `techniqueDetection.test.ts` (oráculos semánticos, 35+ tests)
+- **Catálogo de ejemplos**: campo `expectedTechnique` agregado a todos los ejemplos (35+ algoritmos) para validación automática
+- **Pseudocódigo corregido/mejorado**: Strassen (multiplicación matricial real con submatrices), Subset Sum (FOR + usado[]), Permutations (usado[] + perm[]), Maze Solver (FOR con direcciones), TSP B&B (visitado[] + bound), N-Queens B&B (bound + esSeguro), Least-Cost Path B&B (visitado[] + bound), MergeSort pedagógico (return values)
+- **Desbloqueo de ejemplos**: Strassen, TSP B&B, N-Queens B&B, Least-Cost Path B&B — eliminado `catalogTier: "blocked"`
+- **ADR-015**: Decisión arquitectónica sobre detección estructural de técnicas (reemplaza borrador `adr-xxx`)
+- **Spec y oráculos** actualizados: `technique-detection-spec.md` y `technique-detection-oracles.md` con core definitions, casos soportados (35+) y excepciones semánticas
+- **i18n**: Nuevos mensajes para detección de técnicas (en/es)
+- **Integración frontend**: `RecursiveAnalysisView` y `AnalyzerPage` conectados al detector de técnicas; `useRunAnalysis` hook extendido
+- **Manejo de errores**: `api-error-translator` extendido para cubrir detección de técnicas
+- **Catalog integrity test**: Suite que valida coherencia entre `expectedTechnique` y detección real
+
+### Changed
+- README.md actualizado con descripción y features mejoradas
+- Limpieza de imports y legibilidad del análisis en múltiples módulos (`98a1a14`)
+- Eliminación de manejo no usado de method/technique badges en `ExampleCatalogCard` y `ExamplesHomeView`
+
+### Fixed
+- **Detección Branch & Bound** corregida (`1d03cc6`)
+- **Inyección de procedimiento**: recurrencia recursiva ahora fuerza notación asintótica antes de enviarse
+- **Modal UI**: props de modal corregidos, ruta de quizzes, Ctrl+Enter, stubs de catálogo, alcance de `maxSubarray`
+- **Límites superior/inferior**: `bound_kind` con tipo inferido corregido
+- **Notación \mathcal**: reemplazada por `BigO` en árbol lineal y dominante
+- **Conclusión de árbol estándar**: ahora incluye prefijo `T(n)=`
+- **Dominante**: especifica si es por hojas o raíz
+- **Invariante recursivo**: botón aparece para TODOS los algoritmos recursivos; null safety en `AnalyzerPage`
+- **Docker**: contenido de quizzes agregado a imagen + archivos adicionales
+- **Ruff**: correcciones de lint
+- **Dependencia Playwright** corregida
+
+## [1.8.1] — 2026-05-09
+
+### Added
+- **Invariante Recursivo — Completitud 100%**: Artefacto pedagógico completo con arquitectura formal, tests E2E y ejemplos de algoritmos reales.
 
 #### Documentación Formal
-- `docs/04-api/recursive-invariant-design.md` - Especificación arquitectónica completa con 30 secciones:
+- `docs/04-api/recursive-invariant-design.md` — Especificación arquitectónica completa con 30 secciones:
   - Modelo de dominio con path tracking y mutual exclusivity
   - Pipeline completo: extracción → clasificación → generación narrativa → payload
   - Decisiones de diseño: razonamiento de path tracking ('T'/'F'), cálculo de subproblemas, extracción de casos base
@@ -20,7 +55,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Análisis de performance: O(n) tiempo, O(d) espacio (d = profundidad de nesting)
   - Estrategia de manejo de errores con degradación elegante
   - Roadmap de Fases 2-5 para mejoras futuras
-- `docs/07-user/recursive-invariant-examples.md` - Guía de ejemplos con 7 algoritmos reales:
+- `docs/07-user/recursive-invariant-examples.md` — Guía de ejemplos con 7 algoritmos reales:
   - Fibonacci (exponencial, recursión múltiple)
   - Binary Search (divide-and-conquer)
   - Countdown (recursión lineal)
@@ -30,10 +65,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Binary Exponentiation (divide-and-conquer, 96% confianza)
   - Tabla comparativa de todos los algoritmos
   - Guía pedagógica de uso de invariantes para comprensión y optimización
-- `RECURSIVE_INVARIANT_COMPLETION.md` - Resumen ejecutivo de completitud al 100% con checklist de deliverables, test coverage, métricas clave y status de producción.
+- `RECURSIVE_INVARIANT_COMPLETION.md` — Resumen ejecutivo de completitud al 100% con checklist de deliverables, test coverage, métricas clave y status de producción.
 
 #### Tests E2E Completos
-- `apps/web/e2e/recursive-invariant.spec.ts` - Suite de 10 casos Playwright:
+- `apps/web/e2e/recursive-invariant.spec.ts` — Suite de 10 casos Playwright:
   - Renderización de invariante para Fibonacci (múltiple recursión)
   - Renderización de invariante para Binary Search (divide-and-conquer)
   - Renderización de invariante para Countdown (recursión lineal)
@@ -44,23 +79,23 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Cierre de modal al hacer clic fuera (backdrop)
   - Sección de evidencia con base conditions
   - Llamadas recursivas detectadas correctamente
-- `apps/web/playwright.config.ts` - Configuración lista para producción:
+- `apps/web/playwright.config.ts` — Configuración lista para producción:
   - Soporte multi-browser (Chromium, Firefox)
   - Web server automático en localhost:3000
   - Reportes HTML + GitHub Actions
   - Trazas on-first-retry, screenshots on-failure
 
 #### Tests Unitarios Complejos
-- `apps/api/tests/unit/analysis/test_complex_recursive_algorithms.py` - 5 algoritmos avanzados:
+- `apps/api/tests/unit/analysis/test_complex_recursive_algorithms.py` — 5 algoritmos avanzados:
   - Merge Sort: 2 llamadas no-exclusivas → multiple_recursive, 73% confianza
   - Tower of Hanoi: 3 llamadas → multiple_recursive, 73% confianza
   - Quick Sort: 2 llamadas no-exclusivas → multiple_recursive, 73% confianza
-  - Binary Exponentiation: 2 llamadas exclusivas → divide_conquer, 96% confianza ⭐ (máxima validación)
+  - Binary Exponentiation: 2 llamadas exclusivas → divide_conquer, 96% confianza
   - Ackermann Function: 3 llamadas anidadas → multiple_recursive, 81% confianza
 
 #### Componentes Frontend Mejorados
-- `apps/web/src/components/RecursiveInvariantModal.tsx` - Modal completo con:
-  - Data-testid attributes para todas las secciones (status-badge, confidence-score, recursive-structure, etc.)
+- `apps/web/src/components/RecursiveInvariantModal.tsx` — Modal completo con:
+  - Data-testid attributes para todas las secciones
   - Badge de estado con color semántico (esmeralda, ámbar, rojo)
   - Porcentaje de confianza visible
   - Estructura recursiva: condición base, resultado base, llamadas recursivas, tipo
@@ -71,211 +106,334 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Changed
 - `apps/api/app/modules/analysis/recursive_invariants/extractor.py`:
-  - **Path tracking mejorado**: Cada llamada recursiva ahora registra ruta a través de bifurcaciones If ('T' para rama verdadera, 'F' para alterna)
-  - **Detección de mutual exclusivity**: Comparación pairwise de paths para identificar ramas mutuamente exclusivas
-  - **Extracción de caso base corregida**: Solo procesa la primera declaración If (asunción heurística de caso base)
-  - **Extracción de resultado base**: Solo extrae del consecuente de la primera If
-  - **Cálculo dinámico de subproblemas**: `subproblems_per_call = 1` si mutuamente exclusivas, else `recursive_call_count`
-
+  - **Path tracking mejorado**: cada llamada recursiva registra ruta ('T'/'F')
+  - **Detección de mutual exclusivity**: comparación pairwise de paths
+  - **Extracción de caso base**: solo procesa primera declaración If
+  - **Extracción de resultado base**: solo extrae del consecuente de la primera If
+  - **Cálculo dinámico de subproblemas**: 1 si exclusivas, else recursive_call_count
 - `apps/api/app/modules/analysis/recursive_invariants/schemas.py`:
-  - Nuevo campo `calls_are_mutually_exclusive: bool` para rastrear exclusividad
-  - Nuevo campo `subproblems_per_call: int` para contar subproblemas reales resueltos por llamada
-
+  - Nuevo campo `calls_are_mutually_exclusive: bool`
+  - Nuevo campo `subproblems_per_call: int`
 - `apps/api/app/modules/analysis/recursive_invariants/classifier.py`:
-  - Reordenamiento de prioridades: mutual_exclusivity (máxima) → multiple_recursive → linear → unknown
-  - Confidence ajustado: base 0.75, +0.08 si caso base claro, +0.10 si parámetro decrece, +0.05 si terminación clara
+  - Reordenamiento: mutual_exclusivity → multiple_recursive → linear → unknown
+  - Confidence: base 0.75, +0.08 si base claro, +0.10 si parámetro decrece, +0.05 si terminación clara
   - Detección inmediata de divide-and-conquer si calls_are_mutually_exclusive=True
-
 - `apps/api/app/modules/analysis/recursive_invariants/templates.py`:
-  - Contexto mejorado con acceso a `subproblems_per_call` para seleccionar narrativa apropiada
-  - Templates de divide-and-conquer actualizados para enfatizar 1 subproblema por ejecución
-  - Narrativas mejoradas que reflejan semántica real de ejecución (mutual vs independiente)
-
-- `apps/api/app/modules/analysis/recursive.py`:
-  - IntegrationAnalyzer ahora genera invariante recursivo post-análisis
-  - Campo `recursive_invariant` almacenado en resultado del análisis
-
-- `apps/api/app/modules/analysis/service.py`:
-  - Respuestas enriquecidas con `recursiveInvariant` para algoritmos recursivos
-  - Manejo de degradación elegante si generación falla
-
-- `apps/web/src/app/[locale]/analyzer/page.tsx`:
-  - Lógica contextual: `isAlgorithmRecursive()` selecciona RecursiveInvariantButton vs LoopInvariantButton
-  - Modal state management para modal de invariante recursivo
-
-- `apps/web/messages/{en,es}.json`:
-  - Strings de UI para modal, secciones, badges, leyendas de recursión
+  - Contexto con `subproblems_per_call` para narrativa apropiada
+  - Templates divide-and-conquer actualizados
+  - Narrativas que reflejan semántica real (mutual vs independiente)
+- `apps/api/app/modules/analysis/recursive.py`: IntegrationAnalyzer genera invariante post-análisis
+- `apps/api/app/modules/analysis/service.py`: respuestas con `recursiveInvariant`, degradación elegante
+- `apps/web/src/app/[locale]/analyzer/page.tsx`: lógica contextual `isAlgorithmRecursive()`
+- `apps/web/messages/{en,es}.json`: strings de UI para invariante recursivo
 
 ### Fixed
-- **Clasificación incorrecta de Binary Search**: Antes se clasificaba como "Recursión Múltiple" (2 llamadas), ahora correctamente como "Divide-y-Conquista" (2 llamadas mutuamente exclusivas en ramas If)
-- **Base result incorrecto**: Binary Search mostraba "return mitad" en lugar de "return -1" por iteración sobre ALL If statements; ahora solo procesa primera If
-- **Subproblemas incorrectos**: Binary Search mostraba 2 subproblemas cuando realmente solo 1 se ejecuta por llamada; ahora usa mutual exclusivity detection
-- **Generación consistente de invariantes**: Todos los 7 algoritmos reales (Fibonacci, Binary Search, Countdown, Merge Sort, Quick Sort, Tower of Hanoi, Binary Exp) generan invariantes correctas con confianzas apropiadas (73-96%)
+- Clasificación de Binary Search: múltiple → divide-y-conquista (2 llamadas mutuamente exclusivas)
+- Base result incorrecto: solo procesa primera If
+- Subproblemas incorrectos: usa mutual exclusivity detection
+- Generación consistente para 7 algoritmos reales (73-96% confianza)
 
-## [Unreleased] - 2026-05-07
+## [1.8.0] — 2026-05-07
 
 ### Added
-- **Nuevo artefacto pedagógico: Invariante Recursivo** - Análogo a `loopInvariant` pero para algoritmos recursivos.
-  - Módulo backend completo: `apps/api/app/modules/analysis/recursive_invariants/` con extracción de hechos recursivos, clasificador de patrones, generador de plantillas y servicio orquestador.
-  - Tipos TypeScript en `@aa/types` y esquemas Pydantic en `apps/api/app/modules/analysis/schemas.py`.
-  - Componente React `RecursiveInvariantModal.tsx` con renderización de estructura recursiva, propiedades base, hipótesis inductiva, paso recursivo y garantía de terminación.
-  - Soporte i18n completo (inglés/español) con mensajes en `apps/web/messages/{en,es}.json`.
-  - Integración en `RecursiveAnalyzer` para generación automática durante análisis de algoritmos recursivos.
-  - Respuesta API enriquecida con campo `recursiveInvariant` en `AnalyzeOpenResponse`.
-- Clasificación automática de patrones recursivos: Recursión Lineal, Divide-y-Conquista, Recursión Múltiple.
+- **Artefacto pedagógico: Invariante Recursivo** — análogo a `loopInvariant` para algoritmos recursivos
+  - Módulo backend: `apps/api/app/modules/analysis/recursive_invariants/` con extractor de hechos recursivos, clasificador de patrones, generador de plantillas y servicio orquestador
+  - Tipos TypeScript en `@aa/types` y esquemas Pydantic en `apps/api/app/modules/analysis/schemas.py`
+  - Componente React `RecursiveInvariantModal.tsx` con renderización de estructura recursiva, propiedades base, hipótesis inductiva, paso recursivo y garantía de terminación
+  - Soporte i18n completo (inglés/español) con mensajes en `apps/web/messages/{en,es}.json`
+  - Integración en `RecursiveAnalyzer` para generación automática durante análisis
+  - Respuesta API enriquecida con campo `recursiveInvariant` en `AnalyzeOpenResponse`
+- Clasificación automática de patrones recursivos: Recursión Lineal, Divide-y-Conquista, Recursión Múltiple
 - Generación de narrativa inductiva estructurada con 4 componentes:
-  - Base Property: Propiedad garantizada por el caso base.
-  - Inductive Hypothesis: Suposición de que la recursión funciona para problemas menores.
-  - Recursive Step: Cómo el paso inductivo propaga la propiedad a instancias mayores.
-  - Termination Guarantee: Por qué el tamaño del problema siempre disminuye.
-- Extractor de hechos recursivos que analiza: llamadas recursivas, condiciones base, parámetros, patrones de decrecimiento y tipo de recursión.
-- Test suite completo: `test_recursive_invariant_generation.py` con validación de Fibonacci, recursión lineal y soporte multiidioma.
+  - Base Property: propiedad garantizada por el caso base
+  - Inductive Hypothesis: suposición de que la recursión funciona para problemas menores
+  - Recursive Step: cómo el paso inductivo propaga la propiedad
+  - Termination Guarantee: por qué el tamaño del problema siempre disminuye
+- Extractor de hechos recursivos: llamadas recursivas, condiciones base, parámetros, patrones de decrecimiento, tipo de recursión
+- Test suite: `test_recursive_invariant_generation.py` con Fibonacci, recursión lineal y multiidioma
 
 ### Changed
-- `RecursiveAnalyzer.result()` y `clear()` ahora gestionar el campo `recursive_invariant`.
-- Servicio `analyze_algorithm()` en `service.py` enriquece respuestas recursivas con invariante automáticamente.
+- `RecursiveAnalyzer.result()` y `clear()` gestionan campo `recursive_invariant`
+- Servicio `analyze_algorithm()` en `service.py` enriquece respuestas recursivas automáticamente
 
-## [Unreleased] - 2026-05-06
+## [1.7.0] — 2026-05-06
 
 ### Added
-- Método de iteración ampliado para mostrar una cota superior dinámica con justificación pedagógica explícita, incluyendo el paso de desigualdad clave antes de la generalización por $k$.
-- Soporte para que el método de iteración construya walkthroughs completos aun cuando la recurrencia no cierre de forma exacta, manteniendo el `bound_kind` correspondiente y la salida de paso a paso alineada con el análisis real.
-- Documentación de que el árbol de recursión también puede operar como cota superior cuando la forma no cumple exactamente la variante canónica, manteniendo el resultado metodológicamente consistente.
+- Método de iteración ampliado para mostrar cota superior dinámica con justificación pedagógica explícita, incluyendo paso de desigualdad clave antes de la generalización por $k$
+- Soporte para walkthroughs completos aun cuando la recurrencia no cierre de forma exacta, manteniendo `bound_kind` y paso a paso alineado
+- Documentación: árbol de recursión como cota superior cuando la forma no cumple la variante canónica
+- Árbol de recursión para algoritmos que no cumplen forma equivalente (Fibonacci, Tribonacci, etc.), con análisis paso a paso y generación del árbol
 
 ### Changed
-- El selector de métodos y el análisis por iteración ya no presentan las conclusiones como equivalentes cuando en realidad producen cota superior, inferior o resultado parcial.
-- La narrativa del paso a paso de iteración ahora muestra la desigualdad concreta derivada de la recurrencia real antes de la iteración abstracta, evitando que el desarrollo parezca quemado o inventado.
-- El comportamiento del árbol de recursión quedó documentado y alineado con los casos en que la forma detectada no cumple la plantilla exacta, para que la UI y el backend describan la misma naturaleza matemática.
+- Selector de métodos y análisis por iteración ya no presentan conclusiones como equivalentes cuando producen cota superior, inferior o resultado parcial
+- Narrativa del paso a paso de iteración muestra desigualdad concreta derivada de la recurrencia real
+- Comportamiento del árbol de recursión documentado y alineado con casos de forma no canónica
 
-## [Unreleased] - 2026-04-28
+## [1.6.1] — 2026-05-02
 
 ### Added
-- Clasificación por método recursivo en la detección contractual: cada método ahora puede declararse como cota equivalente, superior, inferior o parcial en lugar de tratarse como si todos aportaran la misma conclusión.
-- Experiencia de trazado recursivo con stepping/playback interactivo sobre `structuredTrace`, mostrando llamadas, expansión y retornos como eventos separados.
-- Controles de seguimiento recursivo debajo del diagrama con play/pause, step, velocidad y contexto del nodo actual.
-- Navegación por niveles para diagramas recursivos, permitiendo acotar la profundidad visible sin alterar la traza contractual.
-- Soporte de snapshot para preservar `structuredTrace` junto con la traza recursiva y el detalle metodológico cuando está disponible.
-- Documentación de seguimiento manual guiado, alcance operativo y checklist formal de validación manual con casos canónicos.
-- Nuevas claves de i18n para el seguimiento recursivo y los estados de expansión/retorno.
+- Detección de técnicas de algoritmo con soporte de localización (`ae7ee17`)
+- Componentes UI para presentación de técnicas mejorados (`4f17aa3`)
+- Categorías de algoritmo actualizadas con localización (`cce3ab2`)
+- Diagramas Mermaid integrados en catálogo de contenido con validación (`da18fff`)
+- Paquete de catálogo de contenido con renderizado mejorado (`d6b5252`)
+- Referencias de contenido y límites de validación actualizados (`81adab4`)
+- Carga de datasets de quizzes con localización y refactorización (`fa52d8c`)
+- Selección y filtrado de quizzes mejorado (`5f354c3`)
+- Formateo y localización en módulos de curso (`dd12ec6`)
+- Árbol de recursión para algoritmos que no cumplen forma equivalente (`feae730`)
 
 ### Changed
-- `structuredTrace` se consolidó como artefacto derivado único para la visualización del árbol de recursión, sin reinterpretar `steps`.
-- La vista de diagrama recursivo ahora comparte la misma fuente de verdad para construcción automática y seguimiento manual guiado.
-- El render de nodos y aristas recursivas se ajustó para mostrar profundidad, fase, retorno y orden de ejecución de forma pedagógica.
-- El panel de seguimiento recursivo se integró en la experiencia de trazado dedicada y en la vista de diagrama.
-- El diseño de los sliders de paso y velocidad se unificó con barra de progreso, color consistente y mejor alineación del thumb.
-- Se añadieron referencias cruzadas desde la guía de usuario hacia el checklist formal de QA para validación manual.
+- Componentes de quizzes mejorados: estilos, localización, refactorización
+- Banco de preguntas: eliminación de preguntas obsoletas (`49440fa`)
 
 ### Fixed
-- Se corrigió la compilación del panel de seguimiento recursivo al limpiar JSX mal formado en `RecursionSteppingControls.tsx`.
-- Se corrigieron alineación visual del slider de paso, el estilo del slider de velocidad y la presentación del nodo final/retorno en el diagrama.
-- El frontend dejó de inventar aristas de retorno y ahora consume las aristas contractuales del grafo estructurado.
-- El snapshot de export ya conserva `structuredTrace` en los artefactos de trazado recursivo.
-- Se ajustó el manejo de trazas parciales, profundas o no concluyentes para degradar limpiamente sin romper la experiencia.
+- Altura mínima en `ExamplesTypeSelector` (`337eb86`)
 
-## [Unreleased] - 2026-04-12
+### Chores
+- Auditoría de archivos residuales trackeados (`80e8997`)
+- Ignorar artefactos locales generados (`7ff8c7d`)
+
+## [1.6.0] — 2026-04-28
 
 ### Added
-- Nuevo gateway LLM en backend (`apps/api/app/modules/llm`) con router, servicio, schemas y proveedores desacoplados.
-- Endpoints backend `POST /llm` y `GET /llm/status` con `requestId`, `errorCode` y payload normalizado para frontend.
-- Soporte de proveedor adicional `openai_compatible` en backend sin romper la interfaz consumida por frontend.
-- Helper frontend `apps/web/src/lib/llm-response.ts` para consumir respuestas normalizadas (`data.text`, `data.structured`, `data.metadata`).
-- Tests de sistema backend para LLM (`apps/api/tests/system/llm/test_llm_endpoint.py` y `apps/api/tests/system/llm/test_llm_status_endpoint.py`).
-- Plantilla `apps/api/.env.example` para configuración LLM del backend.
+- Clasificación por método recursivo en detección contractual: cada método puede declararse como cota equivalente, superior, inferior o parcial
+- Experiencia de trazado recursivo con stepping/playback interactivo sobre `structuredTrace`, mostrando llamadas, expansión y retornos como eventos separados
+- Controles de seguimiento recursivo debajo del diagrama con play/pause, step, velocidad y contexto del nodo actual
+- Navegación por niveles para diagramas recursivos, permitiendo acotar profundidad visible sin alterar traza contractual
+- Soporte de snapshot para preservar `structuredTrace` junto con traza recursiva y detalle metodológico
+- Documentación de seguimiento manual guiado, alcance operativo y checklist formal de validación manual con casos canónicos
+- Nuevas claves de i18n para seguimiento recursivo y estados de expansión/retorno
 
 ### Changed
-- Migración de integración LLM: frontend dejó de llamar al proveedor directamente y ahora usa proxy interno (`/api/llm`, `/api/llm/status`) hacia backend.
-- `apps/web/src/app/api/llm/route.ts` y `apps/web/src/app/api/llm/status/route.ts` simplificados a proxy puro.
-- Registro del router LLM en backend (`apps/api/app/main.py`).
-- Separación de responsabilidades: análisis determinista ya no recibe `api_key` en contrato de `analyze/open`.
-- Normalización backend de respuestas LLM para desacoplar frontend de `candidates/content/parts` de Gemini.
-- Ajustes de performance LLM en backend: reducción de `max_tokens` por job y control de `thinkingConfig` para latencia.
-- Prompting reforzado de gramática para `repair`, `parser_assist` y `general` para mantener sintaxis válida del pseudocódigo del proyecto.
-- Documentación técnica actualizada para reflejar arquitectura backend-first y variables vigentes.
+- `structuredTrace` consolidado como artefacto derivado único para visualización del árbol de recursión
+- Vista de diagrama recursivo comparte misma fuente de verdad para construcción automática y seguimiento manual
+- Render de nodos y aristas recursivas ajustado para mostrar profundidad, fase, retorno y orden de ejecución
+- Panel de seguimiento recursivo integrado en experiencia de trazado dedicada y vista de diagrama
+- Sliders de paso y velocidad unificados con barra de progreso, color consistente y mejor alineación
+- Referencias cruzadas desde guía de usuario hacia checklist formal de QA
 
 ### Fixed
-- Clasificación de timeout de proveedor a `LLM_TIMEOUT` (en lugar de error interno genérico) con retry corto controlado.
-- Flujo `repair`: envío de `apiKey` de cliente cuando no hay `API_KEY` de servidor, evitando `LLM_API_KEY_REQUIRED` en escenarios válidos.
-- Modal de reparación: compatibilidad con múltiples formatos de `removedLines`/`addedLines` (numéricos y textuales), mapeo robusto de líneas y fallback de diff.
-- Modal de reparación: normalización de código reparado con saltos de línea reales cuando el modelo devuelve texto en una sola línea.
-- Modal de reparación: formateo e indentación por bloques `BEGIN/END` para mejorar legibilidad del código reparado.
-- Visualización de comparación en repair: restaurado resaltado correcto de líneas removidas/agregadas sin marcar todo el archivo.
+- Compilación del panel de seguimiento recursivo: JSX mal formado en `RecursionSteppingControls.tsx`
+- Alineación visual del slider de paso, estilo del slider de velocidad y presentación del nodo final/retorno
+- Frontend dejó de inventar aristas de retorno; ahora consume aristas contractuales del grafo estructurado
+- Snapshot de export conserva `structuredTrace` en artefactos de trazado recursivo
+- Manejo de trazas parciales, profundas o no concluyentes con degradación limpia
+
+## [1.5.1] — 2026-04-27
+
+### Added
+- Módulo RAG completo: router, normalización de documentos, chunking, indexing híbrido persistente, query rewriting y generación con métricas de rendimiento
+- Integración de Tesseract OCR en Docker para procesamiento de documentos (`ec7bd5e`)
+- Benchmarking de RAG y scripts asociados (`9be02f4`)
+- Reparación de pseudocódigo con RAG (`0c7ff8b`)
+- Proveedor GroqQwen con parseo JSON robusto (`d41df23`)
+- Esquema JSON de quizzes y dataset de banco de preguntas (`91ee339`)
+- Integración de funcionalidad de quizzes en la aplicación (`4d3c0a0`)
+
+### Changed
+- Configuración LLM y modelos de respuesta mejorados (`72519da`)
+- Dockerfile actualizado con dependencias OCR
+
+### Fixed
+- RAG: reindexing no elimina el directorio de trabajo actual (`ec68de1`)
+- Mejora en respuestas RAG y migración de PROMPT (`3c81ce0`)
+
+## [1.5.0] — 2026-04-12
+
+### Added
+- Nuevo gateway LLM en backend (`apps/api/app/modules/llm`) con router, servicio, schemas y proveedores desacoplados
+- Endpoints backend `POST /llm` y `GET /llm/status` con `requestId`, `errorCode` y payload normalizado para frontend
+- Soporte de proveedor adicional `openai_compatible` en backend
+- Helper frontend `apps/web/src/lib/llm-response.ts` para consumir respuestas normalizadas (`data.text`, `data.structured`, `data.metadata`)
+- Tests de sistema backend para LLM (`test_llm_endpoint.py`, `test_llm_status_endpoint.py`)
+- Plantilla `apps/api/.env.example` para configuración LLM del backend
+
+### Changed
+- Migración de integración LLM: frontend dejó de llamar al proveedor directamente, ahora usa proxy interno (`/api/llm`, `/api/llm/status`) hacia backend
+- `apps/web/src/app/api/llm/route.ts` y `apps/web/src/app/api/llm/status/route.ts` simplificados a proxy puro
+- Registro del router LLM en backend (`apps/api/app/main.py`)
+- Separación de responsabilidades: análisis determinista ya no recibe `api_key` en contrato de `analyze/open`
+- Normalización backend de respuestas LLM para desacoplar frontend de `candidates/content/parts` de Gemini
+- Reducción de `max_tokens` por job y control de `thinkingConfig` para latencia
+- Prompting reforzado de gramática para `repair`, `parser_assist` y `general`
+- Documentación técnica actualizada para reflejar arquitectura backend-first
+
+### Fixed
+- Clasificación de timeout de proveedor a `LLM_TIMEOUT` con retry controlado
+- Flujo `repair`: envío de `apiKey` de cliente cuando no hay `API_KEY` de servidor
+- Modal de reparación: compatibilidad con múltiples formatos de `removedLines`/`addedLines`, normalización de código reparado, formateo por bloques `BEGIN/END`
+- Visualización de comparación en repair con resaltado correcto de líneas
 
 ### Docs
-- Consistencia de variables LLM entre `apps/api/.env.example` y documentación operativa.
-- Limpieza de referencias obsoletas en docs (variables y comportamiento de la arquitectura previa en frontend).
+- Consistencia de variables LLM entre `.env.example` y documentación operativa
+- Limpieza de referencias obsoletas en docs
 
-## [Unreleased] - 2026-03-28
-
-### Added
-- Cobertura agresiva de módulo `export` con 26 nuevos tests unitarios: `test_router.py` (4 tests), `test_latex_compiler.py` (4 tests), `test_trace_diagram.py` (6 tests), `test_document_model_helpers.py` (4 tests), `test_latex_renderer_expanded.py` (7 tests). Logró aumentar cobertura global de 70.08% a 75.51% (+1,022 líneas cubiertas).
-- Procedimiento general didáctico de 4 pasos para análisis iterativo en mejor y peor caso: identificación de líneas contables, cálculo de ejecuciones por línea, construcción de la ecuación completa y cierre asintótico.
-- Procedimiento didáctico de 4 pasos para caso promedio en flujo independiente, manteniendo la semántica de esperanza $E[N_{\ell}]$ por línea.
-- Subpaso explícito en el paso de construcción de ecuación para reemplazar sumatorias por sus formas cerradas cuando el costo crudo contiene términos con $\sum$.
-- Subpaso explícito para sustitución de constantes $C_k \to 1$ en el caso promedio cuando existen constantes simbólicas en la ecuación cerrada.
-- Campo `line_procedure` en cada fila: procedimiento detallado específico de cómo se llegó al costo de esa línea (contabilidad + resolución de sumatorias).
-
-### Changed
-- Reordenamiento del procedimiento de mejor/peor caso para que el paso a paso quede estable y consistente en 4 pasos, con narrativa pedagógica y ecuaciones intermedias.
-- Reordenamiento del procedimiento de promedio para seguir el mismo esquema de 4 pasos, respetando su modelo probabilístico y su cálculo por esperanza.
-- En mejor/peor/promedio, las resoluciones de sumatoria por línea ahora se muestran condicionadas a evidencia real de sumatorias en el procedimiento de la fila (no solo por plantilla), incluyendo pasos intermedios de linealidad, evaluación parcial y combinación.
-- La ecuación simplificada final se conserva para el paso de cierre asintótico, evitando duplicaciones innecesarias entre pasos consecutivos.
-- CI de tests del API optimizado: ejecución paralela (`pytest -n auto`) y exclusión de suite lenta en el gate principal (`-m "not slow"`), dejando benchmarks/estrés/while-contract para ejecución separada.
-- **Separación de responsabilidades en modales para iterativos (worst/best case)**:
-  - Pasos 1-2 (Determinar líneas contables + Resolver sumatorias por línea): ahora se distribuyen a cada `row["line_procedure"]` y se muestran en `ProcedureModal` bajo "How this cost was derived".
-  - Pasos 3-4 (Sumar costos totales + Simplificar): se conservan en `procedure_steps` general y se muestran en `GeneralProcedureModal`.
-- Frontend `ProcedureModal.tsx` ahora renderiza `line_procedure` en una sección con borde ámbar bajo "Number of executions", mostrando el paso a paso completo de cómo se llegó al costo de esa línea específica.
-- En `ProcedureModal.tsx`, la sección bajo "Número de ejecuciones" ahora usa `line_procedure` como fuente principal y `procedure` como fallback, evitando que el paso a paso desaparezca en casos sin `line_procedure`.
-
-### Fixed
-- El servicio de análisis ya no falla completo si la generación de invariante de ciclo lanza excepción: ahora degrada `loopInvariant` a estado `unavailable` y continúa el análisis principal.
-- En `BaseAnalyzer.add_row`, expresiones no-SymPy en `count_raw_expr` usan fallback de texto plano, corrigiendo regresión de formato en pruebas de manejo de errores LaTeX.
-- Corrección de inconsistencia pedagógica donde el caso promedio no reflejaba la misma estructura de 4 pasos que mejor/peor caso.
-- Corrección de omisiones en subpasos de sumatorias para que se muestren únicamente cuando aplican y con trazabilidad completa de transformación algebraica.
-- Refactorización de `_generate_iterative_four_step_procedure`: ahora separa los pasos por línea (line_procedure) de los pasos generales, evitando duplicación y mejorando claridad pedagógica en interfaces.
-
-## [Unreleased] - 2026-03-18
+## [1.4.1] — 2026-04-06
 
 ### Added
-- Documentación de infraestructura de export de reportes: `docs/reports-export-infrastructure.md` (flujo, código completo de router, worker, orquestador, motor, LaTeX, Docker/Compose, `package.json` y fragmento del front).
-- Importación de algoritmos desde archivo `.txt` en modo manual (`/es`) y en la vista del analizador (`/es/analyzer`).
-- Modal dedicado para validación de importación TXT con mensajes por tipo de error (archivo inválido, no algoritmo, gramática inválida).
-- Flujo de reparación con IA tras importación fallida por gramática, manteniendo edición final en Monaco antes de analizar.
-- Utilidades de validación y normalización de TXT en frontend (`apps/web/src/lib/txt-import.ts`).
-- Normalización de entrada en backend de parsing (BOM + saltos de línea) y tests unitarios asociados.
+- **Cobertura agresiva de módulo `export`**: 26 nuevos tests unitarios (+1,022 líneas cubiertas, 70.08% → 75.51%)
+- Validación de eficiencia de los 30 algoritmos de ejemplos
+- Mejora en análisis de bucles WHILE: detección de early return y nuevas estructuras de costo
+- Análisis asintótico con localización y reporting mejorado
+- Ejemplos iterativos en catálogo con nuevos algoritmos de ordenamiento
+- Comparación LLM: integración de payload y salida paso a paso mejorada
+- Análisis recursivo: nuevas estructuras de datos, construcción de perfiles, seguimiento de procedimientos auxiliares
+- Reutilización de símbolos y manejo de bucles mejorado en análisis de complejidad
+- Funcionalidad de asistente embebido con localización (`e0cd9b0`)
+- Soporte de escritura con características de editor y localización (`b025361`)
+- Catálogo de contenido con validación y documentación (`78750ad`)
+- Guía de usuario con componentes y localización (`83c8dfa`)
+- Dependencia server-only y legibilidad de schemas (`19772f0`)
+- Procesos de linting y formateo para web app (`b82719d`)
 
 ### Changed
-- El botón de importación en `/es/analyzer` se ajusta a estilo de icono con tooltip (consistente con el resto de acciones).
-- El flujo de importación ahora solo pega contenido en Monaco cuando la validación completa es exitosa.
-- Si la importación falla, el editor conserva el contenido previo; si el usuario confirma reparar con IA, recién entonces se usa el contenido importado.
+- Optimización CI: ejecución paralela (`pytest -n auto`), exclusión de suite lenta del gate principal
+- Workflow CI: PR gate, validación extendida, lanes nocturnas
+- Análisis iterativo y recursivo mejorado para detección de complejidad
+- Manejo de estado de carga en `NavigationContext`
+- Favicon actualizado a nuevo diseño
 
 ### Fixed
-- Corrección de clasificación errónea durante importación: algoritmos con error de gramática ahora se reportan como "gramática inválida" y no como "no parece algoritmo".
-- Unificación del parse de importación entre `/es` y `/es/analyzer` usando el mismo servicio (`GrammarApiService`) para evitar respuestas inconsistentes.
-- Solapamiento visual de modales (importación y reparación IA): ambos modales se renderizan por portal a `document.body` con z-index alto.
-- Reparación IA: se endurece el prompt y se normaliza salida para evitar prefijos incompatibles con la gramática (p. ej. `PROCEDURE ...`).
+- `object.__new__()` MRO issue en herencia múltiple
+- Cadena MRO cooperativa en `BaseAnalyzer`
+- Invariant crash: análisis ya no falla completo si generación de invariante lanza excepción
+- Tests de export: salto de test dependiente de pdflatex en sistemas sin pdflatex
+- Sincronización de pnpm lockfile para antlr4ts
 
-## [Unreleased]
+### Refactored
+- Eliminación de agente logging de executor y trace builder
+- Limpieza de código y formato en múltiples módulos
+- Reorganización de tests y eliminación de tests de contrato obsoletos
 
-### Removed
-- Benchmark de invariantes de ciclo basado en oráculo JSON: carpeta `tests/_support/algorithms/oracle/`, `loop_invariant_oracle.json`, runner, script de generación de informe, test de contrato asociado y `docs/loop-invariants-benchmark.md`.
+## [1.4.0] — 2026-03-29
+
+### Added
+- **Procedimiento general didáctico de 4 pasos para análisis iterativo** en mejor y peor caso: identificación de líneas contables, cálculo de ejecuciones por línea, construcción de ecuación completa y cierre asintótico
+- Procedimiento didáctico de 4 pasos para **caso promedio** en flujo independiente, manteniendo semántica de esperanza $E[N_{\ell}]$ por línea
+- Subpaso explícito para reemplazar sumatorias por formas cerradas cuando el costo crudo contiene $\sum$
+- Subpaso explícito para sustitución de constantes $C_k \to 1$ en caso promedio
+- Campo `line_procedure` en cada fila: procedimiento detallado de cómo se llegó al costo de esa línea
+- Utilidades para manejo de expresiones LaTeX
+- Localización para texto de análisis en español e inglés
+- Pruebas de documentación y verificación de contratos
+- Análisis de lazo cerrado con bundles de pasos estructurados para:
+  - Ecuación característica paso a paso
+  - Método de iteración con bundles estructurados
+  - Teorema Maestro con bundles estructurados
+  - Árbol de recursión con bundles estructurados
+- Clasificaciones de recurrencia y manejo de método preferido
 
 ### Changed
-- Documentación de `loopInvariant` en `docs/api/loop-invariant-deterministic.md`: alcance actual, módulos, flujo, orden de reglas del clasificador, política de confianza y pruebas mantenidas.
+- **Separación de responsabilidades en modales para iterativos**:
+  - Pasos 1-2 (líneas contables + resolución de sumatorias): distribuidos a `row["line_procedure"]`, mostrados en `ProcedureModal` bajo "How this cost was derived"
+  - Pasos 3-4 (sumar costos + simplificar): conservados en `procedure_steps` general, mostrados en `GeneralProcedureModal`
+- Frontend `ProcedureModal.tsx` renderiza `line_procedure` en sección con borde ámbar
+- Sección bajo "Número de ejecuciones" usa `line_procedure` como fuente principal, `procedure` como fallback
+- Reordenamiento de procedimiento mejor/peor caso para consistencia en 4 pasos
+- Caso promedio sigue mismo esquema de 4 pasos respetando modelo probabilístico
+- Resoluciones de sumatoria condicionadas a evidencia real (no solo plantilla)
+- Ecuación simplificada final conservada para cierre asintótico
+- Análisis de bucles WHILE con estructura de costo por bloques y reporting
+
+### Fixed
+- Invariant crash: análisis ya no falla si generación de invariante lanza excepción (degrada a `unavailable`)
+- Expresiones no-SymPy en `count_raw_expr` usan fallback de texto plano
+- Inconsistencia pedagógica: caso promedio ahora refleja misma estructura de 4 pasos
+- Omisiones en subpasos de sumatorias: se muestran solo cuando aplican y con trazabilidad completa
+- Refactorización de `_generate_iterative_four_step_procedure`: separa pasos por línea de pasos generales
+
+## [1.3.2] — 2026-03-27
+
+### Added
+- Paquete exportador con selección de formato y caché de datos (`2309aaa`)
+- Motor modular de análisis de idoneidad de hardware con extracción de features, detección de patrones y scoring (`8307f82`)
+- Detección de recursión para extracción de features de hardware (`d996ac2`)
+- Análisis paso a paso estructurado para ecuación característica (`4cf35e4`)
+- Análisis paso a paso para método de iteración con bundles (`c73fb49`)
+- Análisis paso a paso para Teorema Maestro con bundles (`1768de3`)
+- Análisis paso a paso para árbol de recursión con bundles (`c0f205f`)
+- Clasificaciones de recurrencia mejoradas y manejo estructurado (`80e29c7`)
+- Método preferido en solicitudes de exportación (`e5d3e9f`)
+- Soporte del operador `div` en análisis de complejidad (`1d728ca`)
+- Comando `AALIEDisplayMath` para ecuaciones largas en LaTeX (`8310a83`)
+- Resúmenes de comportamiento de algoritmos para invariantes de ciclo iterativos (`56ce92e`)
+- Mejoras en catálogo de ejemplos con localización y filtrado (`f43c452`)
+- Reestructuración de documentación y navegación de usuario (`ab4b6ea`)
+- Capacidades de linting y formateo para el módulo API (`6d06230`)
+- Documentación de infraestructura de export de reportes (`docs/reports-export-infrastructure.md`)
+- Dependencias y framework de testing mejorados (`ea8a619`)
+
+### Changed
+- Watermark y colección de assets en exportador (`2ecb5b4`)
+- Lógica de reportes migrada a backend (`9cb3d09`)
+- Política CORS para reportes (`b002987`)
+- Plantillas de análisis y manejo numérico mejorado (`f094adb`)
+- Layout y responsividad del componente `AnalyzerEditor` (`2830de8`)
+- Workflow CI actualizado para verificaciones de Black (`4ca7cd0`)
+
+### Fixed
+- Altura del editor Monaco al cambiar tamaño de pantalla (`0f9400f`)
+- Aserciones de tipo en tests de `RecursiveAnalyzer` (int/float) (`b4e916e`)
+
+### Refactored
+- Eliminación de componentes dummy de análisis (`7b3ad9c`)
+- Limpieza de `pnpm-lock.yaml` (dependencias no usadas) (`dce97b7`)
+- Eliminación de props `recursionDiagram` no usadas (`b55e148`)
+- Formato y legibilidad en múltiples módulos (`e993856`)
+
+## [1.3.1] — 2026-03-23
+
+### Added
+- Importación de algoritmos desde archivo `.txt` en modo manual (`/es`) y en vista del analizador (`/es/analyzer`)
+- Modal dedicado para validación de importación TXT con mensajes por tipo de error (archivo inválido, no algoritmo, gramática inválida)
+- Flujo de reparación con IA tras importación fallida por gramática, manteniendo edición final en Monaco antes de analizar
+- Utilidades de validación y normalización de TXT en frontend (`apps/web/src/lib/txt-import.ts`)
+- Normalización de entrada en backend de parsing (BOM + saltos de línea) y tests unitarios asociados
+- Análisis de lazo cerrado con análisis de invariante de ciclo y documentación (`1d039c0`)
+- Paquete exportador integrado y dependencias actualizadas (`e236071`)
+- Fallback para parámetros escalares no resueltos en `CodeExecutor` (`735f0e5`)
+
+### Changed
+- Botón de importación en `/es/analyzer` con estilo de icono + tooltip (consistente con resto de acciones)
+- Flujo de importación solo pega contenido en Monaco cuando validación completa es exitosa
+- Si la importación falla, el editor conserva contenido previo; si usuario confirma reparar con IA, recién se usa contenido importado
+
+### Fixed
+- Clasificación errónea durante importación: errores de gramática se reportan como "gramática inválida", no "no parece algoritmo"
+- Parseo de importación unificado entre `/es` y `/es/analyzer` usando mismo servicio (`GrammarApiService`)
+- Solapamiento visual de modales (importación y reparación IA): ambos se renderizan por portal a `document.body` con z-index alto
+- Reparación IA: prompt endurecido y normalización de salida para evitar prefijos incompatibles con gramática
+
+## [1.3.0] — 2026-03-16
 
 ### Added
 - Documentación de supuestos del caso promedio (`docs/average-case-assumptions.md`) y auditoría (`docs/average-case-audit.md`)
-- Bandera `avg_foundation` (well_founded/approximate) en el análisis de caso promedio
+- Bandera `avg_foundation` (well_founded / approximate) en el análisis de caso promedio
 - Tests de verificación de fórmulas y `avg_foundation` en `test_avg_case.py` y `test_avg_formulas.py`
-- Narrativa pedagógica en el modal de procedimiento general: explicación del caso promedio, qué se promedia, cuándo es representativo
+- Narrativa pedagógica en modal de procedimiento general: explicación del caso promedio, qué se promedia, cuándo es representativo
 - Etiquetas descriptivas en tarjetas de casos (mejor: salida temprana, promedio: E[ejecuciones], peor: máximo de iteraciones)
-- Badge "Bien fundamentado" / "Aproximado" según el modelo del caso promedio
-- Tabla alineada para notaciones O/Ω/Θ en el modal de procedimiento general
+- Badge "Bien fundamentado" / "Aproximado" según modelo del caso promedio
+- Tabla alineada para notaciones O/Ω/Θ en modal de procedimiento general
 - Columnas con anchos fijos en LineTable y CostsTable para alinear fórmulas
+- Inferencia de parámetros y logging mejorado en flujo de ejecución (`038363b`)
+- Manejo refinado de early return en `RecursiveAnalyzer` (`1600ab3`)
+- Notación de potencias refactorizada en `RecursiveAnalyzer` (`463ff4a`)
+- Función de explicación con IA y localización asociada (`16ed1fa`)
+- Selector de métodos con niveles de precisión y metadatos (`9f9b30f`)
+- Mejora en caso promedio: análisis y documentación (`7877cd0`)
+- Umbral de cobertura actualizado en CI (`d655f49`)
 
 ### Changed
-- GeneralProcedureModal: bloque de narrativa para caso promedio, advertencia cuando es aproximado, mini-notas de supuestos
-- IterativeAnalysisView: hints descriptivos en cada tarjeta de caso
+- `GeneralProcedureModal`: bloque de narrativa para caso promedio, advertencia cuando es aproximado, mini-notas de supuestos
+- `IterativeAnalysisView`: hints descriptivos en cada tarjeta de caso
+- Documentación de `loopInvariant` en `docs/api/loop-invariant-deterministic.md`: alcance actual, módulos, flujo, orden de reglas del clasificador, política de confianza y pruebas mantenidas
+
+### Removed
+- Benchmark de invariantes de ciclo basado en oráculo JSON: carpeta `tests/_support/algorithms/oracle/`, `loop_invariant_oracle.json`, runner, script de generación de informe, test de contrato asociado y `docs/loop-invariants-benchmark.md`
+
+### Fixed
+- Simplificación de mensajes de cálculo de g(n) en inglés y español (`96d248b`)
 
 ## [1.2.2] — 2026-03-14
 

@@ -1,0 +1,18 @@
+mergeSortCost(n)
+BEGIN
+  IF (n <= 1) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    left <- mergeSortCost(n / 2);
+    right <- mergeSortCost(n / 2);
+    total <- 0;
+    FOR i <- 1 TO n DO
+    BEGIN
+      total <- total + 1;
+    END;
+    RETURN left + right + total;
+  END;
+END

@@ -11,6 +11,7 @@ import {
   findMainProcedure,
   type RecursionFacts,
 } from "./recursionFacts";
+import { collectSemanticFacts, type SemanticFacts } from "./semanticFacts";
 import { collectShrinkFacts, type ShrinkFacts } from "./shrinkFacts";
 import { collectTableFacts, type TableFacts } from "./tableFacts";
 import type { AstNode } from "../ast/astAdapter";
@@ -27,6 +28,7 @@ export type TechniqueFacts = {
   table: TableFacts;
   mutation: MutationFacts;
   choice: ChoiceFacts;
+  semantic: SemanticFacts;
 };
 
 export function collectTechniqueFacts(ast: AstNode): TechniqueFacts {
@@ -40,17 +42,19 @@ export function collectTechniqueFacts(ast: AstNode): TechniqueFacts {
 
   const recursion = collectRecursionFacts(scopedAst, index);
   const loops = collectLoopFacts(scopedAst, index);
+  const semantic = collectSemanticFacts(scopedAst);
   const shrink = collectShrinkFacts(scopedAst, index, recursion);
   const partition = collectPartitionFacts(scopedAst, index, recursion);
+  const mutation = collectMutationFacts(scopedAst, index, recursion);
   const decomposition = collectDecompositionFacts(
     scopedAst,
     index,
     recursion,
     shrink,
     partition,
+    mutation,
   );
   const table = collectTableFacts(scopedAst, index, recursion);
-  const mutation = collectMutationFacts(scopedAst, index, recursion);
   const choice = collectChoiceFacts(scopedAst, index, mutation);
 
   return {
@@ -64,5 +68,6 @@ export function collectTechniqueFacts(ast: AstNode): TechniqueFacts {
     table,
     mutation,
     choice,
+    semantic,
   };
 }

@@ -1,6 +1,9 @@
-# ADR-008: Unified content spaces
+# ADR-008: Espacios de contenido unificados
 
 **Tipo:** normativa
+**Estado:** aceptada
+**Fecha:** 2026-05-18
+**Fuente de verdad:** `packages/content-catalog/`, `docs/08-content/content-model.md`, `scripts/check_docs_contracts.py`
 
 ## Propósito
 

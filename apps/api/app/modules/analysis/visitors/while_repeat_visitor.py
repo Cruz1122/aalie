@@ -1323,9 +1323,7 @@ class WhileRepeatVisitor:
                                 if rgt.get("type", "").lower() in (
                                     "number",
                                     "literal",
-                                ) and str(
-                                    rv
-                                ) in ("1", "1.0"):
+                                ) and str(rv) in ("1", "1.0"):
                                     found = True
                 for v in n.values():
                     walk(v)

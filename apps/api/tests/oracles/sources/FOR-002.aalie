@@ -1,0 +1,9 @@
+sumArray(A, n)
+BEGIN
+  suma <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    suma <- suma + A[i];
+  END;
+  RETURN suma;
+END

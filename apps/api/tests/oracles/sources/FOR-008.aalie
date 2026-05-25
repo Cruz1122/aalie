@@ -1,0 +1,13 @@
+sumTwoArrays(A, B, n, m)
+BEGIN
+  total <- 0;
+  FOR i <- 1 TO n DO
+  BEGIN
+    total <- total + A[i];
+  END;
+  FOR j <- 1 TO m DO
+  BEGIN
+    total <- total + B[j];
+  END;
+  RETURN total;
+END

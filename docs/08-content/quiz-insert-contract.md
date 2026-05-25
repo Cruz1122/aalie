@@ -1,5 +1,9 @@
 # Contrato exacto para insertar preguntas
 
+**Estado:** reemplazado
+**Reemplazado por:** `quiz-json-schema.md`
+**Nota:** Documento histórico. El contrato exacto de inserción está cubierto en `quiz-json-schema.md` (sección Dataset y Answer types).
+
 Este contrato aplica a `python scripts/manage_quiz_bank.py insert --input "<archivo>.json"`.
 
 ## Formato del archivo de entrada

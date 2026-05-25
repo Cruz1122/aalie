@@ -102,7 +102,9 @@ def normalize_llm_comparative_payload(payload: Any) -> Dict[str, Any]:
         "verdict": (
             parsed.get("verdict")
             if isinstance(parsed.get("verdict"), str)
-            else parsed.get("note") if isinstance(parsed.get("note"), str) else None
+            else parsed.get("note")
+            if isinstance(parsed.get("note"), str)
+            else None
         ),
         "confidence": _normalize_confidence(parsed.get("confidence")),
         "matches": _to_string_array(parsed.get("matches"))

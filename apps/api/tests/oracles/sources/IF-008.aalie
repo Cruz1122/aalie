@@ -1,0 +1,16 @@
+uniformAverageBranch(A, n, opcion)
+BEGIN
+  total <- 0;
+  IF (opcion = 1) THEN
+  BEGIN
+    FOR i <- 1 TO n DO
+    BEGIN
+      total <- total + A[i];
+    END;
+  END
+  ELSE
+  BEGIN
+    total <- total + 1;
+  END;
+  RETURN total;
+END

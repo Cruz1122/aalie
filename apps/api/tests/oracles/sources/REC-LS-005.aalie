@@ -1,0 +1,13 @@
+doublePreviousCost(n)
+BEGIN
+  IF (n <= 0) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    a <- doublePreviousCost(n - 1);
+    b <- doublePreviousCost(n - 1);
+    RETURN a + b;
+  END;
+END

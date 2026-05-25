@@ -1,121 +1,227 @@
 # Especificación de snapshot de análisis
 
 **Tipo:** normativa
+**Estado:** final
+**Audiencia:** dev
+**Fuente de verdad:** `apps/api/app/modules/export/snapshot_builder.py`, `apps/api/app/modules/export/models.py`, `apps/api/app/modules/export/constants.py`, `apps/api/app/modules/export/section_status.py`, `packages/types/src/export-snapshot.ts`
+**Última revisión:** 2026-05-18
+**Relacionado con informe técnico:** Sección 5.1 — Snapshot de análisis
 
 ## Propósito
 
-Definir el snapshot versionado como fuente única de verdad para UI coherente, export y consumo cruzado.
+Definir el snapshot versionado como fuente única de verdad para UI coherente, export estable y consumo cruzado entre servicios. El snapshot congela el estado completo del análisis en un instante y es la base de toda renderización posterior.
 
 ## Alcance
 
-Aplica al schema `AalieAnalysisSnapshotV1` y a toda la salida de export.
+Aplica al schema `AalieAnalysisSnapshotV1`, al builder `build_snapshot()` en `snapshot_builder.py`, a la función `build_export_state()`, y a todos los consumidores del snapshot (UI, export engine, comparativas).
 
-## Fuente de verdad
+## Fuente de alcance
 
-- `packages/types/src/export-snapshot.ts`
-- `apps/api/app/modules/export/constants.py`
-- `apps/api/app/modules/export/snapshot_builder.py`
+No cubre: análisis en vivo no cacheado, mutación directa del snapshot después de construcción, recalculo de `T_open` o `contentHash` fuera del builder.
 
-## Estructura
+## Contenido
 
-### Campos raiz obligatorios
+### 1. Versión del schema
 
-- `schemaVersion` actual: `1.0.0`
-- `schemaVersion`
-- `snapshotId`
-- `contentHash`
-- `createdAt`
-- `locale`
-- `meta`
-- `input`
-- `internal`
-- `globalResult`
-- `comparative`
-- `institutional`
-- `algorithmType`
-- `iterative`
-- `recursive`
+```
+schemaVersion: "1.0.0"
+```
 
-### Secciones clave
+Definida en `constants.py` como `SNAPSHOT_SCHEMA_VERSION`. Debe coincidir entre backend y tipos compartidos (`packages/types`). Cualquier cambio incompatible requiere un bump de versión.
 
-- `meta`: identificación, validez, warnings, limitaciones
-- `input`: pseudocodigo original, parse observations, resumen de casos y trace
-- `internal`: AST y artefactos intermedios no destinados a consumo institucional directo
-- `globalResult`: resultados por caso
-- `iterative` / `recursive`: detalle por familia de algoritmo
+### 2. Identificadores
 
-### Precedencia entre secciones
+- **`snapshotId`**: UUID v5 basado en namespace `SNAPSHOT_NAMESPACE` (`8ea7d65c-f598-49ea-8fdd-28289954182d`) + hash SHA-256 del payload de entrada normalizado. Estable para el mismo estado de entrada/resultado.
+- **`analysisId`**: UUID v5 basado en namespace `ANALYSIS_NAMESPACE` (`3f239c5d-2970-4cec-8b6d-d11aa2d7a7aa`) + mismo hash. Vincula el snapshot a una sesión de análisis específica.
+- **`contentHash`**: SHA-256 del snapshot completo normalizado (sin `createdAt`). Se recalcula dentro de `build_snapshot()` para garantizar integridad.
 
-- `globalResult` es el resumen público primario del snapshot.
-- `iterative` y `recursive` contienen detalle especializado por familia y no pueden contradecir `globalResult`.
-- si `algorithmType = iterative`, `iterative` puede estar `available` y `recursive` debe estar `not_supported`, `not_applicable` o equivalente contractual.
-- si `algorithmType = recursive`, aplica la regla simétrica.
-- ante conflicto, el snapshot es inválido: no existe precedencia permisiva entre secciones contradictorias.
+### 3. Estructura raíz
 
-### Obligatoriedad por tipo de algoritmo
+```json
+{
+  "schemaVersion": "1.0.0",
+  "snapshotId": "uuid-v5",
+  "contentHash": "sha-256-hex",
+  "createdAt": "2026-05-14T10:30:00.000Z",
+  "locale": "es",
+  "algorithmType": "iterative | recursive | hybrid | dummy | unknown",
+  "meta": { ... },
+  "input": { ... },
+  "internal": { ... },
+  "globalResult": { ... },
+  "iterative": { ... },
+  "recursive": { ... },
+  "comparative": { ... },
+  "institutional": { ... }
+}
+```
 
-- para `algorithmType = iterative`, el snapshot debe incluir `globalResult`, `iterative.status`, resultado principal por caso y representación de costo por líneas o equivalente contractual consumido por UI/export.
-- para `algorithmType = iterative`, `recursive` no debe transportar detalle metodológico activo; solo estado de no aplicabilidad.
-- para `algorithmType = recursive`, el snapshot debe incluir `globalResult`, `recursive.status`, `recurrence_info` o equivalente contractual de recurrencia detectada, `default_method` cuando exista y detalle de método o estado inconcluso explícito.
-- para `algorithmType = recursive`, `iterative` no debe reclamar disponibilidad analítica principal salvo como artefacto auxiliar explícitamente marcado.
-- trace, warnings, metadatos y `snapshotId` son obligatorios para ambos tipos cuando el flujo que generó el snapshot los haya solicitado o materializado.
+### 4. Secciones detalladas
 
-### Propiedad y compatibilidad
+#### `meta`
+- `analysisId`: string
+- `sourceOrigin`: `"editor"` | `"api"` | `"cli"`
+- `algorithm`: `{ name: string, parameters: string[] }`
+- `algorithmTypeDetected`: `"iterative" | "recursive" | "hybrid" | "dummy" | "unknown"`
+- `methodsApplied`: string[] — métodos usados en análisis
+- `methodsAvailable`: string[] — métodos detectados como aplicables
+- `hasCaseVariability`: bool — si best ≠ worst
+- `validity`: `{ parseOk, analysisOk, traceOk }` — checker de integridad
+- `warnings`: `[{ code, message, severity, source }]` — advertencias del pipeline
+- `limitations`: string[] — mensajes de limitaciones
 
-- el snapshot público es propiedad contractual del backend export y de `packages/types`.
-- los consumidores pueden leer `internal`, pero no deben depender de él para render institucional estable.
-- cambios backward compatible: agregar campos opcionales o subsecciones con `status`.
-- cambios incompatibles: alterar semántica de campos públicos, remover campos requeridos o cambiar reglas de precedencia.
+#### `input`
+- `originalPseudocode`: string — código fuente original
+- `normalizedPseudocode`: section (not_implemented actualmente)
+- `procedureName`: string — nombre del procedimiento principal
+- `parameters`: string[] — parámetros formales
+- `parsingObservations`: `{ ok, available, runtime, error, errors }` — resultado del parse
+- `analysisSummary`: `{ hasCaseVariability, availableCases }`
+- `traceSummary`: section con datos de trace por caso
 
-## Inputs
+#### `internal`
+- `ast`: section (available | missing_data) — AST completo
+- `classification`: section — `{ kind, method }`
+- `recurrence`: section — recurrencia normalizada
+- `intermediateMath`: section — todos los artefactos matemáticos intermedios (proof, characteristic_equation, iteration, master, recursion_tree)
 
-- `source`
-- `locale`
-- parse/cache de parse
-- classify/cache de classify
-- analyze/cache de analyze
-- traceByCase
-- opciones auxiliares de export
+#### `globalResult`
+- `cases`: `{ worst, best, avg }` — cada caso contiene:
+  - `case`: string
+  - `T_open`: string — expresión de costo abierto
+  - `T_polynomial`: string — forma polinomial
+  - `big_o`: string
+  - `big_omega`: string
+  - `big_theta`: string
+  - `whileBlocks`: array — bloques WHILE detectados
+  - `explanationSteps`: array — pasos pedagógicos
+  - `raw`: dict — datos completos del analizador
 
-## Outputs
+#### `iterative` (section)
+- `lineCostTable`: `{ worst, best, avg }` — costo por línea por caso
+- `whileBlocks`: `{ worst, best, avg }` — bloques WHILE por caso
+- `summations`: `{ worst, best, avg }` — T_open por caso
+- `simplificationSteps`: `{ worst, best, avg }` — procedimiento paso a paso
+- `asymptoticProcedure`: `{ worst, best, avg }` — notas asintóticas
+- `caseStepByStep`: `{ worst, best, avg }` — bundles paso a paso
+- `trace`: section — trace de ejecución por caso
+- `loopInvariant`: section (not_implemented actualmente)
 
-- snapshot JSON normalizado, versionado y hasheado.
+#### `recursive` (section)
+- `recurrence`: section — recurrencia normalizada
+- `selectedMethod`: section — método usado
+- `methodsAvailable`: section — métodos aplicables
+- `methodDetails`: `[{ method, detail }]` — detalle por método
+- `presentation`: `{ summary, conceptNote, warning, supportReason, renderHints }`
+- `rootsAndMultiplicities`: section — raíces de ecuación característica
+- `stepByStep`: section — bundle paso a paso seleccionado
+- `closedForm`: section — `{ homogeneousSolution, particularSolution, generalSolution, closedForm, theta, baseCases }`
+- `recursionTreeSerializable`: section (not_implemented)
+- `callTrace`: section — trace con call tree
 
-## Invariantes
+#### `comparative`
+- `llm`: section — comparación con LLM (available | not_requested)
+- `gpuCpu`: section — comparación GPU/CPU (available | not_requested)
 
-- `schemaVersion` debe coincidir entre backend y tipos compartidos;
-- `contentHash` deriva del snapshot normalizado;
-- `snapshotId` es estable para el mismo estado de entrada/resultado;
-- las secciones faltantes se representan con `status`, no con recalculo fuera del snapshot.
-- `globalResult`, `iterative` y `recursive` deben ser coherentes entre sí;
-- `internal` no puede convertirse en única fuente necesaria para render público sin cambio explícito de contrato.
+#### `institutional`
+- `disclaimer`: string — texto de descargo institucional (localizado)
+- `caseLimitations`: string[] — limitaciones por caso
+- `generalLimitations`: string[] — limitaciones generales (localizadas)
 
-## Errores esperables
+### 5. section status pattern
 
-- secciones `not_implemented`, `missing_data` o `not_supported`;
-- inconsistencia de versión entre código y spec;
-- ausencia de parse/analyze/trace cacheados cuando el builder no logra reconstruirlos.
+Cada subsección usa el formato `{ "status": string, "data"?: any, "warnings"?: [], "todos"?: [] }`.
 
-## Ejemplos
+| Status | Significado |
+|--------|-------------|
+| `available` | Datos presentes y utilizables |
+| `missing_data` | Datos esperados pero no disponibles |
+| `not_supported` | Funcionalidad no soportada para este algoritmo |
+| `not_implemented` | Funcionalidad no implementada (con `todos`) |
+| `not_requested` | Funcionalidad no solicitada en esta exportación |
 
-### Ejemplos validos
+### 6. Precedencia entre secciones
 
-- snapshot iterativo con `iterative.status = available` y `recursive.status = not_supported`.
-- snapshot recursivo con `recursive.methodDetails` y `callTrace` disponibles.
+1. `globalResult` es el resumen público primario del snapshot.
+2. `iterative` y `recursive` contienen detalle especializado por familia y **no pueden contradecir** `globalResult`.
+3. Si `algorithmType = iterative`, `iterative` debe tener `status = available` y `recursive` debe tener `status = not_supported`.
+4. Si `algorithmType = recursive`, aplica la regla simétrica.
+5. Si `algorithmType = hybrid`, ambas secciones pueden tener `status = available`.
+6. Ante conflicto entre secciones, el snapshot es inválido: no existe precedencia permisiva entre secciones contradictorias.
+7. `internal` no puede convertirse en única fuente necesaria para render público sin cambio explícito de contrato.
 
-### Ejemplos no soportados
+### 7. Invalidation
 
-- exportar recalculando `T_open` fuera del snapshot;
-- mutar manualmente `schemaVersion` sin actualizar código y checks.
+Un nuevo snapshot es necesario cuando:
+- El código fuente cambia.
+- La configuración de análisis cambia (locale, avg_model, preferred_method).
+- Los caches de parse/classify/analyze/trace se actualizan.
+- `schemaVersion` cambia por evolución del contrato.
 
-## Limites conocidos
+El `snapshotId` es estable para el mismo estado de entrada; si los inputs no cambian, el snapshot es el mismo.
+
+### 8. Missing states
+
+- Campos opcionales no presentes: se omiten durante la serialización (`_strip_undefined_deep` elimina `null`s excepto para campos conservados explícitamente).
+- Subsecciones no disponibles: se representan con `status` apropiado, no con omisión silenciosa.
+- `contentHash` se calcula sobre el snapshot sin `createdAt` (para estabilidad).
+- `normalizedPseudocode` y `loopInvariant` están marcados como `not_implemented`.
+
+### 9. Invariantes
+
+1. `schemaVersion` debe coincidir entre backend y tipos compartidos.
+2. `contentHash` deriva del snapshot normalizado (sin `createdAt`).
+3. `snapshotId` es estable para el mismo estado de entrada/resultado.
+4. Las secciones faltantes se representan con `status`, no con recalculo fuera del snapshot.
+5. `globalResult`, `iterative` y `recursive` deben ser coherentes entre sí.
+6. `internal` no puede convertirse en única fuente necesaria para render público.
+7. La normalización de recurrencia en snapshot puede ser un subconjunto de la recurrencia del analizador en vivo.
+8. Los warnings se recolectan en `_collect_warnings()` desde parse, analyze y trace.
+
+### 10. Errores esperables
+
+- Secciones `not_implemented`, `missing_data` o `not_supported`.
+- Inconsistencia de versión entre código y spec.
+- Ausencia de parse/analyze/trace cacheados cuando el builder no logra reconstruirlos.
+- `build_export_state` lanza `ValueError` si `source` está vacío.
+- Parseo no disponible: `parsingObservations.available = false`.
+- Análisis fallido: `validity.analysisOk = false`.
+
+### 11. Casos soportados
+
+1. **Snapshot iterativo completo**: `algorithmType = iterative`, `iterative.status = available`, `recursive.status = not_supported`, con `lineCostTable`, `whileBlocks`, `summations`, trace disponible.
+2. **Snapshot recursivo completo**: `algorithmType = recursive`, `recursive.status = available`, `iterative.status = not_supported`, con `recurrence`, `methodDetails`, `stepByStep`, `callTrace`.
+3. **Snapshot híbrido**: `algorithmType = hybrid`, ambas secciones disponibles.
+4. **Snapshot con error de parse**: `validity.parseOk = false`, warnings con `PARSE_FAILED`.
+5. **Snapshot con trace truncado**: warnings con `TRACE_TRUNCATED`.
+
+### 12. Casos no soportados
+
+1. Exportar recalculando `T_open` fuera del snapshot.
+2. Mutar manualmente `schemaVersion` sin actualizar código y checks.
+3. Depender de `internal` para render institucional estable.
+4. Asumir que `loopInvariant` está disponible (es `not_implemented`).
+
+### 13. Evidencia
+
+- `build_snapshot()` en `snapshot_builder.py` construye el snapshot completo a partir de `snapshot_input`.
+- `build_export_state()` coordina la recolección de datos (parse, classify, analyze, detectMethods, traceByCase).
+- `_derive_metadata()` genera `analysisId`, `snapshotId` y `createdAt`.
+- `_normalize_recurrence()` serializa la recurrencia en formato canónico (3 variantes).
+- `_resolve_report_trace_graph()` construye el grafo de trace para el reporte.
+- `_collect_warnings()` recolecta advertencias de todas las etapas.
+
+### 14. Limitaciones
 
 - Algunas subsecciones pueden declararse `not_implemented` aun dentro de un snapshot válido.
-- `internal` puede incluir artefactos útiles para depuración, pero esos campos no deben tratarse como promesa institucional estable salvo que se promuevan explícitamente.
-- La normalización de `recurrence` en export (`apps/api/app/modules/export/snapshot_builder.py`, `_normalize_recurrence`) puede ser un subconjunto estricto de la recurrencia devuelta por el analizador en vivo; campos auxiliares (por ejemplo `method_outcomes` en `recurrence_info`) no forman parte del snapshot exportado hasta que el builder los incorpore de forma explícita y versionada.
+- `internal` puede incluir artefactos útiles para depuración, pero esos campos no deben tratarse como promesa institucional estable.
+- La normalización de `recurrence` puede ser un subconjunto estricto de la recurrencia devuelta por el analizador; campos auxiliares (`method_outcomes`) no forman parte del snapshot hasta que el builder los incorpore explícitamente.
+- `loopInvariant` y `normalizedPseudocode` están pendientes de implementación.
+- `symbolicRecurrenceTree` completo no está implementado.
 
 ## Archivos relacionados
 
 - `export-engine-spec.md`
 - `execution-trace-spec.md`
+- `../02-architecture/report-architecture.md`
 - `../04-api/schemas/snapshot-schema.md`

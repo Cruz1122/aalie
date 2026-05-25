@@ -1,0 +1,16 @@
+maxArray(A, n)
+BEGIN
+  maximo <- A[1];
+  FOR i <- 2 TO n DO
+  BEGIN
+    IF (A[i] > maximo) THEN
+    BEGIN
+      maximo <- A[i];
+    END
+    ELSE
+    BEGIN
+      maximo <- maximo;
+    END;
+  END;
+  RETURN maximo;
+END

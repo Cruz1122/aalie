@@ -1,0 +1,8 @@
+initializeVector(A, n)
+BEGIN
+  FOR i <- 1 TO n DO
+  BEGIN
+    A[i] <- 0;
+  END;
+  RETURN A;
+END

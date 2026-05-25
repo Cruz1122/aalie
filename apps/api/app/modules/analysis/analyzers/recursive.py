@@ -497,10 +497,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     proc_def, recursive_calls, a, b
                 )
                 # Iteración: permitida para rama única (a=1) O para cualquier divide-and-conquer regular
-                use_iteration = (
-                    self._is_single_branch_geometric_divide_conquer_recurrence(recurrence)
-                    or self._can_use_iteration_for_divide_conquer(recurrence)
-                )
+                use_iteration = self._is_single_branch_geometric_divide_conquer_recurrence(
+                    recurrence
+                ) or self._can_use_iteration_for_divide_conquer(recurrence)
             else:
                 # Fallback conservador para tipos no estandarizados.
                 use_characteristic = self._detect_characteristic_equation_method(
@@ -718,43 +717,41 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         return self._is_constant_work_term(recurrence.get("f", "1"))
 
-    def _can_use_iteration_for_divide_conquer(
-        self, recurrence: Dict[str, Any]
-    ) -> bool:
+    def _can_use_iteration_for_divide_conquer(self, recurrence: Dict[str, Any]) -> bool:
         """
         Detecta si iteración es aplicable para ANY divide-and-conquer recurrence,
         no solo rama única (a=1).
-        
+
         Permite iteración para:
         - T(n)=T(n/b)+Theta(g(n)) (rama única, a=1)
         - T(n)=a*T(n/b)+Theta(g(n)) (múltiples ramas, a>1)
-        
+
         La iteración geométrica es útil siempre que tengamos una estructura regular.
         """
         if recurrence.get("type") != "divide_conquer":
             return False
-        
+
         if not isinstance(self.proc_def, dict):
             return False
-        
+
         try:
             a_val = int(recurrence.get("a", 0))
             b_val = float(recurrence.get("b", 0))
         except Exception:
             return False
-        
+
         # Requiere a >= 1 y b > 1 (divide-and-conquer regular)
         if a_val < 1 or b_val <= 1:
             return False
-        
+
         try:
             recursive_calls = self._find_recursive_calls(self.proc_def)
         except Exception:
             return False
-        
+
         if not recursive_calls:
             return False
-        
+
         # Verificar que el trabajo sea computationally feasible (no exponencial en a, b)
         # O(1), O(n), O(n^2), etc. son permitidos
         return self._is_polynomial_work_term(recurrence.get("f", "1"))
@@ -765,22 +762,32 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         if not f_str or f_str in {"1", "0"}:
             return True
-        
+
         f_lower = str(f_str).lower().strip()
-        
+
         # Términos que consideramos "manejables" para iteración
         manageable = {
-            "theta(1)", "o(1)", "1",
-            "theta(n)", "o(n)", "n",
-            "theta(n^2)", "o(n^2)", "n^2",
-            "theta(log(n))", "o(log(n))", "log(n)",
-            "theta(n*log(n))", "o(n*log(n))", "n*log(n)",
+            "theta(1)",
+            "o(1)",
+            "1",
+            "theta(n)",
+            "o(n)",
+            "n",
+            "theta(n^2)",
+            "o(n^2)",
+            "n^2",
+            "theta(log(n))",
+            "o(log(n))",
+            "log(n)",
+            "theta(n*log(n))",
+            "o(n*log(n))",
+            "n*log(n)",
         }
-        
+
         for term in manageable:
             if term in f_lower:
                 return True
-        
+
         return False
 
     def _infer_method_bound_kind(
@@ -833,9 +840,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "recursion_tree",
             "master",
         ]:
-            bound_kind = self._infer_method_bound_kind(
-                method, recurrence, applicable_methods
-            )
+            bound_kind = self._infer_method_bound_kind(method, recurrence, applicable_methods)
             outcomes[method] = {
                 "applicable": method in applicable_methods,
                 "recommended": method == default_method,
@@ -881,7 +886,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
     def _get_method_bound_kind(self, method: str) -> str:
         """
         Determina bound_kind para el método actual basado en la recurrencia.
-        
+
         Returns: "equivalent" | "upper" | "lower" | "partial"
         """
         if not self.recurrence:
@@ -3950,7 +3955,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 else (
                     "equal"
                     if relation_type == "equal"
-                    else "larger" if relation_type == "greater" else None
+                    else "larger"
+                    if relation_type == "greater"
+                    else None
                 )
             )
 
@@ -8078,7 +8085,10 @@ FIN FUNCIÓN"""
                     "expansions": expansions,
                     "general_form": general_form,
                     "base_case": {"condition": k_condition, "k": k_value},
-                    "summation": {"expression": summation_expression, "evaluated": summation_evaluated},
+                    "summation": {
+                        "expression": summation_expression,
+                        "evaluated": summation_evaluated,
+                    },
                     "theta": rf"{branch_factor_latex}^n",
                     "step_by_step": step_bundle,
                     "branch_factor": branch_factor,
@@ -8148,7 +8158,11 @@ FIN FUNCIÓN"""
                 ]
                 general_form = rf"T(n)\leq {a_total}^kT\left(\frac{{n}}{{{b_max}^k}}\right)+\sum_{{j=0}}^{{k-1}} {a_total}^j {g_n_value}"
                 k_condition = f"\frac{{n}}{{{b_max}^k}}={base_for_formula}"
-                k_value = f"\log_{{{b_max}}} n" if base_for_formula in (0, 1) else f"\log_{{{b_max}}}\left(\frac{{n}}{{{base_for_formula}}}\right)"
+                k_value = (
+                    f"\log_{{{b_max}}} n"
+                    if base_for_formula in (0, 1)
+                    else f"\log_{{{b_max}}}\left(\frac{{n}}{{{base_for_formula}}}\right)"
+                )
                 summation_expression = general_form
                 summation_evaluated = rf"\sum_{{j=0}}^{{k-1}} {a_total}^j {g_n_value}"
                 final_expression = rf"T(n)\leq {a_total}^{{{k_value}}}T({base_for_formula})+({a_total}^{{{k_value}}}-1)\cdot {g_n_value}"
@@ -8186,7 +8200,10 @@ FIN FUNCIÓN"""
                     "expansions": expansions,
                     "general_form": general_form,
                     "base_case": {"condition": k_condition, "k": k_value},
-                    "summation": {"expression": summation_expression, "evaluated": summation_evaluated},
+                    "summation": {
+                        "expression": summation_expression,
+                        "evaluated": summation_evaluated,
+                    },
                     "theta": upper_theta,
                     "step_by_step": step_bundle,
                     "branch_factor": a_total,
@@ -8227,7 +8244,9 @@ FIN FUNCIÓN"""
             k_condition = f"n-k={base_for_formula}"
             k_value = f"n-{base_for_formula}" if base_for_formula > 0 else "n"
             summation_expression = rf"T(n)\leq {branch_factor_latex}^kT(n-k)+\sum_{{j=0}}^{{k-1}} {branch_factor_latex}^j"
-            summation_evaluated = rf"T(n)\leq {branch_factor_latex}^kT(n-k)+({branch_factor_latex}^k-1)"
+            summation_evaluated = (
+                rf"T(n)\leq {branch_factor_latex}^kT(n-k)+({branch_factor_latex}^k-1)"
+            )
             final_expression = (
                 rf"T(n)\leq {branch_factor_latex}^{{{k_value}}}T({base_for_formula})+({branch_factor_latex}^{{{k_value}}}-1)"
                 if base_val is None
@@ -8320,15 +8339,21 @@ FIN FUNCIÓN"""
                 if base_for_formula == 1:
                     k_value = f"\\log_{{{b_display}}} n"
                 else:
-                    k_value = f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+                    k_value = (
+                        f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+                    )
 
                 expansions = [
                     f"T(n)=T\\left(\\frac{{n}}{{{b_display}}}\\right)+{g_n_value}",
                     f"T(n)=T\\left(\\frac{{n}}{{{b_display}^2}}\\right)+2\\cdot {g_n_value}",
                     f"T(n)=T\\left(\\frac{{n}}{{{b_display}^3}}\\right)+3\\cdot {g_n_value}",
                 ]
-                general_form = f"T(n)=T\\left(\\frac{{n}}{{{b_display}^k}}\\right)+k\\cdot {g_n_value}"
-                summation_expression = f"T(n)=T({base_for_formula})+\\sum_{{j=0}}^{{k-1}} {g_n_value}"
+                general_form = (
+                    f"T(n)=T\\left(\\frac{{n}}{{{b_display}^k}}\\right)+k\\cdot {g_n_value}"
+                )
+                summation_expression = (
+                    f"T(n)=T({base_for_formula})+\\sum_{{j=0}}^{{k-1}} {g_n_value}"
+                )
 
                 context = IterationStepContext(
                     locale=self.locale,
@@ -8371,7 +8396,7 @@ FIN FUNCIÓN"""
                     }
                 )
                 return {"success": True, "iteration": iteration}
-            
+
             # Si NO es rama única pero SÍ es un divide-and-conquer regular (a>1, b>1),
             # usar el método genérico de cota superior
             elif self._can_use_iteration_for_divide_conquer(self.recurrence):
@@ -9328,7 +9353,7 @@ FIN FUNCIÓN"""
                     },
                     "dominating_level": {
                         "level": "leaves",
-                        "reason": "\\text{Ramificación: número de nodos \\Theta(2^n) dominan las hojas}"
+                        "reason": "\\text{Ramificación: número de nodos \\Theta(2^n) dominan las hojas}",
                     },
                     "table_by_levels": [],
                     "theta": f"O({theta})",
@@ -9375,7 +9400,7 @@ FIN FUNCIÓN"""
                     },
                     "dominating_level": {
                         "level": "root",
-                        "reason": "\\text{Cota superior por árbol balanceado: cada nivel aporta } n-i \\text{, domina la raíz}"
+                        "reason": "\\text{Cota superior por árbol balanceado: cada nivel aporta } n-i \\text{, domina la raíz}",
                     },
                     "table_by_levels": [],
                     "theta": f"O({theta})",
@@ -9448,7 +9473,7 @@ FIN FUNCIÓN"""
                     },
                     "dominating_level": {
                         "level": "leaves",
-                        "reason": f"\\text{{Cota superior por árbol balanceado: }} O({branch_factor}^n)\\text{{, dominan las hojas}}"
+                        "reason": f"\\text{{Cota superior por árbol balanceado: }} O({branch_factor}^n)\\text{{, dominan las hojas}}",
                     },
                     "table_by_levels": [],
                     "theta": f"O({theta})",
@@ -9526,7 +9551,7 @@ FIN FUNCIÓN"""
                     },
                     "dominating_level": {
                         "level": "leaves",
-                        "reason": "\\text{Cota superior por árbol balanceado: } O(2^n)\\text{, dominan las hojas}"
+                        "reason": "\\text{Cota superior por árbol balanceado: } O(2^n)\\text{, dominan las hojas}",
                     },
                     "table_by_levels": [],
                     "theta": f"O({theta})",

@@ -117,7 +117,7 @@ const JOB_CONFIG = {
   },
   compare: {
     temperature: 0.1,
-    maxTokens: 8000,
+    maxTokens: 20000,
     schema: {
       type: "object",
       properties: {

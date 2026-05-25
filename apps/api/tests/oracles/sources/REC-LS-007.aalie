@@ -1,0 +1,17 @@
+recursiveLinearLocalWork(n)
+BEGIN
+  IF (n <= 0) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    local <- 0;
+    FOR i <- 1 TO n DO
+    BEGIN
+      local <- local + 1;
+    END;
+    sub <- recursiveLinearLocalWork(n - 1);
+    RETURN sub + local;
+  END;
+END

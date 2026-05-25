@@ -1,0 +1,12 @@
+recursiveArraySumCost(n)
+BEGIN
+  IF (n <= 0) THEN
+  BEGIN
+    RETURN 0;
+  END
+  ELSE
+  BEGIN
+    sub <- recursiveArraySumCost(n - 1);
+    RETURN sub + 1;
+  END;
+END

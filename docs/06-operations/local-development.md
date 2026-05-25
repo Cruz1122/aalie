@@ -1,64 +1,177 @@
 # Desarrollo local
 
-**Tipo:** normativa
+**Tipo:** guía
+**Estado:** final
+**Audiencia:** dev
+**Fuente de verdad:** `package.json`, `apps/web/package.json`, `apps/api/pyproject.toml`, `infra/docker-compose.yml`, `README.md`
+**Última revisión:** 2026-05-18
+**Relacionado con informe técnico:** environment-variables, deployment, troubleshooting
 
-## Propósito
+## Requisitos
 
-Permitir levantar y probar AALIE localmente sin consultar documentos legacy.
+| Herramienta | Versión | Nota |
+|---|---|---|
+| Node.js | `>=20 <23` | Engines lock en root package.json |
+| pnpm | `9.15.0` | Package manager del monorepo; `corepack enable` recomendado |
+| Python | `3.11+` | Usado por backend API y scripts de validación |
+| Java | `>=8` | Solo necesario para regenerar parser ANTLR (codegen), no para ejecutar |
+| pdflatex | — | Opcional para export PDF en local |
 
-## Alcance
+## Instalación
 
-Cubre flujo local con `pnpm`/Python y opcion Docker.
+```bash
+# Dependencias Node (frontend + packages)
+pnpm install
 
-## Fuente de verdad
+# Dependencias Python (backend API)
+cd apps/api
+pip install -r requirements.txt
+pip install -r requirements-dev.txt   # solo para desarrollo/tests
+```
 
-- `package.json`
-- `apps/web/package.json`
-- `apps/api/pyproject.toml`
-- `infra/docker-compose.yml`
+### Grammar package (Python)
 
-## Estructura
+El backend necesita el parser ANTLR de Python. Instalarlo en modo editable:
 
-### Requisitos
+```bash
+pip install -e packages/grammar/py
+```
 
-- Node `>=20 <23`
-- `pnpm@9.15.0`
-- Python `3.11+`
-- `pdflatex` si se quiere PDF
+Si falta, `import aanlie_parser` falla y todos los tests de parse/análisis se rompen.
 
-### Flujo recomendado sin Docker
+## Backend
 
-1. `pnpm install`
-2. `pnpm -C packages/types build`
-3. `pnpm -C packages/grammar build`
-4. `cd apps/api && python3 -m pip install -r requirements.txt -r requirements-dev.txt`
-5. `pip install -e ../../packages/grammar/py`
-6. `pnpm dev:api`
-7. `pnpm -C apps/web dev`
+```bash
+cd apps/api
+python -m uvicorn app.main:app --reload --port 8000
+```
 
-### Flujo con Docker
+Servicio disponible en `http://localhost:8000`.
 
-1. `cd infra`
-2. `docker compose up --build`
+- Healthcheck: `GET /health` → `{"status": "ok", "version": "..."}`
+- Documentación interactiva: `GET /docs`
 
-### Regenerar gramaticas
+### Lint del backend (local, sin Docker)
 
-- TS: `pnpm -C packages/grammar build`
-- Python: `pnpm -C packages/grammar gen:py`
+```bash
+pnpm lint:api:local
+# Equivale a: cd apps/api && python -m ruff check app
+```
 
-Java solo se necesita para regenerar el parser Python, no para correr el sistema con artefactos ya committeados.
+## Frontend
 
-## Ejemplos
+```bash
+cd apps/web
+pnpm dev
+```
 
-- validar API: `pnpm test:api:gate`
-- validar examples catalog: `pnpm -C apps/web validate:examples-catalog`
+Interfaz disponible en `http://localhost:3000`.
 
-## Limites conocidos
+### Lint del frontend
 
-- si falta el paquete Python de grammar, parse y tests backend fallaran.
+```bash
+pnpm lint:web
+# Equivale a: pnpm -C apps/web lint
+```
+
+## Codegen
+
+### Regenerar parser TypeScript
+
+```bash
+pnpm --filter @aa/grammar build
+```
+
+### Regenerar parser Python
+
+```bash
+pnpm --filter @aa/grammar gen:py
+```
+
+Java es necesario solo para este paso. Los artefactos generados ya están commiteados; en condiciones normales no es necesario regenerarlos.
+
+## Docker
+
+```bash
+cd infra
+docker compose up --build
+```
+
+Esto levanta:
+
+| Servicio | Puerto | Container name |
+|---|---|---|
+| API (FastAPI + uvicorn) | `8000` | `algoritmos-api` |
+| Web (Next.js dev) | `3000` | `algoritmos-web` |
+
+**Variables de entorno** en Docker:
+
+| Servicio | Variable | Valor |
+|---|---|---|
+| web | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` |
+| web | `API_INTERNAL_BASE_URL` | `http://api:8000` |
+| api (implícito) | `DEV_CORS_ENABLED` | `1` |
+| api (implícito) | `DEV_ALLOWED_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` |
+
+La web depende de `api`, por lo que Docker Compose garantiza el orden de inicio.
+
+### Volúmenes
+
+- `algoritmos-api`: monta `apps/api` y `packages/` para hot-reload
+- `algoritmos-web`: monta `apps/web` y `packages/` para hot-reload; usa volúmenes anónimos para `node_modules` a fin de no pisarlos con el bind mount
+
+## Tests
+
+```bash
+# Todos los tests de la API
+pnpm test:api
+
+# PR gate (unit + component + system, con cobertura ≥ 70%)
+pnpm test:api:cov
+
+# Solo unitarias
+pnpm test:api:unit
+
+# Solo contract
+pnpm test:api:contract
+
+# Solo while_domain
+pnpm test:api:while
+
+# Stress
+pnpm test:api:stress
+
+# Docs contracts
+pnpm test:docs-contracts
+
+# Quiz bank validation
+python apps/api/scripts/validate_quiz_bank.py
+
+# Quiz bank coverage (con gate crítico)
+python apps/api/scripts/report_quiz_bank_coverage.py --fail-on-critical
+```
+
+## Quick troubleshooting
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| `Port 8000 already in use` | Otro proceso en el puerto | `netstat -ano \| findstr :8000` y matar proceso, o cambiar puerto |
+| `import aanlie_parser` fails | Grammar package no instalado | `pip install -e packages/grammar/py` |
+| `pnpm --filter @aa/grammar build` not found | Grammar package no construido | `pnpm -C packages/grammar build` |
+| `Module not found: @aa/types` | Paquete types no construido | `pnpm -C packages/types build` |
+| `pdflatex: command not found` | TeX no instalado | Instalar MiKTeX / TeX Live / texlive-core |
+| `CORS` bloquea requests | CORS no configurado | Ver `environment-variables.md` sección CORS |
+| Frontend sin conexión a API | URL equivocada o backend apagado | Verificar `NEXT_PUBLIC_API_BASE_URL` y que uvicorn esté corriendo |
+
+## Límites conocidos
+
+- Si falta el paquete Python de grammar, parse y tests del backend fallan.
+- La imagen Docker de web está orientada a desarrollo. Para producción se requiere endurecimiento (ver `deployment.md`).
+- `validate:content-catalog` no existe como script npm; la validación de contenido se hace mediante `test:docs-contracts` y los scripts Python del banco de quizzes.
 
 ## Archivos relacionados
 
 - `environment-variables.md`
 - `deployment.md`
 - `troubleshooting.md`
+- `release-checklist.md`

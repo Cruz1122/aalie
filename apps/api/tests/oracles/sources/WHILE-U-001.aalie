@@ -1,0 +1,9 @@
+unknownExternalCondition(n)
+BEGIN
+  total <- 0;
+  WHILE (condicionExterna()) DO
+  BEGIN
+    total <- total + 1;
+  END;
+  RETURN total;
+END

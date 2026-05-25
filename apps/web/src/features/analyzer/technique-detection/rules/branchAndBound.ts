@@ -1,5 +1,8 @@
 import type { TechniqueRule } from "./ruleTypes";
+import type { EvidenceItem } from "../types";
 import { confidenceFromScore } from "./score";
+
+const BACKTRACKING_PENALTY = 80;
 
 export const branchAndBoundRule: TechniqueRule = {
   id: "branch_and_bound",
@@ -7,9 +10,54 @@ export const branchAndBoundRule: TechniqueRule = {
 
   evaluate(facts) {
     let score = 0;
-    const evidenceItems = [];
+    const evidenceItems: EvidenceItem[] = [];
     const secondarySignals: string[] = [];
     const diagnostics: string[] = [];
+
+    const hasBacktrackingCore =
+      facts.choice.hasChoiceEnumeration &&
+      facts.choice.hasFeasibilityCheck &&
+      facts.mutation.hasMutationBeforeRecursiveCall &&
+      facts.mutation.hasUndoAfterRecursiveCall &&
+      facts.recursion.hasSelfCall;
+
+    const hasDivideAndConquerCore =
+      facts.decomposition.hasStructuralDecomposition &&
+      facts.shrink.hasFractionalShrink &&
+      facts.decomposition.hasIndependentSubproblems &&
+      !facts.mutation.hasUndoAfterRecursiveCall;
+
+    /**
+     * Backtracking core: reversible mutation + feasibility check.
+     * If this matches AND the algorithm has explicit B&B semantic cues
+     * (bound/incumbent/priorityQueue/cota), it is legitimately B&B,
+     * not plain backtracking.
+     */
+    if (hasBacktrackingCore && facts.semantic.hasBranchAndBoundCue) {
+      score += 40;
+      secondarySignals.push("backtracking_with_bound_semantics");
+      diagnostics.push(
+        "Backtracking structure with explicit bound/incumbent semantics; classified as Branch and Bound.",
+      );
+    }
+
+    if (hasBacktrackingCore && !facts.semantic.hasBranchAndBoundCue) {
+      score -= BACKTRACKING_PENALTY;
+      diagnostics.push(
+        "Backtracking core detected without explicit bound/incumbent cues; penalized as Branch and Bound.",
+      );
+    }
+
+    /**
+     * Divide and Conquer core: structural decomposition + fractional shrink
+     * + independent subproblems. If this matches, it's definitely not B&B.
+     */
+    if (hasDivideAndConquerCore) {
+      score -= 80;
+      diagnostics.push(
+        "Divide and Conquer core detected; not Branch and Bound.",
+      );
+    }
 
     if (facts.recursion.hasSelfCall) score += 15;
     if (facts.choice.hasChoiceEnumeration) score += 20;
@@ -20,30 +68,20 @@ export const branchAndBoundRule: TechniqueRule = {
     const hasPruneLikeReturn =
       facts.recursion.summary.totalSelfCallSites > 0 &&
       facts.loops.hasConditionalReturn;
+
     if (hasPruneLikeReturn) {
       score += 15;
       secondarySignals.push("prune_like_return");
-      evidenceItems.push({
-        role: "prune" as const,
-        nodeId:
-          facts.loops.loopNodeIds[0] ??
-          facts.choice.choiceNodeIds[0] ??
-          "unknown",
-        importance: "secondary" as const,
-      });
     }
 
     if (facts.loops.hasBoundLikeComparison) {
       score += 15;
       secondarySignals.push("bound_like_comparison");
-      evidenceItems.push({
-        role: "bound" as const,
-        nodeId:
-          facts.choice.choiceNodeIds[0] ??
-          facts.loops.loopNodeIds[0] ??
-          "unknown",
-        importance: "secondary" as const,
-      });
+    }
+
+    if (facts.semantic.hasBranchAndBoundCue) {
+      score += 25;
+      secondarySignals.push("branch_and_bound_semantic_cue");
     }
 
     if (
@@ -51,31 +89,32 @@ export const branchAndBoundRule: TechniqueRule = {
       !facts.choice.hasChoiceEnumerationFromBranches
     ) {
       score -= 40;
+      diagnostics.push("No hay enumeraci�n de decisiones ni ramas candidatas.");
+    }
+
+    if (
+      facts.shrink.hasFractionalShrink &&
+      !facts.mutation.hasMutationBeforeRecursiveCall
+    ) {
+      score -= 20;
       diagnostics.push(
-        "No se encontró enumeración de opciones propia de búsqueda ramificada.",
-      );
-    } else if (facts.choice.hasChoiceEnumerationFromBranches) {
-      diagnostics.push(
-        "Se detectó ramificación IF-based como mecanismo de elección.",
+        "Reducci�n fraccional sin mutaci�n; patr�n de b�squeda por partici�n, no Branch and Bound.",
       );
     }
 
     if (!facts.mutation.hasUndoAfterRecursiveCall) {
       score -= 10;
-      diagnostics.push(
-        "No se encontró rollback posterior a la exploración recursiva (esperado en B&B).",
-      );
     }
 
     if (!facts.recursion.summary.hasCoExecutedSelfCalls) {
-      score -= 30;
-      diagnostics.push(
-        "Las llamadas recursivas no son co-ejecutadas (patrón de búsqueda binaria, no B&B).",
-      );
+      score -= 15;
     }
 
-    if (!hasPruneLikeReturn) {
-      diagnostics.push("No se encontró poda clara antes de expandir ramas.");
+    if (
+      facts.table.hasReturnFromIndexedRead &&
+      facts.table.hasSameStorageReadWrite
+    ) {
+      score -= 35;
     }
 
     return {

@@ -8,18 +8,21 @@ import {
 } from "@/lib/content/course";
 
 interface CourseModulePageProps {
-  params: {
+  params: Promise<{
     locale: string;
     moduleSlug: string;
-  };
+  }>;
 }
 
 export function generateStaticParams() {
   return getCourseStaticParams(routing.locales);
 }
 
-export default function CourseModulePage({ params }: CourseModulePageProps) {
-  const data = getCourseModuleData(params.locale, params.moduleSlug);
+export default async function CourseModulePage({
+  params,
+}: CourseModulePageProps) {
+  const { locale, moduleSlug } = await params;
+  const data = getCourseModuleData(locale, moduleSlug);
 
   if (!data) {
     notFound();

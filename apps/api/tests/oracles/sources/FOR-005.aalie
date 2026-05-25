@@ -1,0 +1,16 @@
+linearScan(A, n, objetivo)
+BEGIN
+  encontrado <- false;
+  FOR i <- 1 TO n DO
+  BEGIN
+    IF (A[i] = objetivo) THEN
+    BEGIN
+      encontrado <- true;
+    END
+    ELSE
+    BEGIN
+      encontrado <- encontrado;
+    END;
+  END;
+  RETURN encontrado;
+END

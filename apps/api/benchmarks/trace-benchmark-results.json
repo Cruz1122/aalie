@@ -1,0 +1,79 @@
+{
+  "generatedAt": "2026-05-16T12:33:38.105969Z",
+  "runs": 30,
+  "warmupRuns": 5,
+  "results": [
+    {
+      "caseId": "while_lineal_trace",
+      "caseName": "WHILE lineal",
+      "family": "Iterativo/WHILE",
+      "inputSize": 1000,
+      "traceCase": "worst",
+      "traceMsMedian": 1850.414,
+      "traceMsP95": 2049.041,
+      "stepCountMedian": 4003.0,
+      "algorithmKind": "iterative",
+      "status": "OK"
+    },
+    {
+      "caseId": "while_logaritmico_trace",
+      "caseName": "WHILE logaritmico",
+      "family": "Iterativo/WHILE",
+      "inputSize": 65536,
+      "traceCase": "worst",
+      "traceMsMedian": 33.009,
+      "traceMsP95": 56.822,
+      "stepCountMedian": 71.0,
+      "algorithmKind": "iterative",
+      "status": "OK"
+    },
+    {
+      "caseId": "euclides_trace",
+      "caseName": "Euclides",
+      "family": "WHILE especifico",
+      "inputSize": 10000,
+      "traceCase": "worst",
+      "traceMsMedian": 14.327,
+      "traceMsP95": 18.607,
+      "stepCountMedian": 13.0,
+      "algorithmKind": "iterative",
+      "status": "OK"
+    },
+    {
+      "caseId": "binary_search_trace",
+      "caseName": "Binary Search",
+      "family": "DyV / WHILE intervalo",
+      "inputSize": 65536,
+      "traceCase": "worst",
+      "traceMsMedian": 3037.949,
+      "traceMsP95": 3242.091,
+      "stepCountMedian": 107.0,
+      "algorithmKind": "iterative",
+      "status": "OK"
+    },
+    {
+      "caseId": "factorial_trace",
+      "caseName": "Factorial",
+      "family": "Recursivo lineal",
+      "inputSize": 100,
+      "traceCase": "worst",
+      "traceMsMedian": 108.174,
+      "traceMsP95": 223.33,
+      "stepCountMedian": 598.0,
+      "algorithmKind": "recursive",
+      "status": "OK"
+    },
+    {
+      "caseId": "binary_tree_traversal_trace",
+      "caseName": "Recorrido arbol binario",
+      "family": "Recursivo estructural",
+      "inputSize": 1023,
+      "traceCase": "worst",
+      "traceMsMedian": 309.279,
+      "traceMsP95": 523.26,
+      "stepCountMedian": 300.0,
+      "algorithmKind": "recursive",
+      "status": "OK"
+    }
+  ]
+}

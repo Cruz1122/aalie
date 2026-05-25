@@ -1,0 +1,53 @@
+[
+  {
+    "id": "while_lineal_trace",
+    "name": "WHILE lineal",
+    "family": "Iterativo/WHILE",
+    "sourceFile": "cases/while_lineal.aalie",
+    "traceCase": "worst",
+    "inputSize": 1000
+  },
+  {
+    "id": "while_logaritmico_trace",
+    "name": "WHILE logaritmico",
+    "family": "Iterativo/WHILE",
+    "sourceFile": "cases/while_logaritmico.aalie",
+    "traceCase": "worst",
+    "inputSize": 65536
+  },
+  {
+    "id": "euclides_trace",
+    "name": "Euclides",
+    "family": "WHILE especifico",
+    "sourceFile": "cases/euclides.aalie",
+    "traceCase": "worst",
+    "inputSize": 10000,
+    "generator": "euclid_pair"
+  },
+  {
+    "id": "binary_search_trace",
+    "name": "Binary Search",
+    "family": "DyV / WHILE intervalo",
+    "sourceFile": "cases/binary_search.aalie",
+    "traceCase": "worst",
+    "inputSize": 65536,
+    "generator": "sorted_array_miss"
+  },
+  {
+    "id": "factorial_trace",
+    "name": "Factorial",
+    "family": "Recursivo lineal",
+    "sourceFile": "cases/factorial.aalie",
+    "traceCase": "worst",
+    "inputSize": 100
+  },
+  {
+    "id": "binary_tree_traversal_trace",
+    "name": "Recorrido arbol binario",
+    "family": "Recursivo estructural",
+    "sourceFile": "cases/binary_tree_traversal.aalie",
+    "traceCase": "worst",
+    "inputSize": 1023,
+    "generator": "balanced_tree"
+  }
+]

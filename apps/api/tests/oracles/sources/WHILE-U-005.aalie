@@ -1,0 +1,11 @@
+unknownUpdateFunction(n)
+BEGIN
+  i <- 0;
+  total <- 0;
+  WHILE (i < n) DO
+  BEGIN
+    total <- total + 1;
+    i <- actualizar(i);
+  END;
+  RETURN total;
+END

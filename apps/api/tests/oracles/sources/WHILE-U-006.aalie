@@ -1,0 +1,13 @@
+noDominantController(n, m)
+BEGIN
+  i <- 0;
+  j <- m;
+  total <- 0;
+  WHILE (i < n AND j > 0) DO
+  BEGIN
+    total <- total + 1;
+    i <- i + 1;
+    j <- j + i;
+  END;
+  RETURN total;
+END

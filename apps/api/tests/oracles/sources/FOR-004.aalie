@@ -1,0 +1,8 @@
+copyArray(A, B, n)
+BEGIN
+  FOR i <- 1 TO n DO
+  BEGIN
+    B[i] <- A[i];
+  END;
+  RETURN B;
+END

@@ -1,0 +1,17 @@
+binarySearch(A, n, x) BEGIN
+  low <- 1;
+  high <- n;
+  WHILE (low <= high) DO BEGIN
+    mid <- (low + high) / 2;
+    IF (A[mid] = x) THEN BEGIN
+      RETURN mid;
+    END
+    IF (A[mid] < x) THEN BEGIN
+      low <- mid + 1;
+    END
+    ELSE BEGIN
+      high <- mid - 1;
+    END
+  END
+  RETURN -1;
+END

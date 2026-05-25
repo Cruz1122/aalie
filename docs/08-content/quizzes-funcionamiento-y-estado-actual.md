@@ -1,5 +1,10 @@
 # Quizzes: funcionamiento y estado actual
 
+**Estado:** reemplazado
+**Reemplazado por:** `../03-specs/quizzes-spec.md` + `quizzes-quality.md` (pendiente)
+**Nota:** Documento histórico. El contenido normativo migró a `quizzes-spec.md`. Las validaciones y calidad están en `quizzes-quality.md`.
+**Corrección:** El banco real tiene 476 preguntas `active` (no `draft`). Este documento no refleja el estado actual del banco.
+
 Este documento explica como funciona el sistema de quizzes de ADA hoy, y que tenemos ahora mismo en backend, frontend y banco de preguntas.
 
 ## 1) Contrato funcional (fuente normativa)

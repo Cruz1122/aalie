@@ -1,0 +1,20 @@
+fourHalfSubproblemsCost(n)
+BEGIN
+  IF (n <= 1) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    a <- fourHalfSubproblemsCost(n / 2);
+    b <- fourHalfSubproblemsCost(n / 2);
+    c <- fourHalfSubproblemsCost(n / 2);
+    d <- fourHalfSubproblemsCost(n / 2);
+    total <- 0;
+    FOR i <- 1 TO n DO
+    BEGIN
+      total <- total + 1;
+    END;
+    RETURN a + b + c + d + total;
+  END;
+END

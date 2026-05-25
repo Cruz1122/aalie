@@ -1,0 +1,376 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-linear-search-analyzer",
+  "slug": "linear-search-analyzer",
+  "title": "Analiza un algoritmo paso a paso",
+  "shortTitle": "Analizador",
+  "order": 2,
+  "locale": "es",
+  "version": "2.0.0",
+  "status": "published",
+  "summary": "Aprende a usar el analizador con búsqueda lineal: escribe código, importa archivos .txt, valida la sintaxis, interpreta los costos por línea, revisa el AST y ejecuta el seguimiento paso a paso.",
+  "difficulty": "basic",
+  "estimatedMinutes": 44,
+  "tags": [
+    "analizador",
+    "búsqueda lineal",
+    "AST",
+    "trace",
+    ".txt"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "analizador general",
+      "búsqueda lineal",
+      "importar txt"
+    ],
+    "keywords": [
+      "editor",
+      "autocompletado",
+      "costos por línea",
+      "AST",
+      "seguimiento"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-getting-started",
+        "kind": "recommended"
+      }
+    ],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-examples-bubble-sort",
+    "mod-user-guide-export-pdf"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-analizar-manual",
+      "text": "Ejecutar un análisis manual desde código escrito o importado."
+    },
+    {
+      "objectiveId": "obj-leer-evidencia",
+      "text": "Interpretar costos por línea, resultados asintóticos, AST y seguimiento sin confundir sus funciones."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-02-analyzer-editor-linear-search",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/02-analyzer-editor-linear-search.webp"
+        },
+        "alt": "Editor con búsqueda lineal cargada.",
+        "caption": "Editor con búsqueda lineal cargada."
+      },
+      {
+        "resourceId": "img-02-syntax-autocomplete",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/02-syntax-autocomplete.webp"
+        },
+        "alt": "Autocompletado o error de sintaxis en el editor.",
+        "caption": "Autocompletado o error de sintaxis en el editor."
+      },
+      {
+        "resourceId": "img-02-txt-import-dialog",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/02-txt-import-dialog.webp"
+        },
+        "alt": "Diálogo o resultado de importar archivo .txt.",
+        "caption": "Diálogo o resultado de importar archivo .txt."
+      },
+      {
+        "resourceId": "img-02-analysis-results-by-line",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/02-analysis-results-by-line.webp"
+        },
+        "alt": "Tabla de costos por línea después de analizar búsqueda lineal.",
+        "caption": "Tabla de costos por línea después de analizar búsqueda lineal."
+      },
+      {
+        "resourceId": "img-02-asymptotic-summary",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/02-asymptotic-summary.webp"
+        },
+        "alt": "Resumen asintótico con mejor caso, promedio y peor caso.",
+        "caption": "Resumen asintótico con mejor caso, promedio y peor caso."
+      },
+      {
+        "resourceId": "img-02-ast-view",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/02-ast-view.webp"
+        },
+        "alt": "Vista o modal del AST generado para el algoritmo.",
+        "caption": "Vista o modal del AST generado para el algoritmo."
+      },
+      {
+        "resourceId": "img-02-step-trace-linear-search",
+        "kind": "image",
+        "source": {
+          "kind": "publicPath",
+          "path": "/images/user-guide/es/02-step-trace-linear-search.webp"
+        },
+        "alt": "Seguimiento paso a paso de búsqueda lineal con valores de entrada definidos.",
+        "caption": "Seguimiento paso a paso de búsqueda lineal con valores de entrada definidos."
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "chapterId": "cap-analizador-lineal",
+      "slug": "analizador-busqueda-lineal",
+      "title": "Analizar búsqueda lineal",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-escribir-importar",
+          "slug": "escribir-e-importar",
+          "title": "Escribir, autocompletar e importar código",
+          "order": 1,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 12,
+          "blocks": [
+            {
+              "id": "blk-m02-s01-p01",
+              "type": "paragraph",
+              "content": [
+            {
+              "type": "text",
+              "text": "El "
+            },
+            {
+              "type": "link",
+              "text": "Analizador General",
+              "target": { "kind": "external", "ref": "/analyzer" }
+            },
+            {
+              "type": "text",
+              "text": " es el espacio donde puedes escribir o cargar un algoritmo y solicitar a AALIE que realice el análisis de complejidad. Para empezar, escribe el pseudocódigo en el editor. En este módulo se usará una búsqueda lineal porque es un ejemplo claro para observar diferencias entre mejor caso, caso promedio y peor caso."
+            }
+              ]
+            },
+            {
+              "id": "blk-m02-s01-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El editor incorpora ayudas para escribir pseudocódigo con menos fricción. El autocompletado sugiere palabras clave, estructuras y fragmentos frecuentes. Esto reduce errores simples de escritura y acelera la creación de algoritmos compatibles con la gramática de AALIE."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s01-img01",
+              "type": "image",
+              "resourceRef": "img-02-analyzer-editor-linear-search",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s01-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Mientras escribes, el sistema puede mostrar errores de sintaxis en tiempo real. Esta validación no significa que el algoritmo ya esté matemáticamente correcto; solo indica si la forma escrita puede ser interpretada por el analizador. Primero debe pasar la sintaxis, después viene el análisis."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s01-img02",
+              "type": "image",
+              "resourceRef": "img-02-syntax-autocomplete",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s01-p04",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "También puedes importar un archivo .txt desde tu computador. El contenido del archivo se carga directamente en el editor. Después de importarlo, revisa que el pseudocódigo esté completo, que los bloques estén cerrados correctamente y que el sistema no marque errores antes de analizar."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s01-img03",
+              "type": "image",
+              "resourceRef": "img-02-txt-import-dialog",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-resultados",
+          "slug": "resultados-del-analisis",
+          "title": "Leer los resultados del análisis",
+          "order": 2,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 18,
+          "blocks": [
+            {
+              "id": "blk-m02-s02-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cuando el código esté listo, presiona el botón Analizar. AALIE procesará el algoritmo y generará los resultados en pantalla. El análisis incluye una tabla por línea donde se muestra qué instrucción aparece, cuántas veces se ejecuta, cuál es su costo y qué explicación acompaña ese comportamiento."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s02-img01",
+              "type": "image",
+              "resourceRef": "img-02-analysis-results-by-line",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s02-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La tabla por línea es una de las partes más importantes del resultado. No basta con mirar la notación final. Debes observar qué líneas dominan el costo, qué ocurre dentro del ciclo y cómo cambian las ejecuciones entre mejor caso, caso promedio y peor caso."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s02-ev",
+              "type": "evidenceBlock",
+              "variant": "interpretation",
+              "icon": "analytics",
+              "title": "Interpretación de escenarios",
+              "blocks": [
+                {
+                  "id": "blk-m02-s02-ev-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "En búsqueda lineal, el mejor caso ocurre cuando el elemento se encuentra al inicio. El peor caso aparece cuando el elemento está al final o no se encuentra. El caso promedio depende del modelo asumido para la posición del elemento. AALIE muestra estos escenarios para que no reduzcas el análisis a una única respuesta sin contexto."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s02-p03",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "En la parte inferior se presenta el comportamiento general del algoritmo y su notación asintótica. Esta sección resume el crecimiento del costo cuando aumenta el tamaño de entrada, pero debe leerse junto con la tabla de costos y las explicaciones generadas."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s02-img02",
+              "type": "image",
+              "resourceRef": "img-02-asymptotic-summary",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-ast-trace",
+          "slug": "ast-y-seguimiento",
+          "title": "AST y seguimiento paso a paso",
+          "order": 3,
+          "kind": "practice",
+          "trackProgress": true,
+          "estimatedMinutes": 14,
+          "blocks": [
+            {
+              "id": "blk-m02-s03-p01",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El AST, o árbol de sintaxis abstracta, representa la estructura interna del algoritmo después de interpretar el pseudocódigo. Sirve para entender cómo AALIE organiza bloques, ciclos, condicionales y retornos antes de analizarlos. No es una vista pensada para memorizar, sino para inspeccionar la estructura del código."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s03-img01",
+              "type": "image",
+              "resourceRef": "img-02-ast-view",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s03-p02",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "El seguimiento paso a paso permite ejecutar el algoritmo con valores concretos. Esta vista es útil para observar cómo cambian las variables, qué condición se evalúa, qué rama se toma y cuándo termina el algoritmo. La traza ayuda a conectar el análisis teórico con una ejecución real."
+                }
+              ]
+            },
+            {
+              "id": "blk-m02-s03-img02",
+              "type": "image",
+              "resourceRef": "img-02-step-trace-linear-search",
+              "display": {
+                "width": "full",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-m02-s03-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Límite de la traza",
+              "blocks": [
+                {
+                  "id": "blk-m02-s03-note-p",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Una traza con valores concretos no demuestra por sí sola la complejidad general del algoritmo. Sirve como apoyo visual. La conclusión asintótica debe apoyarse en el conteo de ejecuciones y en la estructura del algoritmo."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import type { MethodType } from "@/components/MethodSelector";
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { useRouter } from "@/i18n/navigation";
+import { getApiErrorType } from "@/lib/api-error-translator";
 
 type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
 
@@ -130,6 +131,14 @@ export function useRunAnalysis(options?: {
         };
 
         if (!parseRes.ok) {
+          if (
+            getApiErrorType(parseRes as unknown as Record<string, unknown>) ===
+            "connection"
+          ) {
+            handleError(tMessages("errorConnection"));
+            options?.onParseFail?.();
+            return null;
+          }
           const msg =
             parseRes.errors
               ?.map((e: { line?: number; column?: number; message?: string }) =>
@@ -269,6 +278,14 @@ export function useRunAnalysis(options?: {
         await animateProgress(70, 80, 200, updateProgress);
 
         if (!analyzeRes.ok) {
+          if (
+            getApiErrorType(
+              analyzeRes as unknown as Record<string, unknown>,
+            ) === "connection"
+          ) {
+            handleError(tMessages("errorConnection"));
+            return null;
+          }
           const errorMsg =
             analyzeRes.errors
               ?.map(

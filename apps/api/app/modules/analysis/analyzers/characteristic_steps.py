@@ -511,10 +511,10 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
 
     prior_partial = any(s.get("status") in ("partial", "unsupported", "error") for s in steps)
     step12_status: StepStatus = "partial" if prior_partial else "complete"
-    
+
     # Convertir a notación correcta basada en bound_kind
     theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta)
-    
+
     steps.append(
         _make_step(
             ctx=ctx,

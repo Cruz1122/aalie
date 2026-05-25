@@ -1,0 +1,12 @@
+linearPowerCost(n)
+BEGIN
+  IF (n <= 0) THEN
+  BEGIN
+    RETURN 1;
+  END
+  ELSE
+  BEGIN
+    sub <- linearPowerCost(n - 1);
+    RETURN sub * 2;
+  END;
+END

@@ -4,10 +4,7 @@ import type { TechniqueEvidenceBundle } from "../types";
 import { explainEvidence } from "./explainEvidence";
 import { buildCompactSnippet } from "./snippetBuilder";
 
-type TranslationValues = Record<
-  string,
-  string | number | boolean | Date | null | undefined
->;
+type TranslationValues = Record<string, string | number | Date>;
 
 type TechniqueTranslator = (key: string, values?: TranslationValues) => string;
 

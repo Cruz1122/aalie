@@ -5,6 +5,7 @@ import type * as Monaco from "monaco-editor";
 import { useLocale, useTranslations } from "next-intl";
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -116,6 +117,8 @@ export const AnalyzerEditor = forwardRef<
   const [techniqueModalOpen, setTechniqueModalOpen] = useState(false);
   const didRemountAfterZeroHeightRef = useRef(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const onAnalyzeRef = useRef(props.onAnalyze);
+  onAnalyzeRef.current = props.onAnalyze;
 
   useEffect(() => {
     const syncViewport = () => {
@@ -128,12 +131,22 @@ export const AnalyzerEditor = forwardRef<
     };
   }, []);
 
-  // Sincronizar cambios externos del código
+  // Ref para distinguir cambios internos (desde el editor) vs externos (desde el padre)
+  const isInternalChangeRef = useRef(false);
+
+  // Sincronizar cambios externos del código (e.g. resetear plantilla, cargar archivo)
+  // Omitimos setValue() porque el editor ya tiene el valor cuando el cambio es interno.
+  // El flag isInternalChangeRef evita doble-sincronización en el mismo ciclo.
   useEffect(() => {
     setCode(initialValue);
-    if (editorRef.current && editorRef.current.getValue() !== initialValue) {
+    if (
+      !isInternalChangeRef.current &&
+      editorRef.current &&
+      editorRef.current.getValue() !== initialValue
+    ) {
       editorRef.current.setValue(initialValue);
     }
+    isInternalChangeRef.current = false;
   }, [initialValue]);
 
   // Si el editor se montó antes de que el layout final estuviera listo (reload responsive),
@@ -219,7 +232,7 @@ export const AnalyzerEditor = forwardRef<
     // Registrar lenguaje pseudocódigo
     registerPseudocodeLanguage(monaco);
     registerPseudocodeCompletionProvider(monaco, locale);
-    registerPseudocodeCommands(editor, monaco, props.onAnalyze);
+    registerPseudocodeCommands(editor, monaco, onAnalyzeRef);
 
     // Aplicar tema
     monaco.editor.setTheme("pseudocode-theme");
@@ -289,15 +302,22 @@ export const AnalyzerEditor = forwardRef<
 
   /**
    * Maneja los cambios en el contenido del editor.
+   * Envuelto en useCallback para mantener referencia estable y evitar que
+   * @monaco-editor/react des-registre y re-registre el listener onDidChangeModelContent
+   * en cada tecleo.
    * @param value - Nuevo valor del editor
    * @author Juan Camilo Cruz Parra (@Cruz1122)
    */
-  function handleEditorChange(value = "") {
-    setCode(value);
-    if (onChange) {
-      onChange(value);
-    }
-  }
+  const handleEditorChange = useCallback(
+    (value = "") => {
+      isInternalChangeRef.current = true;
+      setCode(value);
+      if (onChange) {
+        onChange(value);
+      }
+    },
+    [onChange],
+  );
 
   useImperativeHandle(ref, () => ({
     insertSnippet(snippet) {

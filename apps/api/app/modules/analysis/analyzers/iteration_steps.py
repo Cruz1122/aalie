@@ -241,7 +241,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
                     else "iteration.base_case_identified.found"
                 ),
                 concept_key="concept.iteration.base_case_identified",
-                warning_key=("warning.iteration.missing_base_case" if ctx.missing_base_case else None),
+                warning_key=(
+                    "warning.iteration.missing_base_case" if ctx.missing_base_case else None
+                ),
                 primary_latex=(
                     f"T({ctx.base_case_index})={ctx.base_case_value}"
                     if ctx.base_case_index is not None and ctx.base_case_value is not None
@@ -271,7 +273,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
                     concept_key="concept.iteration.upper_bound_monotonicity",
                     primary_latex=ctx.key_inequality or ctx.general_form,
                     payload={
-                        "monotonicityJustification": ctx.expansions[1] if len(ctx.expansions) > 1 else None,
+                        "monotonicityJustification": ctx.expansions[1]
+                        if len(ctx.expansions) > 1
+                        else None,
                         "derivedExpression": ctx.key_inequality or ctx.general_form,
                     },
                 )
@@ -279,10 +283,42 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
 
         offset = 1 if ctx.show_monotonicity_step else 0
         for index, title_es, title_en, summary_key, concept_key, kind, default_status in [
-            (4 + offset, "Simplificación para análisis asintótico", "Asymptotic simplification", "iteration.upper_bound_simplified.standard", "concept.iteration.upper_bound_simplified", "summation_simplified", "complete"),
-            (5 + offset, "Primeras expansiones", "Initial unrolling", "iteration.upper_bound_iterated.standard", "concept.iteration.upper_bound_iterated", "initial_unrolling_built", "complete"),
-            (6 + offset, "No hay cierre exacto", "No exact closure", "iteration.upper_bound_no_exact_closure.standard", "concept.iteration.upper_bound_no_exact_closure", "k_pattern_generalized", "partial"),
-            (7 + offset, "Construcción de cota superior", "Upper bound construction", "iteration.upper_bound_generalized.standard", "concept.iteration.upper_bound_generalized", "k_value_solved", "complete"),
+            (
+                4 + offset,
+                "Simplificación para análisis asintótico",
+                "Asymptotic simplification",
+                "iteration.upper_bound_simplified.standard",
+                "concept.iteration.upper_bound_simplified",
+                "summation_simplified",
+                "complete",
+            ),
+            (
+                5 + offset,
+                "Primeras expansiones",
+                "Initial unrolling",
+                "iteration.upper_bound_iterated.standard",
+                "concept.iteration.upper_bound_iterated",
+                "initial_unrolling_built",
+                "complete",
+            ),
+            (
+                6 + offset,
+                "No hay cierre exacto",
+                "No exact closure",
+                "iteration.upper_bound_no_exact_closure.standard",
+                "concept.iteration.upper_bound_no_exact_closure",
+                "k_pattern_generalized",
+                "partial",
+            ),
+            (
+                7 + offset,
+                "Construcción de cota superior",
+                "Upper bound construction",
+                "iteration.upper_bound_generalized.standard",
+                "concept.iteration.upper_bound_generalized",
+                "k_value_solved",
+                "complete",
+            ),
         ]:
             # if index==6 (No exact closure) but asymptotic info is solid, mark complete
             status = default_status
@@ -293,16 +329,22 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
                 payload_expr = ctx.key_inequality or ctx.general_form
             else:
                 primary_latex = (
-                    ctx.general_form if index == 4 + offset else
-                    ctx.expansions[0] if (index == 5 + offset and ctx.expansions) else
-                    ctx.general_form if index == 6 + offset else
-                    f"{ctx.k_condition}\\Rightarrow k={ctx.k_value}"
+                    ctx.general_form
+                    if index == 4 + offset
+                    else ctx.expansions[0]
+                    if (index == 5 + offset and ctx.expansions)
+                    else ctx.general_form
+                    if index == 6 + offset
+                    else f"{ctx.k_condition}\\Rightarrow k={ctx.k_value}"
                 )
                 payload_expr = (
-                    ctx.general_form if index == 4 + offset else
-                    ctx.expansions[0] if (index == 5 + offset and ctx.expansions) else
-                    ctx.general_form if index == 6 + offset else
-                    f"k={ctx.k_value}"
+                    ctx.general_form
+                    if index == 4 + offset
+                    else ctx.expansions[0]
+                    if (index == 5 + offset and ctx.expansions)
+                    else ctx.general_form
+                    if index == 6 + offset
+                    else f"k={ctx.k_value}"
                 )
             steps.append(
                 make_recursive_step(
@@ -334,7 +376,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
                 confidence="high" if asymp_status == "complete" else "medium",
                 summary_key="iteration.upper_bound_decision.standard",
                 concept_key="concept.iteration.upper_bound_decision",
-                warning_key=("warning.iteration.asymptotic_partial" if asymp_status == "partial" else None),
+                warning_key=(
+                    "warning.iteration.asymptotic_partial" if asymp_status == "partial" else None
+                ),
                 primary_latex=get_asymptotic_notation(ctx.bound_kind, ctx.theta),
                 payload={"boundKind": ctx.bound_kind, "theta": ctx.theta},
                 codes=["ITER_GENERIC_UPPER_BOUND"],
@@ -452,9 +496,7 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             "steps": steps,
         }
 
-    applicability_status: StepStatus = (
-        "partial" if ctx.generic_walkthrough else "complete"
-    )
+    applicability_status: StepStatus = "partial" if ctx.generic_walkthrough else "complete"
     applicability_summary_key = (
         "iteration.applicability_validated.partial"
         if ctx.generic_walkthrough
@@ -715,10 +757,10 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
         else None
     )
     step11_codes = ["ITER_ASYMPTOTIC_HEURISTIC"] if ctx.asymptotic_partial else []
-    
+
     # Convertir a notación correcta basada en bound_kind
     theta_with_notation = get_asymptotic_notation(ctx.bound_kind, ctx.theta)
-    
+
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
