@@ -1307,7 +1307,14 @@
         "single_branch_after_interval_split": "Después de dividir el intervalo, el algoritmo sigue solo por la rama que conserva el subproblema relevante.",
         "single_dominant_recursive_call": "En cada camino domina una única llamada recursiva.",
         "structural_decomposition": "La estructura muestra una descomposición real del problema en subproblemas.",
-        "subproblem_shrink": "Cada llamada trabaja sobre una expresión de subproblema más pequeña."
+        "subproblem_shrink": "Cada llamada trabaja sobre una expresión de subproblema más pequeña.",
+        "divide_and_conquer_core": "El problema se descompone en subproblemas independientes de tamaño aproximadamente igual.",
+        "single_branch_interval_partition": "El intervalo se particiona y solo se explora una rama.",
+        "greedy_semantic_cue": "Se detecta una estrategia voraz o de elección localmente óptima.",
+        "memo_pattern": "Patrón de memoización: el resultado se guarda y se consulta antes de recalcular.",
+        "backtracking_core": "Núcleo de backtracking: mutación reversible de soluciones parciales con verificación de factibilidad.",
+        "branch_and_bound_semantic_cue": "Se detectan señales semánticas explícitas de cota, incumbente o branch-and-bound.",
+        "backtracking_with_bound_semantics": "Estructura de backtracking con semántica explícita de cota/incumbente para poda."
       },
       "divide_and_conquer": {
         "title": "Divide y vencerás",
