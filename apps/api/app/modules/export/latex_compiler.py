@@ -95,14 +95,18 @@ def compile_latex_to_pdf(
         )
 
         for current_pass in (1, 2):
+            cmd = [
+                "pdflatex",
+                "-interaction=nonstopmode",
+                "-halt-on-error",
+                "-file-line-error",
+            ]
+            # First pass only needs .aux for cross-references; skip full PDF output.
+            if current_pass == 1:
+                cmd.append("-draftmode")
+            cmd.append(tex_path.name)
             run = subprocess.run(
-                [
-                    "pdflatex",
-                    "-interaction=nonstopmode",
-                    "-halt-on-error",
-                    "-file-line-error",
-                    tex_path.name,
-                ],
+                cmd,
                 cwd=work_dir,
                 capture_output=True,
                 text=True,
