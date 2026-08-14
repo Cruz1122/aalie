@@ -8,6 +8,8 @@ Author: Juan Felipe Henao (@Pipe-1z)
 """
 
 import os
+import shutil
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -17,6 +19,7 @@ from fastapi.responses import JSONResponse
 from .core.config import get_cors_allowed_origins, get_cors_enabled
 from .modules.analysis.router import router as analyze_router
 from .modules.classification.router import router as classify_router
+from .modules.export.asset_registry import resolve_latex_asset_registry
 from .modules.export.router import router as export_router
 from .modules.llm.router import router as llm_router
 from .modules.parsing.router import router as parse_router
@@ -44,6 +47,50 @@ def create_app() -> FastAPI:
         )
 
     # --- Rutas ---
+    @app.get("/health/live")
+    def health_live():
+        return JSONResponse({"ok": True, "status": "live"})
+
+    @app.get("/health/ready")
+    def health_ready():
+        checks: dict[str, bool] = {}
+
+        try:
+            import aa_grammar  # noqa: F401
+
+            checks["parser"] = True
+        except Exception:
+            checks["parser"] = False
+
+        try:
+            assets = resolve_latex_asset_registry()
+            checks["export_assets"] = all(
+                Path(path).is_file()
+                for path in (
+                    assets.style_file_path,
+                    assets.template_path,
+                    assets.ucaldas_logo_path,
+                    assets.aalie_logo_path,
+                )
+            )
+        except Exception:
+            checks["export_assets"] = False
+
+        try:
+            from .modules.quizzes.repository import get_validated_dataset
+
+            _, report = get_validated_dataset()
+            checks["quizzes"] = len(report.errors) == 0
+        except Exception:
+            checks["quizzes"] = False
+
+        checks["pdflatex"] = shutil.which("pdflatex") is not None
+        ready = all(checks.values())
+        return JSONResponse(
+            {"ok": ready, "status": "ready" if ready else "not_ready", "checks": checks},
+            status_code=200 if ready else 503,
+        )
+
     @app.get("/health")
     def health():
         """

@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: "standalone",
   typedRoutes: true,
   transpilePackages: ["@aa/content-catalog", "@aa/grammar", "@aa/types"],
 

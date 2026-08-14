@@ -10,7 +10,11 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "sympy>=1.12,<2.0",
     "reportlab>=4.2,<5.0",
+    "aa-grammar",
 ]
+
+[tool.uv.sources]
+aa-grammar = { path = "../../packages/grammar/py" }
 
 [tool.ruff]
 line-length = 100

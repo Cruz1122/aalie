@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Body, Request
@@ -17,6 +18,7 @@ from .service import ExportService
 
 router = APIRouter(prefix="/export", tags=["export"])
 export_service = ExportService()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/report")
@@ -56,20 +58,12 @@ def export_report(request: Request, payload: Dict[str, Any] = Body(...)) -> Resp
         logs = result.get("logs")
         compiler_logs = result.get("compilerLogs")
         asset_manifest = result.get("assetManifest")
-        workdir = result.get("workDir")
+        logger.error("Export failed (%s): %s", kind or "unknown", logs or compiler_logs or error_message)
         body: Dict[str, Any] = {"ok": False, "error": error_message}
         if kind:
             body["kind"] = kind
-        if isinstance(logs, str):
-            body["logs"] = logs[-4000:]
-        elif isinstance(logs, list):
-            body["logs"] = logs[-4000:]
-        if isinstance(compiler_logs, str) and compiler_logs:
-            body["compilerLogs"] = compiler_logs[-4000:]
         if isinstance(asset_manifest, list):
             body["assetManifest"] = asset_manifest
-        if isinstance(workdir, str) and workdir:
-            body["workDir"] = workdir
         return Response(
             content=json.dumps(body),
             status_code=int(result.get("status") or 500),

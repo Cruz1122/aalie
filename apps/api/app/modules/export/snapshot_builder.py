@@ -1176,6 +1176,7 @@ def build_export_state(payload: Dict[str, Any]) -> Dict[str, Any]:
             "includeSnapshotJson": payload.get("includeSnapshotJson", True),
             "includeZipBundle": payload.get("includeZipBundle", True),
             "pdfTimeoutMs": payload.get("pdfTimeoutMs"),
+            "pdfPasses": payload.get("pdfPasses", 2),
             "debug": bool(payload.get("debug")),
         },
         "options": {

@@ -7,6 +7,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, Iterable, List
 
@@ -27,9 +28,12 @@ def compile_latex_to_pdf(
     cleanup: bool = True,
     extra_files: Iterable[Dict[str, bytes | str]] | None = None,
     preserve_workdir_on_error: bool = False,
+    passes: int = 2,
 ) -> Dict[str, object]:
     timeout = (timeout_ms or 120_000) / 1000.0
     name = job_name or "report"
+    if passes not in {1, 2}:
+        raise ValueError("passes must be 1 or 2")
 
     if not is_pdflatex_available():
         raise LatexCompilationError(
@@ -38,7 +42,10 @@ def compile_latex_to_pdf(
         )
 
     assets = resolve_latex_asset_registry()
+    profile: Dict[str, float] = {}
+    setup_started = time.perf_counter()
     work_dir = Path(tempfile.mkdtemp(prefix="aalie-export-"))
+    profile["temp_setup_ms"] = (time.perf_counter() - setup_started) * 1000
     tex_path = work_dir / f"{name}.tex"
     pdf_path = work_dir / f"{name}.pdf"
     logos_dir = work_dir / "logos"
@@ -94,15 +101,16 @@ def compile_latex_to_pdf(
             }
         )
 
-        for current_pass in (1, 2):
+        for current_pass in range(1, passes + 1):
+            pass_started = time.perf_counter()
             cmd = [
                 "pdflatex",
                 "-interaction=nonstopmode",
                 "-halt-on-error",
                 "-file-line-error",
             ]
-            # First pass only needs .aux for cross-references; skip full PDF output.
-            if current_pass == 1:
+            # In the two-pass pipeline the first pass prepares auxiliary references.
+            if passes == 2 and current_pass == 1:
                 cmd.append("-draftmode")
             cmd.append(tex_path.name)
             run = subprocess.run(
@@ -115,6 +123,7 @@ def compile_latex_to_pdf(
             )
             output = f"{run.stdout or ''}\n{run.stderr or ''}"
             logs.append(f"--- pdflatex pass {current_pass} ---\n{output}")
+            profile[f"pdflatex_pass_{current_pass}_ms"] = (time.perf_counter() - pass_started) * 1000
             if run.returncode != 0:
                 raise LatexCompilationError(
                     "compilation_failed",
@@ -133,13 +142,18 @@ def compile_latex_to_pdf(
                 work_dir=str(work_dir) if preserve_workdir_on_error else None,
             )
 
+        read_started = time.perf_counter()
         pdf_buffer = pdf_path.read_bytes()
+        profile["read_pdf_ms"] = (time.perf_counter() - read_started) * 1000
         return {
             "pdfBuffer": pdf_buffer,
             "logs": "\n".join(logs),
+            "profile": profile,
             "workDir": str(work_dir),
             "assetManifest": build_asset_manifest(asset_entries),
         }
     finally:
+        cleanup_started = time.perf_counter()
         if cleanup and not preserve_workdir_on_error:
             shutil.rmtree(work_dir, ignore_errors=True)
+        profile["cleanup_ms"] = (time.perf_counter() - cleanup_started) * 1000
