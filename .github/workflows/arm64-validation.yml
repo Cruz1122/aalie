@@ -1,0 +1,125 @@
+name: ARM64 validation
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  API_IMAGE: aalie-api:prod
+  WEB_IMAGE: aalie-web:prod
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "infra/docker-compose.prod.yml"
+      - "scripts/smoke_prod.py"
+      - "apps/api/uv.lock"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/arm64-validation.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "infra/docker-compose.prod.yml"
+      - "scripts/smoke_prod.py"
+      - "apps/api/uv.lock"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/arm64-validation.yml"
+
+concurrency:
+  group: arm64-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  arm64-validation:
+    name: ARM64 native build and production smoke
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Record native ARM64 environment
+        run: |
+          echo "Host architecture: $(uname -m)"
+          echo "Docker: $(docker version --format '{{.Server.Version}}')"
+          echo "Buildx: $(docker buildx version)"
+          docker info --format 'Docker architecture: {{.Architecture}}; OS: {{.OSType}}'
+
+      - name: Build API production image natively
+        run: |
+          docker build \
+            --target prod \
+            --tag "$API_IMAGE" \
+            --file apps/api/Dockerfile \
+            .
+
+      - name: Build web production image natively
+        run: |
+          docker build \
+            --target runner \
+            --tag "$WEB_IMAGE" \
+            --file apps/web/Dockerfile \
+            .
+
+      - name: Verify image architecture
+        run: |
+          test "$(docker image inspect "$API_IMAGE" --format '{{.Os}}/{{.Architecture}}')" = "linux/arm64"
+          test "$(docker image inspect "$WEB_IMAGE" --format '{{.Os}}/{{.Architecture}}')" = "linux/arm64"
+          docker image inspect "$API_IMAGE" --format 'API: {{.Os}}/{{.Architecture}}; size={{.Size}} bytes'
+          docker image inspect "$WEB_IMAGE" --format 'Web: {{.Os}}/{{.Architecture}}; size={{.Size}} bytes'
+
+      - name: Start production Compose stack
+        run: docker compose --file infra/docker-compose.prod.yml up --detach --wait
+
+      - name: Verify ARM64 runtime and non-root users
+        run: |
+          docker compose --file infra/docker-compose.prod.yml exec --no-TTY api sh -c 'uname -m; python --version; python -c "import platform; print(platform.machine())"; pdflatex --version | sed -n "1p"; id -un'
+          docker compose --file infra/docker-compose.prod.yml exec --no-TTY web sh -c 'uname -m; node --version; id -un'
+
+      - name: Run complete production smoke
+        run: python3 scripts/smoke_prod.py
+
+      - name: Validate shutdown with SIGTERM
+        if: always()
+        run: docker compose --file infra/docker-compose.prod.yml kill --signal SIGTERM web api || true
+
+      - name: Collect service logs
+        if: always()
+        run: docker compose --file infra/docker-compose.prod.yml logs --no-color
+
+      - name: Clean up stack
+        if: always()
+        run: docker compose --file infra/docker-compose.prod.yml down --remove-orphans
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish validated images to GHCR
+        if: github.event_name != 'pull_request'
+        env:
+          IMAGE_NAMESPACE: ghcr.io/${{ github.repository }}
+        run: |
+          IMAGE_NAMESPACE="${IMAGE_NAMESPACE,,}"
+          docker tag "$API_IMAGE" "$IMAGE_NAMESPACE/aalie-api:${GITHUB_SHA}"
+          docker tag "$WEB_IMAGE" "$IMAGE_NAMESPACE/aalie-web:${GITHUB_SHA}"
+          docker push "$IMAGE_NAMESPACE/aalie-api:${GITHUB_SHA}"
+          docker push "$IMAGE_NAMESPACE/aalie-web:${GITHUB_SHA}"
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            docker tag "$API_IMAGE" "$IMAGE_NAMESPACE/aalie-api:latest"
+            docker tag "$WEB_IMAGE" "$IMAGE_NAMESPACE/aalie-web:latest"
+            docker push "$IMAGE_NAMESPACE/aalie-api:latest"
+            docker push "$IMAGE_NAMESPACE/aalie-web:latest"
+          fi
