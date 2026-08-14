@@ -2,16 +2,17 @@
 
 Usage: python apps/api/scripts/benchmark_pdf.py --warm 25 --concurrency 1,2,5
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import resource
 import statistics
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -68,7 +69,12 @@ def summarize(samples: list[dict[str, object]]) -> dict[str, object]:
         stages[key] = {"min": min(values), "median": statistics.median(values), "max": max(values)}
     return {
         "count": len(samples),
-        "total_ms": {"min": min(totals), "p50": statistics.median(totals), "p95": percentile(totals, 0.95), "max": max(totals)},
+        "total_ms": {
+            "min": min(totals),
+            "p50": statistics.median(totals),
+            "p95": percentile(totals, 0.95),
+            "max": max(totals),
+        },
         "stages_ms": stages,
     }
 
@@ -81,8 +87,14 @@ def main() -> None:
 
     cold = [export_once()]
     warm = [export_once() for _ in range(args.warm)]
-    size_comparison = {"small": summarize([export_once(SMALL_SOURCE) for _ in range(5)]), "representative": summarize([export_once() for _ in range(5)])}
-    pass_comparison = {"one_pass": summarize([export_once(passes=1) for _ in range(5)]), "two_pass": summarize([export_once(passes=2) for _ in range(5)])}
+    size_comparison = {
+        "small": summarize([export_once(SMALL_SOURCE) for _ in range(5)]),
+        "representative": summarize([export_once() for _ in range(5)]),
+    }
+    pass_comparison = {
+        "one_pass": summarize([export_once(passes=1) for _ in range(5)]),
+        "two_pass": summarize([export_once(passes=2) for _ in range(5)]),
+    }
     concurrent = {}
     for level in [int(item) for item in args.concurrency.split(",")]:
         cpu_before = resource.getrusage(resource.RUSAGE_SELF)
@@ -98,7 +110,19 @@ def main() -> None:
             **summarize(samples),
         }
 
-    print(json.dumps({"case": "triangular", "cold": summarize(cold), "warm": summarize(warm), "size_comparison": size_comparison, "pass_comparison": pass_comparison, "concurrent": concurrent}, indent=2))
+    print(
+        json.dumps(
+            {
+                "case": "triangular",
+                "cold": summarize(cold),
+                "warm": summarize(warm),
+                "size_comparison": size_comparison,
+                "pass_comparison": pass_comparison,
+                "concurrent": concurrent,
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

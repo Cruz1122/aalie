@@ -2808,7 +2808,6 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             : undefined,
       };
 
-
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
       const procedureName =
         extractProcedureNameFromSource(source) || algorithmType || "algorithm";
