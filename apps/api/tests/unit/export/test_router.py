@@ -101,7 +101,7 @@ def test_export_report_formats_error_response_details(monkeypatch):
     assert body["logs"] == ["log-a", "log-b"]
     assert body["compilerLogs"] == "compiler-log"
     assert body["assetManifest"] == [{"filename": "report.tex", "size": 10}]
-    assert body["workDir"] == "/tmp/workdir"
+    assert "workDir" not in body
 
 
 def test_export_report_returns_500_when_service_raises(monkeypatch):

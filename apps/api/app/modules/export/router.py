@@ -62,6 +62,12 @@ def export_report(request: Request, payload: Dict[str, Any] = Body(...)) -> Resp
         body: Dict[str, Any] = {"ok": False, "error": error_message}
         if kind:
             body["kind"] = kind
+        if isinstance(logs, str):
+            body["logs"] = logs[-4000:]
+        elif isinstance(logs, list):
+            body["logs"] = logs[-4000:]
+        if isinstance(compiler_logs, str) and compiler_logs:
+            body["compilerLogs"] = compiler_logs[-4000:]
         if isinstance(asset_manifest, list):
             body["assetManifest"] = asset_manifest
         return Response(
