@@ -40,6 +40,19 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Ruff**: correcciones de lint
 - **Dependencia Playwright** corregida
 
+## [1.9.0] — 2026-05-14
+
+### Changed
+- Normalización de la notación asintótica de métodos recursivos según el tipo de cota: equivalencia Θ, cota superior O, cota inferior Ω y resultado parcial.
+- Detección de exclusividad entre llamadas recursivas reforzada mediante análisis de caminos de ejecución y conteo máximo de llamadas por camino.
+- Mejoras en la identificación del nivel dominante de los árboles de recursión y en la presentación de sus conclusiones.
+- Clasificación de patrones recursivos ajustada para distinguir con mayor precisión entre llamadas independientes y ramas mutuamente exclusivas.
+
+### Tests
+- Oráculos deterministas endurecidos para validar resultados exactos y semántica de cotas.
+- Pruebas de métodos recursivos, calidad del banco de quizzes y comprobaciones del repositorio reforzadas.
+- Validaciones de lint y formato alineadas con los gates de calidad del proyecto.
+
 ## [1.8.1] — 2026-05-09
 
 ### Added
