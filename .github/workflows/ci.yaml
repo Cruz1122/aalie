@@ -359,36 +359,41 @@ jobs:
         working-directory: apps/api
         run: python -m pytest tests/unit/quizzes -q
 
-  # Job de Docker: Verifica que las imágenes construyen
   docker-integration:
-    name: "Docker integration (build + compose config)"
+    name: "Docker integration (production build + E2E smoke)"
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, quizzes-quality]  # Solo corre si build, PR gate, lint, docs y quizzes pasan
+    timeout-minutes: 35
+    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, quizzes-quality]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Test API Docker build
+      - name: Validate production Compose contract
         run: |
-          if [ -f apps/api/Dockerfile ]; then
-            echo "🐳 Testing API Docker build..."
-            docker build -f apps/api/Dockerfile -t test-api .
-            echo "✅ API Docker build successful"
-          else
-            echo "ℹ️  No API Dockerfile found"
-          fi
+          docker compose -f infra/docker-compose.prod.yml config --quiet
+          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development|volumes:' infra/docker-compose.prod.yml
 
-      - name: Test docker-compose config
+      - name: Build production images
+        run: docker compose -f infra/docker-compose.prod.yml build
+
+      - name: Start production stack and wait for health
+        run: docker compose -f infra/docker-compose.prod.yml up -d --wait
+
+      - name: Verify non-root runtime, DNS and no source mounts
         run: |
-          if [ -f infra/docker-compose.yml ]; then
-            echo "🐳 Testing docker-compose config..."
-            docker compose -f infra/docker-compose.yml config
-            echo "✅ docker-compose config valid"
-          else
-            echo "ℹ️  No docker-compose.yml found"
-          fi
+          test "$(docker inspect -f '{{.Config.User}}' aalie-web)" = "nextjs"
+          test "$(docker inspect -f '{{.Config.User}}' aalie-api)" = "aalie"
+          test "$(docker inspect -f '{{len .Mounts}}' aalie-web)" = "0"
+          test "$(docker inspect -f '{{len .Mounts}}' aalie-api)" = "0"
+          docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://api:8000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-      - name: Cleanup
-        run: docker image prune -f
+      - name: Run critical production smoke
+        run: python3 scripts/smoke_prod.py
+
+      - name: Validate SIGTERM during PDF export
+        run: python3 scripts/test_sigterm_pdf.py
+
+      - name: Stop production stack
+        if: always()
+        run: docker compose -f infra/docker-compose.prod.yml down -v --remove-orphans

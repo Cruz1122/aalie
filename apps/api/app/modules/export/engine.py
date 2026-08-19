@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import base64
 import json
+import time
 from typing import Any, Dict, List
 
 from .asset_builder import build_asset_manifest
@@ -133,14 +134,22 @@ def build_snapshot_result(export_state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def render_report_result(export_state: Dict[str, Any]) -> Dict[str, Any]:
+    total_started = time.perf_counter()
+    timings: Dict[str, float] = {}
+    started = time.perf_counter()
     snapshot_payload = build_snapshot_result(export_state)
+    timings["snapshot_ms"] = (time.perf_counter() - started) * 1000
     snapshot = snapshot_payload["snapshot"]
     render = export_state.get("render") or {}
     formats = _normalize_formats(render.get("formats"))
     include_snapshot_json = render.get("includeSnapshotJson", True)
     include_zip_bundle = render.get("includeZipBundle", True)
+    started = time.perf_counter()
     document_model = build_document_model(snapshot)
+    timings["document_model_ms"] = (time.perf_counter() - started) * 1000
+    started = time.perf_counter()
     trace_diagram_assets = build_trace_diagram_assets(document_model)
+    timings["trace_assets_ms"] = (time.perf_counter() - started) * 1000
     asset_manifest = build_asset_manifest(
         {
             "filename": asset.filename,
@@ -162,7 +171,9 @@ def render_report_result(export_state: Dict[str, Any]) -> Dict[str, Any]:
             )
         )
     if "latex" in formats or "pdf" in formats:
+        started = time.perf_counter()
         latex_content = render_latex_report(snapshot, document_model)
+        timings["latex_renderer_ms"] = (time.perf_counter() - started) * 1000
         if "latex" in formats:
             artifacts.append(
                 ExportArtifact(
@@ -185,6 +196,7 @@ def render_report_result(export_state: Dict[str, Any]) -> Dict[str, Any]:
                 ],
                 preserve_workdir_on_error=bool(render.get("debug")),
                 cleanup=not bool(render.get("debug")),
+                passes=int(render.get("pdfPasses") or 2),
             )
         except LatexCompilationError as error:
             return {
@@ -196,12 +208,24 @@ def render_report_result(export_state: Dict[str, Any]) -> Dict[str, Any]:
                 "workDir": error.work_dir,
                 "status": 500,
             }
+        compiled_profile = compiled.get("profile")
+        if isinstance(compiled_profile, dict):
+            timings.update(
+                {
+                    str(key): float(value)
+                    for key, value in compiled_profile.items()
+                    if isinstance(value, (int, float))
+                }
+            )
+        pdf_buffer = compiled.get("pdfBuffer")
+        if not isinstance(pdf_buffer, (bytes, str)):
+            raise RuntimeError("PDF compiler returned an invalid buffer.")
         artifacts.append(
             ExportArtifact(
                 format="pdf",
                 filename=PDF_FILENAME,
                 mimeType=_artifact_mime_type("pdf"),
-                content=compiled["pdfBuffer"],
+                content=pdf_buffer,
             )
         )
     if include_snapshot_json:
@@ -232,8 +256,10 @@ def render_report_result(export_state: Dict[str, Any]) -> Dict[str, Any]:
         content = bundle.content
     if not filename or not mime_type or content is None:
         raise RuntimeError("No artifacts were generated.")
+    timings["total_ms"] = (time.perf_counter() - total_started) * 1000
     return {
         "ok": True,
+        "profile": timings,
         "mimeType": mime_type,
         "filename": filename,
         "contentBase64": base64.b64encode(_to_bytes(content)).decode("ascii"),
