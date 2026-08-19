@@ -4,6 +4,9 @@ antlr4-python3-runtime==4.13.2
 python-dotenv>=1.0.0
 sympy>=1.12,<2.0
 reportlab>=4.2,<5.0
+sqlalchemy==2.0.52
+psycopg[binary]==3.3.4
+alembic==1.19.1
 
 # Parser aa_grammar (ruta relativa desde apps/api)
 -e ../../packages/grammar/py

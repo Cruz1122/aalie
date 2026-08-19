@@ -105,6 +105,22 @@ jobs:
     name: "Tests (PR gate: fast + oracle, con cobertura)"
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@127.0.0.1:5432/aalie_ci
+    services:
+      postgres:
+        image: postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108
+        env:
+          POSTGRES_DB: aalie_ci
+          POSTGRES_USER: aalie_ci
+          POSTGRES_PASSWORD: aalie_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aalie_ci -d aalie_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -133,6 +149,12 @@ jobs:
           else
             echo "⚠️  Grammar package not found, tests may fail"
           fi
+
+      - name: Apply database migrations
+        working-directory: apps/api
+        run: |
+          alembic upgrade head
+          test "$(alembic current)" != ""
 
       - name: Verify xdist availability
         run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
@@ -338,6 +360,11 @@ jobs:
       - name: Validate OCI Compose and private service ports
         env:
           AALIE_TAG: "0000000000000000000000000000000000000000"
+          POSTGRES_DB: aalie_ci
+          POSTGRES_USER: aalie_ci
+          POSTGRES_PASSWORD: aalie_ci_password
+          API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+          WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
         run: |
           docker compose -f infra/oci/compose.yml config --quiet
           docker compose -f infra/oci/compose.yml config --format json > /tmp/aalie-oci-compose.json
@@ -348,6 +375,16 @@ jobs:
               config = json.load(stream)
 
           services = config["services"]
+          postgres = services["postgres"]
+          assert postgres["image"] == "postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108"
+          assert not postgres.get("ports"), "PostgreSQL must not publish port 5432"
+          assert postgres["volumes"][0]["target"] == "/var/lib/postgresql"
+          assert postgres["healthcheck"]["test"][0] == "CMD-SHELL"
+          assert "pg_isready" in postgres["healthcheck"]["test"][1]
+          assert services["api"]["depends_on"]["postgres"]["condition"] == "service_healthy"
+          assert services["api"]["environment"]["DATABASE_URL"].startswith("postgresql+psycopg://")
+          assert services["web"]["environment"]["DATABASE_URL"].startswith("postgresql://")
+          assert "NEXT_PUBLIC_DATABASE_URL" not in services["web"].get("environment", {})
           assert not services["api"].get("ports"), "API must not publish port 8000"
           assert not services["web"].get("ports"), "Web must not publish port 3000"
           for service_name in ("api", "web"):
@@ -367,10 +404,12 @@ jobs:
         run: |
           bash -n infra/oci/deploy/aalie-deploy
           bash -n infra/oci/scripts/host-health.sh
+          bash -n infra/oci/scripts/postgres-backup.sh
+          bash -n infra/oci/scripts/postgres-restore.sh
 
       - name: Validate OCI script line endings and idempotence guard
         run: |
-          for file in infra/oci/deploy/aalie-deploy infra/oci/scripts/host-health.sh; do
+          for file in infra/oci/deploy/aalie-deploy infra/oci/scripts/host-health.sh infra/oci/scripts/postgres-backup.sh infra/oci/scripts/postgres-restore.sh; do
             if LC_ALL=C grep -q $'\r' "$file"; then
               echo "CRLF detected in $file"
               exit 1
@@ -431,6 +470,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, oci-contracts, quizzes-quality]
+    env:
+      POSTGRES_DB: aalie_ci
+      POSTGRES_USER: aalie_ci
+      POSTGRES_PASSWORD: aalie_ci_password
+      API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+      WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
 
     steps:
       - name: Checkout
@@ -439,13 +484,43 @@ jobs:
       - name: Validate production Compose contract
         run: |
           docker compose -f infra/docker-compose.prod.yml config --quiet
-          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development|volumes:' infra/docker-compose.prod.yml
+          docker compose -f infra/docker-compose.prod.yml config --format json > /tmp/aalie-prod-compose.json
+          python3 - <<'PY'
+          import json
+
+          with open("/tmp/aalie-prod-compose.json", encoding="utf-8") as stream:
+              services = json.load(stream)["services"]
+          assert not services["api"].get("volumes")
+          assert not services["web"].get("volumes")
+          assert services["postgres"]["image"] == "postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108"
+          assert services["postgres"]["volumes"][0]["target"] == "/var/lib/postgresql"
+          assert not services["postgres"].get("ports")
+          PY
+          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development' infra/docker-compose.prod.yml
 
       - name: Build production images
         run: docker compose -f infra/docker-compose.prod.yml build
 
-      - name: Start production stack and wait for health
-        run: docker compose -f infra/docker-compose.prod.yml up -d --wait
+      - name: Migrate and start production stack
+        run: |
+          docker compose -f infra/docker-compose.prod.yml up -d --wait postgres
+          docker compose -f infra/docker-compose.prod.yml run --rm --no-deps api alembic upgrade head
+          docker compose -f infra/docker-compose.prod.yml up -d --wait
+
+      - name: Validate persistence and backup/restore
+        run: |
+          docker compose -f infra/docker-compose.prod.yml exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql --host=127.0.0.1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --command="CREATE TABLE persistence_probe (id integer PRIMARY KEY, value text NOT NULL); INSERT INTO persistence_probe VALUES (1, '\''survives-down-up'\'');"'
+          mkdir -p /tmp/aalie-ci-backups
+          printf '%s\n' 'AALIE_TAG=0000000000000000000000000000000000000000' > /tmp/aalie-ci-tag.env
+          printf '%s\n' 'POSTGRES_DB=aalie_ci' 'POSTGRES_USER=aalie_ci' 'POSTGRES_PASSWORD=aalie_ci_password' 'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' > /tmp/aalie-ci-runtime.env
+          chmod 600 /tmp/aalie-ci-tag.env /tmp/aalie-ci-runtime.env
+          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/docker-compose.prod.yml" ENV_FILE=/tmp/aalie-ci-tag.env RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env bash infra/oci/scripts/postgres-backup.sh /tmp/aalie-ci-backups/aalie.dump
+          docker compose -f infra/docker-compose.prod.yml down --remove-orphans
+          docker compose -f infra/docker-compose.prod.yml up -d --wait
+          test "$(docker compose -f infra/docker-compose.prod.yml exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql --host=127.0.0.1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --tuples-only --no-align --command="SELECT value FROM persistence_probe WHERE id = 1"' | tr -d '\r\n')" = "survives-down-up"
+          docker compose -f infra/docker-compose.prod.yml exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" createdb --host=127.0.0.1 --username="$POSTGRES_USER" aalie_restore_check'
+          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/docker-compose.prod.yml" ENV_FILE=/tmp/aalie-ci-tag.env RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env bash infra/oci/scripts/postgres-restore.sh /tmp/aalie-ci-backups/aalie.dump aalie_restore_check
+          test "$(docker compose -f infra/docker-compose.prod.yml exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql --host=127.0.0.1 --username="$POSTGRES_USER" --dbname=aalie_restore_check --tuples-only --no-align --command="SELECT value FROM persistence_probe WHERE id = 1"' | tr -d '\r\n')" = "survives-down-up"
 
       - name: Verify non-root runtime, DNS and no source mounts
         run: |
@@ -464,4 +539,4 @@ jobs:
 
       - name: Stop production stack
         if: always()
-        run: docker compose -f infra/docker-compose.prod.yml down -v --remove-orphans
+        run: docker compose -f infra/docker-compose.prod.yml down --remove-orphans

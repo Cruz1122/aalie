@@ -51,6 +51,7 @@ flowchart LR
   SS --> MD[Markdown]
   SS --> TEX[LaTeX/PDF]
   API --> Q[Quizzes]
+  API --> PG[(PostgreSQL 18.6, privado)]
   W --> CC[packages/content-catalog]
   BFF --> LLM[LLM Providers]
 ```
@@ -87,6 +88,7 @@ pseudocódigo → parse (ANTLR) → AST → classify → analyze → trace → s
 - 17 endpoints totales (15 únicos + 2 alias backward-compat)
 - Sin middleware de autenticación — rutas públicas
 - CORS configurable por entorno
+- Acceso relacional diferido mediante SQLAlchemy/psycopg y migraciones Alembic; esta fase deja solo `alembic_version`, sin tablas de negocio.
 
 ### Grammar package
 

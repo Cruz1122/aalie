@@ -60,6 +60,18 @@ Cubre frontend (Next.js), BFF (server-side proxies), backend API (FastAPI), y co
 |---|---|---|---|---|---|---|
 | `AALIE_EXPORTER_ASSETS_DIR` | API Export | No | — | Override del directorio de assets LaTeX para export PDF | Si no se define, el exportador usa rutas por defecto del proyecto; si apunta a un directorio inexistente, la compilación PDF falla | código (`export/asset_registry.py`) |
 
+### PostgreSQL
+
+| Variable | Capa | Obligatoria | Valor/forma | Uso | Secreto |
+|---|---|---|---|---|---|
+| `DATABASE_URL` | API | En runtime DB | `postgresql+psycopg://...` | URL SQLAlchemy/psycopg usada por FastAPI y Alembic | Sí |
+| `DATABASE_URL` | Web server-side | En Better Auth | `postgresql://...` | URL reservada para Better Auth; no se expone al navegador | Sí |
+| `POSTGRES_DB` | Compose PostgreSQL | Sí en OCI | `aalie` | Base inicial de la imagen oficial | No |
+| `POSTGRES_USER` | Compose PostgreSQL | Sí en OCI | `aalie` | Usuario propietario de esta microfase | Sí |
+| `POSTGRES_PASSWORD` | Compose PostgreSQL | Sí en OCI | Secreto hexadecimal generado en el servidor | Sí |
+| `API_DATABASE_URL` | Compose host | Sí en OCI | URL con `postgresql+psycopg` y host `postgres` | Se transforma en `DATABASE_URL` del API | Sí |
+| `WEB_DATABASE_URL` | Compose host | Sí en OCI | URL con `postgresql` y host `postgres` | Se transforma en `DATABASE_URL` de web | Sí |
+
 ### Deployment OCI
 
 | Variable | Capa | Obligatoria | Valor/forma | Uso | Secreto |
@@ -69,6 +81,8 @@ Cubre frontend (Next.js), BFF (server-side proxies), backend API (FastAPI), y co
 | `HOSTNAME` | Web OCI | Sí | `0.0.0.0` | Escucha en todas las interfaces del contenedor | No |
 | `PORT` | Web OCI | Sí | `3000` | Puerto privado del servidor standalone | No |
 | `API_INTERNAL_BASE_URL` | BFF OCI | Sí | `http://api:8000` | Comunicación privada web → API en `aalie-internal` | No |
+
+En OCI, `AALIE_TAG` vive en `.env` y las cinco variables PostgreSQL viven en `.env.runtime`, ambos fuera del repositorio. El deploy carga los dos archivos; no se deben combinar en un único archivo que el deploy pueda sobrescribir.
 
 `OCI_SSH_PRIVATE_KEY` y `OCI_SSH_KNOWN_HOSTS` son material operacional de GitHub Actions, no variables runtime de la aplicación. La primera es secreta; la segunda es pinning de confianza. Viven en el Environment `Production – aalie` y no en `.env`. `API_KEY` no se expone al navegador ni se incorpora a imágenes; en OCI solo existiría si el operador habilita explícitamente LLM por un canal de secretos externo al repositorio.
 

@@ -63,6 +63,8 @@ API_KEY=your-gemini-key docker compose up
 
 ```bash
 docker compose -f infra/docker-compose.prod.yml build
+docker compose -f infra/docker-compose.prod.yml up -d --wait postgres
+docker compose -f infra/docker-compose.prod.yml run --rm --no-deps api alembic upgrade head
 docker compose -f infra/docker-compose.prod.yml up -d --wait
 python scripts/smoke_prod.py
 ```
@@ -81,7 +83,7 @@ En OCI, FastAPI no es público: el navegador habla same-origin con Next.js y el 
 
 #### Healthcheck
 
-El backend expone `GET /health/live` y `GET /health/ready`. La readiness valida parser, assets de export, quizzes y `pdflatex`. El BFF expone `GET /api/health/live` para su propio proceso y `GET /api/health` para comprobar el backend privado. Una respuesta base del backend es:
+El backend expone `GET /health/live` y `GET /health/ready`. La readiness valida parser, assets de export, quizzes, `pdflatex` y conectividad PostgreSQL. El BFF expone `GET /api/health/live` para su propio proceso y `GET /api/health` para comprobar el backend privado. Una respuesta base del backend es:
 
 ```json
 {
@@ -111,10 +113,10 @@ La plataforma funciona completamente sin API key. El análisis determinista (par
 
 AALIE tiene estas características relevantes para hosting:
 
-- **No requiere base de datos:** el contenido (catálogo, quizzes) vive en archivos JSON versionados dentro del repositorio. No hay migraciones ni esquemas de DB que gestionar.
+- **PostgreSQL self-hosted:** PostgreSQL corre dentro de Docker Compose en la VM OCI, sin puerto público, con volumen nombrado y migraciones Alembic. Esta fase deja la base vacía; el contenido, progreso y autenticación todavía no se migran.
 - **No tiene autenticación de usuarios:** no hay sesiones, login, registro, ni almacenamiento de usuarios. El progreso de quizzes se persiste en `localStorage` del navegador.
 - **Contenido file-based:** todo el contenido pedagógico está en `packages/content-data/` dentro del monorepo. Las actualizaciones de contenido requieren un nuevo build/web deploy.
-- **API stateless:** FastAPI no mantiene estado entre requests; escalamiento horizontal sencillo.
+- **API sin tablas de negocio todavía:** FastAPI puede conectarse a PostgreSQL, pero no se crean modelos ni tablas de negocio automáticamente.
 - **Frontend standalone:** Next.js ejecuta un servidor Node standalone con Route Handlers BFF; no es un sitio puramente estático ni se sirve omitiendo ese runtime.
 
 #### Puertos

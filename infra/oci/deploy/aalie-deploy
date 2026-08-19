@@ -4,6 +4,7 @@ set -Eeuo pipefail
 readonly APP_DIR="${APP_DIR:-/home/ubuntu/aalie}"
 readonly COMPOSE_FILE="${APP_DIR}/compose.yml"
 readonly ENV_FILE="${APP_DIR}/.env"
+readonly RUNTIME_ENV_FILE="${APP_DIR}/.env.runtime"
 readonly PREVIOUS_FILE="${APP_DIR}/.previous-tag"
 readonly API_IMAGE="ghcr.io/cruz1122/aalie-api"
 readonly WEB_IMAGE="ghcr.io/cruz1122/aalie-web"
@@ -37,7 +38,11 @@ write_atomic() {
 }
 
 compose() {
-  docker compose --env-file "$ENV_FILE" --file "$COMPOSE_FILE" "$@"
+  docker compose \
+    --env-file "$ENV_FILE" \
+    --env-file "$RUNTIME_ENV_FILE" \
+    --file "$COMPOSE_FILE" \
+    "$@"
 }
 
 verify_runtime() {
@@ -47,11 +52,38 @@ verify_runtime() {
     "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 }
 
+migrate_database() {
+  compose up --detach --wait postgres
+  compose run --rm --no-deps api alembic upgrade head
+}
+
+update_tag() {
+  local new_tag="$1"
+  local temporary
+
+  temporary="$(mktemp "${APP_DIR}/.env.tmp.XXXXXX")"
+  awk -v tag="$new_tag" '
+    /^AALIE_TAG=/ {
+      if (!seen) {
+        print "AALIE_TAG=" tag
+        seen = 1
+      }
+      next
+    }
+    { print }
+    END {
+      if (!seen) print "AALIE_TAG=" tag
+    }
+  ' "$ENV_FILE" >"$temporary"
+  chmod 600 "$temporary"
+  mv -f "$temporary" "$ENV_FILE"
+}
+
 [[ "${SSH_ORIGINAL_COMMAND:-}" =~ ^deploy\ ([0-9a-f]{40})$ ]] || reject
 readonly NEW_TAG="${BASH_REMATCH[1]}"
 
-[[ -d "$APP_DIR" && -f "$COMPOSE_FILE" ]] || {
-  printf 'Deployment directory is incomplete: %s\n' "$APP_DIR" >&2
+[[ -d "$APP_DIR" && -f "$COMPOSE_FILE" && -f "$RUNTIME_ENV_FILE" ]] || {
+  printf 'Deployment directory is incomplete (compose or runtime env missing): %s\n' "$APP_DIR" >&2
   exit 1
 }
 
@@ -63,7 +95,7 @@ readonly OLD_TAG
 
 if [[ "$NEW_TAG" == "$OLD_TAG" ]]; then
   printf 'Deployment is already current: %s; verifying runtime\n' "$NEW_TAG"
-  if compose up --detach --wait && verify_runtime; then
+  if migrate_database && compose up --detach --wait && verify_runtime; then
     printf 'Idempotent deployment healthy: current=%s previous unchanged\n' "$NEW_TAG"
     exit 0
   fi
@@ -75,16 +107,16 @@ printf 'Pulling immutable AALIE images for %s\n' "$NEW_TAG"
 docker pull "${API_IMAGE}:${NEW_TAG}"
 docker pull "${WEB_IMAGE}:${NEW_TAG}"
 
-write_atomic "$ENV_FILE" "AALIE_TAG=${NEW_TAG}"
+update_tag "$NEW_TAG"
 
-if compose up --detach --wait && verify_runtime; then
+if migrate_database && compose up --detach --wait && verify_runtime; then
   write_atomic "$PREVIOUS_FILE" "$OLD_TAG"
   printf 'Deployment succeeded: current=%s previous=%s\n' "$NEW_TAG" "$OLD_TAG"
   exit 0
 fi
 
 printf 'Deployment failed for %s; rolling back to %s\n' "$NEW_TAG" "$OLD_TAG" >&2
-write_atomic "$ENV_FILE" "AALIE_TAG=${OLD_TAG}"
+update_tag "$OLD_TAG"
 
 if compose up --detach --wait && verify_runtime; then
   printf 'Rollback succeeded: current=%s\n' "$OLD_TAG" >&2

@@ -57,6 +57,11 @@ jobs:
       - name: Validate OCI deployment contracts
         env:
           AALIE_TAG: "0000000000000000000000000000000000000000"
+          POSTGRES_DB: aalie_ci
+          POSTGRES_USER: aalie_ci
+          POSTGRES_PASSWORD: aalie_ci_password
+          API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+          WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
         run: |
           docker compose --file infra/oci/compose.yml config --quiet
           docker compose --file infra/oci/compose.yml config --format json > /tmp/aalie-oci-compose.json
@@ -67,6 +72,16 @@ jobs:
               config = json.load(stream)
 
           services = config["services"]
+          postgres = services["postgres"]
+          assert postgres["image"] == "postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108"
+          assert not postgres.get("ports"), "PostgreSQL must not publish port 5432"
+          assert postgres["volumes"][0]["target"] == "/var/lib/postgresql"
+          assert postgres["healthcheck"]["test"][0] == "CMD-SHELL"
+          assert "pg_isready" in postgres["healthcheck"]["test"][1]
+          assert services["api"]["depends_on"]["postgres"]["condition"] == "service_healthy"
+          assert services["api"]["environment"]["DATABASE_URL"].startswith("postgresql+psycopg://")
+          assert services["web"]["environment"]["DATABASE_URL"].startswith("postgresql://")
+          assert "NEXT_PUBLIC_DATABASE_URL" not in services["web"].get("environment", {})
           assert not services["api"].get("ports"), "API must not publish port 8000"
           assert not services["web"].get("ports"), "Web must not publish port 3000"
           published = {
@@ -77,6 +92,8 @@ jobs:
           PY
           bash -n infra/oci/deploy/aalie-deploy
           bash -n infra/oci/scripts/host-health.sh
+          bash -n infra/oci/scripts/postgres-backup.sh
+          bash -n infra/oci/scripts/postgres-restore.sh
           docker run --rm \
             -v "$PWD/infra/oci/Caddyfile:/etc/caddy/Caddyfile:ro" \
             caddy:2.11.4-alpine \
@@ -105,13 +122,17 @@ jobs:
           docker image inspect "$API_IMAGE" --format 'API: {{.Os}}/{{.Architecture}}; size={{.Size}} bytes'
           docker image inspect "$WEB_IMAGE" --format 'Web: {{.Os}}/{{.Architecture}}; size={{.Size}} bytes'
 
-      - name: Start production Compose stack
-        run: docker compose --file infra/docker-compose.prod.yml up --detach --wait
+      - name: Migrate and start production Compose stack
+        run: |
+          docker compose --file infra/docker-compose.prod.yml up --detach --wait postgres
+          docker compose --file infra/docker-compose.prod.yml run --rm --no-deps api alembic upgrade head
+          docker compose --file infra/docker-compose.prod.yml up --detach --wait
 
       - name: Verify ARM64 runtime and non-root users
         run: |
           docker compose --file infra/docker-compose.prod.yml exec --no-TTY api sh -c 'uname -m; python --version; python -c "import platform; print(platform.machine())"; pdflatex --version | sed -n "1p"; id -un'
           docker compose --file infra/docker-compose.prod.yml exec --no-TTY web sh -c 'uname -m; node --version; id -un'
+          docker compose --file infra/docker-compose.prod.yml exec --no-TTY postgres sh -c 'uname -m; postgres --version; id -un'
           docker compose --file infra/docker-compose.prod.yml exec --no-TTY web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
       - name: Run complete production smoke

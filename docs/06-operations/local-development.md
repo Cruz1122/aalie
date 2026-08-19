@@ -103,6 +103,7 @@ Esto levanta:
 |---|---|---|
 | API (FastAPI + uvicorn) | `8000` | `algoritmos-api` |
 | Web (Next.js dev) | `3000` | `algoritmos-web` |
+| PostgreSQL 18.6 | solo red Compose (`5432`) | `algoritmos-postgres` |
 
 **Variables de entorno** en Docker:
 
@@ -114,6 +115,14 @@ Esto levanta:
 | api (implícito) | `DEV_ALLOWED_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` |
 
 La web depende de `api`, por lo que Docker Compose garantiza el orden de inicio.
+
+El servicio PostgreSQL usa el volumen nombrado `postgres-dev-data` y no publica `5432` al host. Tras iniciar el stack, aplicar la baseline vacía una vez:
+
+```bash
+docker compose exec api alembic upgrade head
+```
+
+La URL de la API usa `postgresql+psycopg://`; la web usa `postgresql://`. No hay tablas de negocio en esta microfase.
 
 ### Volúmenes
 

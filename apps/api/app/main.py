@@ -85,6 +85,14 @@ def create_app() -> FastAPI:
             checks["quizzes"] = False
 
         checks["pdflatex"] = shutil.which("pdflatex") is not None
+
+        try:
+            from .core.database import check_database_connection
+
+            checks["postgresql"] = check_database_connection()
+        except Exception:
+            checks["postgresql"] = False
+
         ready = all(checks.values())
         return JSONResponse(
             {"ok": ready, "status": "ready" if ready else "not_ready", "checks": checks},

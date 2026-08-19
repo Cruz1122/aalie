@@ -7,9 +7,12 @@ Esta carpeta versiona la instalación mínima que reproduce la producción de `a
 | `compose.yml` | `/home/ubuntu/aalie/compose.yml` | `ubuntu:ubuntu` / `0644` |
 | `Caddyfile` | `/home/ubuntu/aalie/Caddyfile` | `ubuntu:ubuntu` / `0644` |
 | `.env` (creado en el host) | `/home/ubuntu/aalie/.env` | `ubuntu:ubuntu` / `0600` |
+| `.env.runtime` (creado en el host) | `/home/ubuntu/aalie/.env.runtime` | `ubuntu:ubuntu` / `0600` |
 | `deploy/aalie-deploy` | `/usr/local/bin/aalie-deploy` | `root:root` / `0755` |
 | `ssh/99-aalie-hardening.conf` | `/etc/ssh/sshd_config.d/99-aalie-hardening.conf` | `root:root` / `0644` |
 | `scripts/host-health.sh` | `/home/ubuntu/aalie/host-health.sh` | `ubuntu:ubuntu` / `0755` |
+| `scripts/postgres-backup.sh` | `/home/ubuntu/aalie/postgres-backup.sh` | `ubuntu:ubuntu` / `0755` |
+| `scripts/postgres-restore.sh` | `/home/ubuntu/aalie/postgres-restore.sh` | `ubuntu:ubuntu` / `0755` |
 
 `.env` contiene `AALIE_TAG=<40-char-git-sha>` y no se versiona. `.previous-tag`, gestionado atómicamente por el deploy, conserva el SHA anterior; `latest-arm64` no es fuente de verdad ni mecanismo de rollback.
 

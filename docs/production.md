@@ -6,6 +6,7 @@ La fuente de verdad operacional para reconstruir y administrar la producción OC
 
 ```text
 Browser → aalie-web → Next BFF → aalie-api
+                                      ↘ PostgreSQL (red Docker privada)
 ```
 
 El navegador solo conoce `aalie-web`. Las operaciones de análisis, trace, quizzes, LLM y exportación atraviesan Route Handlers de Next bajo `/api/*`. FastAPI no necesita exponerse públicamente para que funcione la aplicación.
@@ -22,11 +23,14 @@ OCI usa `infra/oci/compose.yml`: consume imágenes ARM64 ya publicadas en GHCR, 
 # Producción local
 docker compose -f infra/docker-compose.prod.yml build
 docker compose -f infra/docker-compose.prod.yml up -d --wait
+docker compose -f infra/docker-compose.prod.yml run --rm --no-deps api alembic upgrade head
 python scripts/smoke_prod.py
 
 # Detener
-docker compose -f infra/docker-compose.prod.yml down -v
+docker compose -f infra/docker-compose.prod.yml down
 ```
+
+`docker compose down` conserva el volumen nombrado de PostgreSQL. `docker compose down -v` elimina los volúmenes y, por tanto, los datos persistentes; no debe usarse en producción.
 
 El host solo necesita Docker y Compose.
 
@@ -47,6 +51,8 @@ El host solo necesita Docker y Compose.
 - `CORS_ENABLED` y `CORS_ALLOWED_ORIGINS`.
 - `QUIZ_DATA_DIR`.
 - `AALIE_EXPORTER_ASSETS_DIR`.
+- `DATABASE_URL` del API usa `postgresql+psycopg://...`; la web recibe una URL `postgresql://...` reservada para Better Auth.
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `API_DATABASE_URL` y `WEB_DATABASE_URL` provienen del runtime, nunca de una imagen.
 - `LLM_PROVIDER`, `LLM_MODEL_*`, `LLM_TIMEOUT_SECONDS`.
 
 ### Secretos
@@ -59,7 +65,7 @@ El host solo necesita Docker y Compose.
 API:
 
 - `/health/live`: proceso HTTP vivo; no consulta dependencias.
-- `/health/ready`: parser, assets de export, quizzes y `pdflatex` disponibles. No genera PDF.
+- `/health/ready`: parser, assets de export, quizzes, `pdflatex` y PostgreSQL disponibles. No genera PDF.
 
 Web:
 

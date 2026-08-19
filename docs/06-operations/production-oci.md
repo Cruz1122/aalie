@@ -20,6 +20,7 @@ Internet
        └─ Caddy (TLS automático, único servicio publicado)
             └─ web:3000 (Next.js standalone + BFF, red privada)
                  └─ api:8000 (FastAPI, red privada)
+                      └─ postgres:5432 (PostgreSQL, red privada y sin puerto publicado)
 ```
 
 El navegador solo conoce Caddy y Next.js. Los Route Handlers `/api/*` del BFF llaman a `http://api:8000`; FastAPI no tiene puerto publicado en el host ni regla de ingreso OCI.
@@ -121,6 +122,7 @@ En la estación que contiene un checkout confiable del repositorio, copie solo l
 ssh -i /ruta/segura/aalie-admin ubuntu@aalie.dev 'install -d -m 0755 /home/ubuntu/aalie'
 scp -i /ruta/segura/aalie-admin \
   infra/oci/compose.yml infra/oci/Caddyfile infra/oci/scripts/host-health.sh \
+  infra/oci/scripts/postgres-backup.sh infra/oci/scripts/postgres-restore.sh \
   ubuntu@aalie.dev:/home/ubuntu/aalie/
 ```
 
@@ -153,10 +155,13 @@ sudo chown ubuntu:ubuntu /home/ubuntu/aalie/compose.yml \
   /home/ubuntu/aalie/Caddyfile /home/ubuntu/aalie/host-health.sh
 chmod 0644 /home/ubuntu/aalie/compose.yml /home/ubuntu/aalie/Caddyfile
 chmod 0755 /home/ubuntu/aalie/host-health.sh
+chmod 0755 /home/ubuntu/aalie/postgres-backup.sh /home/ubuntu/aalie/postgres-restore.sh
 stat -c '%U:%G %a %n' \
   /home/ubuntu/aalie/compose.yml \
   /home/ubuntu/aalie/Caddyfile \
   /home/ubuntu/aalie/host-health.sh \
+  /home/ubuntu/aalie/postgres-backup.sh \
+  /home/ubuntu/aalie/postgres-restore.sh \
   /usr/local/bin/aalie-deploy \
   /etc/ssh/sshd_config.d/99-aalie-hardening.conf
 ```
@@ -171,12 +176,25 @@ umask 077
 printf '%s\n' 'AALIE_TAG=<40-char-lowercase-git-sha>' > .env
 chmod 0600 .env
 stat -c '%U:%G %a %n' .env
+
+DB_PASSWORD="$(openssl rand -hex 32)"
+umask 077
+cat > .env.runtime <<EOF
+POSTGRES_DB=aalie
+POSTGRES_USER=aalie
+POSTGRES_PASSWORD=${DB_PASSWORD}
+API_DATABASE_URL=postgresql+psycopg://aalie:${DB_PASSWORD}@postgres:5432/aalie
+WEB_DATABASE_URL=postgresql://aalie:${DB_PASSWORD}@postgres:5432/aalie
+EOF
+unset DB_PASSWORD
+chmod 0600 .env.runtime
+stat -c '%U:%G %a %n' .env.runtime
 ```
 
 Reemplace el placeholder antes de ejecutar. Valide Compose y Caddy. Compose renderiza la configuración y Caddy comprueba sintaxis; ambos son read-only respecto de servicios, aunque el segundo puede descargar la imagen Caddy si aún no existe. Se espera salida válida y exit code 0.
 
 ```bash
-docker compose --env-file .env -f compose.yml config --quiet
+docker compose --env-file .env --env-file .env.runtime -f compose.yml config --quiet
 docker run --rm \
   -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
   caddy:2.11.4-alpine \
@@ -188,9 +206,11 @@ docker run --rm \
 Las imágenes GHCR se esperan legibles por la VM. Si el registry se vuelve privado, configure en el host una credencial `read:packages` entregada externamente y agréguela al inventario; no la escriba en Compose ni en el repositorio.
 
 ```bash
-docker compose --env-file .env -f compose.yml pull api web caddy
-docker compose --env-file .env -f compose.yml up -d --wait
-docker compose --env-file .env -f compose.yml ps
+docker compose --env-file .env --env-file .env.runtime -f compose.yml pull api web caddy postgres
+docker compose --env-file .env --env-file .env.runtime -f compose.yml up -d --wait postgres
+docker compose --env-file .env --env-file .env.runtime -f compose.yml run --rm --no-deps api alembic upgrade head
+docker compose --env-file .env --env-file .env.runtime -f compose.yml up -d --wait
+docker compose --env-file .env --env-file .env.runtime -f compose.yml ps
 ```
 
 `pull` modifica el almacenamiento local de imágenes; `up` crea/actualiza red, volúmenes y contenedores. Se espera `api` y `web` healthy y `caddy` running. Solo Caddy debe mostrar bindings host para 80/443.
@@ -199,11 +219,11 @@ Caddy monta el archivo versionado y persiste certificados/estado en `caddy-data`
 
 ## 10. Health y smoke funcional
 
-Compruebe primero la API desde dentro del contenedor. Este comando no publica 8000 ni modifica estado; debe responder JSON con `status: ready` y todos los checks en `true`.
+Compruebe primero la API desde dentro del contenedor. Este comando no publica 8000 ni modifica estado; debe responder JSON con `status: ready` y todos los checks en `true`, incluido `postgresql`.
 
 ```bash
 cd /home/ubuntu/aalie
-docker compose --env-file .env -f compose.yml exec -T api python -c \
+docker compose --env-file .env --env-file .env.runtime -f compose.yml exec -T api python -c \
   "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=30).read().decode())"
 ```
 
@@ -455,7 +475,7 @@ Si el host no recupera:
 Después de reboot, patch, cambio Docker, reprovisión, cambio Caddy o rollback:
 
 - [ ] `systemctl is-active docker` devuelve `active`.
-- [ ] `docker compose --env-file .env -f compose.yml ps` muestra los tres servicios.
+- [ ] `docker compose --env-file .env --env-file .env.runtime -f compose.yml ps` muestra PostgreSQL, API, web y Caddy.
 - [ ] `aalie-api` está healthy.
 - [ ] `aalie-web` está healthy.
 - [ ] `aalie-caddy` está running.
@@ -486,7 +506,7 @@ Este checklist permite auditar una reconstrucción sin tocar la VM productiva:
 - [ ] Recursos OCI, región, shape, RAM, disco y Ubuntu descritos.
 - [ ] VCN `10.0.0.0/16`, subnet `10.0.1.0/24`, IGW, ruta e ingress descritos.
 - [ ] Instalación Docker desde repositorio oficial descrita.
-- [ ] `AALIE_TAG=0000000000000000000000000000000000000000 docker compose -f infra/oci/compose.yml config --quiet` pasa.
+- [ ] `AALIE_TAG=0000000000000000000000000000000000000000 POSTGRES_DB=aalie POSTGRES_USER=aalie POSTGRES_PASSWORD=ci API_DATABASE_URL=postgresql+psycopg://aalie:ci@postgres:5432/aalie WEB_DATABASE_URL=postgresql://aalie:ci@postgres:5432/aalie docker compose -f infra/oci/compose.yml config --quiet` pasa.
 - [ ] Config renderizada demuestra 80/443 solo en Caddy y ningún publish 3000/8000.
 - [ ] Caddyfile pasa `caddy:2.11.4-alpine caddy validate`.
 - [ ] `bash -n infra/oci/deploy/aalie-deploy` pasa.
@@ -502,7 +522,33 @@ Este checklist permite auditar una reconstrucción sin tocar la VM productiva:
 - [ ] Recovery checklist y reboot test están completos.
 - [ ] DNS `aalie.dev`, GitHub Environment y secrets están enumerados.
 
-## 24. Referencias oficiales
+## 24. Persistencia, backup y restore
+
+El volumen `postgres-data` conserva la base entre reinicios y entre `docker compose down`/`up`. No ejecute `docker compose down -v` en OCI: elimina el volumen nombrado y sus datos. Para validaciones destructivas use siempre otro proyecto Compose y otro volumen.
+
+El backup por defecto crea un archivo custom comprimido con nombre UTC bajo `backups/`, modo `0600`, y elimina el parcial si `pg_dump` falla:
+
+```bash
+cd /home/ubuntu/aalie
+./postgres-backup.sh
+./postgres-backup.sh /home/ubuntu/aalie/backups/manual-$(date -u +%Y%m%dT%H%M%SZ).dump
+```
+
+El restore exige un archivo válido y una base destino vacía. Use una base separada; el script valida que no existan tablas de usuario y ejecuta `pg_restore --exit-on-error --no-owner --no-privileges`:
+
+```bash
+docker compose --env-file .env --env-file .env.runtime -f compose.yml exec -T postgres \
+  sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" createdb --host=127.0.0.1 --username="$POSTGRES_USER" aalie_restore_check'
+./postgres-restore.sh /home/ubuntu/aalie/backups/manual-<UTC>.dump aalie_restore_check
+```
+
+Los backups permanecen inicialmente en el mismo disco de 50 GB y no constituyen DR off-host. Verifique espacio antes de respaldar y transfiera una copia a un destino externo mediante un procedimiento aprobado.
+
+## 25. Deploy y compatibilidad de esquema
+
+El deploy carga simultáneamente `.env` y `.env.runtime`, actualiza solo la línea `AALIE_TAG` y conserva las demás variables. Antes de levantar API/web espera PostgreSQL saludable y ejecuta `alembic upgrade head`. Un rollback revierte las imágenes, nunca hace downgrade del esquema; las migraciones nuevas deben ser compatibles con la imagen anterior.
+
+## 26. Referencias oficiales
 
 - [OCI: crear una instancia y shapes Ampere](https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/launchinginstance.htm)
 - [OCI: conceptos de networking](https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/overview.htm)

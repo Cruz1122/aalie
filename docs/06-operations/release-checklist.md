@@ -56,6 +56,13 @@ Checklist mínimo antes de liberar cambios que afectan contratos técnicos, APIs
 - [ ] Si se modificó el endpoint o payload de API: spec de API y proxies BFF actualizados
 - [ ] ADR registrado si la decisión cambia un principio arquitectónico establecido
 
+## PostgreSQL y persistencia
+
+- [ ] Compose OCI renderiza PostgreSQL 18.6 fijado por digest, sin `ports`, con volumen `/var/lib/postgresql` y API dependiente de `service_healthy`.
+- [ ] `.env` contiene solo `AALIE_TAG`; `.env.runtime` contiene credenciales/URLs DB con modo `0600`.
+- [ ] La baseline se aplica con `alembic upgrade head` antes de API/web y `alembic current --check-heads` queda en `20260819_0001`.
+- [ ] Persistencia y backup/restore se prueban con un proyecto/volumen aislado; nunca se ejecuta `docker compose down -v` sobre OCI.
+
 ## Notas
 
 - El orden sugerido es secuencial: compilación → tests → contenido/smoke → documentación. No avanzar si un paso anterior falla.
