@@ -4,6 +4,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   API_IMAGE: aalie-api:prod
   WEB_IMAGE: aalie-web:prod
+  GHCR_NAMESPACE: ghcr.io/cruz1122
 
 on:
   workflow_dispatch:
@@ -32,12 +33,11 @@ concurrency:
   group: arm64-validation-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  packages: write
-
 jobs:
   arm64-validation:
+    permissions:
+      contents: read
+      packages: write
     name: ARM64 native build and production smoke
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 90
@@ -87,6 +87,40 @@ jobs:
       - name: Run complete production smoke
         run: python3 scripts/smoke_prod.py
 
+      - name: Log in to GHCR
+        if: success() && github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API ARM64
+        if: success() && github.event_name != 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: prod
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.GHCR_NAMESPACE }}/aalie-api:latest-arm64
+            ${{ env.GHCR_NAMESPACE }}/aalie-api:${{ github.sha }}
+
+      - name: Build and push Web ARM64
+        if: success() && github.event_name != 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          target: runner
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.GHCR_NAMESPACE }}/aalie-web:latest-arm64
+            ${{ env.GHCR_NAMESPACE }}/aalie-web:${{ github.sha }}
+
       - name: Validate shutdown with SIGTERM
         if: always()
         run: docker compose --file infra/docker-compose.prod.yml kill --signal SIGTERM web api || true
@@ -98,28 +132,3 @@ jobs:
       - name: Clean up stack
         if: always()
         run: docker compose --file infra/docker-compose.prod.yml down --remove-orphans
-
-      - name: Login to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish validated images to GHCR
-        if: github.event_name != 'pull_request'
-        env:
-          IMAGE_NAMESPACE: ghcr.io/${{ github.repository }}
-        run: |
-          IMAGE_NAMESPACE="${IMAGE_NAMESPACE,,}"
-          docker tag "$API_IMAGE" "$IMAGE_NAMESPACE/aalie-api:${GITHUB_SHA}"
-          docker tag "$WEB_IMAGE" "$IMAGE_NAMESPACE/aalie-web:${GITHUB_SHA}"
-          docker push "$IMAGE_NAMESPACE/aalie-api:${GITHUB_SHA}"
-          docker push "$IMAGE_NAMESPACE/aalie-web:${GITHUB_SHA}"
-          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-            docker tag "$API_IMAGE" "$IMAGE_NAMESPACE/aalie-api:latest"
-            docker tag "$WEB_IMAGE" "$IMAGE_NAMESPACE/aalie-web:latest"
-            docker push "$IMAGE_NAMESPACE/aalie-api:latest"
-            docker push "$IMAGE_NAMESPACE/aalie-web:latest"
-          fi
