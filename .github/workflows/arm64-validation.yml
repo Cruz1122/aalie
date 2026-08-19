@@ -4,7 +4,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   API_IMAGE: aalie-api:prod
   WEB_IMAGE: aalie-web:prod
-  GHCR_NAMESPACE: ghcr.io/cruz1122
 
 on:
   workflow_dispatch:
@@ -105,8 +104,8 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            ${{ env.GHCR_NAMESPACE }}/aalie-api:latest-arm64
-            ${{ env.GHCR_NAMESPACE }}/aalie-api:${{ github.sha }}
+            ghcr.io/cruz1122/aalie-api:latest-arm64
+            ghcr.io/cruz1122/aalie-api:${{ github.sha }}
 
       - name: Build and push Web ARM64
         if: success() && github.event_name != 'pull_request'
@@ -118,8 +117,8 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            ${{ env.GHCR_NAMESPACE }}/aalie-web:latest-arm64
-            ${{ env.GHCR_NAMESPACE }}/aalie-web:${{ github.sha }}
+            ghcr.io/cruz1122/aalie-web:latest-arm64
+            ghcr.io/cruz1122/aalie-web:${{ github.sha }}
 
       - name: Validate shutdown with SIGTERM
         if: always()
@@ -132,3 +131,70 @@ jobs:
       - name: Clean up stack
         if: always()
         run: docker compose --file infra/docker-compose.prod.yml down --remove-orphans
+
+  deploy-production:
+    name: Deploy production
+    needs: arm64-validation
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: "Production – aalie"
+      url: https://aalie.dev
+
+    concurrency:
+      group: aalie-production
+      cancel-in-progress: false
+
+    steps:
+      - name: Configure production SSH
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.OCI_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" \
+            > ~/.ssh/aalie-production
+
+          chmod 600 ~/.ssh/aalie-production
+
+          printf '%s\n' "$SSH_KNOWN_HOSTS" \
+            > ~/.ssh/known_hosts
+
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy exact commit to OCI
+        shell: bash
+        run: |
+          ssh \
+            -i ~/.ssh/aalie-production \
+            -o IdentitiesOnly=yes \
+            -o BatchMode=yes \
+            ubuntu@aalie.dev \
+            "deploy ${GITHUB_SHA}"
+
+      - name: Public production smoke
+        shell: bash
+        run: |
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --retry 5 \
+            --retry-delay 3 \
+            https://aalie.dev/api/health
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --retry 5 \
+            --retry-delay 3 \
+            https://aalie.dev/es \
+            >/dev/null
+
+          echo "Production smoke passed"
