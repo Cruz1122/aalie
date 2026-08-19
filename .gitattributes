@@ -1,0 +1,2 @@
+*.sh text eol=lf
+infra/oci/deploy/aalie-deploy text eol=lf

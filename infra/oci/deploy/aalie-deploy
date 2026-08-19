@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+readonly APP_DIR="${APP_DIR:-/home/ubuntu/aalie}"
+readonly COMPOSE_FILE="${APP_DIR}/compose.yml"
+readonly ENV_FILE="${APP_DIR}/.env"
+readonly PREVIOUS_FILE="${APP_DIR}/.previous-tag"
+readonly API_IMAGE="ghcr.io/cruz1122/aalie-api"
+readonly WEB_IMAGE="ghcr.io/cruz1122/aalie-web"
+
+umask 077
+
+reject() {
+  printf '%s\n' "Rejected command" >&2
+  exit 64
+}
+
+read_tag() {
+  local file="$1"
+  local line
+
+  [[ -f "$file" ]] || return 1
+  line="$(grep -E '^AALIE_TAG=[0-9a-f]{40}$' "$file" || true)"
+  [[ "$(printf '%s\n' "$line" | grep -c . || true)" -eq 1 ]] || return 1
+  printf '%s\n' "${line#AALIE_TAG=}"
+}
+
+write_atomic() {
+  local target="$1"
+  local content="$2"
+  local temporary
+
+  temporary="$(mktemp "${APP_DIR}/.$(basename "$target").tmp.XXXXXX")"
+  printf '%s\n' "$content" >"$temporary"
+  chmod 600 "$temporary"
+  mv -f "$temporary" "$target"
+}
+
+compose() {
+  docker compose --env-file "$ENV_FILE" --file "$COMPOSE_FILE" "$@"
+}
+
+verify_runtime() {
+  compose exec --no-TTY api python -c \
+    "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=30)"
+  compose exec --no-TTY web node -e \
+    "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+}
+
+[[ "${SSH_ORIGINAL_COMMAND:-}" =~ ^deploy\ ([0-9a-f]{40})$ ]] || reject
+readonly NEW_TAG="${BASH_REMATCH[1]}"
+
+[[ -d "$APP_DIR" && -f "$COMPOSE_FILE" ]] || {
+  printf 'Deployment directory is incomplete: %s\n' "$APP_DIR" >&2
+  exit 1
+}
+
+OLD_TAG="$(read_tag "$ENV_FILE")" || {
+  printf 'Cannot read a valid AALIE_TAG from %s\n' "$ENV_FILE" >&2
+  exit 1
+}
+readonly OLD_TAG
+
+if [[ "$NEW_TAG" == "$OLD_TAG" ]]; then
+  printf 'Deployment is already current: %s; verifying runtime\n' "$NEW_TAG"
+  if compose up --detach --wait && verify_runtime; then
+    printf 'Idempotent deployment healthy: current=%s previous unchanged\n' "$NEW_TAG"
+    exit 0
+  fi
+  printf 'Current deployment %s did not become healthy\n' "$NEW_TAG" >&2
+  exit 1
+fi
+
+printf 'Pulling immutable AALIE images for %s\n' "$NEW_TAG"
+docker pull "${API_IMAGE}:${NEW_TAG}"
+docker pull "${WEB_IMAGE}:${NEW_TAG}"
+
+write_atomic "$ENV_FILE" "AALIE_TAG=${NEW_TAG}"
+
+if compose up --detach --wait && verify_runtime; then
+  write_atomic "$PREVIOUS_FILE" "$OLD_TAG"
+  printf 'Deployment succeeded: current=%s previous=%s\n' "$NEW_TAG" "$OLD_TAG"
+  exit 0
+fi
+
+printf 'Deployment failed for %s; rolling back to %s\n' "$NEW_TAG" "$OLD_TAG" >&2
+write_atomic "$ENV_FILE" "AALIE_TAG=${OLD_TAG}"
+
+if compose up --detach --wait && verify_runtime; then
+  printf 'Rollback succeeded: current=%s\n' "$OLD_TAG" >&2
+else
+  printf 'CRITICAL: rollback to %s did not become healthy\n' "$OLD_TAG" >&2
+fi
+
+exit 1

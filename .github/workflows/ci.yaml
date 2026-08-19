@@ -326,6 +326,73 @@ jobs:
       - name: Validate docs contracts
         run: python3 scripts/check_docs_contracts.py
 
+  oci-contracts:
+    name: "OCI production contracts (static)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate OCI Compose and private service ports
+        env:
+          AALIE_TAG: "0000000000000000000000000000000000000000"
+        run: |
+          docker compose -f infra/oci/compose.yml config --quiet
+          docker compose -f infra/oci/compose.yml config --format json > /tmp/aalie-oci-compose.json
+          python3 - <<'PY'
+          import json
+
+          with open("/tmp/aalie-oci-compose.json", encoding="utf-8") as stream:
+              config = json.load(stream)
+
+          services = config["services"]
+          assert not services["api"].get("ports"), "API must not publish port 8000"
+          assert not services["web"].get("ports"), "Web must not publish port 3000"
+          for service_name in ("api", "web"):
+              healthcheck = services[service_name]["healthcheck"]
+              assert healthcheck["interval"] == "10s"
+              assert healthcheck["timeout"] == "5s"
+              assert healthcheck["retries"] == 10
+              assert healthcheck["start_period"] == "20s"
+          published = {
+              (int(port["published"]), int(port["target"]))
+              for port in services["caddy"].get("ports", [])
+          }
+          assert published == {(80, 80), (443, 443)}, published
+          PY
+
+      - name: Validate OCI shell scripts
+        run: |
+          bash -n infra/oci/deploy/aalie-deploy
+          bash -n infra/oci/scripts/host-health.sh
+
+      - name: Validate OCI script line endings and idempotence guard
+        run: |
+          for file in infra/oci/deploy/aalie-deploy infra/oci/scripts/host-health.sh; do
+            if LC_ALL=C grep -q $'\r' "$file"; then
+              echo "CRLF detected in $file"
+              exit 1
+            fi
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path("infra/oci/deploy/aalie-deploy").read_text(encoding="utf-8")
+          marker = 'if [[ "$NEW_TAG" == "$OLD_TAG" ]]; then'
+          assert marker in source, "missing idempotent redeploy guard"
+          guard = source.split(marker, 1)[1].split("\nfi", 1)[0]
+          assert 'write_atomic "$PREVIOUS_FILE"' not in guard, "guard must not rewrite PREVIOUS_FILE"
+          PY
+
+      - name: Validate pinned Caddy configuration
+        run: |
+          docker run --rm \
+            -v "$PWD/infra/oci/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.11.4-alpine \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
   quizzes-quality:
     name: "Quizzes quality (dataset + coverage + tests)"
     runs-on: ubuntu-latest
@@ -363,7 +430,7 @@ jobs:
     name: "Docker integration (production build + E2E smoke)"
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, quizzes-quality]
+    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, oci-contracts, quizzes-quality]
 
     steps:
       - name: Checkout
@@ -387,6 +454,7 @@ jobs:
           test "$(docker inspect -f '{{len .Mounts}}' aalie-web)" = "0"
           test "$(docker inspect -f '{{len .Mounts}}' aalie-api)" = "0"
           docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://api:8000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+          docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
       - name: Run critical production smoke
         run: python3 scripts/smoke_prod.py

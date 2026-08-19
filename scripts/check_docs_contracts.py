@@ -57,6 +57,9 @@ def _docs_layout() -> list[str]:
     index = REPO / "docs/index.md"
     if not index.is_file():
         errors.append(f"Falta índice de docs: {index}")
+    production_oci = REPO / "docs/06-operations/production-oci.md"
+    if not production_oci.is_file():
+        errors.append(f"Falta guía canónica de producción OCI: {production_oci}")
     return errors
 
 

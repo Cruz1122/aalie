@@ -4,7 +4,7 @@
 **Estado:** final
 **Audiencia:** dev
 **Fuente de verdad:** `package.json`, `apps/web/package.json`, `apps/api/pyproject.toml`, `infra/docker-compose.yml`, `README.md`
-**Última revisión:** 2026-05-18
+**Última revisión:** 2026-08-19
 **Relacionado con informe técnico:** environment-variables, deployment, troubleshooting
 
 ## Requisitos
@@ -166,7 +166,7 @@ python apps/api/scripts/report_quiz_bank_coverage.py --fail-on-critical
 ## Límites conocidos
 
 - Si falta el paquete Python de grammar, parse y tests del backend fallan.
-- La imagen Docker de web está orientada a desarrollo. Para producción se requiere endurecimiento (ver `deployment.md`).
+- `infra/docker-compose.yml` está orientado a desarrollo; el mismo Dockerfile contiene un runner standalone productivo usado por `infra/docker-compose.prod.yml` y `infra/oci/compose.yml`.
 - `validate:content-catalog` no existe como script npm; la validación de contenido se hace mediante `test:docs-contracts` y los scripts Python del banco de quizzes.
 
 ## Archivos relacionados
@@ -175,3 +175,4 @@ python apps/api/scripts/report_quiz_bank_coverage.py --fail-on-critical
 - `deployment.md`
 - `troubleshooting.md`
 - `release-checklist.md`
+- `production-oci.md`

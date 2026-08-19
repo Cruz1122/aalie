@@ -3,13 +3,13 @@
 **Tipo:** guía
 **Estado:** final
 **Audiencia:** dev | operador
-**Fuente de verdad:** `.github/workflows/ci.yaml`, `package.json`, `apps/api/pyproject.toml`, `apps/web/package.json`, `scripts/check_docs_contracts.py`, `apps/api/scripts/validate_quiz_bank.py`, `apps/api/scripts/report_quiz_bank_coverage.py`
-**Última revisión:** 2026-05-18
+**Fuente de verdad:** `.github/workflows/ci.yaml`, `.github/workflows/arm64-validation.yml`, `infra/oci/`, `package.json`, `apps/api/pyproject.toml`, `apps/web/package.json`, `scripts/check_docs_contracts.py`
+**Última revisión:** 2026-08-19
 **Relacionado con informe técnico:** local-development, environment-variables, deployment, troubleshooting
 
 ## Propósito
 
-Checklist mínimo de verificación antes de liberar cambios que afectan contratos técnicos, APIs, export, o contenido académico. No es un pipeline de publicación externa automatizada; el foco es coherencia contractual interna.
+Checklist mínimo antes de liberar cambios que afectan contratos técnicos, APIs, export, contenido académico o producción. CI valida integración; un push aceptado a `main` activa build ARM64, GHCR y deploy OCI automatizado.
 
 ## Checklist
 
@@ -38,6 +38,16 @@ Checklist mínimo de verificación antes de liberar cambios que afectan contrato
 - [ ] Demo: frontend carga en `http://localhost:3000`, analyzer responde, quizzes cargan
 - [ ] Healthcheck: `GET /health` y `GET /api/health` responden `{"status": "ok"}`
 
+### Producción OCI
+
+- [ ] `AALIE_TAG=0000000000000000000000000000000000000000 docker compose -f infra/oci/compose.yml config --quiet` pasa
+- [ ] `bash -n infra/oci/deploy/aalie-deploy` y `bash -n infra/oci/scripts/host-health.sh` pasan
+- [ ] Caddyfile pasa validación con `caddy:2.11.4-alpine`
+- [ ] La configuración renderizada no publica 3000/8000 y Caddy publica solo 80/443
+- [ ] El workflow ARM64 publica ambos artefactos con `${{ github.sha }}` antes de desplegar
+- [ ] El deploy conserva CURRENT/PREVIOUS SHA y no usa `latest-arm64` para rollback
+- [ ] Readiness API pasa dentro del contenedor y el smoke público completo termina en PASS
+
 ### Documentación
 
 - [ ] README.md revisado y alineado con cambios del release
@@ -49,7 +59,7 @@ Checklist mínimo de verificación antes de liberar cambios que afectan contrato
 ## Notas
 
 - El orden sugerido es secuencial: compilación → tests → contenido/smoke → documentación. No avanzar si un paso anterior falla.
-- Los pasos marcados como "manual" pueden automatizarse en CI/CD futuro.
+- Los checks de OCI estáticos, build, publish, deploy y smoke están automatizados; rotaciones, patching, reboot y recuperación siguen procedimientos operativos controlados.
 - La validación del catálogo de contenido se verifica indirectamente mediante `test:docs-contracts` y la suite de tests de `@aa/content-catalog` hasta que exista un script npm dedicado.
 - Este checklist reemplaza el flujo descrito en `release-process.md`. Consultar ese documento para el contexto original de decisiones de release.
 
@@ -59,5 +69,6 @@ Checklist mínimo de verificación antes de liberar cambios que afectan contrato
 - `environment-variables.md`
 - `deployment.md`
 - `troubleshooting.md`
+- `production-oci.md`
 - `../../05-quality/ci-cd.md`
 - `../../09-decisions/`

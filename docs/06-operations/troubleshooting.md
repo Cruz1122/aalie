@@ -3,8 +3,8 @@
 **Tipo:** guía
 **Estado:** final
 **Audiencia:** dev | operador
-**Fuente de verdad:** configuración del repo, errores observables en rutas, tests y Docker, `apps/api/app/core/config.py`, `apps/api/.env.example`, `apps/web/.env.example`, `infra/docker-compose.yml`
-**Última revisión:** 2026-05-18
+**Fuente de verdad:** configuración del repo, errores observables en rutas, tests y Docker, `apps/api/app/core/config.py`, `infra/docker-compose.yml`, `infra/docker-compose.prod.yml`, `infra/oci/`
+**Última revisión:** 2026-08-19
 **Relacionado con informe técnico:** local-development, environment-variables, deployment, release-checklist
 
 ---
@@ -127,6 +127,7 @@ DEV_ALLOWED_ORIGINS=http://localhost:3000
 
 - En desarrollo, usar los valores por defecto (CORS habilitado, orígenes default locales).
 - En producción, definir `CORS_ALLOWED_ORIGINS` con la lista exacta de dominios.
+- En OCI el navegador usa el BFF same-origin y API no es pública; `infra/oci/compose.yml` no necesita publicar 8000 ni habilitar CORS.
 
 ---
 
@@ -534,6 +535,34 @@ python scripts/check_docs_contracts.py --verbose
 
 ---
 
+## Producción OCI no recupera o devuelve 502
+
+### Síntoma
+
+`aalie.dev` devuelve 502 después de un deploy/reboot, o el workflow de producción revierte.
+
+### Verificación segura
+
+```bash
+cd /home/ubuntu/aalie
+./host-health.sh
+docker compose --env-file .env -f compose.yml ps
+docker compose --env-file .env -f compose.yml logs --tail=200
+```
+
+Los tres comandos son read-only. Primero confirme espacio en `/`, Docker activo, API/web healthy, Caddy running y los SHA actual/anterior. Un 502 breve durante `starting` es posible; uno persistente no es aceptable.
+
+Compruebe readiness sin publicar FastAPI:
+
+```bash
+docker compose --env-file .env -f compose.yml exec -T api python -c \
+  "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=30).read().decode())"
+```
+
+Si la imagen activa es la causa, use el rollback por `PREVIOUS_SHA` descrito en `production-oci.md`. No abra 3000/8000, no borre volúmenes Caddy y no ejecute `docker system prune -a`.
+
+---
+
 ## Límites conocidos
 
 - Algunos fallos del proveedor LLM solo pueden reproducirse con la misma key/cuota del entorno afectado.
@@ -546,5 +575,6 @@ python scripts/check_docs_contracts.py --verbose
 - `environment-variables.md`
 - `deployment.md`
 - `release-checklist.md`
+- `production-oci.md`
 - `../../03-specs/export-engine-spec.md`
 - `../../05-quality/ci-cd.md`

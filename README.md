@@ -506,9 +506,13 @@ GitHub Actions ejecuta:
 - validación y tests del sistema de quizzes;
 - integración Docker.
 
+Los pushes exitosos a `main` pasan además por validación ARM64 nativa, publican imágenes API/web en GHCR con el SHA exacto y despliegan `aalie.dev` en OCI mediante una clave SSH con forced command. La VM no construye imágenes; Caddy es la única entrada pública y FastAPI permanece detrás del BFF.
+
 Workflow:
 
 - [`.github/workflows/ci.yaml`](./.github/workflows/ci.yaml)
+- [`.github/workflows/arm64-validation.yml`](./.github/workflows/arm64-validation.yml)
+- Guía canónica: [`docs/06-operations/production-oci.md`](./docs/06-operations/production-oci.md)
 
 
 ## Estructura del proyecto
@@ -525,6 +529,7 @@ packages/
 
 docs/                   specs, arquitectura, operación y ADRs
 infra/                  Docker y soporte de entorno
+  oci/                  runtime reproducible de producción OCI
 ```
 
 
@@ -538,6 +543,7 @@ infra/                  Docker y soporte de entorno
 - [docs/04-api/endpoints-overview.md](./docs/04-api/endpoints-overview.md): resumen de endpoints.
 - [docs/05-quality/testing-strategy.md](./docs/05-quality/testing-strategy.md): estrategia de pruebas.
 - [docs/06-operations/environment-variables.md](./docs/06-operations/environment-variables.md): variables de entorno.
+- [docs/06-operations/production-oci.md](./docs/06-operations/production-oci.md): bootstrap y operación canónica de OCI.
 - [docs/07-user/user-guide.md](./docs/07-user/user-guide.md): guía de uso.
 - [docs/08-content/content-model.md](./docs/08-content/content-model.md): modelo del catálogo.
 

@@ -4,7 +4,7 @@
 **Estado:** final
 **Audiencia:** dev | docente | evaluador | operador
 **Fuente de verdad:** apps/, packages/, tests/, .github/workflows/
-**Última revisión:** 2026-05-18
+**Última revisión:** 2026-08-19
 **Relacionado con informe técnico:** sección de documentación y referencias
 
 ## Propósito
@@ -52,7 +52,7 @@ No incluye: informes académicos, actas de reunión, historiales de sprint, ni d
 | Dev backend | `02-architecture/backend-architecture.md` | `03-specs/` (ruta crítica) + `04-api/` endpoints | `pnpm test:api:contract` |
 | Dev frontend | `02-architecture/frontend-architecture.md` | `04-api/` (contratos BFF) + `08-content/` schemas | `pnpm --filter web test` + `pnpm validate:content-catalog` |
 | QA / evaluador | `05-quality/testing-strategy.md` | `05-quality/algorithm-oracles.md` + `05-quality/benchmarking.md` + `05-quality/coverage-policy.md` | `pnpm test:api:cov` (gate 70%) |
-| Operador / DevOps | `06-operations/local-development.md` | `06-operations/environment-variables.md` + `06-operations/deployment.md` | `pnpm -r build` |
+| Operador / DevOps | `06-operations/production-oci.md` | `06-operations/environment-variables.md` + `06-operations/deployment.md` | OCI contracts + `scripts/smoke_prod.py` |
 | Usuario / docente | `07-user/user-guide.md` | `07-user/analyzer-workflows.md` + `07-user/quizzes-guide.md` | — |
 | Autor de contenido | `08-content/content-model.md` | `08-content/authoring-guide.md` + `08-content/course-json-schema.md` | `pnpm validate:content-catalog` |
 | Implementación canónica | `packages/content-catalog/` (código) | `08-content/` (contratos) | `python apps/api/scripts/validate_quiz_bank.py` |
@@ -95,4 +95,5 @@ El script `scripts/check_docs_contracts.py` verifica que:
 - `01-product/known-limitations.md` — limitaciones conocidas
 - `02-architecture/system-architecture.md` — arquitectura general
 - `06-operations/local-development.md` — guía de desarrollo local
+- `06-operations/production-oci.md` — guía canónica de producción OCI
 - `09-decisions/adr-001-docs-restructure.md` — ADR que define esta estructura de docs

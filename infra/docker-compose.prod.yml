@@ -35,6 +35,7 @@ services:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
       HOSTNAME: "0.0.0.0"
+      PORT: "3000"
       API_INTERNAL_BASE_URL: "http://api:8000"
     ports:
       - "3000:3000"

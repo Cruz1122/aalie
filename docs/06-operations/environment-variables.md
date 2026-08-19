@@ -3,8 +3,8 @@
 **Tipo:** guía
 **Estado:** final
 **Audiencia:** dev | operador
-**Fuente de verdad:** `apps/api/app/core/config.py`, `apps/api/.env.example`, `apps/web/.env.example`, `apps/web/src/app/api/`
-**Última revisión:** 2026-05-18
+**Fuente de verdad:** `apps/api/app/core/config.py`, `apps/api/.env.example`, `apps/web/.env.example`, `apps/web/src/app/api/`, `apps/web/Dockerfile`, `infra/oci/compose.yml`
+**Última revisión:** 2026-08-19
 **Relacionado con informe técnico:** local-development, deployment, troubleshooting
 
 ## Propósito
@@ -26,6 +26,8 @@ Cubre frontend (Next.js), BFF (server-side proxies), backend API (FastAPI), y co
 | `API_INTERNAL_BASE_URL` | BFF/Docker | No | `http://api:8000` | URL interna del backend usada en SSR dentro de Docker | En Docker sin esta var, las llamadas SSR apuntan a localhost en vez de al contenedor api | código |
 | `DOCKER` | Both | No | — | Flag de entorno Docker; cuando está presente activa resolución `http://api:8000` | Ausente en Docker = resuelve contra localhost, no contra el servicio api | código |
 | `NODE_ENV` | Web | No | `development` | Entorno de ejecución Node.js | — | Next.js |
+| `HOSTNAME` | Web runtime | No | `0.0.0.0` en imagen productiva | Dirección de escucha de Next standalone | Otro valor puede impedir acceso desde Caddy/contenedor | `apps/web/Dockerfile` |
+| `PORT` | Web runtime | No | `3000` en imagen productiva | Puerto interno de Next standalone | Debe coincidir con healthcheck y upstream Caddy | `apps/web/Dockerfile` |
 | `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS` | Web | No | `false` | Fuerza diagramas deterministas sin LLM en frontend | Si es `true`, los diagramas LLM se deshabilitan | `.env.example` |
 | `AALIE_USE_LATEX_ONLINE` | Web/API | No | `false` | Flag heredada para compilación LaTeX online; hoy sin consumo real en código | Deprecated; si se requiere en futuro debe auditarse el código | código |
 
@@ -58,6 +60,18 @@ Cubre frontend (Next.js), BFF (server-side proxies), backend API (FastAPI), y co
 |---|---|---|---|---|---|---|
 | `AALIE_EXPORTER_ASSETS_DIR` | API Export | No | — | Override del directorio de assets LaTeX para export PDF | Si no se define, el exportador usa rutas por defecto del proyecto; si apunta a un directorio inexistente, la compilación PDF falla | código (`export/asset_registry.py`) |
 
+### Deployment OCI
+
+| Variable | Capa | Obligatoria | Valor/forma | Uso | Secreto |
+|---|---|---|---|---|---|
+| `AALIE_TAG` | Compose OCI | Sí | Git SHA lowercase de 40 caracteres | Selecciona las imágenes API y web inmutables; vive en `/home/ubuntu/aalie/.env` | No |
+| `NODE_ENV` | Web OCI | Sí | `production` | Habilita runtime productivo Next.js | No |
+| `HOSTNAME` | Web OCI | Sí | `0.0.0.0` | Escucha en todas las interfaces del contenedor | No |
+| `PORT` | Web OCI | Sí | `3000` | Puerto privado del servidor standalone | No |
+| `API_INTERNAL_BASE_URL` | BFF OCI | Sí | `http://api:8000` | Comunicación privada web → API en `aalie-internal` | No |
+
+`OCI_SSH_PRIVATE_KEY` y `OCI_SSH_KNOWN_HOSTS` son material operacional de GitHub Actions, no variables runtime de la aplicación. La primera es secreta; la segunda es pinning de confianza. Viven en el Environment `Production – aalie` y no en `.env`. `API_KEY` no se expone al navegador ni se incorpora a imágenes; en OCI solo existiría si el operador habilita explícitamente LLM por un canal de secretos externo al repositorio.
+
 ## Comportamiento del asistente embebido
 
 - **Superficies:** `/analyzer`, `/examples`, `/user-guide`
@@ -69,11 +83,14 @@ Cubre frontend (Next.js), BFF (server-side proxies), backend API (FastAPI), y co
 
 ## Jerarquía de resolución de URLs
 
-El frontend y BFF resuelven la URL del backend en este orden:
+Los Route Handlers BFF resuelven la URL del backend en este orden:
 
-1. Si `DOCKER` está definido → usa `API_INTERNAL_BASE_URL` (default `http://api:8000`)
-2. Si no Docker → usa `API_BASE_URL` (default `http://localhost:8000`)
-3. El cliente directo siempre usa `NEXT_PUBLIC_API_BASE_URL`
+1. `API_INTERNAL_BASE_URL`, si está definida;
+2. `API_BASE_URL`, si está definida;
+3. fallback `http://api:8000` si `DOCKER` está presente;
+4. fallback `http://localhost:8000` fuera de Docker.
+
+El cliente directo, cuando una superficie lo usa, resuelve `NEXT_PUBLIC_API_BASE_URL`. En OCI el flujo contractual pasa por el BFF y el navegador no conoce FastAPI.
 
 ## Jerarquía de resolución CORS
 
@@ -113,4 +130,5 @@ NEXT_PUBLIC_API_BASE_URL=https://api.example.com pnpm dev
 - `deployment.md`
 - `troubleshooting.md`
 - `release-checklist.md`
+- `production-oci.md`
 - `../../04-api/llm-api.md`

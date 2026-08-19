@@ -1,4 +1,6 @@
-# Producción local de AALIE
+# Producción e integración productiva de AALIE
+
+La fuente de verdad operacional para reconstruir y administrar la producción OCI de `aalie.dev` es [`06-operations/production-oci.md`](06-operations/production-oci.md). Este documento conserva el overview del runtime y el entorno productivo local usado por CI; no duplica bootstrap, SSH, secretos, patching ni rollback.
 
 ## Arquitectura
 
@@ -13,6 +15,8 @@ El navegador solo conoce `aalie-web`. Las operaciones de análisis, trace, quizz
 Desarrollo conserva `infra/docker-compose.yml`: usa bind mounts, instalación de dependencias y hot reload.
 
 Producción usa `infra/docker-compose.prod.yml`: no usa bind mounts, no instala dependencias al arrancar y ejecuta Next standalone y Uvicorn sin reload.
+
+OCI usa `infra/oci/compose.yml`: consume imágenes ARM64 ya publicadas en GHCR, mantiene web/API privadas y expone solo Caddy en 80/443.
 
 ```bash
 # Producción local
@@ -36,6 +40,7 @@ El host solo necesita Docker y Compose.
 
 - `API_INTERNAL_BASE_URL`: URL privada del API, normalmente `http://api:8000`.
 - `HOSTNAME`: `0.0.0.0` para el servidor standalone dentro del contenedor.
+- `PORT`: `3000` para el servidor standalone dentro del contenedor.
 
 ### API
 

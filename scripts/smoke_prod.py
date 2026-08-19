@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -55,9 +56,11 @@ def request(path: str, payload: object | None = None, base: str = BASE) -> tuple
     )
     try:
         with urllib.request.urlopen(req, timeout=180) as response:
-            return response.status, dict(response.headers), response.read()
+            headers = {name.lower(): value for name, value in response.headers.items()}
+            return response.status, headers, response.read()
     except urllib.error.HTTPError as error:
-        return error.code, dict(error.headers), error.read()
+        headers = {name.lower(): value for name, value in error.headers.items()}
+        return error.code, headers, error.read()
 
 
 def expect_json(path: str, payload: object | None = None, base: str = BASE) -> dict:
@@ -68,11 +71,42 @@ def expect_json(path: str, payload: object | None = None, base: str = BASE) -> d
     return value
 
 
+def expect_html(path: str) -> bytes:
+    status, headers, body = request(path)
+    assert status == 200, f"{path}: HTTP {status}: {body[:500]!r}"
+    assert headers.get("content-type", "").startswith("text/html"), headers
+    assert body, f"{path}: empty HTML response"
+    return body
+
+
+def wait_for_public_surface(attempts: int = 5, delay_seconds: int = 3) -> None:
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            status, _, _ = request("/api/health/live")
+            if 200 <= status < 300:
+                return
+            last_error = AssertionError(f"/api/health/live returned HTTP {status}")
+        except (OSError, urllib.error.URLError) as error:
+            last_error = error
+        if attempt < attempts:
+            time.sleep(delay_seconds)
+    raise AssertionError(f"public surface did not become live: {last_error}")
+
+
 def main() -> int:
-    api_live = expect_json("/health/live", base=API_BASE)
-    assert api_live.get("status") == "live"
-    api_ready = expect_json("/health/ready", base=API_BASE)
-    assert all(api_ready.get("checks", {}).values())
+    wait_for_public_surface()
+
+    if API_BASE:
+        api_live = expect_json("/health/live", base=API_BASE)
+        assert api_live.get("status") == "live"
+        api_ready = expect_json("/health/ready", base=API_BASE)
+        assert api_ready.get("status") == "ready"
+        assert all(api_ready.get("checks", {}).values())
+    else:
+        print("direct API live/readiness: SKIPPED (AALIE_API_URL is empty; API must remain private)")
+
+    expect_html("/es")
     expect_json("/api/health/live")
     health = expect_json("/api/health")
     assert health.get("service") == "api"
@@ -135,9 +169,7 @@ def main() -> int:
         snapshot = json.loads(bundle.read("snapshot.json"))
         assert snapshot.get("contentHash") and snapshot.get("globalResult")
 
-    with urllib.request.urlopen(f"{BASE}/es/analyzer", timeout=30) as response:
-        html = response.read()
-        assert response.status == 200
+    html = expect_html("/es/analyzer")
     assert re.search(rb"/_next/static/[^\"']+\.css", html)
     assert re.search(rb"/_next/static/[^\"']+\.js", html)
     with urllib.request.urlopen(f"{BASE}/images/user-guide/es/01-about-page.webp", timeout=30) as response:
