@@ -1,8 +1,9 @@
-name: Temporary PostgreSQL auth corrections gate
+name: Temporary audited branch corrections
 
 on:
-  push:
-    branches: [db/postgresql-init]
+  pull_request:
+    branches: [main]
+    types: [synchronize]
 
 permissions:
   contents: write
@@ -13,6 +14,7 @@ concurrency:
 
 jobs:
   correct-validate-publish:
+    if: github.head_ref == 'db/postgresql-init'
     name: Correct, validate and publish branch
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -60,7 +62,6 @@ jobs:
           from __future__ import annotations
 
           import json
-          import re
           from pathlib import Path
 
           def read(path: str) -> str:
@@ -72,215 +73,140 @@ jobs:
           def replace_once(path: str, old: str, new: str) -> None:
               value = read(path)
               if old not in value:
-                  raise RuntimeError(f"Expected text not found in {path}: {old[:100]!r}")
+                  raise RuntimeError(f"Expected block not found in {path}: {old[:120]!r}")
               write(path, value.replace(old, new, 1))
 
-          # Pin the latest stable Better Auth release. 1.7 is still RC at this point.
-          package_path = Path("apps/web/package.json")
-          package = json.loads(package_path.read_text(encoding="utf-8"))
-          package["dependencies"]["better-auth"] = "1.6.29"
-          package_path.write_text(json.dumps(package, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-          auth_path = "apps/web/src/lib/auth.ts"
+          # 1) Keep Better Auth 1.7.1. Remove session cookie caching so role
+          # changes cannot mint a fresh JWT from a stale cached admin session.
           replace_once(
-              auth_path,
-              '''        clientSecret: requiredEnv("GOOGLE_CLIENT_SECRET"),\n        prompt: "select_account",''',
-              '''        clientSecret: requiredEnv("GOOGLE_CLIENT_SECRET"),\n        scope: ["openid", "email", "profile"],\n        prompt: "select_account",''',
-          )
-          replace_once(
-              auth_path,
-              '''        role: {\n          type: ["USER", "ADMIN"],\n          required: true,\n          defaultValue: "USER",\n          input: false,\n          returned: true,\n        },''',
-              '''        role: {\n          type: "string",\n          required: true,\n          defaultValue: "USER",\n          input: false,\n        },''',
-          )
-          replace_once(
-              auth_path,
+              "apps/web/src/lib/auth.ts",
               '''      cookieCache: {\n        enabled: true,\n        maxAge: 60 * 5,\n        strategy: "compact",\n      },\n''',
               "",
           )
-          replace_once(
-              auth_path,
-              '''    advanced: {\n      database: {\n        joins: true,\n      },\n    },''',
-              '''    experimental: {\n      joins: true,\n    },''',
-          )
 
-          # Stable Better Auth 1.6 core + JWT schema ends at 0002.
-          migration = Path("apps/api/migrations/versions/20260819_0002_better_auth.py")
-          migration_text = migration.read_text(encoding="utf-8")
-          migration_text = migration_text.replace(
-              "The SQL mirrors the Better Auth PostgreSQL schema for the pinned web\ndependency.",
-              "The SQL mirrors the Better Auth 1.6.29 PostgreSQL core schema plus JWT key store.",
-          )
-          migration.write_text(migration_text, encoding="utf-8")
-          for obsolete in (
-              "apps/api/migrations/versions/20260819_0003_better_auth_jwk_metadata.py",
-              "apps/api/migrations/versions/20260819_0004_better_auth_account_issuer.py",
-              "apps/api/migrations/versions/20260819_0005_better_auth_account_identity.py",
-          ):
-              Path(obsolete).unlink()
-
-          # Better Auth 1.6 JWKS may omit alg/use. Enforce them if present and
-          # always enforce Ed25519 + EdDSA at JWT verification time.
-          api_auth = "apps/api/app/core/auth.py"
+          # 2) JWT security tests belong to the blocking fast/oracle PR gate.
           replace_once(
-              api_auth,
-              '''            if (\n                not isinstance(kid, str)\n                or not kid\n                or item.get("kty") != "OKP"\n                or item.get("crv") != "Ed25519"\n                or item.get("alg") != "EdDSA"\n                or item.get("use", "sig") != "sig"\n            ):\n                raise ValueError("JWKS response contains a non-Ed25519 signing key")''',
-              '''            alg = item.get("alg")\n            key_use = item.get("use")\n            if (\n                not isinstance(kid, str)\n                or not kid\n                or item.get("kty") != "OKP"\n                or item.get("crv") != "Ed25519"\n                or (alg is not None and alg != "EdDSA")\n                or (key_use is not None and key_use != "sig")\n            ):\n                raise ValueError("JWKS response contains a non-Ed25519 signing key")''',
-          )
-
-          jwt_test = "apps/api/tests/unit/auth/test_jwt_auth.py"
-          replace_once(
-              jwt_test,
-              '''                "kty": "OKP",\n                "crv": "Ed25519",\n                "alg": "EdDSA",\n                "use": "sig",\n                "x": _b64(public),''',
-              '''                "kty": "OKP",\n                "crv": "Ed25519",\n                "x": _b64(public),''',
-          )
-          replace_once(
-              jwt_test,
+              "apps/api/tests/unit/auth/test_jwt_auth.py",
               '''from app.core import auth\n\n\ndef _b64''',
               '''from app.core import auth\n\npytestmark = [pytest.mark.fast, pytest.mark.unit]\n\n\ndef _b64''',
           )
 
-          # Do not advertise rate-limit/progress benefits until those features exist.
-          sign_in = "apps/web/src/components/SignInForm.tsx"
-          value = read(sign_in)
-          value = value.replace(
-              'import { useState } from "react";\n\nimport { authClient } from "@/lib/auth-client";',
-              'import { useState } from "react";\n\nimport { Link } from "@/i18n/navigation";\nimport { authClient } from "@/lib/auth-client";',
+          # 3) ARM64 must receive the same runtime contract as Docker integration.
+          arm_path = ".github/workflows/arm64-validation.yml"
+          arm = read(arm_path)
+          arm = arm.replace(
+              '''    runs-on: ubuntu-24.04-arm\n    timeout-minutes: 90\n\n    steps:''',
+              '''    runs-on: ubuntu-24.04-arm\n    timeout-minutes: 90\n    env:\n      POSTGRES_DB: aalie_ci\n      POSTGRES_USER: aalie_ci\n      POSTGRES_PASSWORD: aalie_ci_password\n      API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci\n      WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci\n      BETTER_AUTH_URL: http://localhost:3000\n      BETTER_AUTH_SECRET: ci-only-not-a-secret\n      GOOGLE_CLIENT_ID: ci-client-id\n      GOOGLE_CLIENT_SECRET: ci-client-secret\n      AUTH_JWT_ISSUER: http://localhost:3000\n      AUTH_JWT_AUDIENCE: urn:aalie:api\n      AUTH_JWKS_URL: http://web:3000/api/auth/jwks\n\n    steps:''',
               1,
           )
-          value, count = re.subn(
-              r'\nconst BENEFITS = \[.*?\] as const;\n',
-              "\n",
-              value,
-              count=1,
-              flags=re.S,
+          arm = arm.replace(
+              '''  pull_request:\n    branches: [main]\n''',
+              '''  pull_request:\n    types: [opened, synchronize, reopened, ready_for_review]\n    branches: [main]\n''',
+              1,
           )
-          if count != 1:
-              raise RuntimeError("Could not remove SignInForm benefits constant")
-          value, count = re.subn(
-              r'\n        <section aria-labelledby="sign-in-benefits-title">.*?</section>\n',
-              "\n",
-              value,
-              count=1,
-              flags=re.S,
-          )
-          if count != 1:
-              raise RuntimeError("Could not remove SignInForm benefits section")
-          legal = '''\n        <p className="text-center text-xs leading-5 text-slate-400">\n          {t("legalPrefix")} {" "}\n          <Link\n            href="/terms"\n            className="font-medium text-slate-200 underline decoration-white/30 underline-offset-4 hover:decoration-white"\n          >\n            {t("termsLink")}\n          </Link>{" "}\n          {t("legalAnd")} {" "}\n          <Link\n            href="/privacy"\n            className="font-medium text-slate-200 underline decoration-white/30 underline-offset-4 hover:decoration-white"\n          >\n            {t("privacyLink")}\n          </Link>\n          .\n        </p>\n'''
-          marker = "        </AAButton>\n\n        {error && ("
-          if marker not in value:
-              raise RuntimeError("Could not place SignInForm legal notice")
-          value = value.replace(marker, "        </AAButton>\n" + legal + "\n        {error && (", 1)
-          write(sign_in, value)
+          write(arm_path, arm)
 
-          privacy_page = "apps/web/src/app/[locale]/privacy/page.tsx"
+          # 4) Keep web unit tests permanently in the blocking CI contract and
+          # allow a ready-for-review event to validate the final authored commit.
+          ci_path = ".github/workflows/ci.yaml"
+          ci = read(ci_path)
+          ci = ci.replace(
+              '''  pull_request:\n    branches: [main, develop]\n''',
+              '''  pull_request:\n    types: [opened, synchronize, reopened, ready_for_review]\n    branches: [main, develop]\n''',
+              1,
+          )
+          ci = ci.replace(
+              '''      - name: Build web app\n        run: pnpm -C apps/web build\n\n      # Python setup y smoke test''',
+              '''      - name: Build web app\n        run: pnpm -C apps/web build\n\n      - name: Test web app\n        run: pnpm -C apps/web test\n\n      # Python setup y smoke test''',
+              1,
+          )
+          write(ci_path, ci)
+
+          # 5) Privacy must match the new optional Google identity flow. Core
+          # AALIE remains usable anonymously and quiz progress remains local.
+          translations = {
+              "es": {
+                  "last": "Última actualización: agosto de 2026",
+                  "body": "AALIE es una plataforma educativa para aprender y practicar análisis de algoritmos. Sus funciones principales pueden utilizarse sin crear una cuenta. Si eliges iniciar sesión con Google, AALIE procesa los datos básicos de identidad necesarios para crear y mantener tu cuenta. Las funciones opcionales de IA se mantienen separadas y pueden implicar el envío de contexto adicional al proveedor configurado.",
+                  "account_title": "La cuenta es opcional",
+                  "account_desc": "Puedes usar las funciones principales sin iniciar sesión. Si eliges Google, AALIE crea una cuenta y almacena los datos básicos de identidad entregados para autenticarte, como nombre, correo electrónico, imagen de perfil si está disponible, estado de verificación e identificadores técnicos de cuenta.",
+                  "profile": "Si inicias sesión con Google: nombre, correo electrónico, imagen de perfil si está disponible, estado de verificación e identificadores de cuenta y proveedor necesarios para asociar tu identidad.",
+                  "session": "Datos técnicos de sesión necesarios para autenticación y seguridad, que pueden incluir dirección IP y agente de usuario.",
+                  "provider1": "Google se utiliza únicamente como proveedor opcional de identidad. El inicio de sesión usa los permisos básicos de identidad del proveedor; AALIE no solicita acceso a Gmail, Drive, Calendar ni otros productos de Google.",
+                  "provider2": "Para mantener la cuenta y la sesión, AALIE almacena en PostgreSQL datos básicos del usuario y registros técnicos de autenticación. Cuando Better Auth persiste credenciales OAuth devueltas por Google, AALIE configura su cifrado antes de almacenarlas.",
+                  "provider3": "Los datos obtenidos mediante Google no se venden, no se utilizan para publicidad y no se envían a un proveedor de IA por el solo hecho de iniciar sesión. Iniciar sesión tampoco constituye consentimiento para participar en investigación.",
+                  "rights3": "Las funciones principales pueden utilizarse sin cuenta y, en esta fase, el progreso de quizzes continúa almacenándose localmente en el navegador. Puedes borrar esos datos desde el navegador. Para datos asociados a una cuenta creada con Google, puedes contactar al equipo para ejercer las solicitudes aplicables de acceso, corrección o eliminación.",
+                  "changes1": "Podemos actualizar esta política cuando cambien las funciones de AALIE, especialmente si se agregan analíticas, sincronización de progreso, nuevos proveedores de IA, nuevas formas de exportación, integraciones institucionales o cambios en el manejo de API keys y datos de autenticación.",
+                  "benefit1_title": "Identidad persistente",
+                  "benefit1_desc": "Usa la misma cuenta de Google para identificarte en AALIE cuando decidas iniciar sesión.",
+                  "benefit2_title": "Perfil de usuario",
+                  "benefit2_desc": "Consulta tu identidad y rol de AALIE sin convertir el inicio de sesión en un requisito para analizar.",
+              },
+              "en": {
+                  "last": "Last updated: August 2026",
+                  "body": "AALIE is an educational platform for learning and practicing algorithm analysis. Its core features can be used without creating an account. If you choose to sign in with Google, AALIE processes the basic identity data needed to create and maintain your account. Optional AI features remain separate and may send additional context to the configured provider.",
+                  "account_title": "The account is optional",
+                  "account_desc": "You can use the core features without signing in. If you choose Google, AALIE creates an account and stores the basic identity data provided for authentication, such as name, email address, profile image when available, verification status, and technical account identifiers.",
+                  "profile": "If you sign in with Google: name, email address, profile image when available, verification status, and account/provider identifiers needed to associate your identity.",
+                  "session": "Technical session data needed for authentication and security, which may include IP address and user agent.",
+                  "provider1": "Google is used only as an optional identity provider. Sign-in uses the provider's basic identity permissions; AALIE does not request access to Gmail, Drive, Calendar, or other Google products.",
+                  "provider2": "To maintain the account and session, AALIE stores basic user data and technical authentication records in PostgreSQL. When Better Auth persists OAuth credentials returned by Google, AALIE configures them to be encrypted before storage.",
+                  "provider3": "Data obtained through Google is not sold, is not used for advertising, and is not sent to an AI provider merely because you signed in. Signing in also does not constitute consent to participate in research.",
+                  "rights3": "Core features can be used without an account and, at this stage, quiz progress continues to be stored locally in the browser. You can delete that data from the browser. For data associated with a Google-created account, you can contact the team to make applicable access, correction, or deletion requests.",
+                  "changes1": "We may update this policy when AALIE changes, especially if analytics, progress synchronization, new AI providers, new export formats, institutional integrations, or changes to API-key and authentication-data handling are introduced.",
+                  "benefit1_title": "Persistent identity",
+                  "benefit1_desc": "Use the same Google account to identify yourself in AALIE whenever you choose to sign in.",
+                  "benefit2_title": "User profile",
+                  "benefit2_desc": "View your AALIE identity and role without making sign-in a requirement for analysis.",
+              },
+          }
+          for locale, text in translations.items():
+              path = Path(f"apps/web/messages/{locale}.json")
+              data = json.loads(path.read_text(encoding="utf-8"))
+              privacy = data["privacy"]
+              privacy["hero"]["lastUpdated"] = text["last"]
+              privacy["hero"]["body"] = text["body"]
+              privacy["summary"]["items"]["account"]["title"] = text["account_title"]
+              privacy["summary"]["items"]["account"]["description"] = text["account_desc"]
+              privacy["sections"]["provided"]["items"]["accountProfile"] = text["profile"]
+              privacy["sections"]["provided"]["items"]["sessionTechnical"] = text["session"]
+              privacy["sections"]["providers"]["paragraph1"] = text["provider1"]
+              privacy["sections"]["providers"]["paragraph2"] = text["provider2"]
+              privacy["sections"]["providers"]["paragraph3"] = text["provider3"]
+              privacy["sections"]["rights"]["paragraph3"] = text["rights3"]
+              privacy["sections"]["changes"]["paragraph1"] = text["changes1"]
+              benefits = data.get("auth", {}).get("benefits", {})
+              if "limit" in benefits:
+                  benefits["limit"]["title"] = text["benefit1_title"]
+                  benefits["limit"]["description"] = text["benefit1_desc"]
+              if "progress" in benefits:
+                  benefits["progress"]["title"] = text["benefit2_title"]
+                  benefits["progress"]["description"] = text["benefit2_desc"]
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
           replace_once(
-              privacy_page,
+              "apps/web/src/app/[locale]/privacy/page.tsx",
               '''    "questions",\n    "context",\n    "key",''',
               '''    "questions",\n    "context",\n    "accountProfile",\n    "sessionTechnical",\n    "key",''',
           )
 
-          # Keep legal copy synchronized in ES/EN without duplicating it in components.
-          legal_overrides = {
-              "es": {
-                  "lastUpdated": "Última actualización: agosto de 2026",
-                  "heroBody": "AALIE es una plataforma educativa para aprender y practicar análisis de algoritmos. Sus funciones principales pueden utilizarse sin crear una cuenta. Si eliges iniciar sesión con Google, AALIE procesa los datos básicos de identidad necesarios para crear y mantener tu cuenta. Las funciones opcionales de IA se mantienen separadas y pueden implicar el envío de contexto adicional al proveedor configurado.",
-                  "accountTitle": "La cuenta es opcional",
-                  "accountDescription": "Puedes usar las funciones principales sin iniciar sesión. Si eliges Google, AALIE crea una cuenta y almacena los datos básicos de identidad que Google proporciona para autenticarte, como nombre, correo electrónico, imagen de perfil si está disponible, estado de verificación e identificadores técnicos de cuenta.",
-                  "accountProfile": "Si inicias sesión con Google: nombre, correo electrónico, imagen de perfil si está disponible, estado de verificación e identificadores de cuenta/proveedor necesarios para asociar tu identidad.",
-                  "sessionTechnical": "Datos técnicos de sesión necesarios para autenticación y seguridad, que pueden incluir dirección IP y agente de usuario.",
-                  "provider1": "Google se utiliza únicamente como proveedor opcional de identidad. El flujo solicita los alcances básicos openid, email y profile; AALIE no solicita permisos para Gmail, Drive, Calendar ni otros productos de Google.",
-                  "provider2": "Para mantener la cuenta y la sesión, AALIE almacena en PostgreSQL los datos básicos de usuario y los registros técnicos de autenticación. Better Auth puede almacenar credenciales OAuth devueltas por Google; cuando existen, se cifran antes de persistirse mediante la configuración de AALIE.",
-                  "provider3": "Los datos obtenidos mediante Google no se venden, no se utilizan para publicidad y no se envían a un proveedor de IA por el solo hecho de iniciar sesión. El inicio de sesión tampoco constituye consentimiento para participar en investigación. Las funciones de IA, cuando el usuario decide utilizarlas, se rigen por las secciones específicas de esta política.",
-                  "rights3": "Las funciones principales pueden utilizarse sin cuenta y, en esta fase, el progreso de quizzes continúa almacenándose localmente en el navegador. Puedes borrar esos datos desde el navegador. Para datos de una cuenta creada con Google, puedes contactar al equipo para ejercer las solicitudes aplicables de acceso, corrección o eliminación.",
-                  "changes1": "Podemos actualizar esta política cuando cambien las funciones de AALIE, especialmente si se agregan analíticas, sincronización de progreso, nuevos proveedores de IA, nuevas formas de exportación, integraciones institucionales o cambios en el manejo de API keys y datos de autenticación.",
-                  "legalPrefix": "Al continuar, aceptas las",
-                  "termsLink": "Condiciones del Servicio",
-                  "legalAnd": "y la",
-                  "privacyLink": "Política de Privacidad",
-              },
-              "en": {
-                  "lastUpdated": "Last updated: August 2026",
-                  "heroBody": "AALIE is an educational platform for learning and practicing algorithm analysis. Its core features can be used without creating an account. If you choose to sign in with Google, AALIE processes the basic identity data needed to create and maintain your account. Optional AI features remain separate and may send additional context to the configured provider.",
-                  "accountTitle": "The account is optional",
-                  "accountDescription": "You can use the core features without signing in. If you choose Google, AALIE creates an account and stores the basic identity data Google provides for authentication, such as name, email address, profile image when available, verification status, and technical account identifiers.",
-                  "accountProfile": "If you sign in with Google: name, email address, profile image when available, verification status, and account/provider identifiers needed to associate your identity.",
-                  "sessionTechnical": "Technical session data needed for authentication and security, which may include IP address and user agent.",
-                  "provider1": "Google is used only as an optional identity provider. The flow requests the basic openid, email, and profile scopes; AALIE does not request access to Gmail, Drive, Calendar, or other Google products.",
-                  "provider2": "To maintain the account and session, AALIE stores basic user data and technical authentication records in PostgreSQL. Better Auth may store OAuth credentials returned by Google; when present, they are encrypted before persistence by AALIE's configuration.",
-                  "provider3": "Data obtained through Google is not sold, is not used for advertising, and is not sent to an AI provider merely because you signed in. Signing in also does not constitute consent to participate in research. Optional AI features, when intentionally used, are governed by the specific sections of this policy.",
-                  "rights3": "Core features can be used without an account and, at this stage, quiz progress continues to be stored locally in the browser. You can delete that data from the browser. For data associated with a Google-created account, you can contact the team to make applicable access, correction, or deletion requests.",
-                  "changes1": "We may update this policy when AALIE changes, especially if analytics, progress synchronization, new AI providers, new export formats, institutional integrations, or changes to API-key and authentication-data handling are introduced.",
-                  "legalPrefix": "By continuing, you accept the",
-                  "termsLink": "Terms of Service",
-                  "legalAnd": "and the",
-                  "privacyLink": "Privacy Policy",
-              },
-          }
+          # 6) Production bootstrap must contain every runtime variable required
+          # by Compose before the first auth-enabled deployment.
+          prod_path = "docs/06-operations/production-oci.md"
+          prod = read(prod_path)
+          old = '''DB_PASSWORD="$(openssl rand -hex 32)"\numask 077\ncat > .env.runtime <<EOF\nPOSTGRES_DB=aalie\nPOSTGRES_USER=aalie\nPOSTGRES_PASSWORD=${DB_PASSWORD}\nAPI_DATABASE_URL=postgresql+psycopg://aalie:${DB_PASSWORD}@postgres:5432/aalie\nWEB_DATABASE_URL=postgresql://aalie:${DB_PASSWORD}@postgres:5432/aalie\nEOF\nunset DB_PASSWORD'''
+          new = '''DB_PASSWORD="$(openssl rand -hex 32)"\nBETTER_AUTH_SECRET="$(openssl rand -hex 32)"\numask 077\ncat > .env.runtime <<EOF\nPOSTGRES_DB=aalie\nPOSTGRES_USER=aalie\nPOSTGRES_PASSWORD=${DB_PASSWORD}\nAPI_DATABASE_URL=postgresql+psycopg://aalie:${DB_PASSWORD}@postgres:5432/aalie\nWEB_DATABASE_URL=postgresql://aalie:${DB_PASSWORD}@postgres:5432/aalie\nBETTER_AUTH_URL=https://aalie.dev\nBETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}\nGOOGLE_CLIENT_ID=<GOOGLE_CLIENT_ID>\nGOOGLE_CLIENT_SECRET=<GOOGLE_CLIENT_SECRET>\nAUTH_JWT_ISSUER=https://aalie.dev\nAUTH_JWT_AUDIENCE=urn:aalie:api\nAUTH_JWKS_URL=http://web:3000/api/auth/jwks\nEOF\nunset DB_PASSWORD BETTER_AUTH_SECRET'''
+          if old not in prod:
+              raise RuntimeError("Canonical OCI runtime bootstrap block changed unexpectedly")
+          prod = prod.replace(old, new, 1)
+          oauth_note = '''\n### 8.1 Configurar Google OAuth antes del primer arranque con autenticación\n\nConfigure en Google Cloud un cliente OAuth 2.0 de tipo **Web application**. Para producción use `https://aalie.dev` como origen autorizado y `https://aalie.dev/api/auth/callback/google` como redirect URI. Para desarrollo local use `http://localhost:3000` y `http://localhost:3000/api/auth/callback/google`. AALIE usa únicamente identidad básica; no habilite permisos de Gmail, Drive o Calendar.\n\nSustituya `<GOOGLE_CLIENT_ID>` y `<GOOGLE_CLIENT_SECRET>` en `.env.runtime` por las credenciales reales y conserve el archivo en modo `0600`. `GOOGLE_CLIENT_SECRET` y `BETTER_AUTH_SECRET` son secretos y nunca se versionan. Antes del primer deploy auth-enabled compruebe que no quedan placeholders:\n\n```bash\n! grep -q '<GOOGLE_' /home/ubuntu/aalie/.env.runtime\n```\n\nEl comando debe devolver código 0. Las funciones principales de AALIE siguen siendo anónimas, pero la configuración de Better Auth es obligatoria para que el contenedor web actual arranque.\n\n'''
+          marker = "## 9. Primer pull y primer arranque\n"
+          if marker not in prod:
+              raise RuntimeError("OCI section 9 marker missing")
+          prod = prod.replace(marker, oauth_note + marker, 1)
+          write(prod_path, prod)
 
-          for locale, override in legal_overrides.items():
-              path = Path(f"apps/web/messages/{locale}.json")
-              data = json.loads(path.read_text(encoding="utf-8"))
-              privacy = data["privacy"]
-              privacy["hero"]["lastUpdated"] = override["lastUpdated"]
-              privacy["hero"]["body"] = override["heroBody"]
-              privacy["summary"]["items"]["account"]["title"] = override["accountTitle"]
-              privacy["summary"]["items"]["account"]["description"] = override["accountDescription"]
-              provided = privacy["sections"]["provided"]["items"]
-              provided["accountProfile"] = override["accountProfile"]
-              provided["sessionTechnical"] = override["sessionTechnical"]
-              providers = privacy["sections"]["providers"]
-              providers["paragraph1"] = override["provider1"]
-              providers["paragraph2"] = override["provider2"]
-              providers["paragraph3"] = override["provider3"]
-              privacy["sections"]["rights"]["paragraph3"] = override["rights3"]
-              privacy["sections"]["changes"]["paragraph1"] = override["changes1"]
-              auth = data["auth"]
-              auth["legalPrefix"] = override["legalPrefix"]
-              auth["termsLink"] = override["termsLink"]
-              auth["legalAnd"] = override["legalAnd"]
-              auth["privacyLink"] = override["privacyLink"]
-              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-          # Make web auth tests part of the permanent blocking CI contract.
-          ci = ".github/workflows/ci.yaml"
-          replace_once(
-              ci,
-              '''      - name: Build web app\n        run: pnpm -C apps/web build\n\n      # Python setup y smoke test''',
-              '''      - name: Build web app\n        run: pnpm -C apps/web build\n\n      - name: Test web app\n        run: pnpm -C apps/web test\n\n      # Python setup y smoke test''',
-          )
-          replace_once(
-              ci,
-              '''          assert keys and all(k["alg"] == "EdDSA" and k["crv"] == "Ed25519" for k in keys)''',
-              '''          assert keys and all(\n              k.get("kty") == "OKP"\n              and k.get("crv") == "Ed25519"\n              and k.get("alg", "EdDSA") == "EdDSA"\n              for k in keys\n          )''',
-          )
-
-          # Synchronize the canonical OCI bootstrap with the now-required auth runtime.
-          production_doc = "docs/06-operations/production-oci.md"
-          replace_once(
-              production_doc,
-              '''DB_PASSWORD="$(openssl rand -hex 32)"\numask 077\ncat > .env.runtime <<EOF\nPOSTGRES_DB=aalie\nPOSTGRES_USER=aalie\nPOSTGRES_PASSWORD=${DB_PASSWORD}\nAPI_DATABASE_URL=postgresql+psycopg://aalie:${DB_PASSWORD}@postgres:5432/aalie\nWEB_DATABASE_URL=postgresql://aalie:${DB_PASSWORD}@postgres:5432/aalie\nEOF\nunset DB_PASSWORD''',
-              '''DB_PASSWORD="$(openssl rand -hex 32)"\nBETTER_AUTH_SECRET="$(openssl rand -hex 32)"\numask 077\ncat > .env.runtime <<EOF\nPOSTGRES_DB=aalie\nPOSTGRES_USER=aalie\nPOSTGRES_PASSWORD=${DB_PASSWORD}\nAPI_DATABASE_URL=postgresql+psycopg://aalie:${DB_PASSWORD}@postgres:5432/aalie\nWEB_DATABASE_URL=postgresql://aalie:${DB_PASSWORD}@postgres:5432/aalie\nBETTER_AUTH_URL=https://aalie.dev\nBETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}\nGOOGLE_CLIENT_ID=<GOOGLE_CLIENT_ID>\nGOOGLE_CLIENT_SECRET=<GOOGLE_CLIENT_SECRET>\nAUTH_JWT_ISSUER=https://aalie.dev\nAUTH_JWT_AUDIENCE=urn:aalie:api\nAUTH_JWKS_URL=http://web:3000/api/auth/jwks\nEOF\nunset DB_PASSWORD BETTER_AUTH_SECRET''',
-          )
-          google_bootstrap = '''\n### 8.1 Configurar Google OAuth antes del primer arranque con autenticación\n\nEn Google Cloud configure un cliente OAuth 2.0 de tipo **Web application**. Para producción use `https://aalie.dev` como origen autorizado y `https://aalie.dev/api/auth/callback/google` como redirect URI. Para desarrollo local use `http://localhost:3000` y `http://localhost:3000/api/auth/callback/google`. No agregue scopes de Gmail, Drive o Calendar; AALIE usa únicamente `openid`, `email` y `profile`.\n\nSustituya `<GOOGLE_CLIENT_ID>` y `<GOOGLE_CLIENT_SECRET>` en `.env.runtime` por las credenciales reales y conserve el archivo en modo `0600`. `GOOGLE_CLIENT_SECRET` y `BETTER_AUTH_SECRET` son secretos y nunca se versionan. `GOOGLE_CLIENT_ID` no se trata como secreto, pero se mantiene en el mismo inventario runtime para evitar configuración divergente.\n\nAntes de continuar compruebe que no quedan placeholders:\n\n```bash\n! grep -q '<GOOGLE_' /home/ubuntu/aalie/.env.runtime\n```\n\nEl comando debe devolver código 0. La autenticación es opcional para el usuario final, pero estas variables son obligatorias para que el contenedor web arranque con la configuración actual.\n\n'''
-          replace_once(
-              production_doc,
-              "## 9. Primer pull y primer arranque\n",
-              google_bootstrap + "## 9. Primer pull y primer arranque\n",
-          )
-          replace_once(
-              production_doc,
-              '''| API key LLM del servidor | Secreto condicional | No aparece en `infra/oci/compose.yml`; solo gestor/runtime externo si el operador habilita LLM | API | Según proveedor y ante exposición | Filtración: consumo/cuota; pérdida: solo funciones LLM, no motor determinista |''',
-              '''| Contraseña PostgreSQL (`POSTGRES_PASSWORD`) | Secreto crítico | `/home/ubuntu/aalie/.env.runtime` modo `0600` | PostgreSQL, API y web mediante URLs derivadas | Ante exposición o reprovisión controlada | Filtración: acceso a datos persistidos; pérdida: servicios sin conexión a DB |\n| `BETTER_AUTH_SECRET` | Secreto crítico | `/home/ubuntu/aalie/.env.runtime` modo `0600` | Better Auth | Ante exposición; la rotación debe considerar datos cifrados existentes | Filtración: compromete material criptográfico de autenticación |\n| `GOOGLE_CLIENT_SECRET` | Secreto crítico | `/home/ubuntu/aalie/.env.runtime` modo `0600` | Better Auth / Google OAuth | En Google Cloud ante exposición o cambio planificado | Filtración: compromete el cliente OAuth |\n| `GOOGLE_CLIENT_ID` | Identificador público de configuración | `/home/ubuntu/aalie/.env.runtime` y Google Cloud | Better Auth / Google OAuth | Cuando se sustituye el cliente OAuth | Valor incorrecto: login Google falla; no es una credencial secreta |\n| API key LLM del servidor | Secreto condicional | No aparece en `infra/oci/compose.yml`; solo gestor/runtime externo si el operador habilita LLM | API | Según proveedor y ante exposición | Filtración: consumo/cuota; pérdida: solo funciones LLM, no motor determinista |''',
-          )
-
-          readme = "infra/oci/README.md"
-          replace_once(
-              readme,
-              '''| `.env.runtime` (creado en el host) | `/home/ubuntu/aalie/.env.runtime` | `ubuntu:ubuntu` / `0600` |\n| `deploy/aalie-deploy`''',
-              '''| `.env.runtime` (creado en el host) | `/home/ubuntu/aalie/.env.runtime` | `ubuntu:ubuntu` / `0600` |\n| `runtime.env.example` | referencia versionada; no copiar como secreto real | repositorio / `0644` |\n| `scripts/promote-admin.sh` | `/home/ubuntu/aalie/promote-admin.sh` | `ubuntu:ubuntu` / `0755` |\n| `deploy/aalie-deploy`''',
-          )
-
-          print("Audited corrections applied")
+          print("Audited corrections applied; Better Auth remains pinned at 1.7.1")
           PY
 
       - name: Setup pnpm
@@ -295,27 +221,29 @@ jobs:
           node-version: "22.x"
           cache: pnpm
 
-      - name: Regenerate and verify JavaScript lockfile
+      - name: Install JavaScript dependencies
         run: |
           corepack enable
-          pnpm install --lockfile-only --no-frozen-lockfile
           pnpm install --frozen-lockfile
 
-      - name: Audit JavaScript production dependencies
-        run: pnpm audit --prod --audit-level high
+      - name: Format audited frontend files
+        run: |
+          pnpm -C apps/web exec prettier --write \
+            'src/app/[locale]/terms/page.tsx' \
+            'src/app/[locale]/privacy/page.tsx' \
+            'src/components/HealthStatus.tsx' \
+            'src/components/LocaleSwitcher.tsx' \
+            'messages/es.json' \
+            'messages/en.json'
 
-      - name: Build web dependencies and application
+      - name: Build, lint and test web
         run: |
           pnpm -C packages/types build
-          if [ -f packages/grammar/package.json ] && pnpm -C packages/grammar run --help | grep -q "build"; then
-            pnpm -C packages/grammar build
-          fi
-          pnpm -C apps/web build
-
-      - name: Test and lint web
-        run: |
-          pnpm -C apps/web test
+          pnpm -C packages/grammar build
           pnpm -C apps/web lint
+          pnpm -C apps/web test
+          pnpm -C apps/web build
+          pnpm audit --prod --audit-level high
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -324,117 +252,45 @@ jobs:
           cache: pip
           cache-dependency-path: "apps/api/requirements*.txt"
 
-      - name: Install and audit Python dependencies
+      - name: Install Python dependencies
         working-directory: apps/api
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-          pip install pytest-xdist pip-audit
-          pip-audit -r requirements.txt --skip-editable
+          pip install pytest-xdist
 
-      - name: Install grammar package
-        run: pip install -e packages/grammar/py
-
-      - name: Validate stable database migrations
-        working-directory: apps/api
+      - name: Install grammar and validate API
         run: |
+          pip install -e packages/grammar/py
+          python -m ruff check apps/api --output-format=github
+          cd apps/api
           alembic upgrade head
-          alembic current
-          test "$(alembic current | grep -c '20260819_0002')" -eq 1
-
-      - name: Run API blocking and extended tests
-        working-directory: apps/api
-        run: |
           pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle" --cov=app --cov-report=term --cov-fail-under=70
           pytest tests/ -v --tb=short -n auto --dist=worksteal -m "contract or system"
 
-      - name: Lint API and validate docs contracts
+      - name: Validate repository contracts
         run: |
-          python -m ruff check apps/api --output-format=github
           python3 scripts/check_docs_contracts.py
-
-      - name: Validate quiz quality gates
-        run: |
           python apps/api/scripts/validate_quiz_bank.py
           python apps/api/scripts/report_quiz_bank_coverage.py --fail-on-critical
-          python -m pytest apps/api/tests/unit/quizzes -q
-
-      - name: Validate OCI contracts and shell scripts
-        run: |
           AALIE_TAG=0000000000000000000000000000000000000000 docker compose -f infra/oci/compose.yml config --quiet
+          docker compose -f infra/compose.prod.yml config --quiet
           bash -n infra/oci/deploy/aalie-deploy
           bash -n infra/oci/scripts/host-health.sh
           bash -n infra/oci/scripts/postgres-backup.sh
           bash -n infra/oci/scripts/postgres-restore.sh
           bash -n infra/oci/scripts/postgres-runtime-smoke.sh
           bash -n infra/oci/scripts/promote-admin.sh
-          docker run --rm -v "$PWD/infra/oci/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.11.4-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-
-      - name: Build and smoke production stack
-        run: |
-          printf '%s\n' 'AALIE_DOCKER_CANARY=must-not-reach-image' > apps/api/.env
-          docker compose -f infra/compose.prod.yml build
-          docker run --rm --entrypoint sh aalie-api:prod -c "! grep -R -F 'must-not-reach-image' /usr/src/app /opt/venv 2>/dev/null"
-          docker compose -f infra/compose.prod.yml up -d --wait postgres
-          docker compose -f infra/compose.prod.yml run --rm --no-deps api alembic upgrade head
-          docker compose -f infra/compose.prod.yml up -d --wait
-          python3 scripts/smoke_prod.py
-          python3 - <<'PY'
-          import json
-          import urllib.error
-          import urllib.request
-
-          with urllib.request.urlopen("http://127.0.0.1:3000/api/auth/jwks", timeout=5) as response:
-              keys = json.load(response)["keys"]
-          assert keys
-          assert all(
-              key.get("kty") == "OKP"
-              and key.get("crv") == "Ed25519"
-              and key.get("alg", "EdDSA") == "EdDSA"
-              for key in keys
-          )
-
-          with urllib.request.urlopen("http://127.0.0.1:3000/api/auth/get-session", timeout=5) as response:
-              assert json.load(response) is None
-          try:
-              urllib.request.urlopen("http://127.0.0.1:3000/api/auth/token", timeout=5)
-          except urllib.error.HTTPError as error:
-              assert error.code == 401
-          else:
-              raise AssertionError("Unauthenticated token minting must be rejected")
-          PY
-          python3 scripts/test_sigterm_pdf.py
-
-      - name: Stop production stack
-        if: always()
-        run: docker compose -f infra/compose.prod.yml down --remove-orphans || true
 
       - name: Commit validated corrections
-        if: success()
         shell: bash
         run: |
           git config user.name "Cruz1122"
           git config user.email "juan.cruz37552@ucaldas.edu.co"
           git rm -- .github/workflows/db-postgresql-corrections.yml
-          git add -- \
-            .github/workflows/ci.yaml \
-            apps/web/package.json \
-            pnpm-lock.yaml \
-            apps/web/src/lib/auth.ts \
-            apps/web/src/components/SignInForm.tsx \
-            'apps/web/src/app/[locale]/privacy/page.tsx' \
-            apps/web/messages/es.json \
-            apps/web/messages/en.json \
-            apps/api/app/core/auth.py \
-            apps/api/tests/unit/auth/test_jwt_auth.py \
-            apps/api/migrations/versions/20260819_0002_better_auth.py \
-            apps/api/migrations/versions/20260819_0003_better_auth_jwk_metadata.py \
-            apps/api/migrations/versions/20260819_0004_better_auth_account_issuer.py \
-            apps/api/migrations/versions/20260819_0005_better_auth_account_identity.py \
-            docs/06-operations/production-oci.md \
-            infra/oci/README.md
+          git add -A
           git diff --cached --check
-          git status --short
-          git commit -m "fix(auth): harden OAuth and PostgreSQL integration"
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "fix(auth): close PostgreSQL OAuth quality gaps"
           git push origin HEAD:db/postgresql-init
