@@ -178,6 +178,7 @@ chmod 0600 .env
 stat -c '%U:%G %a %n' .env
 
 DB_PASSWORD="$(openssl rand -hex 32)"
+BETTER_AUTH_SECRET="$(openssl rand -hex 32)"
 umask 077
 cat > .env.runtime <<EOF
 POSTGRES_DB=aalie
@@ -185,8 +186,15 @@ POSTGRES_USER=aalie
 POSTGRES_PASSWORD=${DB_PASSWORD}
 API_DATABASE_URL=postgresql+psycopg://aalie:${DB_PASSWORD}@postgres:5432/aalie
 WEB_DATABASE_URL=postgresql://aalie:${DB_PASSWORD}@postgres:5432/aalie
+BETTER_AUTH_URL=https://aalie.dev
+BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+GOOGLE_CLIENT_ID=<GOOGLE_CLIENT_ID>
+GOOGLE_CLIENT_SECRET=<GOOGLE_CLIENT_SECRET>
+AUTH_JWT_ISSUER=https://aalie.dev
+AUTH_JWT_AUDIENCE=urn:aalie:api
+AUTH_JWKS_URL=http://web:3000/api/auth/jwks
 EOF
-unset DB_PASSWORD
+unset DB_PASSWORD BETTER_AUTH_SECRET
 chmod 0600 .env.runtime
 stat -c '%U:%G %a %n' .env.runtime
 ```
@@ -200,6 +208,19 @@ docker run --rm \
   caddy:2.11.4-alpine \
   caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 ```
+
+
+### 8.1 Configurar Google OAuth antes del primer arranque con autenticación
+
+Configure en Google Cloud un cliente OAuth 2.0 de tipo **Web application**. Para producción use `https://aalie.dev` como origen autorizado y `https://aalie.dev/api/auth/callback/google` como redirect URI. Para desarrollo local use `http://localhost:3000` y `http://localhost:3000/api/auth/callback/google`. AALIE usa únicamente identidad básica; no habilite permisos de Gmail, Drive o Calendar.
+
+Sustituya `<GOOGLE_CLIENT_ID>` y `<GOOGLE_CLIENT_SECRET>` en `.env.runtime` por las credenciales reales y conserve el archivo en modo `0600`. `GOOGLE_CLIENT_SECRET` y `BETTER_AUTH_SECRET` son secretos y nunca se versionan. Antes del primer deploy auth-enabled compruebe que no quedan placeholders:
+
+```bash
+! grep -q '<GOOGLE_' /home/ubuntu/aalie/.env.runtime
+```
+
+El comando debe devolver código 0. Las funciones principales de AALIE siguen siendo anónimas, pero la configuración de Better Auth es obligatoria para que el contenedor web actual arranque.
 
 ## 9. Primer pull y primer arranque
 

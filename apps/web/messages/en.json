@@ -1710,15 +1710,15 @@
       "eyebrow": "Privacy",
       "title": "Privacy Policy",
       "subtitle": "We want you to clearly know what information AALIE uses, why it uses it, what stays in your browser, what may be processed on the server, and what depends on your choices.",
-      "body": "AALIE is an educational platform for learning and practicing algorithm analysis. You can use its main features without creating an account: write pseudocode, analyze algorithms, browse content, review examples, and practice with quizzes. Some optional features, such as the AI assistant or using a personal API key, may involve sending additional information to an external provider. That is why this policy clearly separates basic platform use from AI-feature use.",
-      "lastUpdated": "Last updated: May 2026"
+      "body": "AALIE is an educational platform for learning and practicing algorithm analysis. Its core features can be used without creating an account. If you choose to sign in with Google, AALIE processes the basic identity data needed to create and maintain your account. Optional AI features remain separate and may send additional context to the configured provider.",
+      "lastUpdated": "Last updated: August 2026"
     },
     "summary": {
       "title": "Quick summary",
       "items": {
         "account": {
-          "title": "No account required",
-          "description": "AALIE does not require registration to use its main features. You do not need to provide a name, email, password, or payment data to analyze algorithms or practice with available content."
+          "title": "The account is optional",
+          "description": "You can use the core features without signing in. If you choose Google, AALIE creates an account and stores the basic identity data provided for authentication, such as name, email address, profile image when available, verification status, and technical account identifiers."
         },
         "formal": {
           "title": "Formal analysis does not depend on AI",
@@ -1751,7 +1751,9 @@
           "progress": "Quiz progress and answers stored locally",
           "questions": "Questions you write in the AI assistant",
           "context": "Visible page context when you use the AI assistant",
-          "key": "A personal API key, only if you choose to enter one to enable AI features"
+          "key": "A personal API key, only if you choose to enter one to enable AI features",
+          "accountProfile": "If you sign in with Google: name, email address, profile image when available, verification status, and account/provider identifiers needed to associate your identity.",
+          "sessionTechnical": "Technical session data needed for authentication and security, which may include IP address and user agent."
         },
         "purpose": "This information is used so the platform can fulfill its educational purpose: analyze algorithms, show results, help you study, generate reports, and offer practice through quizzes."
       },
@@ -1828,20 +1830,20 @@
       },
       "providers": {
         "title": "External providers",
-        "paragraph1": "AALIE may depend on external services for hosting, backend execution, report generation, or optional AI features.",
-        "paragraph2": "When you use the AI assistant, the information sent may be processed by the configured provider. That provider's privacy policies, terms of use, technical limits, and data processing rules may also apply.",
-        "paragraph3": "AALIE does not fully control how each external provider processes the information once sent. That is why you should avoid using AI features with sensitive or confidential information."
+        "paragraph1": "Google is used only as an optional identity provider. Sign-in uses the provider's basic identity permissions; AALIE does not request access to Gmail, Drive, Calendar, or other Google products.",
+        "paragraph2": "To maintain the account and session, AALIE stores basic user data and technical authentication records in PostgreSQL. When Better Auth persists OAuth credentials returned by Google, AALIE configures them to be encrypted before storage.",
+        "paragraph3": "Data obtained through Google is not sold, is not used for advertising, and is not sent to an AI provider merely because you signed in. Signing in also does not constitute consent to participate in research."
       },
       "rights": {
         "title": "Rights and requests",
         "paragraph1": "You can contact the team if you have questions about this policy or about the use of information in AALIE.",
         "paragraph2": "Depending on the case, you may request information about data related to you, ask for correction, update, deletion, or clarification about the processing of personal information that may be under the team's responsibility.",
-        "paragraph3": "Keep in mind that many current AALIE features do not use user accounts or institutional progress storage. If the data is stored only in your browser, the team may not have technical access to it. In that case, you can delete it by clearing site data in your browser.",
+        "paragraph3": "Core features can be used without an account and, at this stage, quiz progress continues to be stored locally in the browser. You can delete that data from the browser. For data associated with a Google-created account, you can contact the team to make applicable access, correction, or deletion requests.",
         "githubLabel": "Development GitHub"
       },
       "changes": {
         "title": "Changes to this policy",
-        "paragraph1": "We may update this policy when AALIE features change, especially if the following are added: user accounts, analytics, server-side storage, new AI providers, progress sync, new export methods, integration with institutional services, or changes in API key handling.",
+        "paragraph1": "We may update this policy when AALIE changes, especially if analytics, progress synchronization, new AI providers, new export formats, institutional integrations, or changes to API-key and authentication-data handling are introduced.",
         "paragraph2": "When the policy changes, the last modified date will be updated."
       }
     },

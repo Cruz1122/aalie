@@ -15,6 +15,8 @@ from fastapi import HTTPException
 
 from app.core import auth
 
+pytestmark = [pytest.mark.fast, pytest.mark.unit]
+
 
 def _b64(value: bytes) -> str:
     return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")

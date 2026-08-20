@@ -59,11 +59,6 @@ function buildAuth() {
     session: {
       expiresIn: 60 * 60 * 24 * 7,
       updateAge: 60 * 60 * 24,
-      cookieCache: {
-        enabled: true,
-        maxAge: 60 * 5,
-        strategy: "compact",
-      },
     },
     advanced: {
       database: {

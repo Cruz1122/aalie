@@ -111,7 +111,11 @@ export default async function TermsPage({ params }: Props) {
           </section>
 
           {sections.map((section) => (
-            <section key={section.id} id={`terms-${section.id}`} className="space-y-5">
+            <section
+              key={section.id}
+              id={`terms-${section.id}`}
+              className="space-y-5"
+            >
               <header>
                 <h2 className="text-2xl font-semibold tracking-tight text-white">
                   {section.title}
@@ -176,7 +180,10 @@ export default async function TermsPage({ params }: Props) {
                             aria-label={`${t(`contact.members.${member}.name`)} GitHub`}
                             title="GitHub"
                           >
-                            <Github className="h-[18px] w-[18px]" strokeWidth={2} />
+                            <Github
+                              className="h-[18px] w-[18px]"
+                              strokeWidth={2}
+                            />
                           </a>
                         )}
                       </div>
@@ -185,7 +192,10 @@ export default async function TermsPage({ params }: Props) {
                 ))}
               </div>
               <p>{t("contact.reviewNotice")}</p>
-              <Link className="text-primary hover:text-blue-300" href="/privacy">
+              <Link
+                className="text-primary hover:text-blue-300"
+                href="/privacy"
+              >
                 {t("contact.privacyLink")}
               </Link>
             </div>

@@ -68,8 +68,12 @@ export default function HealthStatus({
 
   const content = (
     <>
-      {icon && <span className="material-symbols-outlined footer-icon">{icon}</span>}
-      {!icon && <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />}
+      {icon && (
+        <span className="material-symbols-outlined footer-icon">{icon}</span>
+      )}
+      {!icon && (
+        <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
+      )}
       {msg}
     </>
   );

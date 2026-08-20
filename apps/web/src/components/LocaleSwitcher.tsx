@@ -152,12 +152,16 @@ export default function LocaleSwitcher({
       >
         {showLabel ? (
           <>
-            <span className="material-symbols-outlined footer-icon">language</span>
+            <span className="material-symbols-outlined footer-icon">
+              language
+            </span>
             <span>{t("languageLabel")}</span>
           </>
         ) : (
           <>
-            <span className={`inline-block h-1.5 w-1.5 rounded-full ${badgeDot}`} />
+            <span
+              className={`inline-block h-1.5 w-1.5 rounded-full ${badgeDot}`}
+            />
             <current.Flag className="h-3 w-4 shrink-0 rounded-sm overflow-hidden" />
             <span>{current.label}</span>
           </>

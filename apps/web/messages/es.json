@@ -1731,15 +1731,15 @@
       "eyebrow": "Privacidad",
       "title": "Política de privacidad",
       "subtitle": "Queremos que sepas con claridad qué información usa AALIE, para qué la usa, qué se queda en tu navegador, qué puede procesarse en el servidor y qué depende de decisiones tuyas.",
-      "body": "AALIE es una plataforma educativa para aprender y practicar análisis de algoritmos. Puedes usar sus funciones principales sin crear una cuenta: escribir pseudocódigo, analizar algoritmos, consultar contenido, revisar ejemplos y practicar con quizzes. Algunas funciones opcionales, como el asistente de IA o el uso de una API key personal, pueden implicar el envío de información adicional a un proveedor externo. Por eso esta política separa claramente el uso básico de la plataforma del uso de funciones con IA.",
-      "lastUpdated": "Última actualización: mayo de 2026"
+      "body": "AALIE es una plataforma educativa para aprender y practicar análisis de algoritmos. Sus funciones principales pueden utilizarse sin crear una cuenta. Si eliges iniciar sesión con Google, AALIE procesa los datos básicos de identidad necesarios para crear y mantener tu cuenta. Las funciones opcionales de IA se mantienen separadas y pueden implicar el envío de contexto adicional al proveedor configurado.",
+      "lastUpdated": "Última actualización: agosto de 2026"
     },
     "summary": {
       "title": "Resumen rápido",
       "items": {
         "account": {
-          "title": "No necesitas crear una cuenta",
-          "description": "AALIE no requiere registro para usar sus funciones principales. No necesitas entregar nombre, correo, contraseña ni datos de pago para analizar algoritmos o practicar con el contenido disponible."
+          "title": "La cuenta es opcional",
+          "description": "Puedes usar las funciones principales sin iniciar sesión. Si eliges Google, AALIE crea una cuenta y almacena los datos básicos de identidad entregados para autenticarte, como nombre, correo electrónico, imagen de perfil si está disponible, estado de verificación e identificadores técnicos de cuenta."
         },
         "formal": {
           "title": "El análisis formal no depende de IA",
@@ -1772,7 +1772,9 @@
           "progress": "Progreso de quizzes y respuestas guardadas localmente",
           "questions": "Preguntas que escribes en el asistente de IA",
           "context": "Contexto visible de la página cuando usas el asistente de IA",
-          "key": "API key personal, solo si decides ingresarla para activar funciones de IA"
+          "key": "API key personal, solo si decides ingresarla para activar funciones de IA",
+          "accountProfile": "Si inicias sesión con Google: nombre, correo electrónico, imagen de perfil si está disponible, estado de verificación e identificadores de cuenta y proveedor necesarios para asociar tu identidad.",
+          "sessionTechnical": "Datos técnicos de sesión necesarios para autenticación y seguridad, que pueden incluir dirección IP y agente de usuario."
         },
         "purpose": "Esta información se usa para que la plataforma pueda cumplir su función educativa: analizar algoritmos, mostrar resultados, ayudarte a estudiar, generar reportes y ofrecer práctica mediante quizzes."
       },
@@ -1849,20 +1851,20 @@
       },
       "providers": {
         "title": "Proveedores externos",
-        "paragraph1": "AALIE puede depender de servicios externos para alojamiento, ejecución del backend, generación de reportes o funciones opcionales de IA.",
-        "paragraph2": "Cuando usas el asistente de IA, la información enviada puede ser procesada por el proveedor configurado. Las políticas de privacidad, condiciones de uso, límites técnicos y reglas de tratamiento de datos de ese proveedor también pueden aplicar.",
-        "paragraph3": "AALIE no controla completamente cómo cada proveedor externo procesa la información una vez enviada. Por eso debes evitar usar funciones de IA con información sensible o confidencial."
+        "paragraph1": "Google se utiliza únicamente como proveedor opcional de identidad. El inicio de sesión usa los permisos básicos de identidad del proveedor; AALIE no solicita acceso a Gmail, Drive, Calendar ni otros productos de Google.",
+        "paragraph2": "Para mantener la cuenta y la sesión, AALIE almacena en PostgreSQL datos básicos del usuario y registros técnicos de autenticación. Cuando Better Auth persiste credenciales OAuth devueltas por Google, AALIE configura su cifrado antes de almacenarlas.",
+        "paragraph3": "Los datos obtenidos mediante Google no se venden, no se utilizan para publicidad y no se envían a un proveedor de IA por el solo hecho de iniciar sesión. Iniciar sesión tampoco constituye consentimiento para participar en investigación."
       },
       "rights": {
         "title": "Derechos y solicitudes",
         "paragraph1": "Puedes contactar al equipo si tienes preguntas sobre esta política o sobre el uso de información en AALIE.",
         "paragraph2": "Según el caso, puedes solicitar información sobre los datos relacionados contigo, pedir corrección, actualización, eliminación o aclaración sobre el tratamiento de información personal que pudiera estar bajo responsabilidad del equipo.",
-        "paragraph3": "Ten en cuenta que muchas funciones actuales de AALIE no usan cuentas de usuario ni almacenamiento institucional de progreso. Si los datos están guardados únicamente en tu navegador, el equipo puede no tener acceso técnico a ellos. En ese caso, puedes eliminarlos limpiando los datos del sitio desde tu navegador.",
+        "paragraph3": "Las funciones principales pueden utilizarse sin cuenta y, en esta fase, el progreso de quizzes continúa almacenándose localmente en el navegador. Puedes borrar esos datos desde el navegador. Para datos asociados a una cuenta creada con Google, puedes contactar al equipo para ejercer las solicitudes aplicables de acceso, corrección o eliminación.",
         "githubLabel": "GitHub de desarrollo"
       },
       "changes": {
         "title": "Cambios en esta política",
-        "paragraph1": "Podemos actualizar esta política cuando cambien las funciones de AALIE, especialmente si se agregan: cuentas de usuario, analíticas, almacenamiento en servidor, nuevos proveedores de IA, sincronización de progreso, nuevas formas de exportación, integración con servicios institucionales o cambios en el manejo de API keys.",
+        "paragraph1": "Podemos actualizar esta política cuando cambien las funciones de AALIE, especialmente si se agregan analíticas, sincronización de progreso, nuevos proveedores de IA, nuevas formas de exportación, integraciones institucionales o cambios en el manejo de API keys y datos de autenticación.",
         "paragraph2": "Cuando la política cambie, se actualizará la fecha de última modificación."
       }
     },
