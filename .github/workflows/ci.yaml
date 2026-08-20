@@ -67,7 +67,6 @@ jobs:
       - name: Audit production JavaScript dependencies
         run: pnpm audit --prod --audit-level high
 
-      # Build packages en orden correcto
       - name: Build @aa/types
         run: pnpm -C packages/types build
 
@@ -81,11 +80,12 @@ jobs:
             fi
           fi
 
-      # Build crítico de web (debe pasar)
       - name: Build web app
         run: pnpm -C apps/web build
 
-      # Python setup y smoke test
+      - name: Test web app
+        run: pnpm -C apps/web test
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -97,7 +97,7 @@ jobs:
         working-directory: apps/api
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then 
+          if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           fi
 
@@ -111,7 +111,7 @@ jobs:
         run: python -c "import fastapi; print('✅ FastAPI:', fastapi.__version__)"
 
   test-pr-gate:
-    name: "Tests (PR gate: fast + oracle, con cobertura)"
+    name: "Tests (PR gate: fast, coverage >=70%)"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -156,7 +156,7 @@ jobs:
             echo "📦 Installing grammar package..."
             pip install -e packages/grammar/py
           else
-            echo "⚠️  Grammar package not found, tests may fail"
+            echo "⚠️ Grammar package not found, tests may fail"
           fi
 
       - name: Apply database migrations
@@ -168,11 +168,11 @@ jobs:
       - name: Verify xdist availability
         run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
 
-      - name: Run PR gate lanes with coverage
+      - name: Run fast PR gate with coverage
         working-directory: apps/api
         run: |
-          echo "🧪 Running PR lanes: fast + oracle..."
-          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
+          echo "🧪 Running fast PR lane (oracle lane intentionally omitted)..."
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -186,14 +186,13 @@ jobs:
       - name: Test summary
         if: always()
         run: |
-          echo "✅ PR gate tests completed"
+          echo "✅ Fast PR gate completed"
           echo "📊 Coverage report available in artifacts"
 
   test-extended-lanes:
-    name: "Tests (extendido: contract + system, sin duplicar PR gate)"
+    name: "Tests (blocking: contract + system)"
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -220,16 +219,16 @@ jobs:
             echo "📦 Installing grammar package..."
             pip install -e packages/grammar/py
           else
-            echo "⚠️  Grammar package not found, tests may fail"
+            echo "⚠️ Grammar package not found, tests may fail"
           fi
 
       - name: Verify xdist availability
         run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
 
-      - name: Run extended validation lanes (non-blocking)
+      - name: Run contract and system validation lanes
         working-directory: apps/api
         run: |
-          echo "🧪 Running extended lanes: contract + system (PR gate ya cubre fast + oracle)..."
+          echo "🧪 Running blocking lanes: contract + system"
           pytest tests/ -v --tb=short -n auto --dist=worksteal -m "contract or system"
 
   test-nightly-lanes:
@@ -338,7 +337,6 @@ jobs:
 
       - name: Ruff linting (api)
         run: python -m ruff check apps/api --output-format=github
-
 
   docs-contracts:
     name: "Docs contracts (validate)"
@@ -492,7 +490,7 @@ jobs:
     name: "Docker integration (production build + E2E smoke)"
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, oci-contracts, quizzes-quality]
+    needs: [build, test-pr-gate, test-extended-lanes, lint-web, lint-api, docs-contracts, oci-contracts, quizzes-quality]
     env:
       POSTGRES_DB: aalie_ci
       POSTGRES_USER: aalie_ci
