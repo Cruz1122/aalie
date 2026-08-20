@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Iconos del footer: deben conservarse visualmente mínimos aunque la fuente de Material Symbols defina un tamaño propio. */
+.footer-icon {
+  width: 10px !important;
+  height: 10px !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
 /* Variables CSS */
 :root {
   --primary-color: #0d7ff2;

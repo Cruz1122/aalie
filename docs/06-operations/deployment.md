@@ -41,6 +41,8 @@ docker compose up --build
 
 Levanta ambos servicios con hot-reload.
 
+El Compose de desarrollo carga automáticamente `apps/api/.env` y `apps/web/.env` cuando existen; no es necesario exportar sus variables en la terminal. Los archivos locales prevalecen sobre sus respectivos `.env.example`, y `apps/web/.env` es el override final para la web.
+
 **Variables necesarias:**
 
 | Servicio | Variable | Valor |

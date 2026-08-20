@@ -88,6 +88,14 @@ En OCI, `AALIE_TAG` vive en `.env` y las cinco variables PostgreSQL viven en `.e
 
 ## Comportamiento del asistente embebido
 
+### AutenticaciÃ³n
+
+- `BETTER_AUTH_URL` debe ser `https://aalie.dev` en producciÃ³n y `http://localhost:3000` local; define el callback OAuth.
+- `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_SECRET` y las URLs de base de datos son secretos server-side y nunca deben usar el prefijo `NEXT_PUBLIC_`.
+- `GOOGLE_CLIENT_ID` se usa server-side aunque no sea secreto; Google debe tener exactamente `/api/auth/callback/google` como redirect URI.
+- `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE` y `AUTH_JWKS_URL` forman el contrato web â†’ FastAPI. JWKS no es una dependencia de `/health/ready`.
+- En OCI, las variables de autenticaciÃ³n se agregan a `.env.runtime`, junto con las variables PostgreSQL, y el archivo conserva modo `0600`.
+
 - **Superficies:** `/analyzer`, `/examples`, `/user-guide`
 - **Activación:** `getApiKeyStatus().hasAny === true`
 - **Sin key válida:** no se renderiza launcher ni iframe

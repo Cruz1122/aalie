@@ -76,6 +76,14 @@ El gate Docker de CI construye las imágenes, arranca Compose, espera health, ej
 
 ## PDF
 
+## Migraciones y bootstrap OCI
+
+Alembic es el Ãºnico migrador de producciÃ³n. Las migraciones de autenticaciÃ³n siguen expand/contract y el rollback de imÃ¡genes nunca ejecuta un downgrade del schema.
+
+Antes del primer deploy de esta microfase, copiar manualmente `infra/oci/compose.yml`, `infra/oci/deploy/aalie-deploy`, los scripts OCI y crear `.env.runtime` con modo `0600`. No se amplÃ­a el comando SSH restringido de CI para automatizar ese bootstrap.
+
+El primer usuario entra como `USER`. DespuÃ©s de confirmar su identidad, el operador puede ejecutar `infra/oci/scripts/promote-admin.sh <user-id>`.
+
 La imagen API incluye TeX Live, `pdflatex`, estilos, templates y logos. El proceso corre como usuario `aalie`; los temporales se crean fuera del código de la aplicación.
 
 El pipeline mantiene dos pasadas de `pdflatex`: la primera prepara referencias auxiliares y la segunda produce el PDF final. El profiling del pipeline registra snapshot, modelo documental, assets de trace, renderer LaTeX, preparación temporal, ambas pasadas, lectura del PDF y cleanup.

@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108
+    image: postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296
     container_name: algoritmos-postgres
     restart: unless-stopped
     environment:
@@ -10,7 +10,8 @@ services:
     expose:
       - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      test:
+        ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 10s
       timeout: 5s
       retries: 10
@@ -31,12 +32,19 @@ services:
       python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
+    env_file:
+      - path: ../apps/api/.env.example
+      - path: ../apps/api/.env
+        required: false
     environment:
       DEV_CORS_ENABLED: "1"
       DEV_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
       DATABASE_URL: ${API_DATABASE_URL:-postgresql+psycopg://aalie:aalie-local-only@postgres:5432/aalie}
+      AUTH_JWKS_URL: ${AUTH_JWKS_URL:-http://web:3000/api/auth/jwks}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-http://localhost:3000}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-urn:aalie:api}
     volumes:
       # Monta solo el código de la API para recarga en caliente
       - ../apps/api:/usr/src/app/apps/api
@@ -47,25 +55,33 @@ services:
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
+      target: dev
     container_name: algoritmos-web
     depends_on:
       - api
     working_dir: /usr/src/app
     command: >
-      sh -c "pnpm install -w &&
+      sh -c "pnpm install -w --frozen-lockfile &&
              pnpm --filter web dev --hostname 0.0.0.0"
     ports:
       - "3000:3000"
+    env_file:
+      - path: ../apps/web/.env.example
+      # Compatibilidad con credenciales de auth guardadas previamente en la API.
+      - path: ../apps/api/.env
+        required: false
+      - path: ../apps/web/.env
+        required: false
     environment:
-        NODE_ENV: development
-        NEXT_TELEMETRY_DISABLED: "1"
-        NEXT_PUBLIC_API_BASE_URL: "http://localhost:8000"   # para futuras llamadas cliente
-        API_INTERNAL_BASE_URL: "http://api:8000"            # usado por /api/health (SSR/proxy)
-        DATABASE_URL: ${WEB_DATABASE_URL:-postgresql://aalie:aalie-local-only@postgres:5432/aalie}
-        WATCHPACK_POLLING: "true"
-        # Configuración LLM                       # LOCAL para LM Studio, REMOTE para GitHub Models
-        LM_STUDIO_ENDPOINT: "http://host.docker.internal:1234/v1"  # Acceso al host desde Docker
-        LM_STUDIO_API_KEY: "lm-studio"                   # Token de GitHub para modo REMOTE
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_API_BASE_URL: "http://localhost:8000" # para futuras llamadas cliente
+      API_INTERNAL_BASE_URL: "http://api:8000" # usado por /api/health (SSR/proxy)
+      DATABASE_URL: ${WEB_DATABASE_URL:-postgresql://aalie:aalie-local-only@postgres:5432/aalie}
+      WATCHPACK_POLLING: "true"
+      # Configuración LLM                       # LOCAL para LM Studio, REMOTE para GitHub Models
+      LM_STUDIO_ENDPOINT: "http://host.docker.internal:1234/v1" # Acceso al host desde Docker
+      LM_STUDIO_API_KEY: "lm-studio" # Token de GitHub para modo REMOTE
     volumes:
       # Código con hot-reload
       - ../apps/web:/usr/src/app/apps/web

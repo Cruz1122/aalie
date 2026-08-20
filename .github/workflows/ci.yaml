@@ -109,7 +109,7 @@ jobs:
       DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@127.0.0.1:5432/aalie_ci
     services:
       postgres:
-        image: postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108
+        image: postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296
         env:
           POSTGRES_DB: aalie_ci
           POSTGRES_USER: aalie_ci
@@ -365,6 +365,13 @@ jobs:
           POSTGRES_PASSWORD: aalie_ci_password
           API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
           WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+          BETTER_AUTH_URL: http://localhost:3000
+          BETTER_AUTH_SECRET: ci-only-not-a-secret
+          GOOGLE_CLIENT_ID: ci-client-id
+          GOOGLE_CLIENT_SECRET: ci-client-secret
+          AUTH_JWT_ISSUER: http://localhost:3000
+          AUTH_JWT_AUDIENCE: urn:aalie:api
+          AUTH_JWKS_URL: http://web:3000/api/auth/jwks
         run: |
           docker compose -f infra/oci/compose.yml config --quiet
           docker compose -f infra/oci/compose.yml config --format json > /tmp/aalie-oci-compose.json
@@ -376,7 +383,7 @@ jobs:
 
           services = config["services"]
           postgres = services["postgres"]
-          assert postgres["image"] == "postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108"
+          assert postgres["image"] == "postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296"
           assert not postgres.get("ports"), "PostgreSQL must not publish port 5432"
           assert postgres["volumes"][0]["target"] == "/var/lib/postgresql"
           assert postgres["healthcheck"]["test"][0] == "CMD-SHELL"
@@ -385,6 +392,11 @@ jobs:
           assert services["api"]["environment"]["DATABASE_URL"].startswith("postgresql+psycopg://")
           assert services["web"]["environment"]["DATABASE_URL"].startswith("postgresql://")
           assert "NEXT_PUBLIC_DATABASE_URL" not in services["web"].get("environment", {})
+          for name in ("BETTER_AUTH_URL", "BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+              assert name in services["web"]["environment"]
+          for name in ("AUTH_JWKS_URL", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+              assert name in services["api"]["environment"]
+          assert not any(name.startswith("NEXT_PUBLIC_") and "GOOGLE" in name for name in services["web"]["environment"])
           assert not services["api"].get("ports"), "API must not publish port 8000"
           assert not services["web"].get("ports"), "Web must not publish port 3000"
           for service_name in ("api", "web"):
@@ -406,6 +418,8 @@ jobs:
           bash -n infra/oci/scripts/host-health.sh
           bash -n infra/oci/scripts/postgres-backup.sh
           bash -n infra/oci/scripts/postgres-restore.sh
+          bash -n infra/oci/scripts/postgres-runtime-smoke.sh
+          bash -n infra/oci/scripts/promote-admin.sh
 
       - name: Validate OCI script line endings and idempotence guard
         run: |
@@ -476,6 +490,13 @@ jobs:
       POSTGRES_PASSWORD: aalie_ci_password
       API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
       WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ci-only-not-a-secret
+      GOOGLE_CLIENT_ID: ci-client-id
+      GOOGLE_CLIENT_SECRET: ci-client-secret
+      AUTH_JWT_ISSUER: http://localhost:3000
+      AUTH_JWT_AUDIENCE: urn:aalie:api
+      AUTH_JWKS_URL: http://web:3000/api/auth/jwks
 
     steps:
       - name: Checkout
@@ -492,7 +513,7 @@ jobs:
               services = json.load(stream)["services"]
           assert not services["api"].get("volumes")
           assert not services["web"].get("volumes")
-          assert services["postgres"]["image"] == "postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108"
+          assert services["postgres"]["image"] == "postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296"
           assert services["postgres"]["volumes"][0]["target"] == "/var/lib/postgresql"
           assert not services["postgres"].get("ports")
           PY
@@ -509,18 +530,11 @@ jobs:
 
       - name: Validate persistence and backup/restore
         run: |
-          docker compose -f infra/docker-compose.prod.yml exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql --host=127.0.0.1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --command="CREATE TABLE persistence_probe (id integer PRIMARY KEY, value text NOT NULL); INSERT INTO persistence_probe VALUES (1, '\''survives-down-up'\'');"'
           mkdir -p /tmp/aalie-ci-backups
           printf '%s\n' 'AALIE_TAG=0000000000000000000000000000000000000000' > /tmp/aalie-ci-tag.env
-          printf '%s\n' 'POSTGRES_DB=aalie_ci' 'POSTGRES_USER=aalie_ci' 'POSTGRES_PASSWORD=aalie_ci_password' 'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' > /tmp/aalie-ci-runtime.env
+          printf '%s\n' 'POSTGRES_DB=aalie_ci' 'POSTGRES_USER=aalie_ci' 'POSTGRES_PASSWORD=aalie_ci_password' 'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'BETTER_AUTH_URL=http://localhost:3000' 'BETTER_AUTH_SECRET=ci-only-not-a-secret' 'GOOGLE_CLIENT_ID=ci-client-id' 'GOOGLE_CLIENT_SECRET=ci-client-secret' 'AUTH_JWT_ISSUER=http://localhost:3000' 'AUTH_JWT_AUDIENCE=urn:aalie:api' 'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' > /tmp/aalie-ci-runtime.env
           chmod 600 /tmp/aalie-ci-tag.env /tmp/aalie-ci-runtime.env
-          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/docker-compose.prod.yml" ENV_FILE=/tmp/aalie-ci-tag.env RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env bash infra/oci/scripts/postgres-backup.sh /tmp/aalie-ci-backups/aalie.dump
-          docker compose -f infra/docker-compose.prod.yml down --remove-orphans
-          docker compose -f infra/docker-compose.prod.yml up -d --wait
-          test "$(docker compose -f infra/docker-compose.prod.yml exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql --host=127.0.0.1 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --tuples-only --no-align --command="SELECT value FROM persistence_probe WHERE id = 1"' | tr -d '\r\n')" = "survives-down-up"
-          docker compose -f infra/docker-compose.prod.yml exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" createdb --host=127.0.0.1 --username="$POSTGRES_USER" aalie_restore_check'
-          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/docker-compose.prod.yml" ENV_FILE=/tmp/aalie-ci-tag.env RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env bash infra/oci/scripts/postgres-restore.sh /tmp/aalie-ci-backups/aalie.dump aalie_restore_check
-          test "$(docker compose -f infra/docker-compose.prod.yml exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql --host=127.0.0.1 --username="$POSTGRES_USER" --dbname=aalie_restore_check --tuples-only --no-align --command="SELECT value FROM persistence_probe WHERE id = 1"' | tr -d '\r\n')" = "survives-down-up"
+          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/docker-compose.prod.yml" ENV_FILE=/tmp/aalie-ci-tag.env RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-ci-backups/aalie.dump
 
       - name: Verify non-root runtime, DNS and no source mounts
         run: |

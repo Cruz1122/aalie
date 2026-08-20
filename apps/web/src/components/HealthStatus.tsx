@@ -5,9 +5,19 @@ import type { HealthResponse } from "@aa/types";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
-type Props = { intervalMs?: number };
+type Props = {
+  intervalMs?: number;
+  icon?: string;
+  onClick?: () => void;
+  className?: string;
+};
 
-export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
+export default function HealthStatus({
+  intervalMs = 20_000,
+  icon,
+  onClick,
+  className = "",
+}: Readonly<Props>) {
   const t = useTranslations("footer.backendStatus");
   const [up, setUp] = useState<boolean | null>(null);
 
@@ -40,7 +50,7 @@ export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
   }, [check, intervalMs]);
 
   const pillBase =
-    "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs";
+    "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-[12px] font-normal leading-none";
 
   let style: string;
   let dot: string;
@@ -56,10 +66,26 @@ export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
     dot = "bg-red-400";
   }
 
-  return (
-    <span className={`${pillBase} ${style}`}>
-      <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
+  const content = (
+    <>
+      {icon && <span className="material-symbols-outlined footer-icon">{icon}</span>}
+      {!icon && <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />}
       {msg}
-    </span>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${pillBase} ${style} cursor-pointer ${className}`}
+        aria-label={msg}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <span className={`${pillBase} ${style} ${className}`}>{content}</span>;
 }

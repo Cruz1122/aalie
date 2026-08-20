@@ -6,7 +6,7 @@
 
 ## Decisión
 
-Ejecutar PostgreSQL 18.6 en la misma VM OCI de AALIE, mediante el servicio privado `postgres` de `infra/oci/compose.yml`, usando la imagen oficial `postgres:18.6-bookworm@sha256:7d2695c3aa88e792e8b3b233e7e4adb296a20412c6c0ca361e3edaaacfada108`. El volumen se monta en `/var/lib/postgresql`, no en la ruta histórica. La base no publica `5432` al host.
+Ejecutar PostgreSQL 18.4 en la misma VM OCI de AALIE, mediante el servicio privado `postgres` de `infra/oci/compose.yml`, usando la imagen oficial `postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296`. El volumen se monta en `/var/lib/postgresql`, no en la ruta histórica. La base no publica `5432` al host.
 
 La API recibe `postgresql+psycopg://` y Next recibe una URL estándar `postgresql://`. En OCI, `.env` conserva únicamente `AALIE_TAG`; las credenciales y URLs viven en `.env.runtime` con modo `0600`. El deploy ejecuta `alembic upgrade head` antes de levantar API/web y un rollback solo revierte imágenes: nunca hace downgrade del esquema.
 
@@ -21,7 +21,7 @@ La API recibe `postgresql+psycopg://` y Next recibe una URL estándar `postgresq
 
 El volumen `postgres-data` sobrevive a `docker compose down`; `down -v` es destructivo y queda reservado a pruebas con un proyecto/volumen aislado. Los backups `pg_dump -Fc` se guardan inicialmente en el mismo disco de la VM: no son recuperación ante pérdida del host y no se automatiza Object Storage en esta microfase.
 
-La baseline Alembic crea únicamente `alembic_version`; no se crean tablas de negocio, autenticación, OAuth, roles de aplicación ni rate limiting. Las migraciones futuras deben ser compatibles con la imagen anterior para que el rollback de imágenes sea seguro.
+La migración Alembic de autenticación crea únicamente el schema `auth` y las tablas de Better Auth/JWKS; no se crean tablas de negocio ni rate limiting. Las migraciones futuras deben ser compatibles con la imagen anterior para que el rollback de imágenes sea seguro.
 
 ## Alternativas descartadas
 

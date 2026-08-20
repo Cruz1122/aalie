@@ -20,11 +20,17 @@ const locales = [
 ];
 
 const pillBase =
-  "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs";
+  "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs leading-none";
 const badgeStyle = "bg-slate-900/40 text-slate-300";
 const badgeDot = "bg-slate-400";
 
-export default function LocaleSwitcher() {
+type LocaleSwitcherProps = {
+  showLabel?: boolean;
+};
+
+export default function LocaleSwitcher({
+  showLabel = false,
+}: Readonly<LocaleSwitcherProps>) {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -144,9 +150,18 @@ export default function LocaleSwitcher() {
         aria-haspopup="listbox"
         aria-label={t("languageLabel")}
       >
-        <span className={`inline-block h-1.5 w-1.5 rounded-full ${badgeDot}`} />
-        <current.Flag className="h-3 w-4 shrink-0 rounded-sm overflow-hidden" />
-        <span>{current.label}</span>
+        {showLabel ? (
+          <>
+            <span className="material-symbols-outlined footer-icon">language</span>
+            <span>{t("languageLabel")}</span>
+          </>
+        ) : (
+          <>
+            <span className={`inline-block h-1.5 w-1.5 rounded-full ${badgeDot}`} />
+            <current.Flag className="h-3 w-4 shrink-0 rounded-sm overflow-hidden" />
+            <span>{current.label}</span>
+          </>
+        )}
       </button>
 
       {typeof document !== "undefined" &&

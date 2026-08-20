@@ -107,6 +107,8 @@ Esto levanta:
 
 **Variables de entorno** en Docker:
 
+Compose carga `apps/api/.env.example` y `apps/web/.env.example` como valores base, y después aplica los `.env` locales si existen. `apps/web/.env` tiene la mayor prioridad para la web. Por compatibilidad, la web también puede leer las credenciales de autenticación existentes en `apps/api/.env`.
+
 | Servicio | Variable | Valor |
 |---|---|---|
 | web | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` |

@@ -17,7 +17,8 @@ export type AssistantSurface =
   | "course"
   | "quizzes"
   | "about"
-  | "privacy";
+  | "privacy"
+  | "terms";
 
 export function isAssistantSurface(
   value: string | null | undefined,
@@ -30,7 +31,8 @@ export function isAssistantSurface(
     value === "course" ||
     value === "quizzes" ||
     value === "about" ||
-    value === "privacy"
+    value === "privacy" ||
+    value === "terms"
   );
 }
 
