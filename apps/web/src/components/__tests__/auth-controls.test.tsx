@@ -4,8 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import AuthControls from "@/components/AuthControls";
 
-const { mockSignInSocial, mockUseSession } = vi.hoisted(() => ({
+const { mockSignInSocial, mockSignOut, mockUseSession } = vi.hoisted(() => ({
   mockSignInSocial: vi.fn(),
+  mockSignOut: vi.fn(),
   mockUseSession: vi.fn(),
 }));
 
@@ -27,7 +28,9 @@ vi.mock("next-intl", () => ({
         benefitQuizDescription: "Save and review your attempts.",
         signInGoogle: "Sign in with Google",
         submitting: "Connecting to Google...",
+        signOut: "Sign out",
         oauthError: "Sign-in failed.",
+        signOutError: "Sign-out failed.",
       }) as Record<string, string>
     )[key] ?? key,
 }));
@@ -48,13 +51,14 @@ vi.mock("@/lib/auth-client", () => ({
   authClient: {
     useSession: mockUseSession,
     signIn: { social: mockSignInSocial },
-    signOut: vi.fn(),
+    signOut: mockSignOut,
   },
 }));
 
 describe("AuthControls", () => {
   beforeEach(() => {
     mockSignInSocial.mockReset();
+    mockSignOut.mockReset();
     mockUseSession.mockReturnValue({ data: null, isPending: false });
   });
 
@@ -87,6 +91,28 @@ describe("AuthControls", () => {
       "footer-icon",
     );
     expect(screen.queryByText("Ada Lovelace")).not.toBeInTheDocument();
+  });
+
+  it("waits for sign-out and reports an API error", async () => {
+    mockUseSession.mockReturnValue({
+      data: { user: { name: "Ada", email: "ada@example.com" } },
+      isPending: false,
+    });
+    let resolveSignOut: (value: { error: { message: string } }) => void;
+    mockSignOut.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSignOut = resolve;
+      }),
+    );
+
+    render(<AuthControls variant="footer" />);
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeDisabled();
+    resolveSignOut!({ error: { message: "Unavailable" } });
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Sign-out failed.",
+    );
   });
 
   it("opens the sign-in form without calling the authentication API", () => {

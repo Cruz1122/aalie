@@ -4,13 +4,21 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from threading import RLock
+from threading import Condition, RLock
+from time import monotonic
 from typing import Any
 
 import httpx
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+MAX_BEARER_TOKEN_BYTES = 8_192
+MAX_JWKS_BYTES = 64 * 1_024
+MAX_JWKS_KEYS = 16
+JWKS_TTL_SECONDS = 300.0
+JWKS_STALE_SECONDS = 300.0
+UNKNOWN_KID_REFRESH_SECONDS = 30.0
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -21,38 +29,100 @@ class IdentityClaims:
     role: str
 
 
+def _required_env(name: str) -> str:
+    value = os.getenv(name, "").strip()
+    if not value:
+        raise RuntimeError(f"{name} is required")
+    return value
+
+
 class JwksCache:
+    """Bounded JWKS cache with TTL, stale fallback and single-flight refresh."""
+
     def __init__(self) -> None:
         self._keys: dict[str, Any] = {}
         self._lock = RLock()
+        self._condition = Condition(self._lock)
+        self._refreshing = False
+        self._last_refresh = 0.0
+        self._expires_at = 0.0
+        self._client = httpx.Client(
+            timeout=httpx.Timeout(2.0, connect=0.75),
+            limits=httpx.Limits(max_connections=4, max_keepalive_connections=2),
+        )
 
     def clear(self) -> None:
-        with self._lock:
+        with self._condition:
             self._keys = {}
+            self._last_refresh = 0.0
+            self._expires_at = 0.0
+            self._refreshing = False
+            self._condition.notify_all()
 
-    def get(self, kid: str) -> Any | None:
-        with self._lock:
-            return self._keys.get(kid)
-
-    def refresh(self) -> None:
-        url = os.getenv("AUTH_JWKS_URL", "http://localhost:3000/api/auth/jwks").strip()
-        if not url:
-            raise RuntimeError("AUTH_JWKS_URL is required")
-        response = httpx.get(url, timeout=5.0)
+    def _fetch(self) -> dict[str, Any]:
+        response = self._client.get(_required_env("AUTH_JWKS_URL"))
         response.raise_for_status()
+        if len(response.content) > MAX_JWKS_BYTES:
+            raise ValueError("JWKS response is too large")
+
         body = response.json()
         keys = body.get("keys") if isinstance(body, dict) else None
-        if not isinstance(keys, list):
-            raise ValueError("JWKS response does not contain keys")
-        parsed = {
-            item["kid"]: jwt.PyJWK(item).key
-            for item in keys
-            if isinstance(item, dict) and isinstance(item.get("kid"), str)
-        }
-        if not parsed:
-            raise ValueError("JWKS response contains no usable keys")
-        with self._lock:
-            self._keys = parsed
+        if not isinstance(keys, list) or not keys or len(keys) > MAX_JWKS_KEYS:
+            raise ValueError("JWKS response has an invalid number of keys")
+
+        parsed: dict[str, Any] = {}
+        for item in keys:
+            if not isinstance(item, dict):
+                raise ValueError("JWKS response contains an invalid key")
+            kid = item.get("kid")
+            if (
+                not isinstance(kid, str)
+                or not kid
+                or item.get("kty") != "OKP"
+                or item.get("crv") != "Ed25519"
+                or item.get("alg") != "EdDSA"
+                or item.get("use", "sig") != "sig"
+            ):
+                raise ValueError("JWKS response contains a non-Ed25519 signing key")
+            parsed[kid] = jwt.PyJWK(item, algorithm="EdDSA").key
+
+        if len(parsed) != len(keys):
+            raise ValueError("JWKS response contains duplicate key identifiers")
+        return parsed
+
+    def resolve(self, kid: str) -> Any | None:
+        now = monotonic()
+        with self._condition:
+            cached = self._keys.get(kid)
+            if cached is not None and now < self._expires_at:
+                return cached
+            if cached is None and now - self._last_refresh < UNKNOWN_KID_REFRESH_SECONDS:
+                return None
+
+            if self._refreshing:
+                self._condition.wait_for(lambda: not self._refreshing, timeout=2.5)
+                return self._keys.get(kid)
+            self._refreshing = True
+
+        try:
+            refreshed = self._fetch()
+        except Exception:
+            with self._condition:
+                self._refreshing = False
+                self._condition.notify_all()
+                stale = self._keys.get(kid)
+                if stale is not None and now < self._expires_at + JWKS_STALE_SECONDS:
+                    return stale
+            raise
+
+        refreshed_at = monotonic()
+        with self._condition:
+            self._keys = refreshed
+            self._last_refresh = refreshed_at
+            self._expires_at = refreshed_at + JWKS_TTL_SECONDS
+            self._refreshing = False
+            self._condition.notify_all()
+            return self._keys.get(kid)
 
 
 _jwks_cache = JwksCache()
@@ -68,15 +138,17 @@ def _unauthorized() -> HTTPException:
 
 def _verify_token(token: str) -> IdentityClaims:
     try:
-        header = jwt.get_unverified_header(token)
-        kid = header.get("kid")
-        if not isinstance(kid, str) or not kid:
-            raise jwt.InvalidTokenError("missing kid")
+        if len(token.encode("utf-8")) > MAX_BEARER_TOKEN_BYTES or token.count(".") != 2:
+            raise jwt.InvalidTokenError("invalid token size or shape")
 
-        key = _jwks_cache.get(kid)
-        if key is None:
-            _jwks_cache.refresh()
-            key = _jwks_cache.get(kid)
+        header = jwt.get_unverified_header(token)
+        if header.get("alg") != "EdDSA":
+            raise jwt.InvalidTokenError("invalid algorithm")
+        kid = header.get("kid")
+        if not isinstance(kid, str) or not kid or len(kid) > 128:
+            raise jwt.InvalidTokenError("missing or invalid kid")
+
+        key = _jwks_cache.resolve(kid)
         if key is None:
             raise jwt.InvalidTokenError("unknown kid")
 
@@ -84,8 +156,8 @@ def _verify_token(token: str) -> IdentityClaims:
             token,
             key,
             algorithms=["EdDSA"],
-            issuer=os.getenv("AUTH_JWT_ISSUER", "http://localhost:3000"),
-            audience=os.getenv("AUTH_JWT_AUDIENCE", "urn:aalie:api"),
+            issuer=_required_env("AUTH_JWT_ISSUER"),
+            audience=_required_env("AUTH_JWT_AUDIENCE"),
             options={"require": ["exp", "iss", "aud", "sub"]},
         )
         user_id = payload.get("sub")

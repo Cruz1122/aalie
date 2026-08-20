@@ -36,7 +36,8 @@
     "signInGoogle": "Sign in with Google",
     "submitting": "Connecting to Google...",
     "signOut": "Sign out",
-    "oauthError": "Sign-in failed. Please try again."
+    "oauthError": "Sign-in failed. Please try again.",
+    "signOutError": "Sign-out failed. Please try again."
   },
   "profile": {
     "meta": {

@@ -29,7 +29,8 @@ services:
       postgres:
         condition: service_healthy
     command: >
-      python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      sh -c "alembic upgrade head &&
+             python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     ports:
       - "8000:8000"
     env_file:
@@ -89,8 +90,16 @@ services:
       # Volúmenes para node_modules (no los pises con el bind mount)
       - web_root_node_modules:/usr/src/app/node_modules
       - web_pkg_node_modules:/usr/src/app/apps/web/node_modules
+      - web_content_catalog_node_modules:/usr/src/app/packages/content-catalog/node_modules
+      - web_grammar_node_modules:/usr/src/app/packages/grammar/node_modules
+      - web_types_node_modules:/usr/src/app/packages/types/node_modules
+      - web_next_cache:/usr/src/app/apps/web/.next
 
 volumes:
   postgres-dev-data:
   web_root_node_modules:
   web_pkg_node_modules:
+  web_content_catalog_node_modules:
+  web_grammar_node_modules:
+  web_types_node_modules:
+  web_next_cache:

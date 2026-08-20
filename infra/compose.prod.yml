@@ -4,9 +4,9 @@ services:
     container_name: aalie-postgres-local
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-aalie}
-      POSTGRES_USER: ${POSTGRES_USER:-aalie}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aalie-local-only}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     expose:
       - "5432"
     healthcheck:
@@ -35,10 +35,10 @@ services:
       CORS_ENABLED: "0"
       API_INTERNAL_BASE_URL: "http://api:8000"
       QUIZ_DATA_DIR: "/usr/src/app/packages/content-data/quizzes"
-      DATABASE_URL: ${API_DATABASE_URL:-postgresql+psycopg://aalie:aalie-local-only@postgres:5432/aalie}
-      AUTH_JWKS_URL: ${AUTH_JWKS_URL:-http://web:3000/api/auth/jwks}
-      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-http://localhost:3000}
-      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-urn:aalie:api}
+      DATABASE_URL: ${API_DATABASE_URL:?API_DATABASE_URL is required}
+      AUTH_JWKS_URL: ${AUTH_JWKS_URL:?AUTH_JWKS_URL is required}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:?AUTH_JWT_ISSUER is required}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:?AUTH_JWT_AUDIENCE is required}
     ports:
       - "8000:8000"
     healthcheck:
@@ -70,13 +70,13 @@ services:
       HOSTNAME: "0.0.0.0"
       PORT: "3000"
       API_INTERNAL_BASE_URL: "http://api:8000"
-      DATABASE_URL: ${WEB_DATABASE_URL:-postgresql://aalie:aalie-local-only@postgres:5432/aalie}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-only-change-me}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-http://localhost:3000}
-      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-urn:aalie:api}
+      DATABASE_URL: ${WEB_DATABASE_URL:?WEB_DATABASE_URL is required}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL is required}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET is required}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:?AUTH_JWT_ISSUER is required}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:?AUTH_JWT_AUDIENCE is required}
     ports:
       - "3000:3000"
     healthcheck:

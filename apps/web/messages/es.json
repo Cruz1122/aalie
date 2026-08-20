@@ -36,7 +36,8 @@
     "signInGoogle": "Iniciar sesión con Google",
     "submitting": "Conectando con Google...",
     "signOut": "Cerrar sesión",
-    "oauthError": "No se pudo iniciar sesión. Inténtalo de nuevo."
+    "oauthError": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    "signOutError": "No se pudo cerrar sesión. Inténtalo de nuevo."
   },
   "profile": {
     "meta": {

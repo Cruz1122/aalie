@@ -62,7 +62,7 @@ Cada fila de las tablas siguientes es un compromiso contractual. Si una funciona
 | Ejemplos | Catálogo por categoría, temas, nivel de soporte | Implementado | `apps/web/src/app/[locale]/examples/` | Bajo |
 | i18n | es/en, next-intl, rutas localizadas, contenido bilingüe | Implementado | `apps/web/next-intl.config.js`, `apps/web/messages/` | Bajo |
 | CI/testing | 8 jobs, coverage gate 70%, oráculos, contract/system/fast lanes | Implementado | `.github/workflows/ci.yaml` | Bajo |
-| Docker | Docker Compose, builds de API, test de configuración | Implementado | `infra/docker-compose.yml`, `apps/api/Dockerfile` | Bajo |
+| Docker | Docker Compose, builds de API, test de configuración | Implementado | `infra/compose.yml`, `apps/api/Dockerfile` | Bajo |
 | Despliegue | Variables de entorno multi-capa, local/Docker, BFF proxy | Implementado | `infra/`, `docs/06-operations/environment-variables.md` | Bajo |
 | Diagramas deterministas | Diagramas de flujo, árboles de recursión sin LLM | Implementado | `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS` | Bajo |
 

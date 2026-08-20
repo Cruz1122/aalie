@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 
 import { Link } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth-client";
 
 type ProfileUser = {
   name: string;
@@ -12,53 +12,17 @@ type ProfileUser = {
   emailVerified: boolean;
 };
 
-type ProfileResponse = {
-  authenticated: boolean;
-  user: ProfileUser | null;
-};
-
-type LoadState = "loading" | "ready" | "unauthenticated" | "error";
-
 export default function ProfileView() {
   const t = useTranslations("profile");
-  const [state, setState] = useState<LoadState>("loading");
-  const [user, setUser] = useState<ProfileUser | null>(null);
-  const [requestVersion, setRequestVersion] = useState(0);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadProfile() {
-      setState("loading");
-
-      try {
-        const response = await fetch("/api/me", {
-          cache: "no-store",
-          signal: controller.signal,
-        });
-
-        if (!response.ok) throw new Error("Unable to load profile");
-
-        const result = (await response.json()) as ProfileResponse;
-        if (!result.authenticated || !result.user) {
-          setUser(null);
-          setState("unauthenticated");
-          return;
-        }
-
-        setUser(result.user);
-        setState("ready");
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError")
-          return;
-        setUser(null);
-        setState("error");
-      }
-    }
-
-    void loadProfile();
-    return () => controller.abort();
-  }, [requestVersion]);
+  const { data: session, error, isPending, refetch } = authClient.useSession();
+  const user = (session?.user as ProfileUser | undefined) ?? null;
+  const state = isPending
+    ? "loading"
+    : error
+      ? "error"
+      : user
+        ? "ready"
+        : "unauthenticated";
 
   const isUniversityMember =
     user?.email.toLowerCase().endsWith("@ucaldas.edu.co") ?? false;
@@ -87,7 +51,7 @@ export default function ProfileView() {
           </p>
           <button
             type="button"
-            onClick={() => setRequestVersion((version) => version + 1)}
+            onClick={() => void refetch()}
             className="text-sm font-semibold text-white underline decoration-white/30 underline-offset-4 transition hover:decoration-white"
           >
             {t("error.retry")}

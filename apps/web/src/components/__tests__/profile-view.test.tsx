@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ProfileView from "@/components/ProfileView";
 
@@ -28,16 +28,25 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 
+const { mockUseSession } = vi.hoisted(() => ({ mockUseSession: vi.fn() }));
+
+vi.mock("@/lib/auth-client", () => ({
+  authClient: { useSession: mockUseSession },
+}));
+
 describe("ProfileView", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
+  beforeEach(() => {
+    mockUseSession.mockReturnValue({
+      data: null,
+      error: null,
+      isPending: false,
+      refetch: vi.fn(),
+    });
   });
 
-  it("loads and displays the authenticated profile from the API", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        authenticated: true,
+  it("displays the authenticated profile from the shared session store", () => {
+    mockUseSession.mockReturnValue({
+      data: {
         user: {
           id: "user-1",
           name: "Ada Lovelace",
@@ -46,20 +55,15 @@ describe("ProfileView", () => {
           createdAt: "2026-08-19T12:00:00.000Z",
           role: "USER",
         },
-      }),
+      },
+      error: null,
+      isPending: false,
+      refetch: vi.fn(),
     });
-    vi.stubGlobal("fetch", fetchMock);
 
     render(<ProfileView />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
-    });
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/me",
-      expect.objectContaining({ cache: "no-store" }),
-    );
+    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
     expect(screen.getByText("ada@ucaldas.edu.co")).toBeInTheDocument();
     const verifiedBadge = screen.getByRole("img", {
       name: "Verified email",

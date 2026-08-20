@@ -64,6 +64,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit production JavaScript dependencies
+        run: pnpm audit --prod --audit-level high
+
       # Build packages en orden correcto
       - name: Build @aa/types
         run: pnpm -C packages/types build
@@ -97,6 +100,12 @@ jobs:
           if [ -f requirements.txt ]; then 
             pip install -r requirements.txt
           fi
+
+      - name: Audit Python runtime dependencies
+        working-directory: apps/api
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --skip-editable
 
       - name: FastAPI smoke test
         run: python -c "import fastapi; print('✅ FastAPI:', fastapi.__version__)"
@@ -504,8 +513,8 @@ jobs:
 
       - name: Validate production Compose contract
         run: |
-          docker compose -f infra/docker-compose.prod.yml config --quiet
-          docker compose -f infra/docker-compose.prod.yml config --format json > /tmp/aalie-prod-compose.json
+          docker compose -f infra/compose.prod.yml config --quiet
+          docker compose -f infra/compose.prod.yml config --format json > /tmp/aalie-prod-compose.json
           python3 - <<'PY'
           import json
 
@@ -517,16 +526,23 @@ jobs:
           assert services["postgres"]["volumes"][0]["target"] == "/var/lib/postgresql"
           assert not services["postgres"].get("ports")
           PY
-          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development' infra/docker-compose.prod.yml
+          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development' infra/compose.prod.yml
 
       - name: Build production images
-        run: docker compose -f infra/docker-compose.prod.yml build
+        run: |
+          printf '%s\n' 'AALIE_DOCKER_CANARY=must-not-reach-image' > apps/api/.env
+          docker compose -f infra/compose.prod.yml build
+
+      - name: Verify local env files are absent from final images
+        run: |
+          docker run --rm --entrypoint sh aalie-api:prod -c \
+            "! grep -R -F 'must-not-reach-image' /usr/src/app /opt/venv 2>/dev/null"
 
       - name: Migrate and start production stack
         run: |
-          docker compose -f infra/docker-compose.prod.yml up -d --wait postgres
-          docker compose -f infra/docker-compose.prod.yml run --rm --no-deps api alembic upgrade head
-          docker compose -f infra/docker-compose.prod.yml up -d --wait
+          docker compose -f infra/compose.prod.yml up -d --wait postgres
+          docker compose -f infra/compose.prod.yml run --rm --no-deps api alembic upgrade head
+          docker compose -f infra/compose.prod.yml up -d --wait
 
       - name: Validate persistence and backup/restore
         run: |
@@ -534,7 +550,7 @@ jobs:
           printf '%s\n' 'AALIE_TAG=0000000000000000000000000000000000000000' > /tmp/aalie-ci-tag.env
           printf '%s\n' 'POSTGRES_DB=aalie_ci' 'POSTGRES_USER=aalie_ci' 'POSTGRES_PASSWORD=aalie_ci_password' 'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'BETTER_AUTH_URL=http://localhost:3000' 'BETTER_AUTH_SECRET=ci-only-not-a-secret' 'GOOGLE_CLIENT_ID=ci-client-id' 'GOOGLE_CLIENT_SECRET=ci-client-secret' 'AUTH_JWT_ISSUER=http://localhost:3000' 'AUTH_JWT_AUDIENCE=urn:aalie:api' 'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' > /tmp/aalie-ci-runtime.env
           chmod 600 /tmp/aalie-ci-tag.env /tmp/aalie-ci-runtime.env
-          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/docker-compose.prod.yml" ENV_FILE=/tmp/aalie-ci-tag.env RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-ci-backups/aalie.dump
+          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/compose.prod.yml" ENV_FILE=/tmp/aalie-ci-tag.env RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-ci-backups/aalie.dump
 
       - name: Verify non-root runtime, DNS and no source mounts
         run: |
@@ -542,15 +558,36 @@ jobs:
           test "$(docker inspect -f '{{.Config.User}}' aalie-api)" = "aalie"
           test "$(docker inspect -f '{{len .Mounts}}' aalie-web)" = "0"
           test "$(docker inspect -f '{{len .Mounts}}' aalie-api)" = "0"
-          docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://api:8000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-          docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+          docker compose -f infra/compose.prod.yml exec -T web node -e "fetch('http://api:8000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+          docker compose -f infra/compose.prod.yml exec -T web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
       - name: Run critical production smoke
         run: python3 scripts/smoke_prod.py
+
+      - name: Smoke auth session and JWKS endpoints
+        run: |
+          python3 - <<'PY'
+          import json
+          import urllib.error
+          import urllib.request
+
+          with urllib.request.urlopen("http://127.0.0.1:3000/api/auth/jwks", timeout=5) as response:
+              keys = json.load(response)["keys"]
+          assert keys and all(k["alg"] == "EdDSA" and k["crv"] == "Ed25519" for k in keys)
+
+          with urllib.request.urlopen("http://127.0.0.1:3000/api/auth/get-session", timeout=5) as response:
+              assert json.load(response) is None
+          try:
+              urllib.request.urlopen("http://127.0.0.1:3000/api/auth/token", timeout=5)
+          except urllib.error.HTTPError as error:
+              assert error.code == 401
+          else:
+              raise AssertionError("Unauthenticated token minting must be rejected")
+          PY
 
       - name: Validate SIGTERM during PDF export
         run: python3 scripts/test_sigterm_pdf.py
 
       - name: Stop production stack
         if: always()
-        run: docker compose -f infra/docker-compose.prod.yml down --remove-orphans
+        run: docker compose -f infra/compose.prod.yml down --remove-orphans

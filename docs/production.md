@@ -13,21 +13,21 @@ El navegador solo conoce `aalie-web`. Las operaciones de análisis, trace, quizz
 
 ## Desarrollo vs producción
 
-Desarrollo conserva `infra/docker-compose.yml`: usa bind mounts, instalación de dependencias y hot reload.
+Desarrollo conserva `infra/compose.yml`: usa bind mounts, instalación de dependencias y hot reload.
 
-Producción usa `infra/docker-compose.prod.yml`: no usa bind mounts, no instala dependencias al arrancar y ejecuta Next standalone y Uvicorn sin reload.
+Producción usa `infra/compose.prod.yml`: no usa bind mounts, no instala dependencias al arrancar y ejecuta Next standalone y Uvicorn sin reload.
 
 OCI usa `infra/oci/compose.yml`: consume imágenes ARM64 ya publicadas en GHCR, mantiene web/API privadas y expone solo Caddy en 80/443.
 
 ```bash
 # Producción local
-docker compose -f infra/docker-compose.prod.yml build
-docker compose -f infra/docker-compose.prod.yml up -d --wait
-docker compose -f infra/docker-compose.prod.yml run --rm --no-deps api alembic upgrade head
+docker compose -f infra/compose.prod.yml build
+docker compose -f infra/compose.prod.yml up -d --wait
+docker compose -f infra/compose.prod.yml run --rm --no-deps api alembic upgrade head
 python scripts/smoke_prod.py
 
 # Detener
-docker compose -f infra/docker-compose.prod.yml down
+docker compose -f infra/compose.prod.yml down
 ```
 
 `docker compose down` conserva el volumen nombrado de PostgreSQL. `docker compose down -v` elimina los volúmenes y, por tanto, los datos persistentes; no debe usarse en producción.
@@ -93,7 +93,7 @@ El pipeline mantiene dos pasadas de `pdflatex`: la primera prepara referencias a
 Ejecutado dentro de `aalie-api:prod` con el caso real `triangular(n)`, un PDF con diagramas de trace:
 
 ```bash
-docker compose -f infra/docker-compose.prod.yml exec -T api \
+docker compose -f infra/compose.prod.yml exec -T api \
   python scripts/benchmark_pdf.py --warm 5 --concurrency 1,2,5
 ```
 

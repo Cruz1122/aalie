@@ -12,7 +12,7 @@ on:
     paths:
       - "apps/**"
       - "packages/**"
-      - "infra/docker-compose.prod.yml"
+      - "infra/compose.prod.yml"
       - "infra/oci/**"
       - "scripts/smoke_prod.py"
       - "apps/api/uv.lock"
@@ -23,7 +23,7 @@ on:
     paths:
       - "apps/**"
       - "packages/**"
-      - "infra/docker-compose.prod.yml"
+      - "infra/compose.prod.yml"
       - "infra/oci/**"
       - "scripts/smoke_prod.py"
       - "apps/api/uv.lock"
@@ -138,16 +138,16 @@ jobs:
 
       - name: Migrate and start production Compose stack
         run: |
-          docker compose --file infra/docker-compose.prod.yml up --detach --wait postgres
-          docker compose --file infra/docker-compose.prod.yml run --rm --no-deps api alembic upgrade head
-          docker compose --file infra/docker-compose.prod.yml up --detach --wait
+          docker compose --file infra/compose.prod.yml up --detach --wait postgres
+          docker compose --file infra/compose.prod.yml run --rm --no-deps api alembic upgrade head
+          docker compose --file infra/compose.prod.yml up --detach --wait
 
       - name: Verify ARM64 runtime and non-root users
         run: |
-          docker compose --file infra/docker-compose.prod.yml exec --no-TTY api sh -c 'uname -m; python --version; python -c "import platform; print(platform.machine())"; pdflatex --version | sed -n "1p"; id -un'
-          docker compose --file infra/docker-compose.prod.yml exec --no-TTY web sh -c 'uname -m; node --version; id -un'
-          docker compose --file infra/docker-compose.prod.yml exec --no-TTY postgres sh -c 'uname -m; postgres --version; id -un'
-          docker compose --file infra/docker-compose.prod.yml exec --no-TTY web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+          docker compose --file infra/compose.prod.yml exec --no-TTY api sh -c 'uname -m; python --version; python -c "import platform; print(platform.machine())"; pdflatex --version | sed -n "1p"; id -un'
+          docker compose --file infra/compose.prod.yml exec --no-TTY web sh -c 'uname -m; node --version; id -un'
+          docker compose --file infra/compose.prod.yml exec --no-TTY postgres sh -c 'uname -m; postgres --version; id -un'
+          docker compose --file infra/compose.prod.yml exec --no-TTY web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
       - name: Validate PostgreSQL persistence and restore on ARM64
         run: |
@@ -155,7 +155,7 @@ jobs:
           printf '%s\n' 'AALIE_TAG=0000000000000000000000000000000000000000' > /tmp/aalie-arm64-tag.env
           printf '%s\n' 'POSTGRES_DB=aalie' 'POSTGRES_USER=aalie' 'POSTGRES_PASSWORD=aalie-local-only' 'API_DATABASE_URL=postgresql+psycopg://aalie:aalie-local-only@postgres:5432/aalie' 'WEB_DATABASE_URL=postgresql://aalie:aalie-local-only@postgres:5432/aalie' 'BETTER_AUTH_URL=http://localhost:3000' 'BETTER_AUTH_SECRET=ci-only-not-a-secret' 'GOOGLE_CLIENT_ID=ci-client-id' 'GOOGLE_CLIENT_SECRET=ci-client-secret' 'AUTH_JWT_ISSUER=http://localhost:3000' 'AUTH_JWT_AUDIENCE=urn:aalie:api' 'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' > /tmp/aalie-arm64-runtime.env
           chmod 600 /tmp/aalie-arm64-tag.env /tmp/aalie-arm64-runtime.env
-          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/docker-compose.prod.yml" ENV_FILE=/tmp/aalie-arm64-tag.env RUNTIME_ENV_FILE=/tmp/aalie-arm64-runtime.env bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-arm64-backups/aalie.dump
+          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/compose.prod.yml" ENV_FILE=/tmp/aalie-arm64-tag.env RUNTIME_ENV_FILE=/tmp/aalie-arm64-runtime.env bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-arm64-backups/aalie.dump
 
       - name: Run complete production smoke
         run: python3 scripts/smoke_prod.py
@@ -196,15 +196,15 @@ jobs:
 
       - name: Validate shutdown with SIGTERM
         if: always()
-        run: docker compose --file infra/docker-compose.prod.yml kill --signal SIGTERM web api || true
+        run: docker compose --file infra/compose.prod.yml kill --signal SIGTERM web api || true
 
       - name: Collect service logs
         if: always()
-        run: docker compose --file infra/docker-compose.prod.yml logs --no-color
+        run: docker compose --file infra/compose.prod.yml logs --no-color
 
       - name: Clean up stack
         if: always()
-        run: docker compose --file infra/docker-compose.prod.yml down --remove-orphans
+        run: docker compose --file infra/compose.prod.yml down --remove-orphans
 
   deploy-production:
     name: Deploy production

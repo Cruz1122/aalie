@@ -4,9 +4,25 @@
 .DS_Store
 Thumbs.db
 
+# Local secrets (examples remain buildable/documented)
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+
 # Node / pnpm
 node_modules
 **/node_modules
+**/node_modules/**
+packages/*/node_modules
+packages/*/node_modules/**
+packages/content-catalog/node_modules
+packages/content-catalog/node_modules/**
+packages/grammar/node_modules
+packages/grammar/node_modules/**
+packages/types/node_modules
+packages/types/node_modules/**
 .pnpm-store
 **/.pnpm-store
 pnpm-debug.log*
@@ -17,6 +33,7 @@ out
 # Frontend build caches
 apps/web/.next
 apps/web/node_modules
+apps/web/node_modules/**
 
 # Python venv y cachés
 apps/api/.venv

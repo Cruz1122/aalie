@@ -14,7 +14,7 @@ Cubre build, tests, lint, Docker, contratos OCI, publicación GHCR y deploy prod
 
 - `.github/workflows/ci.yaml`
 - `.github/workflows/arm64-validation.yml`
-- `infra/docker-compose.prod.yml`
+- `infra/compose.prod.yml`
 - `infra/oci/compose.yml`
 
 ## Estructura
@@ -31,7 +31,7 @@ Cubre build, tests, lint, Docker, contratos OCI, publicación GHCR y deploy prod
 
 ### ARM64, GHCR y OCI
 
-`.github/workflows/arm64-validation.yml` corre en un runner Ubuntu ARM nativo cuando cambian runtime, paquetes o infraestructura productiva. Construye API/web, confirma `linux/arm64`, levanta `infra/docker-compose.prod.yml`, comprueba el health de Next dentro del contenedor y ejecuta el smoke completo.
+`.github/workflows/arm64-validation.yml` corre en un runner Ubuntu ARM nativo cuando cambian runtime, paquetes o infraestructura productiva. Construye API/web, confirma `linux/arm64`, levanta `infra/compose.prod.yml`, comprueba el health de Next dentro del contenedor y ejecuta el smoke completo.
 
 En pushes exitosos a `main` publica dos tags por imagen:
 

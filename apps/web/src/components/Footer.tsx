@@ -13,9 +13,9 @@ import {
 } from "@/hooks/useApiKey";
 import { Link, usePathname } from "@/i18n/navigation";
 
+import AuthControls from "./AuthControls";
 import HealthStatus from "./HealthStatus";
 import LocaleSwitcher from "./LocaleSwitcher";
-import AuthControls from "./AuthControls";
 
 type ApiKeyStatus = "none" | "invalid" | "valid" | "server" | "local";
 type ExpandedSetting = "server" | null;
@@ -34,8 +34,7 @@ export default function Footer() {
   const [hasLocalApiKey, setHasLocalApiKey] = useState<boolean>(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(true);
   const [showSettings, setShowSettings] = useState(false);
-  const [expandedSetting, setExpandedSetting] =
-    useState<ExpandedSetting>(null);
+  const [expandedSetting, setExpandedSetting] = useState<ExpandedSetting>(null);
 
   const openSettings = () => {
     setExpandedSetting(null);
@@ -399,14 +398,18 @@ export default function Footer() {
               className="inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
               href="/privacy"
             >
-              <span className="material-symbols-outlined footer-icon">policy</span>
+              <span className="material-symbols-outlined footer-icon">
+                policy
+              </span>
               {t("privacyPolicy")}
             </Link>
             <Link
               className="inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
               href="/terms"
             >
-              <span className="material-symbols-outlined footer-icon">gavel</span>
+              <span className="material-symbols-outlined footer-icon">
+                gavel
+              </span>
               {t("termsOfService")}
             </Link>
             <button
@@ -415,7 +418,9 @@ export default function Footer() {
               className="inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
               aria-label={t("settings")}
             >
-              <span className="material-symbols-outlined footer-icon">settings</span>
+              <span className="material-symbols-outlined footer-icon">
+                settings
+              </span>
               <span>{t("settings")}</span>
             </button>
             <AuthControls variant="footer" />
@@ -431,7 +436,9 @@ export default function Footer() {
               aria-label={t("back")}
               title={t("back")}
             >
-              <span className="material-symbols-outlined footer-icon">arrow_back</span>
+              <span className="material-symbols-outlined footer-icon">
+                arrow_back
+              </span>
             </button>
             <LocaleSwitcher showLabel />
             <button
@@ -441,7 +448,9 @@ export default function Footer() {
               title={getStatusText()}
               aria-label={`${t("artificialIntelligence")}: ${getStatusText()}`}
             >
-              <span className="material-symbols-outlined footer-icon">smart_toy</span>
+              <span className="material-symbols-outlined footer-icon">
+                smart_toy
+              </span>
               <span>{t("artificialIntelligence")}</span>
             </button>
             {expandedSetting === "server" ? (
@@ -457,7 +466,9 @@ export default function Footer() {
                 className="inline-flex w-[150px] items-center justify-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
                 aria-label={t("serverStatus")}
               >
-                <span className="material-symbols-outlined footer-icon">dns</span>
+                <span className="material-symbols-outlined footer-icon">
+                  dns
+                </span>
                 <span>{t("serverStatus")}</span>
               </button>
             )}

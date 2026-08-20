@@ -3,7 +3,7 @@
 **Tipo:** guía
 **Estado:** final
 **Audiencia:** dev | operador
-**Fuente de verdad:** `apps/api/Dockerfile`, `apps/web/Dockerfile`, `infra/docker-compose.yml`, `infra/docker-compose.prod.yml`, `infra/oci/compose.yml`, `.github/workflows/arm64-validation.yml`
+**Fuente de verdad:** `apps/api/Dockerfile`, `apps/web/Dockerfile`, `infra/compose.yml`, `infra/compose.prod.yml`, `infra/oci/compose.yml`, `.github/workflows/arm64-validation.yml`
 **Última revisión:** 2026-08-19
 **Relacionado con informe técnico:** local-development, environment-variables, troubleshooting, release-checklist
 
@@ -61,13 +61,13 @@ API_KEY=your-gemini-key docker compose up
 
 ### 3. Integración productiva local
 
-`infra/docker-compose.prod.yml` construye las imágenes de producción, ejecuta Next.js standalone y Uvicorn sin reload, y publica 3000/8000 únicamente para integración y smoke local/CI:
+`infra/compose.prod.yml` construye las imágenes de producción, ejecuta Next.js standalone y Uvicorn sin reload, y publica 3000/8000 únicamente para integración y smoke local/CI:
 
 ```bash
-docker compose -f infra/docker-compose.prod.yml build
-docker compose -f infra/docker-compose.prod.yml up -d --wait postgres
-docker compose -f infra/docker-compose.prod.yml run --rm --no-deps api alembic upgrade head
-docker compose -f infra/docker-compose.prod.yml up -d --wait
+docker compose -f infra/compose.prod.yml build
+docker compose -f infra/compose.prod.yml up -d --wait postgres
+docker compose -f infra/compose.prod.yml run --rm --no-deps api alembic upgrade head
+docker compose -f infra/compose.prod.yml up -d --wait
 python scripts/smoke_prod.py
 ```
 

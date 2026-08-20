@@ -19,6 +19,21 @@ export default function AuthControls({
   const t = useTranslations("auth");
   const { data: session, isPending } = authClient.useSession();
   const [isSignInFormOpen, setIsSignInFormOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState(false);
+
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    setSignOutError(false);
+    try {
+      const result = await authClient.signOut();
+      if (result.error) setSignOutError(true);
+    } catch {
+      setSignOutError(true);
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
 
   if (isPending) {
     return null;
@@ -54,43 +69,51 @@ export default function AuthControls({
   }
 
   return (
-    <div
-      className={
-        isFooter
-          ? "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text"
-          : "flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] p-1"
-      }
-    >
-      <Link
-        href="/profile"
-        className="group inline-flex items-center gap-1.5 rounded-lg px-1 text-slate-200 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-        aria-label={t("myProfile")}
-        title={t("myProfile")}
+    <div className="flex flex-col items-end gap-1">
+      <div
+        className={
+          isFooter
+            ? "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text"
+            : "flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] p-1"
+        }
       >
-        <span
-          className={`material-symbols-outlined leading-none text-slate-200 ${isFooter ? "footer-icon" : ""}`}
-          style={isFooter ? undefined : { fontSize: "20px" }}
-          aria-hidden
+        <Link
+          href="/profile"
+          className="group inline-flex items-center gap-1.5 rounded-lg px-1 text-slate-200 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+          aria-label={t("myProfile")}
+          title={t("myProfile")}
         >
-          account_circle
-        </span>
-        <span className={isFooter ? "" : "hidden md:inline"}>
-          {t("myProfile")}
-        </span>
-      </Link>
-      <button
-        type="button"
-        className="group flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-400/10 hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70"
-        onClick={() => authClient.signOut()}
-        aria-label={t("signOut")}
-        title={t("signOut")}
-      >
-        <span
-          className={`material-symbols-outlined transition-transform group-hover:translate-x-0.5 ${isFooter ? "footer-icon" : "text-[18px]"}`}
+          <span
+            className={`material-symbols-outlined leading-none text-slate-200 ${isFooter ? "footer-icon" : ""}`}
+            style={isFooter ? undefined : { fontSize: "20px" }}
+            aria-hidden
+          >
+            account_circle
+          </span>
+          <span className={isFooter ? "" : "hidden md:inline"}>
+            {t("myProfile")}
+          </span>
+        </Link>
+        <button
+          type="button"
+          className="group flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-400/10 hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70"
+          onClick={() => void handleSignOut()}
+          disabled={isSigningOut}
+          aria-label={t("signOut")}
+          title={t("signOut")}
         >
-          logout
+          <span
+            className={`material-symbols-outlined transition-transform group-hover:translate-x-0.5 ${isFooter ? "footer-icon" : "text-[18px]"}`}
+          >
+            logout
+          </span>
+        </button>
+      </div>
+      {signOutError && (
+        <span className="text-xs text-rose-300" role="alert">
+          {t("signOutError")}
         </span>
-      </button>
+      )}
     </div>
   );
 }

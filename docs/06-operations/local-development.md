@@ -3,7 +3,7 @@
 **Tipo:** guía
 **Estado:** final
 **Audiencia:** dev
-**Fuente de verdad:** `package.json`, `apps/web/package.json`, `apps/api/pyproject.toml`, `infra/docker-compose.yml`, `README.md`
+**Fuente de verdad:** `package.json`, `apps/web/package.json`, `apps/api/pyproject.toml`, `infra/compose.yml`, `README.md`
 **Última revisión:** 2026-08-19
 **Relacionado con informe técnico:** environment-variables, deployment, troubleshooting
 
@@ -118,18 +118,14 @@ Compose carga `apps/api/.env.example` y `apps/web/.env.example` como valores bas
 
 La web depende de `api`, por lo que Docker Compose garantiza el orden de inicio.
 
-El servicio PostgreSQL usa el volumen nombrado `postgres-dev-data` y no publica `5432` al host. Tras iniciar el stack, aplicar la baseline vacía una vez:
-
-```bash
-docker compose exec api alembic upgrade head
-```
+El servicio PostgreSQL usa el volumen nombrado `postgres-dev-data` y no publica `5432` al host. El contenedor de API ejecuta `alembic upgrade head` automáticamente antes de iniciar Uvicorn, también sobre un volumen nuevo.
 
 La URL de la API usa `postgresql+psycopg://`; la web usa `postgresql://`. No hay tablas de negocio en esta microfase.
 
 ### Volúmenes
 
 - `algoritmos-api`: monta `apps/api` y `packages/` para hot-reload
-- `algoritmos-web`: monta `apps/web` y `packages/` para hot-reload; usa volúmenes anónimos para `node_modules` a fin de no pisarlos con el bind mount
+- `algoritmos-web`: monta `apps/web` y `packages/` para hot-reload; usa volúmenes nombrados para `node_modules` y `.next`, evitando el filesystem lento de Docker Desktop para esos directorios
 
 ## Tests
 
@@ -177,7 +173,7 @@ python apps/api/scripts/report_quiz_bank_coverage.py --fail-on-critical
 ## Límites conocidos
 
 - Si falta el paquete Python de grammar, parse y tests del backend fallan.
-- `infra/docker-compose.yml` está orientado a desarrollo; el mismo Dockerfile contiene un runner standalone productivo usado por `infra/docker-compose.prod.yml` y `infra/oci/compose.yml`.
+- `infra/compose.yml` está orientado a desarrollo; el mismo Dockerfile contiene un runner standalone productivo usado por `infra/compose.prod.yml` y `infra/oci/compose.yml`.
 - `validate:content-catalog` no existe como script npm; la validación de contenido se hace mediante `test:docs-contracts` y los scripts Python del banco de quizzes.
 
 ## Archivos relacionados
