@@ -96,6 +96,26 @@ def test_invalid_claims_are_rejected(
     assert error.value.status_code == 401
 
 
+def test_missing_required_exp_claim_is_rejected(signing_material: Ed25519PrivateKey) -> None:
+    now = datetime.now(timezone.utc)
+    token = jwt.encode(
+        {
+            "sub": "user-123",
+            "role": "USER",
+            "iss": "http://localhost:3000",
+            "aud": "urn:aalie:api",
+            "iat": now,
+        },
+        signing_material,
+        algorithm="EdDSA",
+        headers={"kid": "key-1"},
+    )
+
+    with pytest.raises(HTTPException) as error:
+        auth._verify_token(token)
+    assert error.value.status_code == 401
+
+
 def test_unknown_kid_refreshes_jwks(
     signing_material: Ed25519PrivateKey, monkeypatch: pytest.MonkeyPatch
 ) -> None:
