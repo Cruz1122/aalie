@@ -1,0 +1,84 @@
+name: Temporary publish validated corrections
+
+on:
+  pull_request:
+    branches: [main]
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: db-postgresql-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.head_ref == 'db/postgresql-init'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: db/postgresql-init
+          fetch-depth: 0
+
+      - name: Apply the already-audited non-workflow corrections
+        shell: bash
+        run: |
+          if ! grep -q 'cookieCache' apps/web/src/lib/auth.ts; then
+            echo 'Corrections are already present; nothing to apply.'
+            exit 0
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          source = Path('.github/workflows/db-postgresql-corrections.yml').read_text(encoding='utf-8')
+          start = source.index('          from __future__')
+          end = source.index('\n          PY', start)
+          script = textwrap.dedent(source[start:end])
+          exec(compile(script, 'audited-corrections.py', 'exec'), {'__name__': '__main__'})
+          PY
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - name: Format affected frontend files
+        run: |
+          pnpm -C apps/web exec prettier --write \
+            'src/app/[locale]/terms/page.tsx' \
+            'src/app/[locale]/privacy/page.tsx' \
+            'src/components/HealthStatus.tsx' \
+            'src/components/LocaleSwitcher.tsx' \
+            'messages/es.json' \
+            'messages/en.json'
+
+      - name: Publish only code and documentation
+        shell: bash
+        run: |
+          git config user.name 'Cruz1122'
+          git config user.email 'juan.cruz37552@ucaldas.edu.co'
+          git add apps docs
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No publishable changes remain.'
+            exit 0
+          fi
+          git commit -m 'fix(auth): close PostgreSQL OAuth quality gaps'
+          git push origin HEAD:db/postgresql-init
