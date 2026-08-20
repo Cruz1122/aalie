@@ -27,7 +27,7 @@ mkdir -p "$(dirname "$BACKUP_FILE")"
 rm -f "$BACKUP_FILE"
 
 psql_as_app --command "CREATE TABLE IF NOT EXISTS persistence_probe (id integer PRIMARY KEY, value text NOT NULL); TRUNCATE persistence_probe; INSERT INTO persistence_probe VALUES (1, 'survives-down-up');"
-APP_DIR="$APP_DIR" COMPOSE_FILE="$COMPOSE_FILE" ENV_FILE="$ENV_FILE" RUNTIME_ENV_FILE="$RUNTIME_ENV_FILE" \
+env APP_DIR="$APP_DIR" COMPOSE_FILE="$COMPOSE_FILE" ENV_FILE="$ENV_FILE" RUNTIME_ENV_FILE="$RUNTIME_ENV_FILE" \
   bash "$(dirname "$0")/postgres-backup.sh" "$BACKUP_FILE"
 
 compose down --remove-orphans
@@ -38,7 +38,7 @@ value="$(psql_as_app --tuples-only --no-align --command "SELECT value FROM persi
 
 psql_as_app --command "DROP DATABASE IF EXISTS \"${RESTORE_DB}\";"
 psql_as_app --command "CREATE DATABASE \"${RESTORE_DB}\";"
-APP_DIR="$APP_DIR" COMPOSE_FILE="$COMPOSE_FILE" ENV_FILE="$ENV_FILE" RUNTIME_ENV_FILE="$RUNTIME_ENV_FILE" \
+env APP_DIR="$APP_DIR" COMPOSE_FILE="$COMPOSE_FILE" ENV_FILE="$ENV_FILE" RUNTIME_ENV_FILE="$RUNTIME_ENV_FILE" \
   bash "$(dirname "$0")/postgres-restore.sh" "$BACKUP_FILE" "$RESTORE_DB"
 
 restored="$(compose exec --no-TTY "$POSTGRES_SERVICE" sh -c \
