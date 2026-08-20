@@ -154,7 +154,7 @@ jobs:
         run: |
           mkdir -p /tmp/aalie-arm64-backups
           printf '%s\n' 'AALIE_TAG=0000000000000000000000000000000000000000' > /tmp/aalie-arm64-tag.env
-          printf '%s\n' 'POSTGRES_DB=aalie' 'POSTGRES_USER=aalie' 'POSTGRES_PASSWORD=aalie-local-only' 'API_DATABASE_URL=postgresql+psycopg://aalie:aalie-local-only@postgres:5432/aalie' 'WEB_DATABASE_URL=postgresql://aalie:aalie-local-only@postgres:5432/aalie' 'BETTER_AUTH_URL=http://localhost:3000' 'BETTER_AUTH_SECRET=ci-only-not-a-secret' 'GOOGLE_CLIENT_ID=ci-client-id' 'GOOGLE_CLIENT_SECRET=ci-client-secret' 'AUTH_JWT_ISSUER=http://localhost:3000' 'AUTH_JWT_AUDIENCE=urn:aalie:api' 'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' > /tmp/aalie-arm64-runtime.env
+          printf '%s\n' 'POSTGRES_DB=aalie_ci' 'POSTGRES_USER=aalie_ci' 'POSTGRES_PASSWORD=aalie_ci_password' 'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'BETTER_AUTH_URL=http://localhost:3000' 'BETTER_AUTH_SECRET=ci-only-not-a-secret' 'GOOGLE_CLIENT_ID=ci-client-id' 'GOOGLE_CLIENT_SECRET=ci-client-secret' 'AUTH_JWT_ISSUER=http://localhost:3000' 'AUTH_JWT_AUDIENCE=urn:aalie:api' 'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' > /tmp/aalie-arm64-runtime.env
           chmod 600 /tmp/aalie-arm64-tag.env /tmp/aalie-arm64-runtime.env
           APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/compose.prod.yml" ENV_FILE=/tmp/aalie-arm64-tag.env RUNTIME_ENV_FILE=/tmp/aalie-arm64-runtime.env bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-arm64-backups/aalie.dump
 
