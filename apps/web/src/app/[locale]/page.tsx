@@ -1,11 +1,13 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import AIModeView from "@/components/AIModeView";
+import AALIEIcon from "@/components/AALIEIcon";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import ManualModeView from "@/components/ManualModeView";
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
@@ -27,6 +29,15 @@ export default function HomePage() {
   const tView = useTranslations("analyzer.view");
   const { runAnalysis } = useRunAnalysis();
   const [chatOpen, setChatOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [homeIntroDone, setHomeIntroDone] = useState(false);
+  const [isManualTransitioning, setIsManualTransitioning] = useState(false);
+  const [manualTransitionTarget, setManualTransitionTarget] = useState<
+    "manual" | "ai" | null
+  >(null);
+  const handleEntranceComplete = useCallback(() => {
+    setHomeIntroDone(true);
+  }, []);
   const [inputMessage, setInputMessage] = useState("");
   const [isAnimating, setIsAnimating] = useState(false);
   const { messages, setMessages } = useChatHistory();
@@ -247,6 +258,16 @@ export default function HomePage() {
     setInputMessage("");
   };
 
+  const transitionToManual = (open: boolean) => {
+    setManualTransitionTarget(open ? "manual" : "ai");
+    setIsManualTransitioning(true);
+    window.setTimeout(() => setManualOpen(open), 500);
+    window.setTimeout(() => {
+      setIsManualTransitioning(false);
+      setManualTransitionTarget(null);
+    }, 1400);
+  };
+
   return (
     <div className="relative flex w-full min-h-screen flex-col overflow-x-hidden">
       <Header />
@@ -254,23 +275,78 @@ export default function HomePage() {
       <main className="z-10 flex flex-1 flex-col p-3 sm:p-4">
         <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col">
           <div className="flex min-h-0 flex-1 flex-col">
-            <AIModeView
-              chatOpen={chatOpen}
-              isAnimating={isAnimating}
-              inputMessage={inputMessage}
-              messages={messages}
-              setMessages={setMessages}
-              onInputChange={handleInputChange}
-              onKeyPress={handleKeyPress}
-              onSendMessage={handleSendMessage}
-              onSuggestionClick={handleSuggestionClick}
-              onClose={closeChatAndReset}
-              onAnalyzeCode={handleAnalyzeCodeFromChat}
-              assistantContext={assistantContext}
-            />
+            {manualOpen ? (
+              <ManualModeView
+                messages={messages}
+                setMessages={setMessages}
+                onOpenChat={() => {
+                  setManualOpen(false);
+                  setChatOpen(true);
+                }}
+                onSwitchToAIMode={() => transitionToManual(false)}
+              />
+            ) : (
+              <AIModeView
+                chatOpen={chatOpen}
+                isAnimating={isAnimating}
+                inputMessage={inputMessage}
+                messages={messages}
+                setMessages={setMessages}
+                onInputChange={handleInputChange}
+                onKeyPress={handleKeyPress}
+                onSendMessage={handleSendMessage}
+                onSuggestionClick={handleSuggestionClick}
+                onClose={closeChatAndReset}
+                onOpenManual={() => transitionToManual(true)}
+                animateEntrance={!homeIntroDone}
+                onEntranceComplete={handleEntranceComplete}
+                onAnalyzeCode={handleAnalyzeCodeFromChat}
+                assistantContext={assistantContext}
+              />
+            )}
           </div>
         </div>
       </main>
+
+      {manualOpen && (
+        <button
+          type="button"
+          onClick={() => transitionToManual(false)}
+          className="fixed right-4 top-16 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-purple-300/40 bg-gradient-to-br from-purple-500/25 to-violet-400/20 text-purple-100 transition-all duration-300 hover:scale-110 hover:border-purple-200/70 hover:bg-purple-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/70 sm:right-6 sm:top-20"
+          aria-label={locale === "es" ? "Volver a AALIE" : "Back to AALIE"}
+        >
+          <span className="material-symbols-outlined text-[22px] leading-none">
+            arrow_back
+          </span>
+        </button>
+      )}
+
+      {isManualTransitioning && manualTransitionTarget && (
+        <div className="mode-wipe" aria-hidden>
+          <div className="mode-wipe-content">
+            {manualTransitionTarget === "manual" ? (
+              <span
+                className="material-symbols-outlined leading-none text-blue-300"
+                style={{ fontSize: "clamp(8rem, 21vw, 15rem)" }}
+              >
+                terminal
+              </span>
+            ) : (
+              <AALIEIcon
+                className="h-[clamp(8rem,21vw,15rem)] w-[clamp(8rem,21vw,15rem)] text-purple-300"
+                size={240}
+              />
+            )}
+            <span className="mode-wipe-label">
+              {tHome(
+                manualTransitionTarget === "manual"
+                  ? "modeTransition.manual"
+                  : "modeTransition.ai",
+              )}
+            </span>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

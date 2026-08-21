@@ -10,6 +10,85 @@
   line-height: 1 !important;
 }
 
+.manual-prompt-enter {
+  animation: manualPromptEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mode-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: linear-gradient(135deg, #101a23 0%, #0f1419 100%);
+  overflow: hidden;
+  will-change: transform;
+  animation: modeWipe 1.4s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.mode-wipe-content {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  will-change: opacity, transform;
+  animation: modeWipeContent 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mode-wipe-label {
+  font-size: clamp(1.25rem, 3vw, 2.25rem);
+  line-height: 1;
+}
+
+@keyframes modeWipe {
+  0% {
+    transform: translateX(-105%);
+  }
+  34% {
+    transform: translateX(0);
+  }
+  66% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(105%);
+  }
+}
+
+@keyframes modeWipeContent {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.68);
+  }
+  36%,
+  66% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px) scale(1.03);
+  }
+}
+
+@keyframes manualPromptEnter {
+  0% {
+    opacity: 0;
+    transform: translateX(24px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
 /* Variables CSS */
 :root {
   --primary-color: #0d7ff2;
@@ -864,6 +943,40 @@ dialog::backdrop {
   }
   to {
     opacity: 0;
+  }
+}
+
+.error-state-content {
+  animation: errorStateContent 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.error-state-icon {
+  animation: errorStateIcon 1.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes errorStateContent {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes errorStateIcon {
+  0% {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.55) rotate(-12deg);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-0.25rem) scale(1.08) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
   }
 }
 
