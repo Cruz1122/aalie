@@ -19,7 +19,7 @@ Cubre todas las capacidades visibles en el monorepo a corte 2026-05-18. Cada cap
 
 - Código fuente en `apps/api/app/modules/`, `apps/web/src/app/`, `packages/`.
 - Tests en `apps/api/tests/`.
-- Configuración en `.github/workflows/ci.yaml`, `infra/docker-compose.yml`.
+- Configuración en `.github/workflows/ci.yaml`, `infra/compose.yml`.
 
 ## Contrato
 
@@ -121,7 +121,7 @@ Cada fila es un compromiso: si la capacidad está implementada, debe existir có
 | CI: Lint API | Sí | Job `lint-api` | Ruff check | Solo API | `05-quality/testing-strategy.md` |
 | CI: Docs contracts | Sí | Job `docs-contracts` | `scripts/check_docs_contracts.py` | Validación estructural | `05-quality/testing-strategy.md` |
 | CI: Quizzes quality | Sí | Job `quizzes-quality` | validate + coverage + tests | Falla en crítico | `08-content/content-validation.md` |
-| **Docker** | Sí | `infra/docker-compose.yml`, `apps/api/Dockerfile` | `docker compose build` | Solo API, web es Next.js standalone | `06-operations/deployment.md` |
+| **Docker** | Sí | `infra/compose.yml`, `apps/api/Dockerfile` | `docker compose build` | Solo API, web es Next.js standalone | `06-operations/deployment.md` |
 | Docker: compose config | Sí | CI job `docker-integration` | `docker compose config` | Valida sintaxis | `06-operations/deployment.md` |
 | Docker: API build | Sí | CI job `docker-integration` | `docker build -f apps/api/Dockerfile` | Imagen de producción | `06-operations/deployment.md` |
 

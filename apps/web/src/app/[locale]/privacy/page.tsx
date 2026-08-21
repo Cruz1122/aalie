@@ -31,6 +31,8 @@ export default async function PrivacyPage({ params }: Props) {
     "progress",
     "questions",
     "context",
+    "accountProfile",
+    "sessionTechnical",
     "key",
   ] as const;
   const notCollectedKeys = [

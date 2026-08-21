@@ -64,7 +64,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Build packages en orden correcto
+      - name: Audit production JavaScript dependencies
+        run: pnpm audit --prod --audit-level high
+
       - name: Build @aa/types
         run: pnpm -C packages/types build
 
@@ -78,11 +80,12 @@ jobs:
             fi
           fi
 
-      # Build crítico de web (debe pasar)
       - name: Build web app
         run: pnpm -C apps/web build
 
-      # Python setup y smoke test
+      - name: Test web app
+        run: pnpm -C apps/web test
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -94,17 +97,39 @@ jobs:
         working-directory: apps/api
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then 
+          if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           fi
+
+      - name: Audit Python runtime dependencies
+        working-directory: apps/api
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --skip-editable
 
       - name: FastAPI smoke test
         run: python -c "import fastapi; print('✅ FastAPI:', fastapi.__version__)"
 
   test-pr-gate:
-    name: "Tests (PR gate: fast + oracle, con cobertura)"
+    name: "Tests (PR gate: fast, coverage >=70%)"
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@127.0.0.1:5432/aalie_ci
+    services:
+      postgres:
+        image: postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296
+        env:
+          POSTGRES_DB: aalie_ci
+          POSTGRES_USER: aalie_ci
+          POSTGRES_PASSWORD: aalie_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aalie_ci -d aalie_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -131,17 +156,23 @@ jobs:
             echo "📦 Installing grammar package..."
             pip install -e packages/grammar/py
           else
-            echo "⚠️  Grammar package not found, tests may fail"
+            echo "⚠️ Grammar package not found, tests may fail"
           fi
+
+      - name: Apply database migrations
+        working-directory: apps/api
+        run: |
+          alembic upgrade head
+          test "$(alembic current)" != ""
 
       - name: Verify xdist availability
         run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
 
-      - name: Run PR gate lanes with coverage
+      - name: Run fast PR gate with coverage
         working-directory: apps/api
         run: |
-          echo "🧪 Running PR lanes: fast + oracle..."
-          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
+          echo "🧪 Running fast PR lane (oracle lane intentionally omitted)..."
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -155,14 +186,13 @@ jobs:
       - name: Test summary
         if: always()
         run: |
-          echo "✅ PR gate tests completed"
+          echo "✅ Fast PR gate completed"
           echo "📊 Coverage report available in artifacts"
 
   test-extended-lanes:
-    name: "Tests (extendido: contract + system, sin duplicar PR gate)"
+    name: "Tests (blocking: contract + system)"
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -189,16 +219,16 @@ jobs:
             echo "📦 Installing grammar package..."
             pip install -e packages/grammar/py
           else
-            echo "⚠️  Grammar package not found, tests may fail"
+            echo "⚠️ Grammar package not found, tests may fail"
           fi
 
       - name: Verify xdist availability
         run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
 
-      - name: Run extended validation lanes (non-blocking)
+      - name: Run contract and system validation lanes
         working-directory: apps/api
         run: |
-          echo "🧪 Running extended lanes: contract + system (PR gate ya cubre fast + oracle)..."
+          echo "🧪 Running blocking lanes: contract + system"
           pytest tests/ -v --tb=short -n auto --dist=worksteal -m "contract or system"
 
   test-nightly-lanes:
@@ -308,7 +338,6 @@ jobs:
       - name: Ruff linting (api)
         run: python -m ruff check apps/api --output-format=github
 
-
   docs-contracts:
     name: "Docs contracts (validate)"
     runs-on: ubuntu-latest
@@ -338,6 +367,18 @@ jobs:
       - name: Validate OCI Compose and private service ports
         env:
           AALIE_TAG: "0000000000000000000000000000000000000000"
+          POSTGRES_DB: aalie_ci
+          POSTGRES_USER: aalie_ci
+          POSTGRES_PASSWORD: aalie_ci_password
+          API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+          WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+          BETTER_AUTH_URL: http://localhost:3000
+          BETTER_AUTH_SECRET: ci-only-not-a-secret
+          GOOGLE_CLIENT_ID: ci-client-id
+          GOOGLE_CLIENT_SECRET: ci-client-secret
+          AUTH_JWT_ISSUER: http://localhost:3000
+          AUTH_JWT_AUDIENCE: urn:aalie:api
+          AUTH_JWKS_URL: http://web:3000/api/auth/jwks
         run: |
           docker compose -f infra/oci/compose.yml config --quiet
           docker compose -f infra/oci/compose.yml config --format json > /tmp/aalie-oci-compose.json
@@ -348,6 +389,21 @@ jobs:
               config = json.load(stream)
 
           services = config["services"]
+          postgres = services["postgres"]
+          assert postgres["image"] == "postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296"
+          assert not postgres.get("ports"), "PostgreSQL must not publish port 5432"
+          assert postgres["volumes"][0]["target"] == "/var/lib/postgresql"
+          assert postgres["healthcheck"]["test"][0] == "CMD-SHELL"
+          assert "pg_isready" in postgres["healthcheck"]["test"][1]
+          assert services["api"]["depends_on"]["postgres"]["condition"] == "service_healthy"
+          assert services["api"]["environment"]["DATABASE_URL"].startswith("postgresql+psycopg://")
+          assert services["web"]["environment"]["DATABASE_URL"].startswith("postgresql://")
+          assert "NEXT_PUBLIC_DATABASE_URL" not in services["web"].get("environment", {})
+          for name in ("BETTER_AUTH_URL", "BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+              assert name in services["web"]["environment"]
+          for name in ("AUTH_JWKS_URL", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+              assert name in services["api"]["environment"]
+          assert not any(name.startswith("NEXT_PUBLIC_") and "GOOGLE" in name for name in services["web"]["environment"])
           assert not services["api"].get("ports"), "API must not publish port 8000"
           assert not services["web"].get("ports"), "Web must not publish port 3000"
           for service_name in ("api", "web"):
@@ -367,10 +423,14 @@ jobs:
         run: |
           bash -n infra/oci/deploy/aalie-deploy
           bash -n infra/oci/scripts/host-health.sh
+          bash -n infra/oci/scripts/postgres-backup.sh
+          bash -n infra/oci/scripts/postgres-restore.sh
+          bash -n infra/oci/scripts/postgres-runtime-smoke.sh
+          bash -n infra/oci/scripts/promote-admin.sh
 
       - name: Validate OCI script line endings and idempotence guard
         run: |
-          for file in infra/oci/deploy/aalie-deploy infra/oci/scripts/host-health.sh; do
+          for file in infra/oci/deploy/aalie-deploy infra/oci/scripts/host-health.sh infra/oci/scripts/postgres-backup.sh infra/oci/scripts/postgres-restore.sh; do
             if LC_ALL=C grep -q $'\r' "$file"; then
               echo "CRLF detected in $file"
               exit 1
@@ -430,7 +490,20 @@ jobs:
     name: "Docker integration (production build + E2E smoke)"
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, oci-contracts, quizzes-quality]
+    needs: [build, test-pr-gate, test-extended-lanes, lint-web, lint-api, docs-contracts, oci-contracts, quizzes-quality]
+    env:
+      POSTGRES_DB: aalie_ci
+      POSTGRES_USER: aalie_ci
+      POSTGRES_PASSWORD: aalie_ci_password
+      API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+      WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ci-only-not-a-secret
+      GOOGLE_CLIENT_ID: ci-client-id
+      GOOGLE_CLIENT_SECRET: ci-client-secret
+      AUTH_JWT_ISSUER: http://localhost:3000
+      AUTH_JWT_AUDIENCE: urn:aalie:api
+      AUTH_JWKS_URL: http://web:3000/api/auth/jwks
 
     steps:
       - name: Checkout
@@ -438,14 +511,44 @@ jobs:
 
       - name: Validate production Compose contract
         run: |
-          docker compose -f infra/docker-compose.prod.yml config --quiet
-          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development|volumes:' infra/docker-compose.prod.yml
+          docker compose -f infra/compose.prod.yml config --quiet
+          docker compose -f infra/compose.prod.yml config --format json > /tmp/aalie-prod-compose.json
+          python3 - <<'PY'
+          import json
+
+          with open("/tmp/aalie-prod-compose.json", encoding="utf-8") as stream:
+              services = json.load(stream)["services"]
+          assert not services["api"].get("volumes")
+          assert not services["web"].get("volumes")
+          assert services["postgres"]["image"] == "postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296"
+          assert services["postgres"]["volumes"][0]["target"] == "/var/lib/postgresql"
+          assert not services["postgres"].get("ports")
+          PY
+          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development' infra/compose.prod.yml
 
       - name: Build production images
-        run: docker compose -f infra/docker-compose.prod.yml build
+        run: |
+          printf '%s\n' 'AALIE_DOCKER_CANARY=must-not-reach-image' > apps/api/.env
+          docker compose -f infra/compose.prod.yml build
 
-      - name: Start production stack and wait for health
-        run: docker compose -f infra/docker-compose.prod.yml up -d --wait
+      - name: Verify local env files are absent from final images
+        run: |
+          docker run --rm --entrypoint sh aalie-api:prod -c \
+            "! grep -R -F 'must-not-reach-image' /usr/src/app /opt/venv 2>/dev/null"
+
+      - name: Migrate and start production stack
+        run: |
+          docker compose -f infra/compose.prod.yml up -d --wait postgres
+          docker compose -f infra/compose.prod.yml run --rm --no-deps api alembic upgrade head
+          docker compose -f infra/compose.prod.yml up -d --wait
+
+      - name: Validate persistence and backup/restore
+        run: |
+          mkdir -p /tmp/aalie-ci-backups
+          printf '%s\n' 'AALIE_TAG=0000000000000000000000000000000000000000' > /tmp/aalie-ci-tag.env
+          printf '%s\n' 'POSTGRES_DB=aalie_ci' 'POSTGRES_USER=aalie_ci' 'POSTGRES_PASSWORD=aalie_ci_password' 'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'BETTER_AUTH_URL=http://localhost:3000' 'BETTER_AUTH_SECRET=ci-only-not-a-secret' 'GOOGLE_CLIENT_ID=ci-client-id' 'GOOGLE_CLIENT_SECRET=ci-client-secret' 'AUTH_JWT_ISSUER=http://localhost:3000' 'AUTH_JWT_AUDIENCE=urn:aalie:api' 'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' > /tmp/aalie-ci-runtime.env
+          chmod 600 /tmp/aalie-ci-tag.env /tmp/aalie-ci-runtime.env
+          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/compose.prod.yml" ENV_FILE=/tmp/aalie-ci-tag.env RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-ci-backups/aalie.dump
 
       - name: Verify non-root runtime, DNS and no source mounts
         run: |
@@ -453,15 +556,36 @@ jobs:
           test "$(docker inspect -f '{{.Config.User}}' aalie-api)" = "aalie"
           test "$(docker inspect -f '{{len .Mounts}}' aalie-web)" = "0"
           test "$(docker inspect -f '{{len .Mounts}}' aalie-api)" = "0"
-          docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://api:8000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-          docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+          docker compose -f infra/compose.prod.yml exec -T web node -e "fetch('http://api:8000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+          docker compose -f infra/compose.prod.yml exec -T web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
       - name: Run critical production smoke
         run: python3 scripts/smoke_prod.py
+
+      - name: Smoke auth session and JWKS endpoints
+        run: |
+          python3 - <<'PY'
+          import json
+          import urllib.error
+          import urllib.request
+
+          with urllib.request.urlopen("http://127.0.0.1:3000/api/auth/jwks", timeout=5) as response:
+              keys = json.load(response)["keys"]
+          assert keys and all(k["alg"] == "EdDSA" and k["crv"] == "Ed25519" for k in keys)
+
+          with urllib.request.urlopen("http://127.0.0.1:3000/api/auth/get-session", timeout=5) as response:
+              assert json.load(response) is None
+          try:
+              urllib.request.urlopen("http://127.0.0.1:3000/api/auth/token", timeout=5)
+          except urllib.error.HTTPError as error:
+              assert error.code == 401
+          else:
+              raise AssertionError("Unauthenticated token minting must be rejected")
+          PY
 
       - name: Validate SIGTERM during PDF export
         run: python3 scripts/test_sigterm_pdf.py
 
       - name: Stop production stack
         if: always()
-        run: docker compose -f infra/docker-compose.prod.yml down -v --remove-orphans
+        run: docker compose -f infra/compose.prod.yml down --remove-orphans

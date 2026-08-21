@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 
 from .core.config import get_cors_allowed_origins, get_cors_enabled
 from .modules.analysis.router import router as analyze_router
+from .modules.auth.router import router as auth_router
 from .modules.classification.router import router as classify_router
 from .modules.export.asset_registry import resolve_latex_asset_registry
 from .modules.export.router import router as export_router
@@ -85,6 +86,14 @@ def create_app() -> FastAPI:
             checks["quizzes"] = False
 
         checks["pdflatex"] = shutil.which("pdflatex") is not None
+
+        try:
+            from .core.database import check_database_connection
+
+            checks["postgresql"] = check_database_connection()
+        except Exception:
+            checks["postgresql"] = False
+
         ready = all(checks.values())
         return JSONResponse(
             {"ok": ready, "status": "ready" if ready else "not_ready", "checks": checks},
@@ -106,6 +115,7 @@ def create_app() -> FastAPI:
 
     app.include_router(parse_router)
     app.include_router(analyze_router)
+    app.include_router(auth_router)
     app.include_router(classify_router)
     app.include_router(llm_router)
     app.include_router(export_router)

@@ -3,7 +3,7 @@
 **Tipo:** guía
 **Estado:** final
 **Audiencia:** dev | operador
-**Fuente de verdad:** configuración del repo, errores observables en rutas, tests y Docker, `apps/api/app/core/config.py`, `infra/docker-compose.yml`, `infra/docker-compose.prod.yml`, `infra/oci/`
+**Fuente de verdad:** configuración del repo, errores observables en rutas, tests y Docker, `apps/api/app/core/config.py`, `infra/compose.yml`, `infra/compose.prod.yml`, `infra/oci/`
 **Última revisión:** 2026-08-19
 **Relacionado con informe técnico:** local-development, environment-variables, deployment, release-checklist
 

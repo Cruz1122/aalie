@@ -37,7 +37,7 @@ Cubre cambios en parser, análisis, trace, snapshot, export, APIs, docs crítica
 
 ## Límites conocidos
 
-- No existe un entorno staging equivalente a OCI; `infra/docker-compose.prod.yml` es el gate de integración productiva.
+- No existe un entorno staging equivalente a OCI; `infra/compose.prod.yml` es el gate de integración productiva.
 - La guía canónica de operación y rollback es `production-oci.md`; este documento resume el flujo de release.
 
 ## Archivos relacionados

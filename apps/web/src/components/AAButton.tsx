@@ -16,6 +16,7 @@ export type AAButtonVariant =
   | "purple"
   | "blue"
   | "cyan"
+  | "google"
   | "secondary";
 
 const VARIANT_CLASSES: Record<AAButtonVariant, string> = {
@@ -27,6 +28,8 @@ const VARIANT_CLASSES: Record<AAButtonVariant, string> = {
     "bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 text-white",
   blue: "bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 text-white",
   cyan: "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-cyan-500/30 text-white",
+  google:
+    "border border-white/80 bg-white text-slate-950 shadow-sm shadow-black/20 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50",
   secondary:
     "border border-white/10 hover:bg-white/5 hover:border-white/20 text-slate-300",
 };

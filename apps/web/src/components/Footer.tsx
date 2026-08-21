@@ -13,10 +13,12 @@ import {
 } from "@/hooks/useApiKey";
 import { Link, usePathname } from "@/i18n/navigation";
 
+import AuthControls from "./AuthControls";
 import HealthStatus from "./HealthStatus";
 import LocaleSwitcher from "./LocaleSwitcher";
 
 type ApiKeyStatus = "none" | "invalid" | "valid" | "server" | "local";
+type ExpandedSetting = "server" | null;
 
 export default function Footer() {
   const pathname = usePathname();
@@ -31,6 +33,18 @@ export default function Footer() {
   const [hasServerApiKey, setHasServerApiKey] = useState<boolean>(false);
   const [hasLocalApiKey, setHasLocalApiKey] = useState<boolean>(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [expandedSetting, setExpandedSetting] = useState<ExpandedSetting>(null);
+
+  const openSettings = () => {
+    setExpandedSetting(null);
+    setShowSettings(true);
+  };
+
+  const closeSettings = () => {
+    setShowSettings(false);
+    setExpandedSetting(null);
+  };
 
   // Función para actualizar el estado de API_KEY (memoizada sin dependencias problemáticas)
   const updateApiKeyStatus = useCallback(async () => {
@@ -310,61 +324,15 @@ export default function Footer() {
     }
   };
 
-  const getStatusStyle = () => {
-    if (isCheckingStatus) {
-      return "bg-blue-900/40 text-blue-300";
-    }
-
-    if (hasServerApiKey) {
-      return "bg-green-900/40 text-green-300";
-    }
-
-    if (hasLocalApiKey) {
-      return "bg-green-900/40 text-green-300";
-    }
-
-    switch (status) {
-      case "none":
-        return "bg-slate-900/40 text-slate-300";
-      case "invalid":
-        return "bg-red-900/40 text-red-300";
-      case "valid":
-        return "bg-green-900/40 text-green-300";
-      default:
-        return "bg-slate-900/40 text-slate-300";
-    }
-  };
-
-  const getStatusDot = () => {
-    if (isCheckingStatus) {
-      return "bg-blue-400";
-    }
-
-    if (hasServerApiKey || hasLocalApiKey) {
-      return "bg-green-400";
-    }
-
-    switch (status) {
-      case "none":
-        return "bg-slate-400";
-      case "invalid":
-        return "bg-red-400";
-      case "valid":
-        return "bg-green-400";
-      default:
-        return "bg-slate-400";
-    }
-  };
-
   return (
     <footer
       ref={footerRef}
-      className="glass-header relative z-40 shrink-0 px-3 sm:px-4 md:px-6 py-3"
+      className="glass-header relative z-40 min-h-[44px] shrink-0 px-3 py-3 sm:px-4 md:px-6"
     >
       {showInput ? (
         /* Input de API_KEY - reemplaza el contenido del footer cuando está activo */
         <div className="flex flex-col items-center justify-center gap-1">
-          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs w-full max-w-2xl min-w-0 px-2 sm:px-0">
+          <div className="flex h-5 flex-wrap items-center justify-center gap-1.5 text-xs w-full max-w-2xl min-w-0 px-2 sm:px-0">
             <input
               type="password"
               value={apiKey}
@@ -382,14 +350,14 @@ export default function Footer() {
                   : status === "valid"
                     ? "focus:ring-green-500/50"
                     : "focus:ring-slate-500/50"
-              } transition-all flex-1 min-w-[180px] h-6`}
+              } transition-all flex-1 min-w-[180px] h-5`}
               autoFocus
             />
             {isEditing && (
               <button
                 onClick={handleSave}
                 disabled={status !== "valid"}
-                className={`px-2 py-1 rounded-lg text-xs font-medium transition-all h-6 ${
+                className={`px-2 py-0.5 rounded-lg text-xs font-medium transition-all h-5 ${
                   status === "valid"
                     ? "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
                     : "bg-slate-500/20 text-slate-500 border border-slate-500/30 cursor-not-allowed"
@@ -401,14 +369,14 @@ export default function Footer() {
             {hasLocalApiKey && (
               <button
                 onClick={handleClear}
-                className="px-2 py-1 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all h-6"
+                className="px-2 py-0.5 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all h-5"
               >
                 {tCommon("delete")}
               </button>
             )}
             <button
               onClick={() => setShowInput(false)}
-              className="px-2 py-1 rounded-lg text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-slate-500/30 transition-all h-6"
+              className="px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-slate-500/30 transition-all h-5"
             >
               {tCommon("close")}
             </button>
@@ -418,54 +386,92 @@ export default function Footer() {
               {tApiKey("invalidHint")}
             </p>
           )}
-          {!hasServerApiKey && !hasLocalApiKey && (
-            <p className="text-slate-400 text-[10px] text-center max-w-xl leading-tight mt-0.5">
-              {tApiKey("geminiHintPre")}
-              <a
-                href="https://aistudio.google.com/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline"
-              >
-                {tApiKey("geminiHintLinkText")}
-              </a>
-              {tApiKey("geminiHintPost")}
-            </p>
-          )}
         </div>
       ) : (
         /* Enlaces y badges - contenido normal del footer */
-        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-y-3 sm:gap-y-0 sm:gap-x-3 md:gap-x-4 text-xs">
-          <div className="flex items-center gap-x-2 sm:gap-x-3 flex-wrap justify-center">
-            <a
-              className="text-dark-text hover:text-white transition-colors whitespace-nowrap"
-              href="https://ingenierias.ucaldas.edu.co"
-            >
-              {t("university")}
-            </a>
-            <span className="text-slate-600 hidden sm:inline">•</span>
+        <div className="grid">
+          <div
+            className={`col-start-1 row-start-1 flex min-h-5 flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs leading-none transition-opacity duration-300 ${showSettings ? "pointer-events-none opacity-0" : "opacity-100"}`}
+            aria-hidden={showSettings}
+          >
             <Link
-              className="text-dark-text hover:text-white transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
               href="/privacy"
             >
+              <span className="material-symbols-outlined footer-icon">
+                policy
+              </span>
               {t("privacyPolicy")}
             </Link>
-          </div>
-          <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap justify-center">
-            <span className="text-slate-600 hidden sm:inline">•</span>
-            <button
-              onClick={() => setShowInput(true)}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs cursor-pointer hover:opacity-80 transition-opacity ${getStatusStyle()}`}
+            <Link
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
+              href="/terms"
             >
-              <span
-                className={`inline-block h-1.5 w-1.5 rounded-full ${getStatusDot()}`}
-              />
-              {getStatusText()}
+              <span className="material-symbols-outlined footer-icon">
+                gavel
+              </span>
+              {t("termsOfService")}
+            </Link>
+            <button
+              type="button"
+              onClick={openSettings}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
+              aria-label={t("settings")}
+            >
+              <span className="material-symbols-outlined footer-icon">
+                settings
+              </span>
+              <span>{t("settings")}</span>
             </button>
-            <span className="text-slate-600 hidden sm:inline">•</span>
-            <HealthStatus />
-            <span className="text-slate-600 hidden sm:inline">•</span>
-            <LocaleSwitcher />
+            <AuthControls variant="footer" />
+          </div>
+          <div
+            className={`col-start-1 row-start-1 flex min-h-5 flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs leading-none transition-opacity duration-300 ${showSettings ? "opacity-100" : "pointer-events-none opacity-0"}`}
+            aria-hidden={!showSettings}
+          >
+            <button
+              type="button"
+              onClick={closeSettings}
+              className="inline-flex h-5 w-5 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label={t("back")}
+              title={t("back")}
+            >
+              <span className="material-symbols-outlined footer-icon">
+                arrow_back
+              </span>
+            </button>
+            <LocaleSwitcher showLabel />
+            <button
+              type="button"
+              onClick={() => setShowInput(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
+              title={getStatusText()}
+              aria-label={`${t("artificialIntelligence")}: ${getStatusText()}`}
+            >
+              <span className="material-symbols-outlined footer-icon">
+                smart_toy
+              </span>
+              <span>{t("artificialIntelligence")}</span>
+            </button>
+            {expandedSetting === "server" ? (
+              <HealthStatus
+                icon="dns"
+                onClick={() => setExpandedSetting(null)}
+                className="w-[150px] justify-center"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setExpandedSetting("server")}
+                className="inline-flex w-[150px] items-center justify-center gap-1.5 rounded-lg px-2 py-0.5 text-xs text-dark-text transition-colors hover:bg-white/10 hover:text-white"
+                aria-label={t("serverStatus")}
+              >
+                <span className="material-symbols-outlined footer-icon">
+                  dns
+                </span>
+                <span>{t("serverStatus")}</span>
+              </button>
+            )}
           </div>
         </div>
       )}

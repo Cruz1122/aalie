@@ -370,13 +370,12 @@ export default function ChatBot({
               </h4>
               <p className="text-slate-300 text-sm text-center leading-relaxed">
                 {t("apiKeyRequired")}{" "}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a
-                  href="https://aistudio.google.com/apikey"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/help/api-key"
                   className="text-blue-400 hover:text-blue-300 underline"
                 >
-                  {tFooter("googleAIStudio")}
+                  {t("apiKeyLink")}
                 </a>
                 .
               </p>
