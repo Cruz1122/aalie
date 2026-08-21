@@ -14,11 +14,27 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import Response
 
+from .pdf_concurrency import PdfCompilerBusy, pdf_compiler_gate
 from .service import ExportService
 
 router = APIRouter(prefix="/export", tags=["export"])
 export_service = ExportService()
 logger = logging.getLogger(__name__)
+
+
+def _needs_pdf(payload: Dict[str, Any]) -> bool:
+    render = payload.get("render")
+    if not isinstance(render, dict):
+        return False
+    formats = render.get("formats")
+    return isinstance(formats, list) and "pdf" in formats
+
+
+def _render(payload: Dict[str, Any]) -> Dict[str, Any]:
+    if not _needs_pdf(payload):
+        return export_service.render_report(payload)
+    with pdf_compiler_gate.slot():
+        return export_service.render_report(payload)
 
 
 @router.post("/report")
@@ -32,12 +48,24 @@ def export_report(request: Request, payload: Dict[str, Any] = Body(...)) -> Resp
         )
 
     try:
-        # Ensure we pass an origin so llm/compare (if enabled later) can still reach Next proxies.
         origin = request.headers.get("origin") or request.headers.get("referer")
         if origin and not payload.get("requestOrigin"):
             payload["requestOrigin"] = origin
 
-        result = export_service.render_report(payload)
+        result = _render(payload)
+    except PdfCompilerBusy:
+        return Response(
+            content=json.dumps(
+                {
+                    "ok": False,
+                    "code": "PDF_COMPILER_BUSY",
+                    "error": "PDF compiler is busy",
+                }
+            ),
+            status_code=503,
+            media_type="application/json",
+            headers={"Retry-After": "5"},
+        )
     except Exception as e:
         return Response(
             content=json.dumps(
@@ -51,14 +79,16 @@ def export_report(request: Request, payload: Dict[str, Any] = Body(...)) -> Resp
         )
 
     if not result.get("ok"):
-        # Expected structure:
-        # { ok:false, error, kind?, logs?, status? }
         error_message = str(result.get("error") or "Export failed")
         kind = result.get("kind")
         logs = result.get("logs")
         compiler_logs = result.get("compilerLogs")
         asset_manifest = result.get("assetManifest")
-        logger.error("Export failed (%s): %s", kind or "unknown", logs or compiler_logs or error_message)
+        logger.error(
+            "Export failed (%s): %s",
+            kind or "unknown",
+            logs or compiler_logs or error_message,
+        )
         body: Dict[str, Any] = {"ok": False, "error": error_message}
         if kind:
             body["kind"] = kind

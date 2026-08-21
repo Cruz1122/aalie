@@ -13,6 +13,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "server-only": path.resolve(__dirname, "./src/test/server-only.ts"),
       "@aa/grammar": path.resolve(__dirname, "../../packages/grammar/index.ts"),
       "@aa/types": path.resolve(__dirname, "../../packages/types/src/index.ts"),
       "@aa/content-catalog/server": path.resolve(
