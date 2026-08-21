@@ -18,17 +18,9 @@ on:
       - "apps/api/uv.lock"
       - "pnpm-lock.yaml"
       - ".github/workflows/arm64-validation.yml"
+      - ".github/workflows/deploy-production.yml"
   pull_request:
     branches: [main, develop]
-    paths:
-      - "apps/**"
-      - "packages/**"
-      - "infra/compose.prod.yml"
-      - "infra/oci/**"
-      - "scripts/smoke_prod.py"
-      - "apps/api/uv.lock"
-      - "pnpm-lock.yaml"
-      - ".github/workflows/arm64-validation.yml"
 
 concurrency:
   group: arm64-validation-${{ github.ref }}
@@ -39,7 +31,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    name: ARM64 native build and production smoke
+    name: ARM64 validation
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 90
     env:
@@ -103,6 +95,7 @@ jobs:
           }
           assert published == {(80, 80), (443, 443)}, published
           PY
+
           bash -n infra/oci/deploy/aalie-deploy
           bash -n infra/oci/scripts/host-health.sh
           bash -n infra/oci/scripts/postgres-backup.sh
@@ -111,6 +104,7 @@ jobs:
           bash -n infra/oci/scripts/postgres-restore-object-storage.sh
           bash -n infra/oci/scripts/postgres-runtime-smoke.sh
           bash -n infra/oci/scripts/promote-admin.sh
+
           docker run --rm \
             -v "$PWD/infra/oci/Caddyfile:/etc/caddy/Caddyfile:ro" \
             caddy:2.11.4-alpine \
@@ -156,9 +150,26 @@ jobs:
         run: |
           mkdir -p /tmp/aalie-arm64-backups
           printf '%s\n' 'AALIE_TAG=0000000000000000000000000000000000000000' > /tmp/aalie-arm64-tag.env
-          printf '%s\n' 'POSTGRES_DB=aalie_ci' 'POSTGRES_USER=aalie_ci' 'POSTGRES_PASSWORD=aalie_ci_password' 'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' 'BETTER_AUTH_URL=http://localhost:3000' 'BETTER_AUTH_SECRET=ci-only-not-a-secret' 'GOOGLE_CLIENT_ID=ci-client-id' 'GOOGLE_CLIENT_SECRET=ci-client-secret' 'AUTH_JWT_ISSUER=http://localhost:3000' 'AUTH_JWT_AUDIENCE=urn:aalie:api' 'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' > /tmp/aalie-arm64-runtime.env
+          printf '%s\n' \
+            'POSTGRES_DB=aalie_ci' \
+            'POSTGRES_USER=aalie_ci' \
+            'POSTGRES_PASSWORD=aalie_ci_password' \
+            'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' \
+            'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' \
+            'BETTER_AUTH_URL=http://localhost:3000' \
+            'BETTER_AUTH_SECRET=ci-only-not-a-secret' \
+            'GOOGLE_CLIENT_ID=ci-client-id' \
+            'GOOGLE_CLIENT_SECRET=ci-client-secret' \
+            'AUTH_JWT_ISSUER=http://localhost:3000' \
+            'AUTH_JWT_AUDIENCE=urn:aalie:api' \
+            'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' \
+            > /tmp/aalie-arm64-runtime.env
           chmod 600 /tmp/aalie-arm64-tag.env /tmp/aalie-arm64-runtime.env
-          APP_DIR=/tmp COMPOSE_FILE="$GITHUB_WORKSPACE/infra/compose.prod.yml" ENV_FILE=/tmp/aalie-arm64-tag.env RUNTIME_ENV_FILE=/tmp/aalie-arm64-runtime.env bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-arm64-backups/aalie.dump
+          APP_DIR=/tmp \
+          COMPOSE_FILE="$GITHUB_WORKSPACE/infra/compose.prod.yml" \
+          ENV_FILE=/tmp/aalie-arm64-tag.env \
+          RUNTIME_ENV_FILE=/tmp/aalie-arm64-runtime.env \
+          bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-arm64-backups/aalie.dump
 
       - name: Run complete production smoke
         run: python3 scripts/smoke_prod.py
@@ -208,58 +219,3 @@ jobs:
       - name: Clean up stack
         if: always()
         run: docker compose --file infra/compose.prod.yml down --remove-orphans
-
-  deploy-production:
-    name: Deploy production
-    needs: arm64-validation
-    if: >
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    environment:
-      name: "Production – aalie"
-      url: https://aalie.dev
-
-    concurrency:
-      group: aalie-production
-      cancel-in-progress: false
-
-    steps:
-      - name: Checkout smoke contract
-        uses: actions/checkout@v4
-
-      - name: Configure production SSH
-        shell: bash
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.OCI_SSH_KNOWN_HOSTS }}
-        run: |
-          install -m 700 -d ~/.ssh
-
-          printf '%s\n' "$SSH_PRIVATE_KEY" \
-            > ~/.ssh/aalie-production
-
-          chmod 600 ~/.ssh/aalie-production
-
-          printf '%s\n' "$SSH_KNOWN_HOSTS" \
-            > ~/.ssh/known_hosts
-
-          chmod 600 ~/.ssh/known_hosts
-
-      - name: Deploy exact commit to OCI
-        shell: bash
-        run: |
-          ssh \
-            -i ~/.ssh/aalie-production \
-            -o IdentitiesOnly=yes \
-            -o BatchMode=yes \
-            ubuntu@aalie.dev \
-            "deploy ${GITHUB_SHA}"
-
-      - name: Complete public production smoke
-        shell: bash
-        env:
-          AALIE_BASE_URL: https://aalie.dev
-          AALIE_API_URL: ""
-        run: python3 scripts/smoke_prod.py
