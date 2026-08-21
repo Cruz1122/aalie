@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from fastapi import HTTPException, Request
 import pytest
+from fastapi import HTTPException, Request
 
 from app.core.auth import IdentityClaims
 from app.modules.quizzes import router as quiz_router
