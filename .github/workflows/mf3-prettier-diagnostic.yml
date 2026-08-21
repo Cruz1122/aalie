@@ -1,0 +1,37 @@
+name: MF3 Prettier diagnostic
+
+on:
+  pull_request:
+    branches: [develop]
+
+concurrency:
+  group: mf3-prettier-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prettier-diff:
+    name: Canonical Prettier diff
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: pnpm
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Render canonical formatting diff
+        run: |
+          pnpm -C apps/web exec prettier --write .
+          git diff --check
+          git diff --exit-code -- apps/web
