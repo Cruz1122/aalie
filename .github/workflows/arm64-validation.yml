@@ -19,7 +19,7 @@ on:
       - "pnpm-lock.yaml"
       - ".github/workflows/arm64-validation.yml"
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "apps/**"
       - "packages/**"
@@ -107,6 +107,8 @@ jobs:
           bash -n infra/oci/scripts/host-health.sh
           bash -n infra/oci/scripts/postgres-backup.sh
           bash -n infra/oci/scripts/postgres-restore.sh
+          bash -n infra/oci/scripts/postgres-backup-object-storage.sh
+          bash -n infra/oci/scripts/postgres-restore-object-storage.sh
           bash -n infra/oci/scripts/postgres-runtime-smoke.sh
           bash -n infra/oci/scripts/promote-admin.sh
           docker run --rm \
