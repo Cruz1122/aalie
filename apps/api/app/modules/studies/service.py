@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from ...db.models.mf3 import (
     Study,
     StudyConsent,
+    StudyEvent,
     StudyIdentityLink,
     StudyMeasurement,
     StudyParticipant,
@@ -204,6 +205,20 @@ def withdraw_from_study(db: Session, *, study: Study, user_id: str) -> StudyPart
     return participant
 
 
+def _participant_has_evidence(db: Session, participant_id: UUID) -> bool:
+    evidence_models = (StudyQuizAttempt, StudyEvent, StudyMeasurement)
+    return any(
+        bool(
+            db.scalar(
+                select(func.count())
+                .select_from(model)
+                .where(model.participant_id == participant_id)
+            )
+        )
+        for model in evidence_models
+    )
+
+
 def assign_condition(
     db: Session,
     *,
@@ -217,12 +232,11 @@ def assign_condition(
     if condition not in STUDY_CONDITIONS:
         raise HTTPException(status_code=400, detail="Invalid study condition")
 
-    evidence_exists = db.scalar(
-        select(func.count())
-        .select_from(StudyQuizAttempt)
-        .where(StudyQuizAttempt.participant_id == participant.id)
-    )
-    if participant.condition is not None and participant.condition != condition and evidence_exists:
+    if (
+        participant.condition is not None
+        and participant.condition != condition
+        and _participant_has_evidence(db, participant.id)
+    ):
         raise HTTPException(
             status_code=409,
             detail="Condition is immutable after experimental evidence exists",
