@@ -22,6 +22,7 @@ from ..quizzes.schemas import (
     QuizQuestion,
     QuizSelectionRequest,
     QuizSession,
+    QuizSessionPreferences,
     QuizSessionResult,
 )
 from ..quizzes.selector import select_questions
@@ -103,6 +104,13 @@ def _server_selection_request(
     progress: StudyQuizProgress,
     recent_results: list[dict[str, object]],
 ) -> QuizSelectionRequest:
+    # In research mode, client-side/localStorage adaptive state is never authoritative.
+    # The client may request the pedagogical module and a bounded session length, while
+    # difficulty/topic/skill adaptation comes exclusively from persisted server progress.
+    preferences = QuizSessionPreferences(
+        questionCount=max(1, min(int(payload.sessionPreferences.questionCount), 20)),
+        moduleId=payload.sessionPreferences.moduleId,
+    )
     return QuizSelectionRequest(
         studentId=None,
         studiedContentRefs=[],
@@ -111,7 +119,7 @@ def _server_selection_request(
         weakTopics=list(progress.last_failed_topic_ids or []),
         recentResults=recent_results,
         recentQuestionIds=list(progress.recent_question_ids or []),
-        sessionPreferences=payload.sessionPreferences,
+        sessionPreferences=preferences,
         locale=payload.locale,
     )
 
