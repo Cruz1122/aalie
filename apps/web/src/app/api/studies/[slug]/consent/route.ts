@@ -1,9 +1,6 @@
 import type { NextRequest } from "next/server";
 
-import {
-  STUDY_COOKIE_NAME,
-  studyCookieOptions,
-} from "@/lib/bff/identity";
+import { STUDY_COOKIE_NAME, studyCookieOptions } from "@/lib/bff/identity";
 import { POLICIES } from "@/lib/bff/policies";
 import { proxyApiRequest } from "@/lib/bff/proxy";
 

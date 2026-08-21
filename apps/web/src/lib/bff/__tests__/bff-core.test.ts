@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { readJsonBody } from "../body";
-import { validStudySlug, validVisitorId, visitorCookieOptions } from "../identity";
+import {
+  validStudySlug,
+  validVisitorId,
+  visitorCookieOptions,
+} from "../identity";
 import { buildBackendHeaders, copySafeResponseHeaders } from "../proxy";
 import type { BffRequestContext } from "../request-context";
 
@@ -35,7 +39,10 @@ describe("MF3 BFF boundary", () => {
   it("enforces the actual body size instead of trusting Content-Length", async () => {
     const request = new Request("http://aalie.test/api", {
       method: "POST",
-      headers: { "content-type": "application/json", "content-length": "1" },
+      headers: {
+        "content-type": "application/json",
+        "content-length": "1",
+      },
       body: JSON.stringify({ source: "x".repeat(512) }),
     });
     await expect(readJsonBody(request, 128)).rejects.toMatchObject({
@@ -45,7 +52,12 @@ describe("MF3 BFF boundary", () => {
   });
 
   it("constructs identity headers only from server context", () => {
-    const headers = buildBackendHeaders(context, "signed.jwt.token", {}, "/quizzes/attempts");
+    const headers = buildBackendHeaders(
+      context,
+      "signed.jwt.token",
+      {},
+      "/quizzes/attempts",
+    );
     expect(headers.get("authorization")).toBe("Bearer signed.jwt.token");
     expect(headers.get("x-aalie-study-slug")).toBe("study-v1");
     expect(headers.has("x-aalie-user")).toBe(false);

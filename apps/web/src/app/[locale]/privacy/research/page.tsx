@@ -28,13 +28,27 @@ export default async function ResearchPrivacyPage({ params }: Props) {
             </p>
           </header>
 
-          <Section title={es ? "Datos que puede registrar el estudio" : "Data a study may record"}>
+          <Section
+            title={
+              es ? "Datos que puede registrar el estudio" : "Data a study may record"
+            }
+          >
             <ul className="space-y-2">
-              <li>• participant ID pseudónimo y condición experimental AALIE o CONTROL;</li>
-              <li>• versión y hash del consentimiento y su historial de aceptación o retiro;</li>
-              <li>• IDs, versiones y fingerprints de preguntas mostradas, puntajes y notas de quiz;</li>
+              <li>
+                • participant ID pseudónimo y condición experimental AALIE o CONTROL;
+              </li>
+              <li>
+                • versión y hash del consentimiento y su historial de aceptación o retiro;
+              </li>
+              <li>
+                • IDs, versiones y fingerprints de preguntas mostradas, puntajes y notas de
+                quiz;
+              </li>
               <li>• uso de funcionalidades allowlisted y duración de operaciones;</li>
-              <li>• measurements académicas registradas por el protocolo, con métrica y versión.</li>
+              <li>
+                • measurements académicas registradas por el protocolo, con métrica y
+                versión.
+              </li>
             </ul>
           </Section>
 
@@ -46,7 +60,13 @@ export default async function ResearchPrivacyPage({ params }: Props) {
             </p>
           </Section>
 
-          <Section title={es ? "Datos excluidos del dataset académico" : "Data excluded from the academic dataset"}>
+          <Section
+            title={
+              es
+                ? "Datos excluidos del dataset académico"
+                : "Data excluded from the academic dataset"
+            }
+          >
             <ul className="space-y-2">
               <li>• nombre y correo;</li>
               <li>• Google subject u otros identificadores del proveedor;</li>
@@ -84,7 +104,13 @@ export default async function ResearchPrivacyPage({ params }: Props) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold text-white">{title}</h2>

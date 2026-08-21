@@ -6,6 +6,8 @@ import Header from "@/components/Header";
 import { ResearchStudiesList } from "@/components/research/ResearchAdminClient";
 import { getAuth } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ locale: string }> };
 
 export default async function ResearchAdminPage({ params }: Props) {

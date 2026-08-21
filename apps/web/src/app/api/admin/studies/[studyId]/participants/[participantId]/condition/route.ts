@@ -7,7 +7,9 @@ export async function PATCH(
   request: NextRequest,
   {
     params,
-  }: { params: Promise<{ studyId: string; participantId: string }> },
+  }: {
+    params: Promise<{ studyId: string; participantId: string }>;
+  },
 ) {
   const { studyId, participantId } = await params;
   return proxyApiRequest(request, {

@@ -1,7 +1,10 @@
 import "server-only";
 
 export function getApiBase(): string {
-  const configured = process.env.API_INTERNAL_BASE_URL?.trim().replace(/\/+$/, "");
+  const configured = process.env.API_INTERNAL_BASE_URL?.trim().replace(
+    /\/+$/,
+    "",
+  );
   if (configured) {
     return /^https?:\/\//i.test(configured) ? configured : `http://${configured}`;
   }

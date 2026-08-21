@@ -57,6 +57,10 @@ export function resolveStudySlug(request: NextRequest): string | null {
 
 export function hashRateLimitSubject(subject: string): string {
   const secret = process.env.RATE_LIMIT_HMAC_SECRET?.trim();
-  if (!secret) throw new Error("RATE_LIMIT_HMAC_SECRET is required when product rate limits are enabled");
+  if (!secret) {
+    throw new Error(
+      "RATE_LIMIT_HMAC_SECRET is required when product rate limits are enabled",
+    );
+  }
   return createHmac("sha256", secret).update(subject, "utf8").digest("hex");
 }

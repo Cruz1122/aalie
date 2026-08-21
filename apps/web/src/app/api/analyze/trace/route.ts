@@ -8,7 +8,10 @@ export async function POST(request: NextRequest) {
     path: "/analyze/trace",
     policy: POLICIES.trace,
     transformBody: (raw) => {
-      const body = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+      const body =
+        raw && typeof raw === "object"
+          ? (raw as Record<string, unknown>)
+          : {};
       return {
         ...body,
         case: body.case || "worst",

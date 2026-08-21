@@ -21,7 +21,9 @@ export interface BffRequestContext {
   studySlug: string | null;
 }
 
-export async function buildRequestContext(request: NextRequest): Promise<BffRequestContext> {
+export async function buildRequestContext(
+  request: NextRequest,
+): Promise<BffRequestContext> {
   const visitor = resolveVisitor(request);
   const session = await getAuth().api.getSession({
     headers: request.headers,
@@ -29,7 +31,8 @@ export async function buildRequestContext(request: NextRequest): Promise<BffRequ
   });
   const userId = session?.user?.id ? String(session.user.id) : null;
   const rawRole = session?.user?.role;
-  const role: OperationalRole | null = rawRole === "ADMIN" ? "ADMIN" : rawRole === "USER" ? "USER" : null;
+  const role: OperationalRole | null =
+    rawRole === "ADMIN" ? "ADMIN" : rawRole === "USER" ? "USER" : null;
   const authenticated = Boolean(userId && role);
 
   return {
@@ -37,7 +40,9 @@ export async function buildRequestContext(request: NextRequest): Promise<BffRequ
     authenticated,
     userId: authenticated ? userId : null,
     role: authenticated ? role : null,
-    subject: authenticated ? `user:${userId}` : `visitor:${visitor.visitorId}`,
+    subject: authenticated
+      ? `user:${userId}`
+      : `visitor:${visitor.visitorId}`,
     visitorId: visitor.visitorId,
     shouldSetVisitorCookie: visitor.shouldSetCookie,
     studySlug: authenticated ? resolveStudySlug(request) : null,
