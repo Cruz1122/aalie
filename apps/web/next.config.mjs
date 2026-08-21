@@ -4,13 +4,29 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   reactStrictMode: true,
   output: "standalone",
+  serverExternalPackages: ["pg"],
   typedRoutes: true,
   transpilePackages: ["@aa/content-catalog", "@aa/grammar", "@aa/types"],
 
   // Configuración para Web Workers
   webpack: (config, { isServer }) => {
+    if (isServer) {
+      const betterAuthServerEntries = new Set([
+        "better-auth",
+        "better-auth/next-js",
+        "better-auth/plugins",
+      ]);
+      config.externals.push(({ request }, callback) => {
+        if (betterAuthServerEntries.has(request)) {
+          return callback(null, `commonjs ${request}`);
+        }
+        return callback();
+      });
+    }
+
     // Solo en el cliente
     if (!isServer) {
       config.output.globalObject = "self";

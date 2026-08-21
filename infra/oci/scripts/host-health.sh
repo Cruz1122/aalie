@@ -4,6 +4,7 @@ set -Eeuo pipefail
 readonly APP_DIR="${APP_DIR:-/home/ubuntu/aalie}"
 readonly COMPOSE_FILE="${APP_DIR}/compose.yml"
 readonly ENV_FILE="${APP_DIR}/.env"
+readonly RUNTIME_ENV_FILE="${APP_DIR}/.env.runtime"
 readonly PREVIOUS_FILE="${APP_DIR}/.previous-tag"
 
 status=0
@@ -67,11 +68,14 @@ else
 fi
 
 printf '\nCompose services:\n'
-if [[ ! -f "$COMPOSE_FILE" || ! -f "$ENV_FILE" ]]; then
-  critical "compose.yml or .env is missing under ${APP_DIR}"
+if [[ ! -f "$COMPOSE_FILE" || ! -f "$ENV_FILE" || ! -f "$RUNTIME_ENV_FILE" ]]; then
+  critical "compose.yml, .env or .env.runtime is missing under ${APP_DIR}"
 else
-  if docker compose --env-file "$ENV_FILE" --file "$COMPOSE_FILE" ps; then
-    for container in aalie-api aalie-web; do
+  if docker compose \
+    --env-file "$ENV_FILE" \
+    --env-file "$RUNTIME_ENV_FILE" \
+    --file "$COMPOSE_FILE" ps; then
+    for container in aalie-postgres aalie-api aalie-web; do
       health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container" 2>/dev/null || true)"
       if [[ "$health" == "healthy" ]]; then
         ok "${container} is healthy"
@@ -85,6 +89,16 @@ else
       ok "aalie-caddy is running"
     else
       critical "aalie-caddy is not running"
+    fi
+
+    if docker compose \
+      --env-file "$ENV_FILE" \
+      --env-file "$RUNTIME_ENV_FILE" \
+      --file "$COMPOSE_FILE" exec --no-TTY api python -c \
+      "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=30)"; then
+      ok "aalie-api readiness passed"
+    else
+      critical "aalie-api readiness failed"
     fi
   else
     critical "docker compose ps failed"

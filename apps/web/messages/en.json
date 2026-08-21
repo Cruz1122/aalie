@@ -20,6 +20,48 @@
     "howToUse": "How to use",
     "quizzes": "Quizzes"
   },
+  "auth": {
+    "signIn": "Sign in",
+    "myProfile": "My profile",
+    "formTitle": "Sign in",
+    "formDescription": "Get more from AALIE's learning tools.",
+    "closeForm": "Close sign-in form",
+    "benefitsTitle": "Benefits of signing in",
+    "benefitUsageLabel": "Higher usage limits",
+    "benefitUsageDescription": "Analyze, practice, and use AALIE's tools with higher limits.",
+    "benefitCourseLabel": "Course progress",
+    "benefitCourseDescription": "Keep your progress and continue learning where you left off.",
+    "benefitQuizLabel": "Quiz tracking",
+    "benefitQuizDescription": "Save your attempts and see how you improve in each topic.",
+    "signInGoogle": "Sign in with Google",
+    "submitting": "Connecting to Google...",
+    "signOut": "Sign out",
+    "oauthError": "Sign-in failed. Please try again.",
+    "signOutError": "Sign-out failed. Please try again."
+  },
+  "profile": {
+    "meta": {
+      "title": "My profile | AALIE",
+      "description": "View the information associated with your AALIE account."
+    },
+    "loading": "Loading your profile...",
+    "error": {
+      "title": "We couldn't load your profile",
+      "body": "There was a problem retrieving your account information. You can try again.",
+      "retry": "Try again"
+    },
+    "unauthenticated": {
+      "title": "Your session isn't active",
+      "body": "Sign in to view your profile information.",
+      "action": "Return home"
+    },
+    "verifiedEmail": "Verified email",
+    "universityBadge": "University of Caldas",
+    "privacy": {
+      "body": "Your account data is handled according to our",
+      "action": "Privacy Policy."
+    }
+  },
   "quizzes": {
     "title": "ADA Quiz",
     "subtitle": "Answer a short quiz based on your course progress.",
@@ -378,8 +420,12 @@
   },
   "footer": {
     "languageLabel": "Language",
-    "university": "University of Caldas - 2025",
+    "settings": "Settings",
+    "back": "Back",
+    "artificialIntelligence": "Artificial intelligence",
+    "serverStatus": "Server status",
     "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
     "backendStatus": {
       "connecting": "Connecting...",
       "online": "Online",
@@ -392,7 +438,7 @@
       "invalid": "Invalid API Key",
       "inEnv": "API Key saved on server",
       "inLocalStorage": "API Key saved in this browser",
-      "placeholder": "Gemini API Key",
+      "placeholder": "Enter your API key",
       "invalidHint": "Invalid API Key",
       "geminiHintPre": "Enter your Gemini API Key to enable AI functions. You can get it at ",
       "geminiHintLinkText": "Google AI Studio",
@@ -414,6 +460,19 @@
     "parseCode": "Error parsing code",
     "analyzeAlgorithm": "Error analyzing algorithm",
     "unexpectedAnalysis": "Unexpected error during analysis"
+  },
+  "errorPages": {
+    "notFound": {
+      "eyebrow": "PAGE NOT FOUND",
+      "title": "We couldn't find what you were looking for",
+      "homeLabel": "Back to home"
+    },
+    "error": {
+      "eyebrow": "SOMETHING WENT WRONG",
+      "title": "We're working to fix it",
+      "homeLabel": "Back to home",
+      "retryLabel": "Try again"
+    }
   },
   "analyzer": {
     "progress": {
@@ -1504,10 +1563,39 @@
     "greeting": "Hi, I'm AALIE.",
     "greetingQuestion": "How may I help you?",
     "placeholder": "Describe the algorithm you need...",
+    "apiKeyGreeting": "AI UNAVAILABLE",
+    "apiKeyPromptPrefix": "You need an ",
+    "apiKeyPromptLink": "API KEY",
+    "apiKeyPromptSuffix": "!",
+    "apiKeyPlaceholder": "Enter your API key",
+    "manualPromptQuestion": "Not sure what to ask?",
+    "manualPromptAffirmation": "Build your own algorithm!",
+    "modeTransition": {
+      "manual": "MANUAL MODE",
+      "ai": "AALIE"
+    },
+    "manualPromptAction": "Open the manual analyzer",
     "suggestions": {
-      "notation": "What is asymptotic notation?",
-      "bubbleSort": "How does bubble sort work?",
-      "mergesort": "Give me the mergesort code"
+      "notation": "What does asymptotic notation mean?",
+      "countOperations": "How do I count elementary operations?",
+      "bigO": "What is the difference between O, Ω, and Θ?",
+      "loops": "How do I calculate the cost of a loop?",
+      "nestedLoops": "How do I analyze nested loops?",
+      "recursion": "How do I analyze a recursive function?",
+      "recurrence": "How do I set up a recurrence equation?",
+      "masterTheorem": "How do I choose a method to solve a recurrence?",
+      "divideAndConquer": "How do I identify the input size?",
+      "binarySearch": "What is a dominant operation?",
+      "bubbleSort": "How do I compare best, average and worst cases?",
+      "mergesort": "How do I obtain an algorithm's total cost?",
+      "dynamicProgramming": "How do I identify an iterative algorithm?",
+      "greedy": "How do I analyze memory usage?",
+      "backtracking": "What is the difference between termination and correctness?",
+      "invariant": "What is a loop invariant?",
+      "bestWorstCase": "What is the difference between best and worst case?",
+      "spaceComplexity": "How do I identify an input's size?",
+      "traceAlgorithm": "Can you show the execution step by step?",
+      "compareAlgorithms": "How do I compare two algorithms?"
     }
   },
   "about": {
@@ -1645,8 +1733,9 @@
     "clearConversation": "Clear conversation",
     "backToHome": "Back to home",
     "closeAssistant": "Close assistant",
-    "unavailable": "AALIE unavailable",
-    "apiKeyRequired": "AALIE requires a Gemini API Key to work. Configure your API Key to enable AI functions. You can get it at",
+    "unavailable": "Artificial intelligence unavailable",
+    "apiKeyRequired": "You need an API KEY!",
+    "apiKeyLink": "API KEY",
     "placeholder": "Type your message...",
     "helpRequest": "Help me fix this error",
     "retry": "Retry",
@@ -1664,15 +1753,15 @@
       "eyebrow": "Privacy",
       "title": "Privacy Policy",
       "subtitle": "We want you to clearly know what information AALIE uses, why it uses it, what stays in your browser, what may be processed on the server, and what depends on your choices.",
-      "body": "AALIE is an educational platform for learning and practicing algorithm analysis. You can use its main features without creating an account: write pseudocode, analyze algorithms, browse content, review examples, and practice with quizzes. Some optional features, such as the AI assistant or using a personal API key, may involve sending additional information to an external provider. That is why this policy clearly separates basic platform use from AI-feature use.",
-      "lastUpdated": "Last updated: May 2026"
+      "body": "AALIE is an educational platform for learning and practicing algorithm analysis. Its core features can be used without creating an account. If you choose to sign in with Google, AALIE processes the basic identity data needed to create and maintain your account. Optional AI features remain separate and may send additional context to the configured provider.",
+      "lastUpdated": "Last updated: August 2026"
     },
     "summary": {
       "title": "Quick summary",
       "items": {
         "account": {
-          "title": "No account required",
-          "description": "AALIE does not require registration to use its main features. You do not need to provide a name, email, password, or payment data to analyze algorithms or practice with available content."
+          "title": "The account is optional",
+          "description": "You can use the core features without signing in. If you choose Google, AALIE creates an account and stores the basic identity data provided for authentication, such as name, email address, profile image when available, verification status, and technical account identifiers."
         },
         "formal": {
           "title": "Formal analysis does not depend on AI",
@@ -1705,7 +1794,9 @@
           "progress": "Quiz progress and answers stored locally",
           "questions": "Questions you write in the AI assistant",
           "context": "Visible page context when you use the AI assistant",
-          "key": "A personal API key, only if you choose to enter one to enable AI features"
+          "key": "A personal API key, only if you choose to enter one to enable AI features",
+          "accountProfile": "If you sign in with Google: name, email address, profile image when available, verification status, and account/provider identifiers needed to associate your identity.",
+          "sessionTechnical": "Technical session data needed for authentication and security, which may include IP address and user agent."
         },
         "purpose": "This information is used so the platform can fulfill its educational purpose: analyze algorithms, show results, help you study, generate reports, and offer practice through quizzes."
       },
@@ -1782,20 +1873,20 @@
       },
       "providers": {
         "title": "External providers",
-        "paragraph1": "AALIE may depend on external services for hosting, backend execution, report generation, or optional AI features.",
-        "paragraph2": "When you use the AI assistant, the information sent may be processed by the configured provider. That provider's privacy policies, terms of use, technical limits, and data processing rules may also apply.",
-        "paragraph3": "AALIE does not fully control how each external provider processes the information once sent. That is why you should avoid using AI features with sensitive or confidential information."
+        "paragraph1": "Google is used only as an optional identity provider. Sign-in uses the provider's basic identity permissions; AALIE does not request access to Gmail, Drive, Calendar, or other Google products.",
+        "paragraph2": "To maintain the account and session, AALIE stores basic user data and technical authentication records in PostgreSQL. When Better Auth persists OAuth credentials returned by Google, AALIE configures them to be encrypted before storage.",
+        "paragraph3": "Data obtained through Google is not sold, is not used for advertising, and is not sent to an AI provider merely because you signed in. Signing in also does not constitute consent to participate in research."
       },
       "rights": {
         "title": "Rights and requests",
         "paragraph1": "You can contact the team if you have questions about this policy or about the use of information in AALIE.",
         "paragraph2": "Depending on the case, you may request information about data related to you, ask for correction, update, deletion, or clarification about the processing of personal information that may be under the team's responsibility.",
-        "paragraph3": "Keep in mind that many current AALIE features do not use user accounts or institutional progress storage. If the data is stored only in your browser, the team may not have technical access to it. In that case, you can delete it by clearing site data in your browser.",
+        "paragraph3": "Core features can be used without an account and, at this stage, quiz progress continues to be stored locally in the browser. You can delete that data from the browser. For data associated with a Google-created account, you can contact the team to make applicable access, correction, or deletion requests.",
         "githubLabel": "Development GitHub"
       },
       "changes": {
         "title": "Changes to this policy",
-        "paragraph1": "We may update this policy when AALIE features change, especially if the following are added: user accounts, analytics, server-side storage, new AI providers, progress sync, new export methods, integration with institutional services, or changes in API key handling.",
+        "paragraph1": "We may update this policy when AALIE changes, especially if analytics, progress synchronization, new AI providers, new export formats, institutional integrations, or changes to API-key and authentication-data handling are introduced.",
         "paragraph2": "When the policy changes, the last modified date will be updated."
       }
     },
@@ -1827,6 +1918,413 @@
         "quizzesDescription": "Practice and keep local progress in your browser.",
         "aboutTitle": "About AALIE",
         "aboutDescription": "Understand the educational purpose of the project, its approach, and the team behind the platform."
+      }
+    }
+  },
+  "terms": {
+    "meta": {
+      "title": "AALIE Terms of Service",
+      "description": "Terms governing access to and use of AALIE, its educational results, AI features, and user-provided content."
+    },
+    "hero": {
+      "eyebrow": "Terms of service",
+      "title": "AALIE Terms of Service",
+      "subtitle": "These terms explain how AALIE may be used, what its results mean, and which responsibilities accompany use of the Platform.",
+      "body": "AALIE is an educational project for learning, teaching, and practicing algorithm analysis and design. The Service may include a formal analyzer, learning content, quizzes, exports, and optional features supported by external providers. By accessing or using AALIE, you accept these terms to the extent permitted by applicable law.",
+      "lastUpdated": "Last updated: August 19, 2026 · Version 1.0"
+    },
+    "summary": {
+      "title": "Quick summary",
+      "items": [
+        {
+          "title": "AALIE is an educational tool",
+          "description": "Its results support learning and exploration, but they do not replace the mathematical, academic, or professional review that may be required."
+        },
+        {
+          "title": "Analysis coverage has limits",
+          "description": "The system may abstain, show warnings, or produce partial results when a case exceeds its grammar, methods, or available evidence."
+        },
+        {
+          "title": "AI is optional support",
+          "description": "Responses generated by language models may be inaccurate and must be checked. The assistant does not replace AALIE's deterministic engine."
+        },
+        {
+          "title": "You control what you share",
+          "description": "Only provide content you are authorized to process, and never include secrets, credentials, confidential information, or unnecessary personal data."
+        },
+        {
+          "title": "Use must be lawful and responsible",
+          "description": "You may not compromise security, evade limits, access other people's data, or use the Platform to harm people or systems."
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "nature",
+        "title": "1. Nature and purpose of AALIE",
+        "paragraphs": [
+          "AALIE, short for Algorithm Analysis Learning Interactive Environment, is primarily an educational and academic software platform. Its purpose is to support learning, teaching, exploration, and analysis of algorithms and computational complexity.",
+          "Depending on the available version, the Service may include pseudocode editing and processing, iterative and recursive analysis, supported recurrence solving, traces, recursion trees, cost calculations, examples, courses, quizzes, exports, AI-assisted features, and compatible file uploads."
+        ]
+      },
+      {
+        "id": "results",
+        "title": "2. Educational nature of results",
+        "paragraphs": [
+          "Results produced by AALIE are educational and supportive in nature. Although the engine uses rules designed to produce reproducible results within its coverage, no result should be treated as infallible.",
+          "Analysis may be incorrect, incomplete, partial, or inapplicable when pseudocode, variable relationships, recurrences, termination conditions, probability models, or symbolic complexity exceed what the system can safely interpret. Review every result before using it in academic work, evaluations, publications, research, professional work, or any other decision."
+        ]
+      },
+      {
+        "id": "heuristics",
+        "title": "3. Heuristics and inconclusive analysis",
+        "paragraphs": [
+          "Some features use conservative heuristics. When AALIE lacks enough evidence for a reliable conclusion, it may produce a partial result, identify an unsupported construction, show a warning, or decline to infer a specific complexity.",
+          "The absence of a conclusion does not mean that an algorithm has no mathematically determinable complexity. It may mean that the case exceeds AALIE's coverage, assumptions, or technical limits."
+        ]
+      },
+      {
+        "id": "traces",
+        "title": "4. Execution traces",
+        "paragraphs": [
+          "Traces, trees, walks, diagrams, and other execution representations are educational aids.",
+          "An execution with concrete values is not a general mathematical proof and does not guarantee behavior for every input size. It may be limited by depth, steps, resources, or other safety measures. Time and relative-cost estimates are not necessarily hardware benchmarks."
+        ]
+      },
+      {
+        "id": "exports",
+        "title": "5. Exports and generated documents",
+        "paragraphs": [
+          "AALIE may generate reports and documents derived from an analysis. They may include pseudocode, results, methods, recurrences, traces, tables, warnings, diagrams, and technical identifiers.",
+          "An export represents the analysis state at the time it was generated. It is not a certification, academic validation, peer review, or institutional approval. Warnings are an integral part of the report and must not be removed to make the result appear stronger than it is."
+        ]
+      },
+      {
+        "id": "formats",
+        "title": "6. PDF, LaTeX, and technical dependencies",
+        "paragraphs": [
+          "Some formats depend on additional technical components. PDF generation may require LaTeX tools available in the infrastructure where AALIE runs.",
+          "An export may fail temporarily, one format may be available while another is not, appearance may vary, or some elements may require an additional transformation. AALIE does not guarantee permanent availability of every format."
+        ]
+      },
+      {
+        "id": "ai",
+        "title": "7. Language-model assistance",
+        "paragraphs": [
+          "AALIE may offer optional features based on language models or external AI providers. These features are auxiliary and are not the source of truth for deterministic analysis.",
+          "Responses may contain errors, omissions, incomplete explanations, inaccurate claims, invalid code, or pseudocode that is incompatible with AALIE's grammar. Check them before use. Availability may depend on the provider, connection, model, quotas, limits, latency, policies, API changes, and valid credentials."
+        ]
+      },
+      {
+        "id": "third-party-services",
+        "title": "8. Third-party services",
+        "paragraphs": [
+          "AALIE may interact with third parties for authentication, language models, infrastructure, hosting, software distribution, or other specific features.",
+          "Those services may also be subject to their own terms, policies, and limitations. AALIE does not control their availability, continuity, technical changes, or internal operation. A third-party interruption or change may affect a feature temporarily or permanently."
+        ]
+      },
+      {
+        "id": "google-oauth",
+        "title": "9. Sign-in with Google",
+        "paragraphs": [
+          "AALIE allows users to sign in with Google to establish an identity within the Platform and enable account-related features.",
+          "AALIE will request only the data and permissions needed for that purpose, as described in the Privacy Policy and authorization interface. Google is not responsible for AALIE, its educational results, or the Platform's operation. Users must also comply with the terms applicable to their Google Account."
+        ]
+      },
+      {
+        "id": "anonymous-access",
+        "title": "10. Access without an account",
+        "paragraphs": [
+          "Where the Platform allows it, some features may be used without creating an account or signing in. Anonymous access may have different limits from authenticated access.",
+          "AALIE may apply controls to prevent abuse, reduce malicious automation, protect availability, control resources, and maintain fair use. Access without authentication does not create a permanent right to use a feature without limits."
+        ]
+      },
+      {
+        "id": "limits",
+        "title": "11. Usage limits",
+        "paragraphs": [
+          "AALIE may set limits for particular operations. Limits may depend on the user, authentication, operation, computational cost, available resources, external services, or observed behavior.",
+          "Operations with different costs may have different limits. AALIE may adjust them when necessary to maintain Service stability, security, or sustainability."
+        ]
+      },
+      {
+        "id": "accounts",
+        "title": "12. User accounts",
+        "paragraphs": [
+          "When you use an AALIE account, you must use only authentication mechanisms you are legitimately authorized to access.",
+          "You may not use another person's account, impersonate someone, manipulate sessions, alter tokens, obtain higher privileges, bypass authorization controls, or access other users' data. AALIE may invalidate sessions or restrict access for technical or security reasons."
+        ]
+      },
+      {
+        "id": "roles",
+        "title": "13. Roles and privileges",
+        "paragraphs": [
+          "AALIE may distinguish between regular and administrative users. Creating an account does not automatically grant administrative privileges.",
+          "Only expressly authorized people may perform administrative functions. You may not alter your role, grant yourself privileges, manipulate permission requests, or access administrative endpoints without authorization."
+        ]
+      },
+      {
+        "id": "permitted-use",
+        "title": "14. Permitted use",
+        "paragraphs": [
+          "You may use AALIE for lawful purposes consistent with its educational nature, including individual learning, teaching, classroom demonstrations, academic activities, experimentation, exercises, research, and critical evaluation of analysis methods.",
+          "You may also create material derived from your own analyses provided that you respect these terms, third-party rights, and applicable academic rules."
+        ]
+      },
+      {
+        "id": "prohibited-use",
+        "title": "15. Prohibited use",
+        "paragraphs": ["You may not use AALIE to:"],
+        "items": [
+          "Compromise the security of the Platform or other systems.",
+          "Obtain unauthorized access to accounts, data, endpoints, or internal components.",
+          "Conduct attacks, abusive scraping, or automated loads that degrade the Service.",
+          "Evade limits, manipulate sessions, or extract secrets and credentials.",
+          "Distribute malware, exploit vulnerabilities to harm others, or interfere with infrastructure.",
+          "Use the Platform for unlawful purposes.",
+          "Deliberately present a result as a mathematical proof, certification, or institutional conclusion beyond the scope in which AALIE produced it."
+        ]
+      },
+      {
+        "id": "user-content",
+        "title": "16. User-provided content",
+        "paragraphs": [
+          "You retain the rights you legally hold in pseudocode, algorithms, text, files, and other content you enter into AALIE.",
+          "When using a function that processes that content, you represent that you have the necessary rights or permissions. Do not upload material whose processing would infringe copyright, trade secrets, confidentiality agreements, third-party rights, or applicable law.",
+          "Avoid entering passwords, API keys, tokens, secrets, confidential information, or unnecessary personal data."
+        ]
+      },
+      {
+        "id": "technical-processing",
+        "title": "17. Technical processing of content",
+        "paragraphs": [
+          "To provide the Service, AALIE may technically process the content you provide. Processing may include parsing, transformation, analysis, controlled execution, trace generation, snapshot construction, and report generation.",
+          "When an AI feature requires information to be sent to an external provider, that processing will be described in the Privacy Policy and the relevant interface."
+        ]
+      },
+      {
+        "id": "aalie-ip",
+        "title": "18. AALIE intellectual property",
+        "paragraphs": [
+          "Unless an applicable license states otherwise, AALIE's software, interface, visual identity, documentation, original materials, content organization, and other proprietary elements are protected by applicable intellectual-property rules.",
+          "Public access does not transfer rights. Components released under open-source licenses are governed by those licenses, and third-party licenses remain applicable to their components."
+        ]
+      },
+      {
+        "id": "institutional-material",
+        "title": "19. Institutional material and marks",
+        "paragraphs": [
+          "AALIE may include names, logos, academic references, or other elements associated with participating institutions or the project's academic context.",
+          "Their inclusion does not grant rights to reuse institutional marks outside uses authorized by their owners. A report containing institutional elements does not mean that its content was reviewed or approved by the relevant institution."
+        ]
+      },
+      {
+        "id": "quizzes",
+        "title": "20. Quizzes and educational content",
+        "paragraphs": [
+          "Quizzes, exercises, examples, and other educational content are intended for practice and learning.",
+          "Unless expressly stated otherwise, they are not certifications, official academic grades, or substitutes for institutional assessments. They may be updated, corrected, withdrawn, or contain errors that are corrected over time. Adaptive selection does not constitute a professional educational diagnosis."
+        ]
+      },
+      {
+        "id": "academic-integrity",
+        "title": "21. Academic integrity",
+        "paragraphs": [
+          "AALIE is a learning aid, not a mechanism for avoiding academic responsibilities.",
+          "Each institution, teacher, or activity may set specific rules for digital tools or automated assistance. You are responsible for knowing and following the rules applicable to your course, assessment, or research. The fact that AALIE can perform an analysis does not mean its use is allowed in every context."
+        ]
+      },
+      {
+        "id": "research",
+        "title": "22. Research and academic studies",
+        "paragraphs": [
+          "AALIE may be used in academic research or educational evaluation. Participation in a study must be distinguished from ordinary use of the Platform.",
+          "Visiting AALIE, creating an account, signing in with Google, or using the analyzer does not by itself constitute consent to participate in research. Any study requiring participation, additional data, or specific consent must explain that through the appropriate information and mechanisms."
+        ]
+      },
+      {
+        "id": "research-data",
+        "title": "23. Experimental data and pseudonymization",
+        "paragraphs": [
+          "When AALIE is used in an authorized study, experimental data will be handled according to the information provided to participants, the Privacy Policy, and applicable rules.",
+          "Pseudonymization or aggregation reduces direct identification, but does not automatically make information anonymous or remove applicable legal obligations."
+        ]
+      },
+      {
+        "id": "availability",
+        "title": "24. Availability and continuity",
+        "paragraphs": [
+          "AALIE is provided according to the availability of its infrastructure, providers, and technical resources. It may experience interruptions because of maintenance, errors, configuration changes, security incidents, or third-party failures.",
+          "The Service is not guaranteed to be continuous, timely, compatible with every device, or error-free."
+        ]
+      },
+      {
+        "id": "feature-changes",
+        "title": "25. Changes to features",
+        "paragraphs": [
+          "The project may add, modify, correct, limit, or remove features, algorithms, content, technical providers, and export formats.",
+          "When a change substantially affects rights or access conditions, AALIE will seek to communicate it appropriately."
+        ]
+      },
+      {
+        "id": "retention",
+        "title": "26. No guarantee of permanent retention",
+        "paragraphs": [
+          "Unless a feature expressly states otherwise, you should not use AALIE as the sole storage system for important information.",
+          "Keep independent copies of your algorithms, reports, work, files, results, and academic information. Clearing browser data, changing devices, or using another browser may affect information stored locally."
+        ]
+      },
+      {
+        "id": "security",
+        "title": "27. Security",
+        "paragraphs": [
+          "AALIE applies reasonable technical measures intended to protect its infrastructure and processed data. However, no system connected to the Internet can guarantee absolute security.",
+          "If you identify a vulnerability, report it responsibly and do not exploit it to access information, alter data, interrupt services, or obtain privileges."
+        ]
+      },
+      {
+        "id": "privacy",
+        "title": "28. Privacy and personal data",
+        "paragraphs": [
+          "Personal-data processing associated with AALIE is governed primarily by the Privacy Policy, which forms part of the documentation applicable to the Service.",
+          "If the two documents differ regarding a specific personal-data process, the provision that specifically describes that process will apply, without prejudice to rights recognized by applicable law."
+        ]
+      },
+      {
+        "id": "account-deletion",
+        "title": "29. Account deletion and closure",
+        "paragraphs": [
+          "When AALIE enables account-deletion mechanisms, you may request deletion of associated information according to the Privacy Policy and applicable legal or technical obligations.",
+          "Some records may be retained for reasonable periods when needed for security, fraud or abuse prevention, legal compliance, dispute resolution, or backups subject to normal deletion cycles."
+        ]
+      },
+      {
+        "id": "suspension",
+        "title": "30. Suspension or restriction",
+        "paragraphs": [
+          "AALIE may temporarily or permanently restrict access for reasons related to security, abuse, breach of these terms, infrastructure impact, fraud, unauthorized access, legal noncompliance, or harmful automation.",
+          "Where reasonably possible, contact channels will be available to review the situation."
+        ]
+      },
+      {
+        "id": "warranties",
+        "title": "31. Disclaimer of warranties",
+        "paragraphs": [
+          "To the extent permitted by applicable law, AALIE is provided as is and as available.",
+          "AALIE does not absolutely guarantee mathematical accuracy, fitness for a particular purpose, permanent availability, compatibility with all pseudocode, academic validity, institutional acceptance of a report, or the accuracy of third-party or language-model responses. Warnings shown by the system are part of the conditions under which each result is provided."
+        ]
+      },
+      {
+        "id": "liability",
+        "title": "32. Limitation of liability",
+        "paragraphs": [
+          "To the extent permitted by applicable law, the team responsible for AALIE will not be liable for harm arising exclusively from use that violates these terms or from relying, without reasonable verification, on results expressly presented as educational support.",
+          "This may include harm arising from an incorrect analysis, an AI response, loss of local progress, an interruption, export errors, technical incompatibilities, or academic decisions made without independent review. Nothing in these terms excludes liability that cannot legally be excluded."
+        ]
+      },
+      {
+        "id": "user-responsibility",
+        "title": "33. User responsibility",
+        "paragraphs": [
+          "You are responsible for verifying information you use, keeping copies of important files, protecting your account, following academic rules, using the Platform lawfully, avoiding data you should not share, reviewing warnings, and checking results before presenting or using them in a formal context."
+        ]
+      },
+      {
+        "id": "external-links",
+        "title": "34. External links and resources",
+        "paragraphs": [
+          "AALIE may include links to documentation, articles, providers, libraries, educational resources, and other external sites.",
+          "Those resources are managed by their respective operators. Including a link does not mean that AALIE approves their content or accepts responsibility for their practices, availability, or terms."
+        ]
+      },
+      {
+        "id": "terms-changes",
+        "title": "35. Changes to these Terms",
+        "paragraphs": [
+          "These terms may be updated to reflect new features, technical changes, authentication systems, operational practices, legal requirements, third-party services, or research activities.",
+          "The update date appears at the beginning. When a change is material and reasonably requires notice, AALIE may communicate it through the Platform. Continued use after it takes effect may be subject to the updated version."
+        ]
+      },
+      {
+        "id": "termination",
+        "title": "36. Termination of the Service",
+        "paragraphs": [
+          "The project may suspend, transform, or terminate all or part of the Service.",
+          "Where reasonably possible, it will seek to provide advance information about significant changes. Termination does not require indefinite maintenance of infrastructure, external providers, or available storage."
+        ]
+      },
+      {
+        "id": "governing-law",
+        "title": "37. Governing law",
+        "paragraphs": [
+          "These terms will be interpreted under the applicable laws of the Republic of Colombia, without prejudice to mandatory rules that apply to the user's circumstances.",
+          "Before beginning a formal dispute, the parties will reasonably seek to resolve the issue through the available contact channels."
+        ]
+      },
+      {
+        "id": "severability",
+        "title": "38. Severability",
+        "paragraphs": [
+          "If a provision is declared invalid, unenforceable, or contrary to a mandatory rule, that decision will not automatically affect the validity of the remaining provisions.",
+          "The affected provision will be interpreted, within legal limits, as closely as possible to its original purpose."
+        ]
+      },
+      {
+        "id": "no-waiver",
+        "title": "39. No waiver",
+        "paragraphs": [
+          "A failure to immediately exercise a right under these terms will not automatically be interpreted as a permanent waiver of that right."
+        ]
+      },
+      {
+        "id": "agreement",
+        "title": "40. Entire applicable framework",
+        "paragraphs": [
+          "These terms, together with the Privacy Policy and feature-specific notices, form the general framework applicable to use of AALIE.",
+          "When a feature displays additional terms or notices, they supplement this document for that feature."
+        ]
+      },
+      {
+        "id": "contact-section",
+        "title": "41. Contact",
+        "paragraphs": [
+          "For questions about these terms, the Service, privacy, security, or rights requests, you may contact the project team using the contacts available on this page."
+        ]
+      }
+    ],
+    "contact": {
+      "title": "Contact and review",
+      "intro": "AALIE is an academic project developed in the context of Universidad de Caldas. These contacts are the team members currently identified in the Platform.",
+      "reviewNotice": "This document is an operational draft and should undergo legal review before being used as a definitive contractual version.",
+      "privacyLink": "You can also read AALIE's Privacy Policy.",
+      "members": {
+        "luz": {
+          "name": "Luz Enith Guerrero",
+          "email": "luzenith_g@ucaldas.edu.co"
+        },
+        "camilo": {
+          "name": "Camilo Cruz",
+          "email": "juan.cruz37552@ucaldas.edu.co",
+          "github": "@Cruz1122"
+        },
+        "jhon": {
+          "name": "Jhon Hander Patiño",
+          "email": "jhon.patino29550@ucaldas.edu.co",
+          "github": "@Jhonder18"
+        }
+      }
+    },
+    "assistant": {
+      "features": {
+        "analyzerTitle": "Analyzer",
+        "analyzerDescription": "Review the scope and limitations of AALIE's formal analysis.",
+        "analyzerAvailability": "Available in the Platform",
+        "privacyTitle": "Privacy",
+        "privacyDescription": "Review how information is handled when you use AALIE.",
+        "privacyAvailability": "Related policy",
+        "aboutTitle": "About AALIE",
+        "aboutDescription": "Learn about the project's educational context and purpose.",
+        "aboutAvailability": "Project context"
       }
     }
   },

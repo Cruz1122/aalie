@@ -16,6 +16,13 @@ COPY packages/types/package.json packages/types/
 
 RUN pnpm install --filter web... --frozen-lockfile
 
+FROM deps AS dev
+
+ENV NODE_ENV=development
+WORKDIR /usr/src/app
+
+CMD ["pnpm", "--filter", "web", "dev", "--hostname", "0.0.0.0"]
+
 FROM node:22-alpine AS builder
 
 ENV PNPM_HOME=/usr/local/share/pnpm

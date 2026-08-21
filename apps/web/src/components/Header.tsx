@@ -90,9 +90,9 @@ export default function Header() {
 
   return (
     <header className="glass-header relative z-50">
-      <div className="flex items-center justify-center whitespace-nowrap px-4 sm:px-6 py-2">
+      <div className="flex items-center justify-between gap-3 whitespace-nowrap px-3 py-2 sm:px-5">
         {/* Navegación Desktop - Centrada */}
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden min-w-0 flex-1 justify-center lg:flex">
           <nav className="flex items-center gap-2">
             {navItems.map((item) => {
               const active = isActive(item.href);
@@ -115,7 +115,7 @@ export default function Header() {
 
         {/* Botón Hamburguesa para Mobile */}
         <button
-          className="lg:hidden glass-secondary p-2 rounded-lg transition-colors flex items-center justify-center hover:bg-white/10"
+          className="glass-secondary flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-white/10 lg:hidden"
           onClick={toggleMenu}
           aria-label={t("openMenu")}
         >

@@ -1,15 +1,13 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import AIModeView from "@/components/AIModeView";
+import AALIEIcon from "@/components/AALIEIcon";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import ManualModeView, {
-  ManualModeViewHandle,
-} from "@/components/ManualModeView";
-import ModeToggle from "@/components/ModeToggle";
+import ManualModeView from "@/components/ManualModeView";
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
@@ -27,47 +25,21 @@ interface Message {
 export default function HomePage() {
   const locale = useLocale();
   const tHome = useTranslations("home");
-  const tManual = useTranslations("analyzer.manualMode");
   const tNav = useTranslations("nav");
   const tView = useTranslations("analyzer.view");
-  const manualViewRef = useRef<ManualModeViewHandle>(null);
   const { runAnalysis } = useRunAnalysis();
-  const [mode, setMode] = useState<"ai" | "manual">("ai");
-  const defaultCode = tManual("defaultCode");
-  const [sharedCode, setSharedCode] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("manualModeCode");
-      const savedLocale = localStorage.getItem("manualModeLocale");
-      if (saved && savedLocale === locale) return saved;
-    }
-    return "";
-  });
-  const hasLoadedRef = useRef(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("manualModeCode");
-    const savedLocale = localStorage.getItem("manualModeLocale");
-    if (!hasLoadedRef.current) {
-      hasLoadedRef.current = true;
-      if (saved && savedLocale === locale) {
-        setSharedCode(saved);
-      } else {
-        setSharedCode(defaultCode);
-      }
-    } else if (savedLocale !== locale) {
-      setSharedCode(saved && savedLocale === locale ? saved : defaultCode);
-    }
-  }, [locale, defaultCode]);
-  useEffect(() => {
-    if (typeof window !== "undefined" && sharedCode !== "") {
-      localStorage.setItem("manualModeCode", sharedCode);
-      localStorage.setItem("manualModeLocale", locale);
-    }
-  }, [sharedCode, locale]);
   const [chatOpen, setChatOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [homeIntroDone, setHomeIntroDone] = useState(false);
+  const [isManualTransitioning, setIsManualTransitioning] = useState(false);
+  const [manualTransitionTarget, setManualTransitionTarget] = useState<
+    "manual" | "ai" | null
+  >(null);
+  const handleEntranceComplete = useCallback(() => {
+    setHomeIntroDone(true);
+  }, []);
   const [inputMessage, setInputMessage] = useState("");
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isSwitching, setIsSwitching] = useState(false);
   const { messages, setMessages } = useChatHistory();
   const { state: analysisState } = useAnalysisProgressContext();
   const isChatAnalyzing =
@@ -81,16 +53,13 @@ export default function HomePage() {
       locale,
       pageContext: {
         route: "/",
-        view: mode,
+        view: "ai",
         title: tNav("home"),
         description: text(
           "Pantalla inicial para empezar con el chat o ir al analizador manual.",
           "Landing screen to start with chat or switch to the manual analyzer.",
         ),
-        notes: [
-          `currentMode=${mode}`,
-          "entrypoints=analyzer,examples,user-guide",
-        ],
+        notes: ["currentMode=ai", "entrypoints=analyzer,examples,user-guide"],
       },
       availableFeatures: [
         {
@@ -199,7 +168,7 @@ export default function HomePage() {
         },
       ],
     };
-  }, [locale, mode, tNav, tView]);
+  }, [locale, tNav, tView]);
 
   const handleAnalyzeCodeFromChat = (code: string) => {
     const trimmed = code.trim();
@@ -289,13 +258,14 @@ export default function HomePage() {
     setInputMessage("");
   };
 
-  const handleModeSwitch = (newMode: "ai" | "manual") => {
-    if (newMode === mode) return;
-    setIsSwitching(true);
-    setTimeout(() => {
-      setMode(newMode);
-      setIsSwitching(false);
-    }, 300);
+  const transitionToManual = (open: boolean) => {
+    setManualTransitionTarget(open ? "manual" : "ai");
+    setIsManualTransitioning(true);
+    window.setTimeout(() => setManualOpen(open), 500);
+    window.setTimeout(() => {
+      setIsManualTransitioning(false);
+      setManualTransitionTarget(null);
+    }, 1400);
   };
 
   return (
@@ -303,21 +273,19 @@ export default function HomePage() {
       <Header />
 
       <main className="z-10 flex flex-1 flex-col p-3 sm:p-4">
-        <ModeToggle
-          mode={mode}
-          isSwitching={isSwitching}
-          onModeSwitch={handleModeSwitch}
-        />
-
         <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col">
-          <div
-            className={`flex min-h-0 flex-1 flex-col transition-all duration-300 ${
-              isSwitching
-                ? "opacity-0 translate-y-2"
-                : "opacity-100 translate-y-0"
-            }`}
-          >
-            {mode === "ai" ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+            {manualOpen ? (
+              <ManualModeView
+                messages={messages}
+                setMessages={setMessages}
+                onOpenChat={() => {
+                  setManualOpen(false);
+                  setChatOpen(true);
+                }}
+                onSwitchToAIMode={() => transitionToManual(false)}
+              />
+            ) : (
               <AIModeView
                 chatOpen={chatOpen}
                 isAnimating={isAnimating}
@@ -329,23 +297,56 @@ export default function HomePage() {
                 onSendMessage={handleSendMessage}
                 onSuggestionClick={handleSuggestionClick}
                 onClose={closeChatAndReset}
+                onOpenManual={() => transitionToManual(true)}
+                animateEntrance={!homeIntroDone}
+                onEntranceComplete={handleEntranceComplete}
                 onAnalyzeCode={handleAnalyzeCodeFromChat}
                 assistantContext={assistantContext}
-              />
-            ) : (
-              <ManualModeView
-                ref={manualViewRef}
-                messages={messages}
-                setMessages={setMessages}
-                onOpenChat={() => setChatOpen(true)}
-                onSwitchToAIMode={() => setMode("ai")}
-                initialCode={sharedCode}
-                onCodeChange={setSharedCode}
               />
             )}
           </div>
         </div>
       </main>
+
+      {manualOpen && (
+        <button
+          type="button"
+          onClick={() => transitionToManual(false)}
+          className="fixed right-4 top-16 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-purple-300/40 bg-gradient-to-br from-purple-500/25 to-violet-400/20 text-purple-100 transition-all duration-300 hover:scale-110 hover:border-purple-200/70 hover:bg-purple-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/70 sm:right-6 sm:top-20"
+          aria-label={locale === "es" ? "Volver a AALIE" : "Back to AALIE"}
+        >
+          <span className="material-symbols-outlined text-[22px] leading-none">
+            arrow_back
+          </span>
+        </button>
+      )}
+
+      {isManualTransitioning && manualTransitionTarget && (
+        <div className="mode-wipe" aria-hidden>
+          <div className="mode-wipe-content">
+            {manualTransitionTarget === "manual" ? (
+              <span
+                className="material-symbols-outlined leading-none text-blue-300"
+                style={{ fontSize: "clamp(8rem, 21vw, 15rem)" }}
+              >
+                terminal
+              </span>
+            ) : (
+              <AALIEIcon
+                className="h-[clamp(8rem,21vw,15rem)] w-[clamp(8rem,21vw,15rem)] text-purple-300"
+                size={240}
+              />
+            )}
+            <span className="mode-wipe-label">
+              {tHome(
+                manualTransitionTarget === "manual"
+                  ? "modeTransition.manual"
+                  : "modeTransition.ai",
+              )}
+            </span>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

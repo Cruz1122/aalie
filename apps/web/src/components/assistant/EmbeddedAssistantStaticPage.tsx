@@ -14,7 +14,7 @@ import type {
 import { EmbeddedAssistantLauncher } from "./EmbeddedAssistantLauncher";
 
 export interface EmbeddedAssistantStaticPageProps {
-  surface: Extract<AssistantSurface, "about" | "privacy">;
+  surface: Extract<AssistantSurface, "about" | "privacy" | "terms">;
   route: string;
   title: string;
   description: string;
