@@ -25,7 +25,9 @@ import { POLICIES } from "../policies";
 import { proxyApiRequest } from "../proxy";
 import type { BffRequestContext } from "../request-context";
 
-function context(overrides: Partial<BffRequestContext> = {}): BffRequestContext {
+function context(
+  overrides: Partial<BffRequestContext> = {},
+): BffRequestContext {
   return {
     requestId: "request-gate",
     authenticated: false,
@@ -81,7 +83,9 @@ describe("MF3 common BFF proxy", () => {
   });
 
   it("enforces ADMIN as 401 for anonymous, 403 for USER and proxies ADMIN", async () => {
-    const anonymousRequest = new NextRequest("http://aalie.test/api/admin/studies");
+    const anonymousRequest = new NextRequest(
+      "http://aalie.test/api/admin/studies",
+    );
     let response = await proxyApiRequest(anonymousRequest, {
       path: "/admin/studies",
       policy: POLICIES.admin,
@@ -170,23 +174,24 @@ describe("MF3 common BFF proxy", () => {
   it("turns an upstream AbortController timeout into a controlled 504", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn((_url: string, init?: RequestInit) =>
-        new Promise<Response>((_resolve, reject) => {
-          const signal = init?.signal;
-          if (!signal) {
-            reject(new Error("missing abort signal"));
-            return;
-          }
-          signal.addEventListener(
-            "abort",
-            () => {
-              const error = new Error("aborted");
-              error.name = "AbortError";
-              reject(error);
-            },
-            { once: true },
-          );
-        }),
+      vi.fn(
+        (_url: string, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            const signal = init?.signal;
+            if (!signal) {
+              reject(new Error("missing abort signal"));
+              return;
+            }
+            signal.addEventListener(
+              "abort",
+              () => {
+                const error = new Error("aborted");
+                error.name = "AbortError";
+                reject(error);
+              },
+              { once: true },
+            );
+          }),
       ),
     );
     const request = new NextRequest("http://aalie.test/api/slow");
