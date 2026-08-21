@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
-from .schemas import QuizQuestion, QuizSelectionItem, QuizSelectionRequest, QuizSelectionResult
+from .schemas import QuizDifficulty, QuizQuestion, QuizSelectionItem, QuizSelectionRequest, QuizSelectionResult
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,41 @@ def _next_difficulty(recent_results: list[dict[str, object]]) -> tuple[str, str]
     if accuracy < 0.5:
         return _difficulty_from_rank(rank - 1), "decrease_difficulty"
     return current, "maintain_difficulty"
+
+
+def _difficulty_plan(
+    mix: dict[QuizDifficulty, float],
+    desired_count: int,
+) -> list[QuizDifficulty]:
+    """Convert a weight mix into deterministic integer quotas using largest remainder."""
+
+    order: list[QuizDifficulty] = ["basic", "intermediate", "advanced"]
+    weights = {key: max(0.0, float(mix.get(key, 0.0))) for key in order}
+    total = sum(weights.values())
+    if total <= 0:
+        return []
+
+    exact = {key: desired_count * weights[key] / total for key in order}
+    quotas = {key: math.floor(exact[key]) for key in order}
+    remaining = desired_count - sum(quotas.values())
+    rank = sorted(
+        order,
+        key=lambda key: (-(exact[key] - quotas[key]), order.index(key)),
+    )
+    for key in rank[:remaining]:
+        quotas[key] += 1
+
+    plan: list[QuizDifficulty] = []
+    while len(plan) < desired_count:
+        progressed = False
+        for key in order:
+            if quotas[key] > 0:
+                plan.append(key)
+                quotas[key] -= 1
+                progressed = True
+        if not progressed:
+            break
+    return plan
 
 
 def _weak_skill_target_set(request: QuizSelectionRequest) -> set[str]:
@@ -85,10 +121,13 @@ def _recent_type_streak(recent_results: list[dict[str, object]]) -> str | None:
 def _build_reason(code: str, question: QuizQuestion) -> dict[str, object]:
     messages = {
         "initial_question": "Se eligió una pregunta inicial de dificultad básica.",
-        "reinforce_failed_topic": "Se eligió esta pregunta porque el estudiante falló una pregunta previa del mismo tema.",
+        "reinforce_failed_topic": (
+            "Se eligió esta pregunta porque el estudiante falló una pregunta previa del mismo tema."
+        ),
         "increase_difficulty": "Se incrementó la dificultad por buen desempeño reciente.",
         "decrease_difficulty": "Se redujo la dificultad para reforzar fundamentos.",
         "maintain_difficulty": "Se mantiene la dificultad por desempeño reciente estable.",
+        "difficulty_mix": "Se eligió la dificultad por la mezcla explícita de la sesión.",
         "cover_pending_topic": "Se eligió este tema para cubrir contenido pendiente.",
         "avoid_repetition": "Se eligió esta pregunta para evitar repetición de tema o tipo.",
         "target_weak_skills": "Se priorizó una habilidad con bajo dominio o área a reforzar.",
@@ -163,12 +202,14 @@ def select_questions(
         active = []
     else:
         active = filtered_active
+
     studied = {(ref.moduleId, ref.chapterId) for ref in request.studiedContentRefs}
     seen = set(request.recentQuestionIds)
-    recent = request.recentResults
+    recent = list(request.recentResults)
 
     priority_topic = _pick_priority_topic(request)
-    desired_difficulty, difficulty_code = _next_difficulty(recent)
+    adaptive_difficulty, adaptive_code = _next_difficulty(recent)
+    explicit_plan = _difficulty_plan(prefs.difficultyMix, desired_count)
 
     selected: list[_Candidate] = []
     used_ids: set[str] = set()
@@ -210,13 +251,18 @@ def select_questions(
                 topic_pool = same_topic
                 reason_code = "reinforce_failed_topic"
 
+        desired_difficulty = (
+            explicit_plan[len(selected)] if explicit_plan else adaptive_difficulty
+        )
+        difficulty_code = "difficulty_mix" if explicit_plan else adaptive_code
         diff_pool = [q for q in topic_pool if q.difficulty == desired_difficulty]
         if diff_pool:
             topic_pool = diff_pool
             if reason_code == "fallback_available_question":
                 reason_code = difficulty_code
+        elif explicit_plan:
+            warnings.append("difficulty_mix_relaxed")
 
-        # Coverage: avoid >2 same topic/type in a row when alternatives exist
         topic_streak = _recent_topic_streak(recent)
         type_streak = _recent_type_streak(recent)
 
@@ -233,7 +279,6 @@ def select_questions(
                 alternatives = alt_type
                 reason_code = "avoid_repetition"
 
-        # Cover pending topic when there is no failed-topic pressure
         if not priority_topic:
             seen_topics = {str(item.get("topic", "")) for item in recent if item.get("topic")}
             pending_pool = [q for q in alternatives if q.topic not in seen_topics]
