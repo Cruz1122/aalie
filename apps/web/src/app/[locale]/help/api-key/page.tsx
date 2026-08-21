@@ -48,7 +48,10 @@ const providersEs: Provider[] = [
     recommendation:
       "Recomendado para empezar rápidamente y probar el asistente con una buena relación entre coste y capacidad.",
     links: [
-      { label: "Crear una clave", href: "https://aistudio.google.com/api-keys" },
+      {
+        label: "Crear una clave",
+        href: "https://aistudio.google.com/api-keys",
+      },
       {
         label: "Precios oficiales",
         href: "https://ai.google.dev/gemini-api/docs/pricing?hl=es-419",
@@ -75,7 +78,10 @@ const providersEs: Provider[] = [
     recommendation:
       "Recomendado si quieres acceso directo a modelos GPT y priorizas calidad sobre el coste mínimo.",
     links: [
-      { label: "Crear una clave", href: "https://platform.openai.com/api-keys" },
+      {
+        label: "Crear una clave",
+        href: "https://platform.openai.com/api-keys",
+      },
       {
         label: "Precios oficiales",
         href: "https://developers.openai.com/api/docs/pricing",
@@ -102,7 +108,10 @@ const providersEs: Provider[] = [
     recommendation:
       "Recomendado para explicaciones extensas, razonamiento y programación.",
     links: [
-      { label: "Administrar claves", href: "https://platform.claude.com/settings/keys" },
+      {
+        label: "Administrar claves",
+        href: "https://platform.claude.com/settings/keys",
+      },
       {
         label: "Precios oficiales",
         href: "https://platform.claude.com/docs/en/about-claude/pricing",
@@ -128,7 +137,10 @@ const providersEs: Provider[] = [
     recommendation:
       "Recomendado para experimentar con modelos potentes manteniendo bajo el coste por token.",
     links: [
-      { label: "Crear una clave", href: "https://platform.deepseek.com/api_keys" },
+      {
+        label: "Crear una clave",
+        href: "https://platform.deepseek.com/api_keys",
+      },
       {
         label: "Precios oficiales",
         href: "https://api-docs.deepseek.com/quick_start/pricing/",
@@ -180,7 +192,10 @@ const providersEs: Provider[] = [
       "Recomendado para privacidad, experimentación local y usuarios con hardware capaz de ejecutar el modelo.",
     links: [
       { label: "Descargar Ollama", href: "https://ollama.com/download" },
-      { label: "Autenticación oficial", href: "https://docs.ollama.com/api/authentication" },
+      {
+        label: "Autenticación oficial",
+        href: "https://docs.ollama.com/api/authentication",
+      },
     ],
   },
   {
@@ -226,8 +241,14 @@ const providersEs: Provider[] = [
     recommendation:
       "Recomendado si te interesan específicamente Grok o las herramientas del ecosistema xAI.",
     links: [
-      { label: "Guía de inicio", href: "https://docs.x.ai/developers/quickstart" },
-      { label: "Precios oficiales", href: "https://docs.x.ai/developers/pricing" },
+      {
+        label: "Guía de inicio",
+        href: "https://docs.x.ai/developers/quickstart",
+      },
+      {
+        label: "Precios oficiales",
+        href: "https://docs.x.ai/developers/pricing",
+      },
     ],
   },
   {
@@ -249,8 +270,14 @@ const providersEs: Provider[] = [
     recommendation:
       "Recomendado si priorizas velocidad de inferencia o quieres modelos abiertos mediante una API alojada.",
     links: [
-      { label: "Inicio rápido", href: "https://console.groq.com/docs/quickstart" },
-      { label: "Facturación", href: "https://console.groq.com/docs/billing-faqs" },
+      {
+        label: "Inicio rápido",
+        href: "https://console.groq.com/docs/quickstart",
+      },
+      {
+        label: "Facturación",
+        href: "https://console.groq.com/docs/billing-faqs",
+      },
     ],
   },
 ];
@@ -271,11 +298,16 @@ const providersEn: Provider[] = [
       "Go to API Keys and select Create API key.",
       "Copy the key, return to AALIE, and select Gemini.",
     ],
-    pricing: "Google offers a free tier for selected models. Paid use requires Cloud Billing and may ask for a USD 10 minimum prepayment.",
-    recommendation: "Recommended for getting started quickly with a good balance of cost and capability.",
+    pricing:
+      "Google offers a free tier for selected models. Paid use requires Cloud Billing and may ask for a USD 10 minimum prepayment.",
+    recommendation:
+      "Recommended for getting started quickly with a good balance of cost and capability.",
     links: [
       { label: "Create a key", href: "https://aistudio.google.com/api-keys" },
-      { label: "Official pricing", href: "https://ai.google.dev/gemini-api/docs/pricing" },
+      {
+        label: "Official pricing",
+        href: "https://ai.google.dev/gemini-api/docs/pricing",
+      },
     ],
   },
   {
@@ -293,11 +325,16 @@ const providersEn: Provider[] = [
       "Create a secret key and copy it immediately.",
       "Add balance if needed and select OpenAI in AALIE.",
     ],
-    pricing: "The API is billed separately from ChatGPT. New API accounts use prepaid billing; the stated minimum purchase is USD 5.",
-    recommendation: "Recommended when direct GPT access matters more than the lowest possible cost.",
+    pricing:
+      "The API is billed separately from ChatGPT. New API accounts use prepaid billing; the stated minimum purchase is USD 5.",
+    recommendation:
+      "Recommended when direct GPT access matters more than the lowest possible cost.",
     links: [
       { label: "Create a key", href: "https://platform.openai.com/api-keys" },
-      { label: "Official pricing", href: "https://developers.openai.com/api/docs/pricing" },
+      {
+        label: "Official pricing",
+        href: "https://developers.openai.com/api/docs/pricing",
+      },
     ],
   },
   {
@@ -315,11 +352,19 @@ const providersEn: Provider[] = [
       "Open Settings → API Keys and create a key named AALIE.",
       "Store it safely, configure billing, and select Anthropic in AALIE.",
     ],
-    pricing: "Anthropic charges per million tokens and also offers prompt caching and Batch API discounts on compatible models.",
-    recommendation: "Recommended for long explanations, reasoning, and programming tasks.",
+    pricing:
+      "Anthropic charges per million tokens and also offers prompt caching and Batch API discounts on compatible models.",
+    recommendation:
+      "Recommended for long explanations, reasoning, and programming tasks.",
     links: [
-      { label: "Manage keys", href: "https://platform.claude.com/settings/keys" },
-      { label: "Official pricing", href: "https://platform.claude.com/docs/en/about-claude/pricing" },
+      {
+        label: "Manage keys",
+        href: "https://platform.claude.com/settings/keys",
+      },
+      {
+        label: "Official pricing",
+        href: "https://platform.claude.com/docs/en/about-claude/pricing",
+      },
     ],
   },
   {
@@ -336,11 +381,16 @@ const providersEn: Provider[] = [
       "Create a new key and copy it.",
       "Add balance if needed and select DeepSeek in AALIE.",
     ],
-    pricing: "Pricing distinguishes cached from new input and peak from off-peak hours.",
-    recommendation: "Recommended for trying capable models while keeping token cost low.",
+    pricing:
+      "Pricing distinguishes cached from new input and peak from off-peak hours.",
+    recommendation:
+      "Recommended for trying capable models while keeping token cost low.",
     links: [
       { label: "Create a key", href: "https://platform.deepseek.com/api_keys" },
-      { label: "Official pricing", href: "https://api-docs.deepseek.com/quick_start/pricing/" },
+      {
+        label: "Official pricing",
+        href: "https://api-docs.deepseek.com/quick_start/pricing/",
+      },
     ],
   },
   {
@@ -358,8 +408,10 @@ const providersEn: Provider[] = [
       "Select Create API Key, name it, and set a limit if desired.",
       "Copy it, select OpenRouter in AALIE, and choose a model.",
     ],
-    pricing: "Each model keeps its own input and output price. OpenRouter charges a fee when buying credits and offers free models with daily limits.",
-    recommendation: "Recommended for comparing models without creating a separate account at every lab.",
+    pricing:
+      "Each model keeps its own input and output price. OpenRouter charges a fee when buying credits and offers free models with daily limits.",
+    recommendation:
+      "Recommended for comparing models without creating a separate account at every lab.",
     links: [
       { label: "Create a key", href: "https://openrouter.ai/settings/keys" },
       { label: "Catalog and pricing", href: "https://openrouter.ai/models" },
@@ -380,11 +432,16 @@ const providersEn: Provider[] = [
       "Run Ollama and select Ollama local in AALIE.",
       "For Cloud, create a key in settings and select that mode.",
     ],
-    pricing: "Local Ollama needs no key or per-token payment: it uses your computer's CPU, GPU, memory, and electricity. Cloud uses usage plans.",
-    recommendation: "Recommended for privacy, local experimentation, and hardware that can run the selected model.",
+    pricing:
+      "Local Ollama needs no key or per-token payment: it uses your computer's CPU, GPU, memory, and electricity. Cloud uses usage plans.",
+    recommendation:
+      "Recommended for privacy, local experimentation, and hardware that can run the selected model.",
     links: [
       { label: "Download Ollama", href: "https://ollama.com/download" },
-      { label: "Official authentication", href: "https://docs.ollama.com/api/authentication" },
+      {
+        label: "Official authentication",
+        href: "https://docs.ollama.com/api/authentication",
+      },
     ],
   },
   {
@@ -402,10 +459,15 @@ const providersEn: Provider[] = [
       "Open API Keys, select Create new key, and set an expiration.",
       "Copy the key immediately and enter it in AALIE.",
     ],
-    pricing: "Free mode supports limited usage without a card. Mistral also offers a 50% discount for Batch processing.",
-    recommendation: "Recommended for open or European models and an API with a free starting mode.",
+    pricing:
+      "Free mode supports limited usage without a card. Mistral also offers a 50% discount for Batch processing.",
+    recommendation:
+      "Recommended for open or European models and an API with a free starting mode.",
     links: [
-      { label: "Create a key", href: "https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key" },
+      {
+        label: "Create a key",
+        href: "https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key",
+      },
       { label: "Official pricing", href: "https://mistral.ai/pricing/api/" },
     ],
   },
@@ -420,11 +482,16 @@ const providersEn: Provider[] = [
       "Add credits, open API Keys, and select Create API Key.",
       "Copy it and select xAI inside AALIE.",
     ],
-    pricing: "For contexts up to 200k tokens, Grok 4.6 has the listed price. Longer contexts cost more.",
-    recommendation: "Recommended when Grok or xAI ecosystem tools are specifically what you need.",
+    pricing:
+      "For contexts up to 200k tokens, Grok 4.6 has the listed price. Longer contexts cost more.",
+    recommendation:
+      "Recommended when Grok or xAI ecosystem tools are specifically what you need.",
     links: [
       { label: "Quickstart", href: "https://docs.x.ai/developers/quickstart" },
-      { label: "Official pricing", href: "https://docs.x.ai/developers/pricing" },
+      {
+        label: "Official pricing",
+        href: "https://docs.x.ai/developers/pricing",
+      },
     ],
   },
   {
@@ -441,8 +508,10 @@ const providersEn: Provider[] = [
       "Go to API Keys and create a key for your project.",
       "Copy it and select Groq in AALIE.",
     ],
-    pricing: "Groq has a free tier with limits. Developer usage is billed according to the selected model.",
-    recommendation: "Recommended when inference speed matters or you want hosted open models.",
+    pricing:
+      "Groq has a free tier with limits. Developer usage is billed according to the selected model.",
+    recommendation:
+      "Recommended when inference speed matters or you want hosted open models.",
     links: [
       { label: "Quickstart", href: "https://console.groq.com/docs/quickstart" },
       { label: "Billing", href: "https://console.groq.com/docs/billing-faqs" },
@@ -465,25 +534,45 @@ export default async function ApiKeyHelpPage({ params }: Props) {
     ? {
         eyebrow: "AI provider guide",
         title: "Connect an AI provider",
-        subtitle: "AALIE can use external models to explain results, answer questions, compare analyses, and help with pseudocode.",
+        subtitle:
+          "AALIE can use external models to explain results, answer questions, compare analyses, and help with pseudocode.",
         noKey: "You do not need an API key to analyze algorithms.",
-        noKeyBody: "AALIE's deterministic engine works independently. Adding a provider only enables features that depend on external models.",
-        updated: "Prices and procedures change frequently. The values shown were reviewed on August 21, 2026; always check the provider's official page before adding funds.",
+        noKeyBody:
+          "AALIE's deterministic engine works independently. Adding a provider only enables features that depend on external models.",
+        updated:
+          "Prices and procedures change frequently. The values shown were reviewed on August 21, 2026; always check the provider's official page before adding funds.",
         warningTitle: "An API key is not a chat subscription",
-        warningBody: "ChatGPT Plus, Claude Pro, Gemini Advanced, and similar consumer subscriptions do not automatically include API balance. Chat apps and developer APIs usually have separate billing.",
-        warningTip: "When AALIE asks for a key, get it from the provider's developer platform—not from the chat application.",
+        warningBody:
+          "ChatGPT Plus, Claude Pro, Gemini Advanced, and similar consumer subscriptions do not automatically include API balance. Chat apps and developer APIs usually have separate billing.",
+        warningTip:
+          "When AALIE asks for a key, get it from the provider's developer platform—not from the chat application.",
         quickTitle: "Before you begin",
         quick: [
-          ["01", "Keep it private", "Treat a key like a password. Never post it in GitHub, Discord, screenshots, or source code."],
-          ["02", "Create one for AALIE", "Use a separate key when the provider allows it, with a spending limit if available."],
-          ["03", "Revoke if exposed", "If someone may have seen it, revoke it in the provider dashboard and create a new one."],
+          [
+            "01",
+            "Keep it private",
+            "Treat a key like a password. Never post it in GitHub, Discord, screenshots, or source code.",
+          ],
+          [
+            "02",
+            "Create one for AALIE",
+            "Use a separate key when the provider allows it, with a spending limit if available.",
+          ],
+          [
+            "03",
+            "Revoke if exposed",
+            "If someone may have seen it, revoke it in the provider dashboard and create a new one.",
+          ],
         ],
         tokenTitle: "How API billing works",
-        tokenBody: "Most providers charge by tokens: input tokens include your question, pseudocode, and context; output tokens are the generated answer and are usually more expensive. Prices are commonly shown per 1 million tokens, but you only pay for what you use.",
-        tokenNote: "Some models also price cached tokens, reasoning, web search, images, audio, or very long contexts differently.",
+        tokenBody:
+          "Most providers charge by tokens: input tokens include your question, pseudocode, and context; output tokens are the generated answer and are usually more expensive. Prices are commonly shown per 1 million tokens, but you only pay for what you use.",
+        tokenNote:
+          "Some models also price cached tokens, reasoning, web search, images, audio, or very long contexts differently.",
         providersEyebrow: "Choose your connection",
         providersTitle: "Providers and recommended models",
-        providersSubtitle: "There is no universally best provider. Choose the balance of price, capability, speed, and privacy that fits your use.",
+        providersSubtitle:
+          "There is no universally best provider. Choose the balance of price, capability, speed, and privacy that fits your use.",
         setup: "Quick setup",
         models: "Recommended models",
         pricing: "Pricing note",
@@ -493,12 +582,22 @@ export default async function ApiKeyHelpPage({ params }: Props) {
         comparisonHeaders: ["Provider", "Start free", "Billing", "Best for"],
         comparison: [
           ["Gemini", "Yes, selected models", "Tokens", "Simple setup"],
-          ["OpenAI", "Do not assume free", "Prepaid + tokens", "Direct GPT access"],
+          [
+            "OpenAI",
+            "Do not assume free",
+            "Prepaid + tokens",
+            "Direct GPT access",
+          ],
           ["Anthropic", "Do not assume free", "Tokens", "Claude"],
           ["DeepSeek", "Depends on account", "Tokens", "Low cost"],
           ["OpenRouter", "Yes, free models", "Per model", "Comparing models"],
           ["Ollama local", "Yes", "No token fee", "Privacy"],
-          ["Mistral / Groq", "Yes, with limits", "Tokens", "Open models / speed"],
+          [
+            "Mistral / Groq",
+            "Yes, with limits",
+            "Tokens",
+            "Open models / speed",
+          ],
         ],
         chooseTitle: "Which one should you choose?",
         choose: [
@@ -515,46 +614,87 @@ export default async function ApiKeyHelpPage({ params }: Props) {
           "Use a different key for each application so you can revoke AALIE without affecting other projects.",
         ],
         finalTitle: "One last warning",
-        finalBody: "Never send your key to someone else to “configure it for you”. The AALIE team, a teacher, or a classmate does not need to know your secret key. If it appears in a screenshot, conversation, repository, or public space, consider it compromised: revoke it and generate a new one.",
+        finalBody:
+          "Never send your key to someone else to “configure it for you”. The AALIE team, a teacher, or a classmate does not need to know your secret key. If it appears in a screenshot, conversation, repository, or public space, consider it compromised: revoke it and generate a new one.",
         back: "Back to AALIE",
       }
     : {
         eyebrow: "Guía de proveedores de IA",
         title: "Conecta un proveedor de inteligencia artificial",
-        subtitle: "AALIE puede utilizar modelos externos para explicar resultados, responder preguntas, comparar análisis y ayudarte con el pseudocódigo.",
+        subtitle:
+          "AALIE puede utilizar modelos externos para explicar resultados, responder preguntas, comparar análisis y ayudarte con el pseudocódigo.",
         noKey: "No necesitas una clave de API para analizar algoritmos.",
-        noKeyBody: "El motor determinista de AALIE funciona de manera independiente. Añadir un proveedor solo habilita las funciones que dependen de modelos externos.",
-        updated: "Los precios y procedimientos cambian con frecuencia. Los valores mostrados fueron revisados el 21 de agosto de 2026; revisa siempre la página oficial antes de agregar saldo.",
+        noKeyBody:
+          "El motor determinista de AALIE funciona de manera independiente. Añadir un proveedor solo habilita las funciones que dependen de modelos externos.",
+        updated:
+          "Los precios y procedimientos cambian con frecuencia. Los valores mostrados fueron revisados el 21 de agosto de 2026; revisa siempre la página oficial antes de agregar saldo.",
         warningTitle: "Una API key no es una suscripción de chat",
-        warningBody: "Pagar ChatGPT Plus, Claude Pro, Gemini Advanced u otra suscripción para consumidores no significa que tengas saldo para utilizar la API. Las aplicaciones de chat y las APIs de desarrolladores suelen tener facturación independiente.",
-        warningTip: "Cuando AALIE te pida una clave, obtenla desde la plataforma para desarrolladores del proveedor, no desde la aplicación de chat.",
+        warningBody:
+          "Pagar ChatGPT Plus, Claude Pro, Gemini Advanced u otra suscripción para consumidores no significa que tengas saldo para utilizar la API. Las aplicaciones de chat y las APIs de desarrolladores suelen tener facturación independiente.",
+        warningTip:
+          "Cuando AALIE te pida una clave, obtenla desde la plataforma para desarrolladores del proveedor, no desde la aplicación de chat.",
         quickTitle: "Antes de empezar",
         quick: [
-          ["01", "Mantenla privada", "Trata la clave como una contraseña. No la publiques en GitHub, Discord, capturas de pantalla ni código fuente."],
-          ["02", "Crea una para AALIE", "Usa una clave independiente cuando el proveedor lo permita y configura un límite de gasto."],
-          ["03", "Revócala si se expone", "Si alguien pudo verla, revócala desde el panel del proveedor y crea una nueva."],
+          [
+            "01",
+            "Mantenla privada",
+            "Trata la clave como una contraseña. No la publiques en GitHub, Discord, capturas de pantalla ni código fuente.",
+          ],
+          [
+            "02",
+            "Crea una para AALIE",
+            "Usa una clave independiente cuando el proveedor lo permita y configura un límite de gasto.",
+          ],
+          [
+            "03",
+            "Revócala si se expone",
+            "Si alguien pudo verla, revócala desde el panel del proveedor y crea una nueva.",
+          ],
         ],
         tokenTitle: "¿Cómo se cobran las APIs?",
-        tokenBody: "La mayoría de proveedores cobra por tokens: los tokens de entrada incluyen tu pregunta, pseudocódigo y contexto; los de salida son la respuesta generada y suelen ser más caros. Los precios normalmente se publican por 1 millón de tokens, pero solo pagas lo que utilizas.",
-        tokenNote: "Algunos modelos también tienen tarifas distintas para tokens en caché, razonamiento, búsquedas web, imágenes, audio o contextos muy largos.",
+        tokenBody:
+          "La mayoría de proveedores cobra por tokens: los tokens de entrada incluyen tu pregunta, pseudocódigo y contexto; los de salida son la respuesta generada y suelen ser más caros. Los precios normalmente se publican por 1 millón de tokens, pero solo pagas lo que utilizas.",
+        tokenNote:
+          "Algunos modelos también tienen tarifas distintas para tokens en caché, razonamiento, búsquedas web, imágenes, audio o contextos muy largos.",
         providersEyebrow: "Elige tu conexión",
         providersTitle: "Proveedores y modelos recomendados",
-        providersSubtitle: "No existe un proveedor universalmente mejor. Elige el equilibrio de precio, capacidad, velocidad y privacidad que mejor se adapte a ti.",
+        providersSubtitle:
+          "No existe un proveedor universalmente mejor. Elige el equilibrio de precio, capacidad, velocidad y privacidad que mejor se adapte a ti.",
         setup: "Configuración rápida",
         models: "Modelos recomendados",
         pricing: "Nota de precios",
         recommended: "Por qué elegirlo",
         official: "Enlaces oficiales",
         comparisonTitle: "Comparación rápida",
-        comparisonHeaders: ["Proveedor", "Empezar gratis", "Cobro", "Ideal para"],
+        comparisonHeaders: [
+          "Proveedor",
+          "Empezar gratis",
+          "Cobro",
+          "Ideal para",
+        ],
         comparison: [
           ["Gemini", "Sí, algunos modelos", "Tokens", "Configuración sencilla"],
-          ["OpenAI", "No asumir nivel gratuito", "Saldo + tokens", "Acceso directo a GPT"],
+          [
+            "OpenAI",
+            "No asumir nivel gratuito",
+            "Saldo + tokens",
+            "Acceso directo a GPT",
+          ],
           ["Anthropic", "No asumir nivel gratuito", "Tokens", "Claude"],
           ["DeepSeek", "Depende de la cuenta", "Tokens", "Coste bajo"],
-          ["OpenRouter", "Sí, modelos gratuitos", "Por modelo", "Comparar modelos"],
+          [
+            "OpenRouter",
+            "Sí, modelos gratuitos",
+            "Por modelo",
+            "Comparar modelos",
+          ],
           ["Ollama local", "Sí", "Sin cobro por token", "Privacidad"],
-          ["Mistral / Groq", "Sí, con límites", "Tokens", "Modelos abiertos / velocidad"],
+          [
+            "Mistral / Groq",
+            "Sí, con límites",
+            "Tokens",
+            "Modelos abiertos / velocidad",
+          ],
         ],
         chooseTitle: "¿Cuál deberías elegir?",
         choose: [
@@ -571,7 +711,8 @@ export default async function ApiKeyHelpPage({ params }: Props) {
           "Usa una clave diferente para cada aplicación: así podrás revocar la de AALIE sin afectar otros proyectos.",
         ],
         finalTitle: "Una última advertencia",
-        finalBody: "Nunca envíes tu clave a otra persona para que “la configure por ti”. El equipo de AALIE, un profesor o un compañero no necesita conocer tu clave secreta. Si aparece en una captura, conversación, repositorio o espacio público, considérala comprometida: revócala y genera una nueva.",
+        finalBody:
+          "Nunca envíes tu clave a otra persona para que “la configure por ti”. El equipo de AALIE, un profesor o un compañero no necesita conocer tu clave secreta. Si aparece en una captura, conversación, repositorio o espacio público, considérala comprometida: revócala y genera una nueva.",
         back: "Volver a AALIE",
       };
 
@@ -583,23 +724,44 @@ export default async function ApiKeyHelpPage({ params }: Props) {
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-12">
           <section className="api-help-reveal relative space-y-6">
             <div className="relative flex items-center gap-3">
-              <KeyRound className="api-help-key-icon h-8 w-8 text-purple-300" strokeWidth={1.6} />
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{copy.eyebrow}</p>
+              <KeyRound
+                className="api-help-key-icon h-8 w-8 text-purple-300"
+                strokeWidth={1.6}
+              />
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                {copy.eyebrow}
+              </p>
             </div>
-            <h1 className="relative text-3xl font-extrabold leading-tight text-white sm:text-4xl">{copy.title}</h1>
-            <p className="relative text-lg leading-8 text-slate-200">{copy.subtitle}</p>
-            <p className="relative border-l-2 border-emerald-300/60 pl-4 text-[15px] font-semibold leading-7 text-emerald-100">{copy.noKey}</p>
-            <p className="relative text-[15px] leading-7 text-dark-text">{copy.noKeyBody}</p>
-            <p className="relative text-sm italic leading-6 text-slate-400">{copy.updated}</p>
+            <h1 className="relative text-3xl font-extrabold leading-tight text-white sm:text-4xl">
+              {copy.title}
+            </h1>
+            <p className="relative text-lg leading-8 text-slate-200">
+              {copy.subtitle}
+            </p>
+            <p className="relative border-l-2 border-emerald-300/60 pl-4 text-[15px] font-semibold leading-7 text-emerald-100">
+              {copy.noKey}
+            </p>
+            <p className="relative text-[15px] leading-7 text-dark-text">
+              {copy.noKeyBody}
+            </p>
+            <p className="relative text-sm italic leading-6 text-slate-400">
+              {copy.updated}
+            </p>
           </section>
 
           <section className="api-help-reveal api-help-delay-1 space-y-5 border-y border-amber-300/20 py-7">
             <div className="flex items-start gap-4">
               <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-amber-200" />
               <div>
-                <h2 className="text-2xl font-semibold tracking-tight text-white">{copy.warningTitle}</h2>
-                <p className="mt-3 text-[15px] leading-7 text-dark-text">{copy.warningBody}</p>
-                <p className="mt-3 border-l-2 border-amber-200/50 pl-4 text-sm font-medium leading-6 text-amber-100">{copy.warningTip}</p>
+                <h2 className="text-2xl font-semibold tracking-tight text-white">
+                  {copy.warningTitle}
+                </h2>
+                <p className="mt-3 text-[15px] leading-7 text-dark-text">
+                  {copy.warningBody}
+                </p>
+                <p className="mt-3 border-l-2 border-amber-200/50 pl-4 text-sm font-medium leading-6 text-amber-100">
+                  {copy.warningTip}
+                </p>
               </div>
             </div>
           </section>
@@ -607,10 +769,14 @@ export default async function ApiKeyHelpPage({ params }: Props) {
           <section className="api-help-reveal api-help-delay-2 space-y-5">
             {copy.quick.map(([number, title, body]) => (
               <article key={number} className="flex items-start gap-4">
-                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-white">{number}</span>
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-white">
+                  {number}
+                </span>
                 <div>
                   <h2 className="text-lg font-semibold text-white">{title}</h2>
-                  <p className="mt-1 text-[15px] leading-7 text-dark-text">{body}</p>
+                  <p className="mt-1 text-[15px] leading-7 text-dark-text">
+                    {body}
+                  </p>
                 </div>
               </article>
             ))}
@@ -618,27 +784,45 @@ export default async function ApiKeyHelpPage({ params }: Props) {
 
           <section className="api-help-reveal api-help-delay-3 space-y-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/70">Tokens, saldo y límites</p>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">{copy.tokenTitle}</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/70">
+                Tokens, saldo y límites
+              </p>
+              <h2 className="text-2xl font-semibold tracking-tight text-white">
+                {copy.tokenTitle}
+              </h2>
             </div>
             <div className="space-y-4 text-[15px] leading-7 text-dark-text">
               <p>{copy.tokenBody}</p>
-              <p className="border-l-2 border-cyan-300/50 pl-4 text-cyan-100/80">{copy.tokenNote}</p>
+              <p className="border-l-2 border-cyan-300/50 pl-4 text-cyan-100/80">
+                {copy.tokenNote}
+              </p>
             </div>
           </section>
 
           <section id="providers" className="scroll-mt-6 space-y-8">
             <div className="api-help-reveal space-y-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{copy.providersEyebrow}</p>
-              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{copy.providersTitle}</h2>
-              <p className="text-[15px] leading-7 text-dark-text">{copy.providersSubtitle}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                {copy.providersEyebrow}
+              </p>
+              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                {copy.providersTitle}
+              </h2>
+              <p className="text-[15px] leading-7 text-dark-text">
+                {copy.providersSubtitle}
+              </p>
             </div>
             <div className="space-y-10">
               {providers.map((provider, index) => {
                 return (
-                  <article key={provider.name} className="api-help-provider space-y-5 border-t border-white/10 pt-8" style={{ animationDelay: `${index * 70}ms` }}>
+                  <article
+                    key={provider.name}
+                    className="api-help-provider space-y-5 border-t border-white/10 pt-8"
+                    style={{ animationDelay: `${index * 70}ms` }}
+                  >
                     <header className="flex items-start gap-4">
-                      <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br ${provider.tone}`}>
+                      <span
+                        className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br ${provider.tone}`}
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={`https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/${provider.logo}.svg`}
@@ -648,41 +832,82 @@ export default async function ApiKeyHelpPage({ params }: Props) {
                         />
                       </span>
                       <div>
-                        <h3 className="text-xl font-semibold text-white">{provider.name}</h3>
-                        <p className="mt-1 text-[15px] leading-6 text-dark-text">{provider.tagline}</p>
+                        <h3 className="text-xl font-semibold text-white">
+                          {provider.name}
+                        </h3>
+                        <p className="mt-1 text-[15px] leading-6 text-dark-text">
+                          {provider.tagline}
+                        </p>
                       </div>
                     </header>
 
                     <div className="space-y-5 pl-0 sm:pl-14">
                       <div>
-                        <h4 className="flex items-center gap-2 text-sm font-semibold text-white"><Sparkles className="h-4 w-4 text-purple-300" />{copy.models}</h4>
+                        <h4 className="flex items-center gap-2 text-sm font-semibold text-white">
+                          <Sparkles className="h-4 w-4 text-purple-300" />
+                          {copy.models}
+                        </h4>
                         <ul className="mt-2 divide-y divide-white/[0.08] border-y border-white/[0.08] text-sm">
                           {provider.models.map((model) => (
-                            <li key={model.name} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5 text-dark-text">
-                              <span className="font-medium text-slate-100">{model.name}</span>
-                              <span className="text-xs text-slate-400">{model.price}</span>
+                            <li
+                              key={model.name}
+                              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5 text-dark-text"
+                            >
+                              <span className="font-medium text-slate-100">
+                                {model.name}
+                              </span>
+                              <span className="text-xs text-slate-400">
+                                {model.price}
+                              </span>
                             </li>
                           ))}
                         </ul>
                       </div>
                       <div>
-                        <h4 className="flex items-center gap-2 text-sm font-semibold text-white"><KeyRound className="h-4 w-4 text-amber-300" />{copy.setup}</h4>
+                        <h4 className="flex items-center gap-2 text-sm font-semibold text-white">
+                          <KeyRound className="h-4 w-4 text-amber-300" />
+                          {copy.setup}
+                        </h4>
                         <ol className="mt-2 space-y-2 text-[15px] leading-6 text-dark-text">
                           {provider.steps.map((step, stepIndex) => (
-                            <li key={step} className="flex items-start gap-3"><span className="text-xs font-semibold text-slate-500">{stepIndex + 1}.</span><span>{step}</span></li>
+                            <li key={step} className="flex items-start gap-3">
+                              <span className="text-xs font-semibold text-slate-500">
+                                {stepIndex + 1}.
+                              </span>
+                              <span>{step}</span>
+                            </li>
                           ))}
                         </ol>
                       </div>
                     </div>
 
                     <div className="space-y-3 text-[15px] leading-7 text-dark-text">
-                      <p><strong className="font-semibold text-white">{copy.pricing}: </strong>{provider.pricing}</p>
-                      <p><strong className="font-semibold text-white">{copy.recommended}: </strong>{provider.recommendation}</p>
+                      <p>
+                        <strong className="font-semibold text-white">
+                          {copy.pricing}:{" "}
+                        </strong>
+                        {provider.pricing}
+                      </p>
+                      <p>
+                        <strong className="font-semibold text-white">
+                          {copy.recommended}:{" "}
+                        </strong>
+                        {provider.recommendation}
+                      </p>
                       <p className="flex flex-wrap gap-x-4 gap-y-2 pt-1 text-sm">
-                        <span className="font-semibold text-slate-400">{copy.official}:</span>
+                        <span className="font-semibold text-slate-400">
+                          {copy.official}:
+                        </span>
                         {provider.links.map((link) => (
-                          <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-cyan-300 underline decoration-cyan-300/40 underline-offset-4 transition-colors hover:text-cyan-200">
-                            {link.label}<ExternalLink className="h-3 w-3" />
+                          <a
+                            key={link.href}
+                            href={link.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-cyan-300 underline decoration-cyan-300/40 underline-offset-4 transition-colors hover:text-cyan-200"
+                          >
+                            {link.label}
+                            <ExternalLink className="h-3 w-3" />
                           </a>
                         ))}
                       </p>
@@ -694,31 +919,92 @@ export default async function ApiKeyHelpPage({ params }: Props) {
           </section>
 
           <section className="api-help-reveal space-y-5">
-            <div className="flex items-center gap-3"><CircleDollarSign className="h-5 w-5 text-emerald-300" /><h2 className="text-2xl font-semibold tracking-tight text-white">{copy.comparisonTitle}</h2></div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[620px] text-left text-sm">
-                  <thead className="border-y border-white/10 text-xs uppercase tracking-wider text-slate-400"><tr>{copy.comparisonHeaders.map((header) => <th key={header} className="px-3 py-3 font-semibold">{header}</th>)}</tr></thead>
-                  <tbody className="divide-y divide-white/[0.08] text-dark-text">{copy.comparison.map((row) => <tr key={row[0]}>{row.map((cell, cellIndex) => <td key={`${row[0]}-${cellIndex}`} className={`px-3 py-3 ${cellIndex === 0 ? "font-semibold text-white" : ""}`}>{cell}</td>)}</tr>)}</tbody>
-                </table>
-              </div>
+            <div className="flex items-center gap-3">
+              <CircleDollarSign className="h-5 w-5 text-emerald-300" />
+              <h2 className="text-2xl font-semibold tracking-tight text-white">
+                {copy.comparisonTitle}
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[620px] text-left text-sm">
+                <thead className="border-y border-white/10 text-xs uppercase tracking-wider text-slate-400">
+                  <tr>
+                    {copy.comparisonHeaders.map((header) => (
+                      <th key={header} className="px-3 py-3 font-semibold">
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.08] text-dark-text">
+                  {copy.comparison.map((row) => (
+                    <tr key={row[0]}>
+                      {row.map((cell, cellIndex) => (
+                        <td
+                          key={`${row[0]}-${cellIndex}`}
+                          className={`px-3 py-3 ${cellIndex === 0 ? "font-semibold text-white" : ""}`}
+                        >
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <section className="api-help-reveal space-y-5">
-            <header><h2 className="text-2xl font-semibold tracking-tight text-white">{copy.chooseTitle}</h2></header>
-            <ul className="space-y-3 text-[15px] leading-7 text-dark-text">{copy.choose.map((item) => <li key={item} className="flex items-start gap-3"><ArrowRight className="mt-1 h-4 w-4 shrink-0 text-purple-300" />{item}</li>)}</ul>
+            <header>
+              <h2 className="text-2xl font-semibold tracking-tight text-white">
+                {copy.chooseTitle}
+              </h2>
+            </header>
+            <ul className="space-y-3 text-[15px] leading-7 text-dark-text">
+              {copy.choose.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-purple-300" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </section>
 
           <section className="api-help-reveal space-y-5">
-            <header><h2 className="text-2xl font-semibold tracking-tight text-white">{copy.budgetTitle}</h2></header>
-            <ul className="space-y-3 text-[15px] leading-7 text-dark-text">{copy.budget.map((item) => <li key={item} className="flex items-start gap-3"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-300" />{item}</li>)}</ul>
+            <header>
+              <h2 className="text-2xl font-semibold tracking-tight text-white">
+                {copy.budgetTitle}
+              </h2>
+            </header>
+            <ul className="space-y-3 text-[15px] leading-7 text-dark-text">
+              {copy.budget.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <Check className="mt-1 h-4 w-4 shrink-0 text-emerald-300" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </section>
 
           <section className="api-help-reveal space-y-5 border-t border-red-300/20 pt-8">
-            <header className="flex items-start gap-3"><AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-red-300" /><h2 className="text-2xl font-semibold tracking-tight text-white">{copy.finalTitle}</h2></header>
-            <p className="text-[15px] leading-7 text-dark-text">{copy.finalBody}</p>
+            <header className="flex items-start gap-3">
+              <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-red-300" />
+              <h2 className="text-2xl font-semibold tracking-tight text-white">
+                {copy.finalTitle}
+              </h2>
+            </header>
+            <p className="text-[15px] leading-7 text-dark-text">
+              {copy.finalBody}
+            </p>
           </section>
 
-          <NavigationLink href="/" className="api-help-reveal inline-flex items-center gap-2 self-start text-sm font-semibold text-cyan-300 underline decoration-cyan-300/40 underline-offset-4 transition-colors hover:text-cyan-200 focus-visible-enhanced"><ArrowRight className="h-4 w-4 rotate-180" />{copy.back}</NavigationLink>
+          <NavigationLink
+            href="/"
+            className="api-help-reveal inline-flex items-center gap-2 self-start text-sm font-semibold text-cyan-300 underline decoration-cyan-300/40 underline-offset-4 transition-colors hover:text-cyan-200 focus-visible-enhanced"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180" />
+            {copy.back}
+          </NavigationLink>
         </div>
       </main>
 
