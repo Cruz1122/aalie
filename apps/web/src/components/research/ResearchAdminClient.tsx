@@ -103,7 +103,9 @@ export function ResearchStudiesList({ locale }: { locale: string }) {
           detail?: string;
         } | null;
         throw new Error(
-          payload?.error ?? payload?.detail ?? `Create failed: HTTP ${response.status}`,
+          payload?.error ??
+            payload?.detail ??
+            `Create failed: HTTP ${response.status}`,
         );
       }
       setDraft(EMPTY_STUDY);
@@ -196,7 +198,8 @@ export function ResearchStudiesList({ locale }: { locale: string }) {
             <div>
               <div className="font-semibold text-white">{study.title}</div>
               <div className="mt-1 text-xs text-slate-500">
-                {study.slug} · protocol {study.protocolVersion} · consent {study.consentVersion}
+                {study.slug} · protocol {study.protocolVersion} · consent{" "}
+                {study.consentVersion}
               </div>
             </div>
             <span className="text-xs font-semibold uppercase tracking-wider text-cyan-200">
@@ -265,7 +268,9 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
           detail?: string;
         } | null;
         throw new Error(
-          payload?.error ?? payload?.detail ?? `Status update failed: HTTP ${response.status}`,
+          payload?.error ??
+            payload?.detail ??
+            `Status update failed: HTTP ${response.status}`,
         );
       }
       await load();
@@ -308,13 +313,16 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                {summary.study.status} · telemetry {summary.study.telemetryEnabled ? "ON" : "OFF"}
+                {summary.study.status} · telemetry{" "}
+                {summary.study.telemetryEnabled ? "ON" : "OFF"}
               </p>
               <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
                 {summary.study.title}
               </h1>
               <p className="mt-2 text-xs text-slate-500">
-                Protocol {summary.study.protocolVersion} · consent {summary.study.consentVersion} · SHA {summary.study.consentSha256.slice(0, 12)}…
+                Protocol {summary.study.protocolVersion} · consent{" "}
+                {summary.study.consentVersion} · SHA{" "}
+                {summary.study.consentSha256.slice(0, 12)}…
               </p>
             </div>
             <a
@@ -328,7 +336,8 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
           <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-5">
             <h2 className="font-semibold text-white">Study controls</h2>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              CLOSED is terminal. Experimental evidence is recorded only while ACTIVE and all participant gates pass.
+              CLOSED is terminal. Experimental evidence is recorded only while
+              ACTIVE and all participant gates pass.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {status === "DRAFT" ? (
@@ -383,7 +392,9 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
                 </>
               ) : null}
               {status === "CLOSED" ? (
-                <span className="text-sm text-slate-500">No further status transitions are allowed.</span>
+                <span className="text-sm text-slate-500">
+                  No further status transitions are allowed.
+                </span>
               ) : null}
             </div>
           </section>
@@ -402,7 +413,9 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
                 className="rounded-xl border border-white/10 bg-white/[0.025] p-4"
               >
                 <div className="text-xs text-slate-500">{label}</div>
-                <div className="mt-1 text-2xl font-bold text-white">{value}</div>
+                <div className="mt-1 text-2xl font-bold text-white">
+                  {value}
+                </div>
               </div>
             ))}
           </div>
@@ -470,7 +483,9 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-dark-text">{participant.attempts}</td>
+                    <td className="px-4 py-3 text-dark-text">
+                      {participant.attempts}
+                    </td>
                     <td className="px-4 py-3 text-dark-text">
                       {participant.averageAccuracy == null
                         ? "—"
