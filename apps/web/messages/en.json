@@ -1759,8 +1759,8 @@
       "eyebrow": "Privacy",
       "title": "Privacy Policy",
       "subtitle": "We want you to clearly know what information AALIE uses, why it uses it, what stays in your browser, what may be processed on the server, and what depends on your choices.",
-      "body": "AALIE is an educational platform for learning and practicing algorithm analysis. Its core features can be used without creating an account. If you choose to sign in with Google, AALIE processes the basic identity data needed to create and maintain your account. Optional AI features remain separate and may send additional context to the configured provider.",
-      "lastUpdated": "Last updated: August 2026"
+      "body": "AALIE is an educational platform created to support learning and teaching Algorithm Analysis and Design. This policy applies whether or not you create an account, including when you use optional AI features or voluntarily participate in an academic study. Many tools can be used without an account. Other functions may require additional information processing. We use only information reasonably necessary to provide AALIE's functions, protect the platform, and conduct previously disclosed academic activities.",
+      "lastUpdated": "Last updated: August 21, 2026 · Version 2.0"
     },
     "summary": {
       "title": "Quick summary",
@@ -1786,6 +1786,363 @@
           "description": "AALIE is not designed to sell personal information, create commercial profiles, show personalized ads, or market student or teacher data."
         }
       }
+    },
+    "fullPolicy": {
+      "sections": [
+        {
+          "title": "Purpose and summary",
+          "paragraphs": [
+            "We want you to clearly understand what information AALIE uses, why it may need it, and what control you have over it.",
+            "AALIE is an educational platform created to support learning and teaching Algorithm Analysis and Design. You can use many of its tools without creating an account. Other functions, such as saving profile-related information, using external artificial intelligence services, or voluntarily taking part in an academic study, may require additional information processing.",
+            "Our general rule is simple: we use only information that is reasonably necessary to provide AALIE's functions, protect the platform, and conduct academic activities that have been disclosed in advance."
+          ]
+        },
+        {
+          "title": "Data controller",
+          "paragraphs": [
+            "The Data Controller for personal data managed directly by AALIE is Juan Camilo Cruz Parra.",
+            "Address and contact location: Manizales, Caldas, Colombia. Email: juan.cruz37552@ucaldas.edu.co. Phone: +57 321 465 0754."
+          ]
+        },
+        {
+          "title": "Academic context",
+          "paragraphs": [
+            "AALIE was developed in an academic context related to the University of Caldas. This reference describes the project's educational context and does not, by itself, mean that the University of Caldas is responsible for every data processing activity carried out through the platform."
+          ]
+        },
+        {
+          "title": "Scope of this policy",
+          "paragraphs": [
+            "This policy applies to people who use AALIE, whether or not they create an account. It also applies to people who choose optional features such as the artificial intelligence assistant and to people who voluntarily agree to participate in academic studies conducted through AALIE.",
+            "When you use a service provided by a third party, such as Google for sign-in or an external artificial intelligence provider, that third party may also apply its own terms and privacy policies to processing it performs directly."
+          ]
+        },
+        {
+          "title": "Processing principles",
+          "paragraphs": [
+            "AALIE seeks to process personal data lawfully, transparently, and only for clear purposes. This means that we seek to collect only necessary information, avoid uses different from those disclosed, protect access to data, retain information for a reasonably necessary period, and allow people to understand and exercise their rights over it.",
+            "When the law requires authorization for processing, that authorization must be prior and informed and may be retained as evidence of the authorization."
+          ]
+        },
+        {
+          "title": "Information that may be processed",
+          "paragraphs": ["Depending on the features you use, AALIE may work with:"],
+          "items": [
+            "Pseudocode that you write or upload for analysis.",
+            ".txt files that you choose to open through the editor.",
+            "Questions or instructions that you send to the assistant.",
+            "Answers that you select in quizzes.",
+            "Information related to your progress through educational content.",
+            "Language or functionality preferences.",
+            "Basic account information when you choose to sign in.",
+            "Results, costs, traces, recurrences, warnings, and reports derived from the analysis.",
+            "Any other information that you voluntarily enter into a feature that clearly requests it."
+          ],
+          "paragraphsAfter": ["You do not need to provide sensitive information to use AALIE normally."]
+        },
+        {
+          "title": "Account and Google sign-in",
+          "paragraphs": [
+            "Creating an account is optional for features that AALIE makes available without authentication. If you choose to sign in with Google, AALIE may receive the basic information needed to recognize you and maintain your account, such as:",
+            "We may also retain information needed to maintain your session, protect your account, and apply the permissions that belong within the platform. AALIE does not need to know or store your Google password.",
+            "Signing in with Google does not automatically give AALIE access to Gmail, Google Drive, Google Calendar, or private content in other Google services."
+          ],
+          "items": [
+            "Your name.",
+            "Your email address.",
+            "Your profile photo, when available.",
+            "Confirmation that your email has been verified.",
+            "Identifiers needed to link your sign-in to your AALIE account."
+          ]
+        },
+        {
+          "title": "Use without an account and technical identifiers",
+          "paragraphs": [
+            "You can use certain AALIE features without personally identifying yourself. In these cases, the platform may use a random identifier to recognize in a limited way that different requests came from the same browser.",
+            "This helps protect the service, distribute resources reasonably, and enforce usage limits without needing your name or email address. AALIE does not seek to identify anonymous users through invasive device-tracking techniques. This identifier is not used for advertising or to follow your activity outside AALIE."
+          ]
+        },
+        {
+          "title": "Pseudocode and analysis",
+          "paragraphs": [
+            "When you write pseudocode or upload a compatible file, AALIE needs to process that content to perform the function you requested. Depending on the case, this may provide complexity analysis, line costs, mathematical functions, asymptotic notation, recurrences, traces, explanations, warnings, or reports.",
+            "The editor exists for working with algorithms, not for storing personal documents. Avoid entering real names, identity documents, email addresses, confidential information, trade secrets, passwords, credentials, or any other data that is not necessary to analyze the algorithm in pseudocode.",
+            "Formal analysis is performed by the AALIE engine and does not depend on using an AI assistant or entering a personal key."
+          ]
+        },
+        {
+          "title": ".txt files",
+          "paragraphs": [
+            "AALIE may allow you to open .txt files and bring their contents into the editor. This feature is intended to make it easier to write or import pseudocode. It is not intended to operate as personal file storage.",
+            "Before uploading a file, review its contents. If it contains private or confidential information that you do not need for the analysis, remove that information before using the file."
+          ]
+        },
+        {
+          "title": "Results and reports",
+          "paragraphs": [
+            "Results generated by AALIE may include information derived from the pseudocode you provided. If you generate a report, it may contain the original algorithm, mathematical analysis, costs, recurrences, traces, warnings, and other information needed to represent the analysis performed.",
+            "The file you download comes under your control. You decide where to store it and with whom to share it. Always review a report before sharing it, because personal or confidential information you originally entered may also appear in the generated document."
+          ]
+        },
+        {
+          "title": "Educational activity and quizzes",
+          "paragraphs": ["AALIE may record information related to your educational activity, such as:"],
+          "items": [
+            "Quizzes started or completed.",
+            "Questions presented.",
+            "Answers.",
+            "Scores.",
+            "Topics you have practiced.",
+            "Progress through the content.",
+            "Strengths or topics that may be useful to study again."
+          ],
+          "paragraphsAfter": [
+            "This information is used to help you continue your learning process and, where applicable, deterministically adapt future practice activities.",
+            "AALIE results are pedagogical. They are not, by themselves, an official grade, certification, academic record, or professional diagnosis of your abilities."
+          ]
+        },
+        {
+          "title": "Local storage in the browser",
+          "paragraphs": [
+            "AALIE may save some information directly in your browser to remember preferences and provide a more continuous experience. For example, it may retain:",
+            "Data stored only in your browser may disappear if you clear site data, use private browsing, change browsers, or change devices. We do not recommend storing sensitive information on public, shared, or lab computers."
+          ],
+          "items": [
+            "Language.",
+            "Interface preferences.",
+            "Educational progress.",
+            "The state of certain activities.",
+            "Temporary information needed to use a feature."
+          ]
+        },
+        {
+          "title": "Artificial intelligence assistant",
+          "paragraphs": [
+            "AALIE's artificial intelligence features are optional. Formal algorithm analysis does not depend on using an AI assistant.",
+            "When you choose to use it, the provider generating the response may need to receive information related to your request, such as:",
+            "This information is sent only when you use a feature that requires the external provider. Signing in to AALIE does not mean that your profile data is automatically sent to an artificial intelligence provider.",
+            "External providers may apply their own policies regarding data processing, retention, and location. Do not use the assistant with sensitive information, secrets, credentials, private information about other people, or confidential material that you are not authorized to share."
+          ],
+          "items": [
+            "The question you wrote.",
+            "The pseudocode you are asking about.",
+            "Analysis results.",
+            "Visible information relevant to understanding your question.",
+            "A recent part of the conversation needed to maintain context."
+          ]
+        },
+        {
+          "title": "Personal keys for AI providers",
+          "paragraphs": [
+            "AALIE may allow you to use a personal key from an artificial intelligence provider. If you choose to do so, the key is used only to attempt the requests that you initiate through the relevant features.",
+            "Using a personal key may create costs, consume quotas, or be subject to conditions set directly by the provider. AALIE is not a service intended to manage enterprise secrets or credentials.",
+            "Do not share your key with other people and avoid using or storing it on public or shared computers. If you suspect that a key was exposed, revoke it directly through the relevant provider's platform."
+          ]
+        },
+        {
+          "title": "Information AALIE does not need",
+          "paragraphs": ["AALIE does not need the following for its ordinary operation:"],
+          "items": [
+            "Banking or payment data.",
+            "Precise geographic location.",
+            "Biometric information.",
+            "Passwords for external services.",
+            "Health information.",
+            "Political or religious information.",
+            "Information about sex life or sexual orientation.",
+            "Information about racial or ethnic origin.",
+            "Financial information.",
+            "Data intended for personalized advertising.",
+            "Private information about third parties."
+          ],
+          "paragraphsAfter": [
+            "Colombian law provides special protection for sensitive data and restricts its processing. The fact that a text box technically allows certain information to be entered does not mean that AALIE needs or requests it. Do not enter unnecessary sensitive information."
+          ]
+        },
+        {
+          "title": "Processing purposes",
+          "paragraphs": ["Information processed through AALIE may be used to:"],
+          "items": [
+            "Provide the platform's educational functions.",
+            "Analyze algorithms and generate their results.",
+            "Display content, quizzes, and progress.",
+            "Create and maintain accounts when the user requests it.",
+            "Maintain sessions and remember preferences.",
+            "Generate reports and answer requests made to the AI assistant.",
+            "Prevent abuse, protect availability, administer permissions, detect errors, and investigate security incidents.",
+            "Handle privacy-related questions and requests.",
+            "Comply with legal obligations.",
+            "Conduct academic studies only when there is valid participation for that purpose."
+          ],
+          "paragraphsAfter": ["We will not use the information for a substantially different purpose without first meeting the applicable information and authorization requirements."]
+        },
+        {
+          "title": "Research and ordinary use",
+          "paragraphs": [
+            "AALIE may be used as a tool in research related to education, algorithms, learning, or evaluation of the platform itself. However, there is a clear separation between using AALIE and participating in research.",
+            "Creating an account, signing in, using the analyzer, taking a quiz, or opening educational content does not mean that you accepted participation in a study."
+          ]
+        },
+        {
+          "title": "Voluntary participation in studies and test environments",
+          "paragraphs": [
+            "When a study requires your participation, AALIE must present it separately and explain the necessary information before recording your participation. Participation is voluntary, and where applicable you may withdraw consent according to the conditions provided for the study.",
+            "In test environments or experiments, use of the software may be limited to selected or invited users. You may choose not to take part in the experiment. If you do not wish to participate, you may contact us to request deletion of the associated data where legally permitted. This choice may mean that you lose access to the application or to experimental-environment features because access may depend on selected participation.",
+            "Refusing to participate or withdrawing from a study should not, solely for that reason, become a sanction within AALIE's ordinary educational use."
+          ]
+        },
+        {
+          "title": "Data a study may use",
+          "paragraphs": ["Depending on the study, data may include:"],
+          "items": [
+            "The study condition or group.",
+            "Quiz results.",
+            "Questions asked, answers, and scores.",
+            "Measurements defined in advance by the protocol.",
+            "Activities performed within the features being studied.",
+            "Approximate duration of certain activities.",
+            "Results obtained.",
+            "Information needed to identify which version of the educational activity was used."
+          ],
+          "paragraphsAfter": [
+            "Each study may limit the information it collects even further. The fact that AALIE can access other information as part of its normal operation does not mean that the information automatically becomes part of a research study."
+          ]
+        },
+        {
+          "title": "Data excluded from the academic dataset",
+          "paragraphs": ["As a general rule, datasets intended for academic analysis should not directly include:"],
+          "items": [
+            "Your name.",
+            "Your email address.",
+            "Information from your Google account.",
+            "Data used only to maintain your session.",
+            "IP address.",
+            "Device information.",
+            "The pseudocode you wrote.",
+            "Complete questions sent to an AI assistant.",
+            "Complete answers generated by that assistant."
+          ],
+          "paragraphsAfter": ["If future research needed to use different information, it would have to be specifically disclosed and the applicable authorizations or approvals obtained."]
+        },
+        {
+          "title": "Pseudonymization and identity protection",
+          "paragraphs": [
+            "When you agree to participate in a study, AALIE may associate your participation with a code created specifically for that study. The goal is for information used in academic analysis to work primarily with a pseudonymous identity rather than your name or email address.",
+            "Separating your name from data used in a study considerably reduces direct exposure of your identity. However, while additional information exists that can legitimately link those records back to you, the data continues to receive the protection applicable to personal data. AALIE does not present pseudonymization as absolute anonymity."
+          ]
+        },
+        {
+          "title": "Withdrawal from research",
+          "paragraphs": [
+            "Withdrawing from research does not automatically delete your AALIE account. Likewise, stopping your use of AALIE does not automatically change the status of an academic participation that was previously recorded.",
+            "If you participate in a study, the study-specific conditions will explain what happens to information already collected when you withdraw consent. The platform will seek to stop collecting new experimental information from a person who has withdrawn, unless a legal obligation requires otherwise."
+          ]
+        },
+        {
+          "title": "External services",
+          "paragraphs": [
+            "AALIE needs certain external services to provide some of its functions. These may include hosting and infrastructure, authentication, artificial intelligence, security, communications, and other services needed to operate the platform.",
+            "Google is involved when you choose Google sign-in. Artificial intelligence providers are involved only when you use features that require their models. External providers receive only the information needed for the relevant function under the terms applicable to that integration. AALIE does not sell databases to these providers."
+          ]
+        },
+        {
+          "title": "International transfers",
+          "paragraphs": [
+            "Some providers used to operate AALIE may be located in or process information outside Colombia. This may occur, for example, with infrastructure, authentication, or artificial intelligence services.",
+            "When processing involves the transmission or transfer of personal data internationally, the rules and safeguards required by Colombian law for the relevant case will apply. Using a foreign provider does not, by itself, authorize unlimited use of the information."
+          ]
+        },
+        {
+          "title": "Security",
+          "paragraphs": [
+            "AALIE adopts reasonable measures to protect information against loss, alteration, unauthorized access, or misuse. Among other measures, we seek to limit who can access information, separate functions that do not need to share data, protect communications, reduce the amount of information stored, and establish controls against abusive use.",
+            "No service connected to the Internet can guarantee absolute security. You can also help protect your information."
+          ],
+          "items": [
+            "Do not share your credentials.",
+            "Sign out on shared devices.",
+            "Do not enter secrets in the editor or assistant.",
+            "Review files before sharing them.",
+            "Tell us about any possible security incident."
+          ]
+        },
+        {
+          "title": "Children and adolescents",
+          "paragraphs": [
+            "AALIE has an educational purpose and may be used in contexts involving children or adolescents. Their personal data receives enhanced protection.",
+            "When an activity requires processing a minor's personal data, their prevailing rights, best interests, and applicable authorizations must be respected. Research involving minors must also establish the specific participation, consent, or authorization conditions that apply. AALIE does not consider ordinary platform use a substitute for these safeguards."
+          ]
+        },
+        {
+          "title": "Data subject rights",
+          "paragraphs": ["As the data subject, you have the rights recognized by Colombian law, including:"],
+          "items": [
+            "Know which personal data is being processed.",
+            "Update information that has changed.",
+            "Request correction of inaccurate information.",
+            "Know how your data has been used.",
+            "Request proof of authorization when applicable.",
+            "Access your data free of charge.",
+            "Request deletion where legally permitted.",
+            "Request revocation of authorization when applicable.",
+            "Submit questions or complaints.",
+            "Go to the Superintendence of Industry and Commerce when the legal requirements are met."
+          ],
+          "paragraphsAfter": ["These rights are recognized in Law 1581 of 2012. Deletion or revocation may be limited when a legal obligation or legitimate reason requires certain information to be retained."]
+        },
+        {
+          "title": "Requests and identity verification",
+          "paragraphs": [
+            "You may submit questions, requests, or complaints about your personal data to the Data Controller. Your request must allow us to know who you are, which right you want to exercise, and what information it concerns.",
+            "We may request information reasonably necessary to verify that the request comes from the data subject or a person legally authorized to act on their behalf. Questions and complaints will be handled within the time limits established by applicable Colombian law."
+          ]
+        },
+        {
+          "title": "Account and data deletion",
+          "paragraphs": [
+            "You may request deletion of information associated with your account where legally permitted. Deleting an account does not necessarily mean that all records disappear immediately.",
+            "It may be necessary to temporarily retain information to comply with legal obligations, handle requests or complaints, protect security, investigate fraud or abuse, honor commitments validly made in research, or complete normal backup and deletion cycles. When there is no longer a valid reason to retain the information, it must be deleted or no longer kept personally associated with you, as applicable."
+          ]
+        },
+        {
+          "title": "Information retention",
+          "paragraphs": [
+            "We retain data only while there is a valid purpose for doing so. AALIE's general database will remain in effect while the platform operates and for any additional period needed to comply with legal obligations, handle requests, protect security, or properly close its operations.",
+            "Information associated with an account may be retained while the account remains active or until a valid deletion request is processed, subject to legal exceptions. Information stored only in your browser will remain according to that browser's settings and may be deleted by you.",
+            "Each research study may establish its own retention period. When it does, that period must be disclosed as part of the study conditions. We will not retain information indefinitely merely because it might be useful in the future."
+          ]
+        },
+        {
+          "title": "Advertising, profiles, and third-party data",
+          "paragraphs": [
+            "AALIE does not sell personal information. AALIE does not use your data to provide personalized advertising. AALIE does not build commercial profiles about students, teachers, or other users.",
+            "Information about your quiz performance is used for educational purposes and not to determine which products to offer you or which advertisements to show you.",
+            "Do not enter another person's personal information into AALIE unless you have the right and authorization to do so. We do not need a person's real name to analyze an algorithm. When you can use fictional or generic data, that is normally the more appropriate choice."
+          ]
+        },
+        {
+          "title": "Legal requests",
+          "paragraphs": [
+            "We may provide information when there is a legal obligation, a valid order from a competent authority, or another circumstance permitted by applicable law. In those cases, we will seek to limit the information provided to what is necessary to respond to the relevant request."
+          ]
+        },
+        {
+          "title": "Changes to this policy",
+          "paragraphs": [
+            "This policy may be updated when AALIE's functions, processing practices, providers, academic activities, or applicable law change.",
+            "Substantial changes will be communicated reasonably before new conditions begin to apply when necessary. A new purpose that requires additional authorization will not become automatically authorized simply because this policy was updated. The version and update date will remain visible so that the policy in effect can be identified."
+          ]
+        },
+        {
+          "title": "Effective date, authority, and final contact",
+          "paragraphs": [
+            "This Privacy and Personal Data Processing Policy takes effect on August 21, 2026. It will remain in effect while AALIE continues the processing described here and will be replaced when a new version is formally published. The validity of each set of information depends on the purpose for which it was obtained and the retention periods explained in this policy or, where applicable, in the specific conditions of a study.",
+            "In Colombia, the authority responsible for personal data protection is the Superintendence of Industry and Commerce. You may contact it in the cases and after the prior procedures established by Colombian law.",
+            "For questions about this policy, personal data processing, privacy, information deletion, or exercising your rights, contact Juan Camilo Cruz Parra, AALIE's Data Controller, in Manizales, Caldas, Colombia, at juan.cruz37552@ucaldas.edu.co or +57 321 465 0754.",
+            "AALIE is an academic project developed to support teaching and learning Algorithm Analysis and Design. Privacy is part of that purpose: we want you to use the tool with an understanding of what information is involved, why it is needed, and which decisions remain under your control."
+          ]
+        }
+      ]
     },
     "sections": {
       "provided": {

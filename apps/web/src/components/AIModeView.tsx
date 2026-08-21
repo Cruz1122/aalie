@@ -208,31 +208,16 @@ export default function AIModeView({
   }, [animateEntrance, chatOpen, onEntranceComplete]);
 
   useEffect(() => {
-    if (chatOpen || entranceStage < 4 || manualPromptVisibleRef.current) {
+    // La invitación debe acompañar la entrada de AALIE. Cuando se vuelve
+    // desde el modo manual, entranceStage ya empieza en 4, por lo que se
+    // muestra inmediatamente y no vuelve a pasar por un temporizador de
+    // inactividad.
+    if (chatOpen || entranceStage < 1 || manualPromptVisibleRef.current) {
       return;
     }
 
-    let idleTimer: number | undefined;
-
-    const schedulePrompt = () => {
-      if (idleTimer !== undefined) window.clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(() => {
-        manualPromptVisibleRef.current = true;
-        setManualPromptVisible(true);
-      }, 5000);
-    };
-
-    schedulePrompt();
-    window.addEventListener("pointerdown", schedulePrompt);
-    window.addEventListener("keydown", schedulePrompt);
-    window.addEventListener("touchstart", schedulePrompt);
-
-    return () => {
-      if (idleTimer !== undefined) window.clearTimeout(idleTimer);
-      window.removeEventListener("pointerdown", schedulePrompt);
-      window.removeEventListener("keydown", schedulePrompt);
-      window.removeEventListener("touchstart", schedulePrompt);
-    };
+    manualPromptVisibleRef.current = true;
+    setManualPromptVisible(true);
   }, [chatOpen, entranceStage]);
 
   useLayoutEffect(() => {

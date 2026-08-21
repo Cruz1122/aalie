@@ -7,6 +7,13 @@ import Header from "@/components/Header";
 
 type Props = { params: Promise<{ locale: string }> };
 
+type PolicySection = {
+  title: string;
+  paragraphs?: string[];
+  items?: string[];
+  paragraphsAfter?: string[];
+};
+
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "privacy.meta" });
@@ -20,32 +27,9 @@ export async function generateMetadata({ params }: Props) {
 export default async function PrivacyPage({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "privacy" });
+  const policySections = t.raw("fullPolicy.sections") as PolicySection[];
 
   const summaryKeys = ["account", "formal", "browser", "ai", "sales"] as const;
-  const providedKeys = [
-    "pseudocode",
-    "files",
-    "results",
-    "costs",
-    "language",
-    "progress",
-    "questions",
-    "context",
-    "accountProfile",
-    "sessionTechnical",
-    "key",
-  ] as const;
-  const notCollectedKeys = [
-    "documents",
-    "payment",
-    "location",
-    "biometric",
-    "passwords",
-    "profiles",
-    "sensitive",
-    "ads",
-    "thirdParty",
-  ] as const;
 
   const assistantFeatures = [
     {
@@ -139,187 +123,41 @@ export default async function PrivacyPage({ params }: Props) {
             </ol>
           </section>
 
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.provided.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.provided.intro")}</p>
-              <ul className="space-y-2">
-                {providedKeys.map((key) => (
-                  <li key={key} className="flex items-start gap-3">
-                    <span className="mt-2 h-2 w-2 rounded-full bg-cyan-300" />
-                    <span>{t(`sections.provided.items.${key}`)}</span>
-                  </li>
-                ))}
-              </ul>
-              <p>{t("sections.provided.purpose")}</p>
-            </div>
-          </section>
+          <article className="space-y-12">
+            {policySections.map((section, index) => (
+              <section key={section.title} className="space-y-5">
+                <header>
+                  <h2 className="text-2xl font-semibold tracking-tight text-white">
+                    {index + 1}. {section.title}
+                  </h2>
+                </header>
+                <div className="space-y-5 text-[15px] leading-7 text-dark-text">
+                  {section.paragraphs?.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                  {section.items ? (
+                    <ul className="space-y-2">
+                      {section.items.map((item) => (
+                        <li key={item} className="flex items-start gap-3">
+                          <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-cyan-300" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {section.paragraphsAfter?.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+              </section>
+            ))}
 
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.notCollected.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <ul className="space-y-2">
-                {notCollectedKeys.map((key) => (
-                  <li key={key} className="flex items-start gap-3">
-                    <span className="mt-2 h-2 w-2 rounded-full bg-amber-300" />
-                    <span>{t(`sections.notCollected.items.${key}`)}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-4 text-sm font-medium text-amber-100">
-                {t("sections.notCollected.warning")}
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.analyzer.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.analyzer.paragraph1")}</p>
-              <p>{t("sections.analyzer.paragraph2")}</p>
-              <p>{t("sections.analyzer.paragraph3")}</p>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.txtFiles.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.txtFiles.paragraph1")}</p>
-              <p>{t("sections.txtFiles.paragraph2")}</p>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.quizzesProgress.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.quizzesProgress.paragraph1")}</p>
-              <p>{t("sections.quizzesProgress.paragraph2")}</p>
-              <p>{t("sections.quizzesProgress.paragraph3")}</p>
-              <p>{t("sections.quizzesProgress.paragraph4")}</p>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.localStorage.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.localStorage.paragraph1")}</p>
-              <p>{t("sections.localStorage.paragraph2")}</p>
-              <p>{t("sections.localStorage.paragraph3")}</p>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.assistant.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.assistant.paragraph1")}</p>
-              <p>{t("sections.assistant.paragraph2")}</p>
-              <p>{t("sections.assistant.paragraph3")}</p>
-              <p>{t("sections.assistant.paragraph4")}</p>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.apiKeys.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.apiKeys.paragraph1")}</p>
-              <p>{t("sections.apiKeys.paragraph2")}</p>
-              <p>{t("sections.apiKeys.paragraph3")}</p>
-              <div className="rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-4 text-sm font-medium text-red-100">
-                {t("sections.apiKeys.warning")}
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.exports.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.exports.paragraph1")}</p>
-              <p>{t("sections.exports.paragraph2")}</p>
-              <p>{t("sections.exports.paragraph3")}</p>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.providers.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.providers.paragraph1")}</p>
-              <p>{t("sections.providers.paragraph2")}</p>
-              <p>{t("sections.providers.paragraph3")}</p>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.security.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.security.paragraph1")}</p>
-              <p>{t("sections.security.paragraph2")}</p>
-              <ul className="space-y-2">
-                {(
-                  ["editor", "assistant", "key", "report", "browser"] as const
-                ).map((key) => (
-                  <li key={key} className="flex items-start gap-3">
-                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-400" />
-                    <span>{t(`sections.security.items.${key}`)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.rights.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.rights.paragraph1")}</p>
-              <p>{t("sections.rights.paragraph2")}</p>
-              <p>{t("sections.rights.paragraph3")}</p>
+            <section className="space-y-5">
+              <header>
+                <h2 className="text-2xl font-semibold tracking-tight text-white">
+                  {locale === "es" ? "Equipo de contacto" : "Contact team"}
+                </h2>
+              </header>
               <div className="grid gap-4 text-[15px] leading-7 text-dark-text sm:grid-cols-2 lg:grid-cols-3">
                 {(["luz", "camilo", "jhon"] as const).map((member) => (
                   <article
@@ -359,20 +197,8 @@ export default async function PrivacyPage({ params }: Props) {
                   </article>
                 ))}
               </div>
-            </div>
-          </section>
-
-          <section className="space-y-5">
-            <header>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">
-                {t("sections.changes.title")}
-              </h2>
-            </header>
-            <div className="space-y-5 text-[15px] leading-7 text-dark-text">
-              <p>{t("sections.changes.paragraph1")}</p>
-              <p>{t("sections.changes.paragraph2")}</p>
-            </div>
-          </section>
+            </section>
+          </article>
         </div>
       </main>
 
@@ -382,12 +208,14 @@ export default async function PrivacyPage({ params }: Props) {
         title={t("meta.title")}
         description={t("meta.description")}
         notes={[
-          "sections=hero,quick-summary,information-you-provide,what-we-dont-collect,analyzer-use,txt-files,quizzes-progress,local-storage,ai-assistant,api-keys,exports,external-providers,security,rights,contact,policy-changes",
-          "lastUpdated=2026-05",
+          "sections=hero,quick-summary,policy-sections-1-to-35,contact,policy-changes",
+          "lastUpdated=2026-08-21",
+          "version=2.0",
           "noAccountRequired=true",
           "aiAssistantOptional=true",
           "bringYourOwnKeySupported=true",
           "localProgressStorage=true",
+          "experimentalAccessMayBeSelected=true",
           "layout=editorial-single-column",
         ]}
         guideSection={{

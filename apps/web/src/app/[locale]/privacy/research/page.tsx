@@ -6,6 +6,36 @@ type Props = { params: Promise<{ locale: string }> };
 export default async function ResearchPrivacyPage({ params }: Props) {
   const { locale } = await params;
   const es = locale === "es";
+  const recordedItems = es
+    ? [
+        "ID de participante seudónimo y condición experimental: AALIE o CONTROL.",
+        "Versión y hash del consentimiento, junto con su historial de aceptación o retiro.",
+        "Identificadores, versiones y huellas de las preguntas mostradas, puntajes y notas de quiz.",
+        "Uso de funcionalidades autorizadas y duración de las operaciones.",
+        "Mediciones académicas registradas por el protocolo, con su métrica y versión.",
+      ]
+    : [
+        "Pseudonymous participant ID and experimental condition: AALIE or CONTROL.",
+        "Consent version and hash, together with its acceptance or withdrawal history.",
+        "Identifiers, versions, and fingerprints of displayed questions, scores, and quiz notes.",
+        "Use of allowlisted features and duration of operations.",
+        "Academic measurements recorded by the protocol, with their metric and version.",
+      ];
+  const excludedItems = es
+    ? [
+        "Nombre y correo electrónico.",
+        "Identificador de Google u otros identificadores del proveedor.",
+        "Código fuente o pseudocódigo introducido en el analizador.",
+        "Preguntas y respuestas completas del modelo de lenguaje.",
+        "Dirección IP y agente de usuario como evidencia académica.",
+      ]
+    : [
+        "Name and email address.",
+        "Google identifier or other provider identifiers.",
+        "Source code or pseudocode entered into the analyzer.",
+        "Complete prompts and responses from the language model.",
+        "IP address and user-agent as academic evidence.",
+      ];
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
@@ -36,25 +66,9 @@ export default async function ResearchPrivacyPage({ params }: Props) {
             }
           >
             <ul className="space-y-2">
-              <li>
-                • participant ID pseudónimo y condición experimental AALIE o
-                CONTROL;
-              </li>
-              <li>
-                • versión y hash del consentimiento y su historial de aceptación
-                o retiro;
-              </li>
-              <li>
-                • IDs, versiones y fingerprints de preguntas mostradas, puntajes
-                y notas de quiz;
-              </li>
-              <li>
-                • uso de funcionalidades allowlisted y duración de operaciones;
-              </li>
-              <li>
-                • measurements académicas registradas por el protocolo, con
-                métrica y versión.
-              </li>
+              {recordedItems.map((item) => (
+                <li key={item}>• {item}</li>
+              ))}
             </ul>
           </Section>
 
@@ -76,13 +90,9 @@ export default async function ResearchPrivacyPage({ params }: Props) {
             }
           >
             <ul className="space-y-2">
-              <li>• nombre y correo;</li>
-              <li>• Google subject u otros identificadores del proveedor;</li>
-              <li>
-                • código fuente o pseudocódigo introducido en el analizador;
-              </li>
-              <li>• prompts y respuestas completas del LLM;</li>
-              <li>• dirección IP y user-agent como evidencia académica.</li>
+              {excludedItems.map((item) => (
+                <li key={item}>• {item}</li>
+              ))}
             </ul>
           </Section>
 
@@ -104,8 +114,8 @@ export default async function ResearchPrivacyPage({ params }: Props) {
 
           <p className="text-sm text-slate-400">
             {es
-              ? "Última actualización: agosto de 2026."
-              : "Last updated: August 2026."}
+              ? "Última actualización: 21 de agosto de 2026 · Versión 2.0."
+              : "Last updated: August 21, 2026 · Version 2.0."}
           </p>
         </article>
       </main>
