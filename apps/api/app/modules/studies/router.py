@@ -2,19 +2,20 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from ...core.auth import IdentityClaims, get_identity, require_admin
 from ...core.database import get_db
+from ...db.models.mf3 import Study
 from .export_service import build_study_export, record_export_audit
 from .schemas import (
     ParticipantAdminRow,
     ParticipantPublic,
     StudyConditionRequest,
     StudyCreateRequest,
-    StudyMeResponse,
     StudyMeasurementRequest,
+    StudyMeResponse,
     StudyPublic,
     StudyStatusRequest,
     StudySummaryResponse,
@@ -37,6 +38,13 @@ from .service import (
 )
 
 router = APIRouter(tags=["studies"])
+
+
+def _admin_study(db: Session, study_id: UUID) -> Study:
+    study = db.get(Study, study_id)
+    if study is None:
+        raise HTTPException(status_code=404, detail="Study not found")
+    return study
 
 
 @router.get("/studies/{slug}", response_model=StudyPublic)
@@ -110,14 +118,14 @@ def admin_create_study(
     return public_study(create_study(db, payload))
 
 
-@router.patch("/admin/studies/{slug}/status", response_model=StudyPublic)
+@router.patch("/admin/studies/{study_id}/status", response_model=StudyPublic)
 def admin_update_status(
-    slug: str,
+    study_id: UUID,
     payload: StudyStatusRequest,
     _: IdentityClaims = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> StudyPublic:
-    study = get_study_or_404(db, slug)
+    study = _admin_study(db, study_id)
     return public_study(
         update_study_status(
             db,
@@ -128,36 +136,36 @@ def admin_update_status(
     )
 
 
-@router.get("/admin/studies/{slug}/summary", response_model=StudySummaryResponse)
+@router.get("/admin/studies/{study_id}/summary", response_model=StudySummaryResponse)
 def admin_summary(
-    slug: str,
+    study_id: UUID,
     _: IdentityClaims = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> StudySummaryResponse:
-    return study_summary(db, get_study_or_404(db, slug))
+    return study_summary(db, _admin_study(db, study_id))
 
 
-@router.get("/admin/studies/{slug}/participants", response_model=list[ParticipantAdminRow])
+@router.get("/admin/studies/{study_id}/participants", response_model=list[ParticipantAdminRow])
 def admin_participants(
-    slug: str,
+    study_id: UUID,
     _: IdentityClaims = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> list[ParticipantAdminRow]:
-    return participant_rows(db, get_study_or_404(db, slug))
+    return participant_rows(db, _admin_study(db, study_id))
 
 
 @router.patch(
-    "/admin/studies/{slug}/participants/{participant_id}/condition",
+    "/admin/studies/{study_id}/participants/{participant_id}/condition",
     response_model=ParticipantPublic,
 )
 def admin_assign_condition(
-    slug: str,
+    study_id: UUID,
     participant_id: UUID,
     payload: StudyConditionRequest,
     _: IdentityClaims = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> ParticipantPublic:
-    study = get_study_or_404(db, slug)
+    study = _admin_study(db, study_id)
     return public_participant(
         assign_condition(
             db,
@@ -168,13 +176,13 @@ def admin_assign_condition(
     )
 
 
-@router.get("/admin/studies/{slug}/export")
+@router.get("/admin/studies/{study_id}/export")
 def admin_export(
-    slug: str,
+    study_id: UUID,
     identity: IdentityClaims = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> Response:
-    study = get_study_or_404(db, slug)
+    study = _admin_study(db, study_id)
     export = build_study_export(study.id)
     record_export_audit(
         db,
