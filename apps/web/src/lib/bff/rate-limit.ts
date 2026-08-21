@@ -37,6 +37,23 @@ function enabled(): boolean {
   );
 }
 
+function configuredLimit(
+  scope: RateLimitScope,
+  authenticated: boolean,
+): number {
+  const index = authenticated ? 1 : 0;
+  const suffix = authenticated ? "AUTH" : "ANON";
+  const key = `AALIE_RATE_LIMIT_${scope.toUpperCase()}_${suffix}`;
+  const parsed = Number.parseInt(
+    (process.env[key] ?? String(DEFAULTS[scope][index])).trim(),
+    10,
+  );
+  if (!Number.isFinite(parsed) || parsed < 1 || parsed > 100_000) {
+    return DEFAULTS[scope][index];
+  }
+  return parsed;
+}
+
 function fallbackDecision(
   scope: RateLimitScope,
   subjectHash: string,
@@ -44,15 +61,21 @@ function fallbackDecision(
 ): Decision {
   const now = Date.now();
   const key = `${scope}:${subjectHash}:${authenticated ? "auth" : "anon"}`;
-  const configured = DEFAULTS[scope][authenticated ? 1 : 0];
+  const configured = configuredLimit(scope, authenticated);
   const limit = Math.max(1, Math.floor(configured / 2));
   const existing = fallbackBuckets.get(key);
-  const bucket = !existing || existing.resetAt <= now ? { count: 0, resetAt: now + 60_000 } : existing;
+  const bucket =
+    !existing || existing.resetAt <= now
+      ? { count: 0, resetAt: now + 60_000 }
+      : existing;
   bucket.count += 1;
   fallbackBuckets.set(key, bucket);
   return {
     allowed: bucket.count <= limit,
-    retryAfterSeconds: bucket.count > limit ? Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)) : 0,
+    retryAfterSeconds:
+      bucket.count > limit
+        ? Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))
+        : 0,
   };
 }
 
@@ -67,7 +90,10 @@ export async function enforceRateLimit(
   try {
     const response = await fetch(`${getApiBase()}/internal/rate-limits/check`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-request-id": context.requestId },
+      headers: {
+        "content-type": "application/json",
+        "x-request-id": context.requestId,
+      },
       body: JSON.stringify({
         scope: policy.rateScope,
         subjectHash,
@@ -76,13 +102,18 @@ export async function enforceRateLimit(
       cache: "no-store",
       signal: controller.signal,
     });
-    if (!response.ok) throw new Error(`rate limiter returned ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`rate limiter returned ${response.status}`);
+    }
     const raw = (await response.json()) as Record<string, unknown>;
     return {
       allowed: raw.allowed === true,
-      retryAfterSeconds: Math.max(0, Number(raw.retryAfterSeconds ?? 0) || 0),
+      retryAfterSeconds: Math.max(
+        0,
+        Number(raw.retryAfterSeconds ?? 0) || 0,
+      ),
     };
-  } catch (error) {
+  } catch {
     if (policy.failClosedRateLimit) {
       throw new BffHttpError(
         503,
@@ -91,7 +122,11 @@ export async function enforceRateLimit(
         { "Retry-After": "5" },
       );
     }
-    return fallbackDecision(policy.rateScope, subjectHash, context.authenticated);
+    return fallbackDecision(
+      policy.rateScope,
+      subjectHash,
+      context.authenticated,
+    );
   } finally {
     clearTimeout(timer);
   }
