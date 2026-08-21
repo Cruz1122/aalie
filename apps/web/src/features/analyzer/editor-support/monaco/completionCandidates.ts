@@ -1,3 +1,5 @@
+import { extractTextualSymbols } from "@/features/analyzer/manual-guidance/context/extractSymbols";
+
 import { resolveSnippetAlias } from "../catalog/snippetAliases";
 import {
   completionSnippetCatalog,
@@ -31,10 +33,6 @@ const IDENTIFIER_KEYWORDS = new Set([
   "true",
   "false",
 ]);
-
-const SIGNATURE_REGEX = /^\s*[A-Za-z_][A-Za-z0-9_]*\s*\(([^)]*)\)\s*BEGIN\b/gm;
-const ASSIGNMENT_REGEX = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(?:\[[^\]]+\])?\s*<-/;
-const FOR_LOOP_REGEX = /^\s*FOR\s+([A-Za-z_][A-Za-z0-9_]*)\s*<-/;
 
 export interface IdentifierCompletionCandidate {
   readonly type: "identifier";
@@ -94,41 +92,6 @@ function pushIdentifierCandidate(
   });
 }
 
-function extractSignatureParameters(sourceCode: string): string[] {
-  const parameters: string[] = [];
-
-  for (const match of sourceCode.matchAll(SIGNATURE_REGEX)) {
-    const rawParameters = match[1] ?? "";
-    for (const parameter of rawParameters.split(",")) {
-      const identifier = parameter.match(/[A-Za-z_][A-Za-z0-9_]*/)?.[0];
-      if (identifier) {
-        parameters.push(identifier);
-      }
-    }
-  }
-
-  return parameters;
-}
-
-function extractAssignedVariables(sourceCode: string): string[] {
-  const variables: string[] = [];
-
-  for (const line of sourceCode.split("\n")) {
-    const loopMatch = line.match(FOR_LOOP_REGEX);
-    if (loopMatch?.[1]) {
-      variables.push(loopMatch[1]);
-      continue;
-    }
-
-    const assignmentMatch = line.match(ASSIGNMENT_REGEX);
-    if (assignmentMatch?.[1]) {
-      variables.push(assignmentMatch[1]);
-    }
-  }
-
-  return variables;
-}
-
 export function extractIdentifierCandidates(
   sourceCode: string,
   prefix: string,
@@ -136,22 +99,23 @@ export function extractIdentifierCandidates(
   const normalizedPrefix = normalizeCompletionText(prefix);
   const seen = new Set<string>();
   const candidates: IdentifierCompletionCandidate[] = [];
+  const symbols = extractTextualSymbols(sourceCode, sourceCode.length);
 
-  for (const parameter of extractSignatureParameters(sourceCode)) {
+  for (const parameter of symbols.parameters) {
     pushIdentifierCandidate(
       candidates,
       seen,
-      parameter,
+      parameter.name,
       "parameter",
       normalizedPrefix,
     );
   }
 
-  for (const variable of extractAssignedVariables(sourceCode)) {
+  for (const variable of symbols.variables) {
     pushIdentifierCandidate(
       candidates,
       seen,
-      variable,
+      variable.name,
       "variable",
       normalizedPrefix,
     );

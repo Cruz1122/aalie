@@ -19,6 +19,12 @@ import { insertSnippetIntoEditor } from "@/features/analyzer/editor-support/mona
 import { registerPseudocodeCommands } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCommands";
 import { registerPseudocodeCompletionProvider } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCompletionProvider";
 import { useDebouncedSyntaxHints } from "@/features/analyzer/editor-support/parser/validateSourceDebounced";
+import {
+  resolveEditorContext,
+  type EditorContext,
+  type EditorCursor,
+  type EditorSelection,
+} from "@/features/analyzer/manual-guidance";
 import { AlgorithmTechniqueCard } from "@/features/analyzer/technique-detection/AlgorithmTechniqueCard";
 import { AlgorithmTechniqueModal } from "@/features/analyzer/technique-detection/AlgorithmTechniqueModal";
 import { detectTechniqueFromAst } from "@/features/analyzer/technique-detection/detectTechniqueFromAst";
@@ -39,6 +45,8 @@ interface AnalyzerEditorProps {
   readonly onAstChange?: (ast: Program) => void;
   readonly onParseStatusChange?: (ok: boolean, isParsing: boolean) => void;
   readonly onErrorsChange?: (errors: ParseError[] | undefined) => void;
+  /** Contexto puro del editor para consumidores no visuales. */
+  readonly onEditorContextChange?: (context: EditorContext) => void;
   readonly height?: string;
   /** Callback para verificar parse (tooltip en esquina) */
   readonly onVerifyParse?: () => void;
@@ -92,6 +100,7 @@ export const AnalyzerEditor = forwardRef<
     onAstChange,
     onParseStatusChange,
     onErrorsChange,
+    onEditorContextChange,
     height,
     onVerifyParse,
     onViewAst,
@@ -110,6 +119,7 @@ export const AnalyzerEditor = forwardRef<
   const locale = useLocale();
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoReact | null>(null);
+  const editorListenersRef = useRef<Array<{ dispose: () => void }>>([]);
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const rafLayoutRef = useRef<number | null>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
@@ -117,6 +127,12 @@ export const AnalyzerEditor = forwardRef<
   const [techniqueModalOpen, setTechniqueModalOpen] = useState(false);
   const didRemountAfterZeroHeightRef = useRef(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [editorCursor, setEditorCursor] = useState<EditorCursor>({
+    line: 1,
+    column: 0,
+    offset: 0,
+  });
+  const [editorSelection, setEditorSelection] = useState<EditorSelection>();
   const onAnalyzeRef = useRef(props.onAnalyze);
   onAnalyzeRef.current = props.onAnalyze;
 
@@ -162,6 +178,47 @@ export const AnalyzerEditor = forwardRef<
 
   // Parsear código con worker
   const parseResult = useParseWorker(code);
+  const editorContext = useMemo(() => {
+    const parseStatus =
+      code.trim().length === 0
+        ? "idle"
+        : parseResult.isParsing
+          ? "pending"
+          : parseResult.ok
+            ? "valid"
+            : "invalid";
+
+    return resolveEditorContext({
+      source: code,
+      cursor: editorCursor,
+      selection: editorSelection,
+      parseResult: {
+        status: parseStatus,
+        errors: parseResult.errors,
+      },
+      ast: parseResult.ast,
+    });
+  }, [
+    code,
+    editorCursor,
+    editorSelection,
+    parseResult.ast,
+    parseResult.errors,
+    parseResult.isParsing,
+    parseResult.ok,
+  ]);
+
+  useEffect(() => {
+    onEditorContextChange?.(editorContext);
+  }, [editorContext, onEditorContextChange]);
+
+  useEffect(() => {
+    return () => {
+      for (const listener of editorListenersRef.current) listener.dispose();
+      editorListenersRef.current = [];
+    };
+  }, []);
+
   const syntaxHints = useDebouncedSyntaxHints(parseResult);
   const techniqueDetection = useMemo(
     () => detectTechniqueFromAst(parseResult.ast, code, tTechnique),
@@ -228,6 +285,46 @@ export const AnalyzerEditor = forwardRef<
     editorRef.current = editor;
     monacoRef.current = monaco;
     setIsEditorReady(true);
+
+    for (const listener of editorListenersRef.current) listener.dispose();
+    const syncEditorPosition = () => {
+      const model = editor.getModel();
+      const position = editor.getPosition();
+      const selection = editor.getSelection();
+      if (!model || !position) return;
+
+      setEditorCursor({
+        line: position.lineNumber,
+        column: Math.max(0, position.column - 1),
+        offset: model.getOffsetAt(position),
+      });
+
+      if (!selection) {
+        setEditorSelection(undefined);
+        return;
+      }
+
+      const startOffset = model.getOffsetAt({
+        lineNumber: selection.startLineNumber,
+        column: selection.startColumn,
+      });
+      const endOffset = model.getOffsetAt({
+        lineNumber: selection.endLineNumber,
+        column: selection.endColumn,
+      });
+      setEditorSelection({
+        active: startOffset !== endOffset,
+        text: model.getValueInRange(selection),
+        startOffset: Math.min(startOffset, endOffset),
+        endOffset: Math.max(startOffset, endOffset),
+      });
+    };
+
+    editorListenersRef.current = [
+      editor.onDidChangeCursorPosition(syncEditorPosition),
+      editor.onDidChangeCursorSelection(syncEditorPosition),
+    ];
+    syncEditorPosition();
 
     // Registrar lenguaje pseudocódigo
     registerPseudocodeLanguage(monaco);
