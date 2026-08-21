@@ -7,6 +7,8 @@ import pytest
 
 from app.modules.export.pdf_concurrency import PdfCompilerBusy, PdfCompilerGate
 
+pytestmark = [pytest.mark.fast, pytest.mark.unit]
+
 
 def test_pdf_gate_allows_only_one_compiler() -> None:
     gate = PdfCompilerGate(1)
