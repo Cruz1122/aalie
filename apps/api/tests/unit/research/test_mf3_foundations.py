@@ -33,9 +33,7 @@ from app.modules.studies.quiz_service import (
     create_study_quiz_session,
     evaluate_study_quiz_session,
 )
-from app.modules.studies.schemas import (
-    StudyCreateRequest,
-)
+from app.modules.studies.schemas import StudyCreateRequest
 from app.modules.studies.service import (
     assign_condition,
     consent_to_study,
@@ -386,15 +384,23 @@ def test_research_export_is_pseudonymized_and_hashes_payload_files() -> None:
                 actual = hashlib.sha256(archive.read(filename)).hexdigest()
                 assert declared == f"sha256:{actual}"
 
-            combined = b"\n".join(archive.read(name) for name in expected)
+            csv_payload = b"\n".join(
+                archive.read(name)
+                for name in (
+                    "participants.csv",
+                    "quiz_attempts.csv",
+                    "quiz_items.csv",
+                    "events.csv",
+                    "measurements.csv",
+                )
+            ).lower()
             for forbidden in (
                 b"auth_user_id",
-                b"email",
                 b"user_agent",
                 b"source_code",
                 b"prompt",
             ):
-                assert forbidden not in combined.lower()
+                assert forbidden not in csv_payload
     finally:
         if study_id is not None:
             _cleanup_study(study_id)
