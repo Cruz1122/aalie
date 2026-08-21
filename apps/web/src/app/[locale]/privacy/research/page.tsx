@@ -30,29 +30,37 @@ export default async function ResearchPrivacyPage({ params }: Props) {
 
           <Section
             title={
-              es ? "Datos que puede registrar el estudio" : "Data a study may record"
+              es
+                ? "Datos que puede registrar el estudio"
+                : "Data a study may record"
             }
           >
             <ul className="space-y-2">
               <li>
-                • participant ID pseudónimo y condición experimental AALIE o CONTROL;
+                • participant ID pseudónimo y condición experimental AALIE o
+                CONTROL;
               </li>
               <li>
-                • versión y hash del consentimiento y su historial de aceptación o retiro;
+                • versión y hash del consentimiento y su historial de aceptación
+                o retiro;
               </li>
               <li>
-                • IDs, versiones y fingerprints de preguntas mostradas, puntajes y notas de
-                quiz;
+                • IDs, versiones y fingerprints de preguntas mostradas, puntajes
+                y notas de quiz;
               </li>
-              <li>• uso de funcionalidades allowlisted y duración de operaciones;</li>
               <li>
-                • measurements académicas registradas por el protocolo, con métrica y
-                versión.
+                • uso de funcionalidades allowlisted y duración de operaciones;
+              </li>
+              <li>
+                • measurements académicas registradas por el protocolo, con
+                métrica y versión.
               </li>
             </ul>
           </Section>
 
-          <Section title={es ? "Separación de identidad" : "Identity separation"}>
+          <Section
+            title={es ? "Separación de identidad" : "Identity separation"}
+          >
             <p>
               {es
                 ? "La cuenta Google se usa como identidad operativa. La evidencia académica referencia un participant ID separado. El vínculo entre ambos se mantiene fuera del dataset académico exportable y solo se usa para resolver la participación server-side."
@@ -70,7 +78,9 @@ export default async function ResearchPrivacyPage({ params }: Props) {
             <ul className="space-y-2">
               <li>• nombre y correo;</li>
               <li>• Google subject u otros identificadores del proveedor;</li>
-              <li>• código fuente o pseudocódigo introducido en el analizador;</li>
+              <li>
+                • código fuente o pseudocódigo introducido en el analizador;
+              </li>
               <li>• prompts y respuestas completas del LLM;</li>
               <li>• dirección IP y user-agent como evidencia académica.</li>
             </ul>

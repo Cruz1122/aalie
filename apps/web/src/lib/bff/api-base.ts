@@ -6,7 +6,9 @@ export function getApiBase(): string {
     "",
   );
   if (configured) {
-    return /^https?:\/\//i.test(configured) ? configured : `http://${configured}`;
+    return /^https?:\/\//i.test(configured)
+      ? configured
+      : `http://${configured}`;
   }
   return process.env.DOCKER ? "http://api:8000" : "http://localhost:8000";
 }

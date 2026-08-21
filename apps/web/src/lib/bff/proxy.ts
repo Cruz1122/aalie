@@ -12,10 +12,7 @@ import {
 import { mintInternalJwt } from "./jwt";
 import type { BffPolicy } from "./policies";
 import { enforceRateLimit } from "./rate-limit";
-import {
-  buildRequestContext,
-  type BffRequestContext,
-} from "./request-context";
+import { buildRequestContext, type BffRequestContext } from "./request-context";
 
 const SAFE_RESPONSE_HEADERS = [
   "content-type",
@@ -87,9 +84,7 @@ export function buildBackendHeaders(
   }
 
   const record =
-    body && typeof body === "object"
-      ? (body as Record<string, unknown>)
-      : {};
+    body && typeof body === "object" ? (body as Record<string, unknown>) : {};
   if (path === "/export/report" && typeof record.format === "string") {
     headers.set("x-aalie-export-format", record.format.slice(0, 16));
   }
@@ -98,10 +93,7 @@ export function buildBackendHeaders(
   }
   if (path === "/analyze/open") {
     if (typeof record.algorithm_kind === "string") {
-      headers.set(
-        "x-aalie-algorithm-kind",
-        record.algorithm_kind.slice(0, 32),
-      );
+      headers.set("x-aalie-algorithm-kind", record.algorithm_kind.slice(0, 32));
     }
     if (typeof record.preferred_method === "string") {
       headers.set(
@@ -127,7 +119,9 @@ export async function proxyApiRequest(
     const maxBytes = preliminary?.bodyLimitBytes ?? 512 * 1024;
     let body: unknown = hasBody ? await readJsonBody(request, maxBytes) : {};
     const policy =
-      typeof options.policy === "function" ? options.policy(body) : options.policy;
+      typeof options.policy === "function"
+        ? options.policy(body)
+        : options.policy;
 
     if (hasBody && policy.bodyLimitBytes < maxBytes) {
       const encodedSize = new TextEncoder().encode(

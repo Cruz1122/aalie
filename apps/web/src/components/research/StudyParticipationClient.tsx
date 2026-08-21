@@ -84,9 +84,10 @@ export function StudyParticipationClient({
         { method: "POST" },
       );
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string; detail?: string }
-          | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+          detail?: string;
+        } | null;
         throw new Error(
           payload?.error ?? payload?.detail ?? `HTTP ${response.status}`,
         );
@@ -134,9 +135,7 @@ export function StudyParticipationClient({
               </h2>
               <ul className="mt-4 space-y-2 text-sm leading-6 text-dark-text">
                 <li>• participant ID + experimental condition</li>
-                <li>
-                  • quiz question IDs, versions, fingerprints and grades
-                </li>
+                <li>• quiz question IDs, versions, fingerprints and grades</li>
                 <li>• allowlisted feature usage and durations</li>
                 <li>• consent history and registered measurements</li>
               </ul>

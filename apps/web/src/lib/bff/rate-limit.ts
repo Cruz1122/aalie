@@ -112,10 +112,7 @@ export async function enforceRateLimit(
     const raw = (await response.json()) as Record<string, unknown>;
     return {
       allowed: raw.allowed === true,
-      retryAfterSeconds: Math.max(
-        0,
-        Number(raw.retryAfterSeconds ?? 0) || 0,
-      ),
+      retryAfterSeconds: Math.max(0, Number(raw.retryAfterSeconds ?? 0) || 0),
     };
   } catch {
     if (policy.failClosedRateLimit) {

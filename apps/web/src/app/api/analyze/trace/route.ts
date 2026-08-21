@@ -9,9 +9,7 @@ export async function POST(request: NextRequest) {
     policy: POLICIES.trace,
     transformBody: (raw) => {
       const body =
-        raw && typeof raw === "object"
-          ? (raw as Record<string, unknown>)
-          : {};
+        raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
       return {
         ...body,
         case: body.case || "worst",

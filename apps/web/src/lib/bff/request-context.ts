@@ -40,9 +40,7 @@ export async function buildRequestContext(
     authenticated,
     userId: authenticated ? userId : null,
     role: authenticated ? role : null,
-    subject: authenticated
-      ? `user:${userId}`
-      : `visitor:${visitor.visitorId}`,
+    subject: authenticated ? `user:${userId}` : `visitor:${visitor.visitorId}`,
     visitorId: visitor.visitorId,
     shouldSetVisitorCookie: visitor.shouldSetCookie,
     studySlug: authenticated ? resolveStudySlug(request) : null,
