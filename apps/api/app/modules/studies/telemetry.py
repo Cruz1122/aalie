@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+
 from fastapi import Request
+
 from ...core.auth import _verify_token
 from ...core.database import get_session_factory
 from ...db.models.mf3 import StudyEvent
