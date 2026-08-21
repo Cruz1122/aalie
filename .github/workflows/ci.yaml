@@ -18,16 +18,6 @@ on:
       - ".github/workflows/ci.yaml"
   pull_request:
     branches: [main, develop]
-    paths:
-      - "apps/**"
-      - "docs/**"
-      - "packages/**"
-      - "infra/**"
-      - "scripts/**"
-      - "pnpm-*.yaml"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - ".github/workflows/ci.yaml"
   schedule:
     - cron: "0 5 * * *"
 
@@ -36,11 +26,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Job principal: Build crítico (debe pasar)
-  build:
-    name: "Build (web + API smoke)"
+  ci:
+    name: CI
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 90
+    env:
+      DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@127.0.0.1:5432/aalie_ci
+      POSTGRES_DB: aalie_ci
+      POSTGRES_USER: aalie_ci
+      POSTGRES_PASSWORD: aalie_ci_password
+      API_DATABASE_URL: postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+      WEB_DATABASE_URL: postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ci-only-not-a-secret
+      GOOGLE_CLIENT_ID: ci-client-id
+      GOOGLE_CLIENT_SECRET: ci-client-secret
+      AUTH_JWT_ISSUER: http://localhost:3000
+      AUTH_JWT_AUDIENCE: urn:aalie:api
+      AUTH_JWKS_URL: http://web:3000/api/auth/jwks
+      AALIE_STUDY_TELEMETRY_ENABLED: "false"
+
+    services:
+      postgres:
+        image: postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296
+        env:
+          POSTGRES_DB: aalie_ci
+          POSTGRES_USER: aalie_ci
+          POSTGRES_PASSWORD: aalie_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aalie_ci -d aalie_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -49,226 +68,25 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-            version: 9.15.0
-            run_install: false
+          version: 9.15.0
+          run_install: false
 
-      - name: Setup Node.js (22.x) + Cache
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-          cache: "pnpm"
+          cache: pnpm
 
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Install dependencies
+      - name: Install JavaScript dependencies
         run: pnpm install --frozen-lockfile
 
-      # Build packages en orden correcto
-      - name: Build @aa/types
-        run: pnpm -C packages/types build
+      - name: Audit production JavaScript dependencies
+        run: pnpm audit --prod --audit-level high
 
-      - name: Build @aa/grammar
-        run: |
-          if [ -f packages/grammar/package.json ]; then
-            if pnpm -C packages/grammar run --help | grep -q "build"; then
-              pnpm -C packages/grammar build
-            else
-              echo "No build script in @aa/grammar, using existing files"
-            fi
-          fi
-
-      # Build crítico de web (debe pasar)
-      - name: Build web app
-        run: pnpm -C apps/web build
-
-      # Python setup y smoke test
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: "apps/api/requirements*.txt"
-
-      - name: Install FastAPI dependencies
-        working-directory: apps/api
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then 
-            pip install -r requirements.txt
-          fi
-
-      - name: FastAPI smoke test
-        run: python -c "import fastapi; print('✅ FastAPI:', fastapi.__version__)"
-
-  test-pr-gate:
-    name: "Tests (PR gate: fast + oracle, con cobertura)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: "apps/api/requirements*.txt"
-
-      - name: Install Python dependencies
-        working-directory: apps/api
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-          pip install pytest-xdist
-
-      - name: Install grammar package
-        run: |
-          if [ -d packages/grammar/py ]; then
-            echo "📦 Installing grammar package..."
-            pip install -e packages/grammar/py
-          else
-            echo "⚠️  Grammar package not found, tests may fail"
-          fi
-
-      - name: Verify xdist availability
-        run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
-
-      - name: Run PR gate lanes with coverage
-        working-directory: apps/api
-        run: |
-          echo "🧪 Running PR lanes: fast + oracle..."
-          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
-
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: apps/api/htmlcov/
-          if-no-files-found: ignore
-          retention-days: 30
-
-      - name: Test summary
-        if: always()
-        run: |
-          echo "✅ PR gate tests completed"
-          echo "📊 Coverage report available in artifacts"
-
-  test-extended-lanes:
-    name: "Tests (extendido: contract + system, sin duplicar PR gate)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    continue-on-error: true
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: "apps/api/requirements*.txt"
-
-      - name: Install Python dependencies
-        working-directory: apps/api
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-          pip install pytest-xdist
-
-      - name: Install grammar package
-        run: |
-          if [ -d packages/grammar/py ]; then
-            echo "📦 Installing grammar package..."
-            pip install -e packages/grammar/py
-          else
-            echo "⚠️  Grammar package not found, tests may fail"
-          fi
-
-      - name: Verify xdist availability
-        run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
-
-      - name: Run extended validation lanes (non-blocking)
-        working-directory: apps/api
-        run: |
-          echo "🧪 Running extended lanes: contract + system (PR gate ya cubre fast + oracle)..."
-          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "contract or system"
-
-  test-nightly-lanes:
-    name: "Tests (nightly: slow + stress + export + benchmark)"
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: "apps/api/requirements*.txt"
-
-      - name: Install Python dependencies
-        working-directory: apps/api
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-          pip install pytest-xdist
-
-      - name: Install grammar package
-        run: |
-          if [ -d packages/grammar/py ]; then
-            pip install -e packages/grammar/py
-          fi
-
-      - name: Verify xdist availability
-        run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
-
-      - name: Run nightly lanes
-        working-directory: apps/api
-        run: |
-          echo "🌙 Running nightly lanes: slow + stress + export + benchmark"
-          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "slow or stress or export or benchmark"
-
-  lint-web:
-    name: "Lint (web: eslint + prettier check)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-            version: 9.15.0
-            run_install: false
-
-      - name: Setup Node.js (22.x)
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22.x"
-          cache: "pnpm"
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build dependencies for linting
+      - name: Build workspace dependencies
         run: |
           pnpm -C packages/types build
           if [ -f packages/grammar/package.json ]; then
@@ -277,23 +95,20 @@ jobs:
             fi
           fi
 
-      - name: ESLint + Prettier (web)
+      - name: Lint and format check web
         run: pnpm -C apps/web lint
 
-  lint-api:
-    name: "Lint (api: ruff check)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+      - name: Build web app
+        run: pnpm -C apps/web build
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Test web app
+        run: pnpm -C apps/web test
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
+          cache: pip
           cache-dependency-path: "apps/api/requirements*.txt"
 
       - name: Install Python dependencies
@@ -301,41 +116,70 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          if [ -f requirements-dev.txt ]; then
-            pip install -r requirements-dev.txt
+          pip install -r requirements-dev.txt
+          pip install pytest-xdist pip-audit
+
+      - name: Audit Python runtime dependencies
+        working-directory: apps/api
+        run: pip-audit -r requirements.txt --skip-editable
+
+      - name: Install grammar package
+        run: |
+          if [ -d packages/grammar/py ]; then
+            pip install -e packages/grammar/py
+          else
+            echo "Grammar package not found"
+            exit 1
           fi
 
-      - name: Ruff linting (api)
+      - name: Ruff linting
         run: python -m ruff check apps/api --output-format=github
 
+      - name: Apply database migrations
+        working-directory: apps/api
+        run: |
+          alembic upgrade head
+          test "$(alembic current)" != ""
 
-  docs-contracts:
-    name: "Docs contracts (validate)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+      - name: Run fast PR gate with coverage
+        working-directory: apps/api
+        run: |
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast" \
+            --cov=app --cov-report=xml --cov-report=term --cov-report=html \
+            --cov-fail-under=70
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          python-version: "3.11"
+          name: coverage-report
+          path: apps/api/htmlcov/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Run contract and system validation lanes
+        working-directory: apps/api
+        run: pytest tests/ -v --tb=short -n auto --dist=worksteal -m "contract or system"
+
+      - name: Run nightly lanes
+        if: github.event_name == 'schedule'
+        working-directory: apps/api
+        run: pytest tests/ -v --tb=short -n auto --dist=worksteal -m "slow or stress or export or benchmark"
+
+      - name: Validate quiz bank
+        run: python apps/api/scripts/validate_quiz_bank.py
+
+      - name: Validate quiz bank coverage
+        run: python apps/api/scripts/report_quiz_bank_coverage.py --fail-on-critical
+
+      - name: Run quizzes backend tests
+        working-directory: apps/api
+        run: python -m pytest tests/unit/quizzes -q
 
       - name: Validate docs contracts
         run: python3 scripts/check_docs_contracts.py
 
-  oci-contracts:
-    name: "OCI production contracts (static)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Validate OCI Compose and private service ports
+      - name: Validate OCI production contracts
         env:
           AALIE_TAG: "0000000000000000000000000000000000000000"
         run: |
@@ -348,120 +192,154 @@ jobs:
               config = json.load(stream)
 
           services = config["services"]
-          assert not services["api"].get("ports"), "API must not publish port 8000"
-          assert not services["web"].get("ports"), "Web must not publish port 3000"
-          for service_name in ("api", "web"):
-              healthcheck = services[service_name]["healthcheck"]
-              assert healthcheck["interval"] == "10s"
-              assert healthcheck["timeout"] == "5s"
-              assert healthcheck["retries"] == 10
-              assert healthcheck["start_period"] == "20s"
+          postgres = services["postgres"]
+          assert postgres["image"] == "postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296"
+          assert not postgres.get("ports")
+          assert postgres["volumes"][0]["target"] == "/var/lib/postgresql"
+          assert postgres["healthcheck"]["test"][0] == "CMD-SHELL"
+          assert "pg_isready" in postgres["healthcheck"]["test"][1]
+          assert services["api"]["depends_on"]["postgres"]["condition"] == "service_healthy"
+          assert services["api"]["environment"]["DATABASE_URL"].startswith("postgresql+psycopg://")
+          assert services["web"]["environment"]["DATABASE_URL"].startswith("postgresql://")
+          assert "NEXT_PUBLIC_DATABASE_URL" not in services["web"].get("environment", {})
+          for name in ("BETTER_AUTH_URL", "BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+              assert name in services["web"]["environment"]
+          for name in ("AUTH_JWKS_URL", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+              assert name in services["api"]["environment"]
+          assert not services["api"].get("ports")
+          assert not services["web"].get("ports")
           published = {
               (int(port["published"]), int(port["target"]))
               for port in services["caddy"].get("ports", [])
           }
-          assert published == {(80, 80), (443, 443)}, published
+          assert published == {(80, 80), (443, 443)}
           PY
 
-      - name: Validate OCI shell scripts
-        run: |
           bash -n infra/oci/deploy/aalie-deploy
           bash -n infra/oci/scripts/host-health.sh
+          bash -n infra/oci/scripts/postgres-backup.sh
+          bash -n infra/oci/scripts/postgres-restore.sh
+          bash -n infra/oci/scripts/postgres-backup-object-storage.sh
+          bash -n infra/oci/scripts/postgres-restore-object-storage.sh
+          bash -n infra/oci/scripts/postgres-runtime-smoke.sh
+          bash -n infra/oci/scripts/promote-admin.sh
 
-      - name: Validate OCI script line endings and idempotence guard
-        run: |
-          for file in infra/oci/deploy/aalie-deploy infra/oci/scripts/host-health.sh; do
+          for file in \
+            infra/oci/deploy/aalie-deploy \
+            infra/oci/scripts/host-health.sh \
+            infra/oci/scripts/postgres-backup.sh \
+            infra/oci/scripts/postgres-restore.sh; do
             if LC_ALL=C grep -q $'\r' "$file"; then
               echo "CRLF detected in $file"
               exit 1
             fi
           done
-          python3 - <<'PY'
-          from pathlib import Path
 
-          source = Path("infra/oci/deploy/aalie-deploy").read_text(encoding="utf-8")
-          marker = 'if [[ "$NEW_TAG" == "$OLD_TAG" ]]; then'
-          assert marker in source, "missing idempotent redeploy guard"
-          guard = source.split(marker, 1)[1].split("\nfi", 1)[0]
-          assert 'write_atomic "$PREVIOUS_FILE"' not in guard, "guard must not rewrite PREVIOUS_FILE"
-          PY
-
-      - name: Validate pinned Caddy configuration
-        run: |
           docker run --rm \
             -v "$PWD/infra/oci/Caddyfile:/etc/caddy/Caddyfile:ro" \
             caddy:2.11.4-alpine \
             caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
-  quizzes-quality:
-    name: "Quizzes quality (dataset + coverage + tests)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: "apps/api/requirements*.txt"
-
-      - name: Install Python dependencies
-        working-directory: apps/api
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-
-      - name: Validate quiz bank
-        run: python apps/api/scripts/validate_quiz_bank.py
-
-      - name: Quiz bank coverage report (critical gate)
-        run: python apps/api/scripts/report_quiz_bank_coverage.py --fail-on-critical
-
-      - name: Quizzes backend tests
-        working-directory: apps/api
-        run: python -m pytest tests/unit/quizzes -q
-
-  docker-integration:
-    name: "Docker integration (production build + E2E smoke)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts, oci-contracts, quizzes-quality]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: FastAPI smoke
+        run: python -c "import fastapi; print('FastAPI:', fastapi.__version__)"
 
       - name: Validate production Compose contract
         run: |
-          docker compose -f infra/docker-compose.prod.yml config --quiet
-          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development|volumes:' infra/docker-compose.prod.yml
+          docker compose -f infra/compose.prod.yml config --quiet
+          docker compose -f infra/compose.prod.yml config --format json > /tmp/aalie-prod-compose.json
+          python3 - <<'PY'
+          import json
+
+          with open("/tmp/aalie-prod-compose.json", encoding="utf-8") as stream:
+              services = json.load(stream)["services"]
+          assert not services["api"].get("volumes")
+          assert not services["web"].get("volumes")
+          assert services["postgres"]["image"] == "postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296"
+          assert services["postgres"]["volumes"][0]["target"] == "/var/lib/postgresql"
+          assert not services["postgres"].get("ports")
+          PY
+          ! grep -Eq 'next dev|uvicorn .*--reload|NODE_ENV: development' infra/compose.prod.yml
 
       - name: Build production images
-        run: docker compose -f infra/docker-compose.prod.yml build
+        run: |
+          printf '%s\n' 'AALIE_DOCKER_CANARY=must-not-reach-image' > apps/api/.env
+          docker compose -f infra/compose.prod.yml build
 
-      - name: Start production stack and wait for health
-        run: docker compose -f infra/docker-compose.prod.yml up -d --wait
+      - name: Verify local env files are absent from final images
+        run: |
+          docker run --rm --entrypoint sh aalie-api:prod -c \
+            "! grep -R -F 'must-not-reach-image' /usr/src/app /opt/venv 2>/dev/null"
 
-      - name: Verify non-root runtime, DNS and no source mounts
+      - name: Migrate and start production stack
+        run: |
+          docker compose -f infra/compose.prod.yml up -d --wait postgres
+          docker compose -f infra/compose.prod.yml run --rm --no-deps api alembic upgrade head
+          docker compose -f infra/compose.prod.yml up -d --wait
+
+      - name: Validate persistence and backup restore
+        run: |
+          mkdir -p /tmp/aalie-ci-backups
+          printf '%s\n' 'AALIE_TAG=0000000000000000000000000000000000000000' > /tmp/aalie-ci-tag.env
+          printf '%s\n' \
+            'POSTGRES_DB=aalie_ci' \
+            'POSTGRES_USER=aalie_ci' \
+            'POSTGRES_PASSWORD=aalie_ci_password' \
+            'API_DATABASE_URL=postgresql+psycopg://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' \
+            'WEB_DATABASE_URL=postgresql://aalie_ci:aalie_ci_password@postgres:5432/aalie_ci' \
+            'BETTER_AUTH_URL=http://localhost:3000' \
+            'BETTER_AUTH_SECRET=ci-only-not-a-secret' \
+            'GOOGLE_CLIENT_ID=ci-client-id' \
+            'GOOGLE_CLIENT_SECRET=ci-client-secret' \
+            'AUTH_JWT_ISSUER=http://localhost:3000' \
+            'AUTH_JWT_AUDIENCE=urn:aalie:api' \
+            'AUTH_JWKS_URL=http://web:3000/api/auth/jwks' \
+            > /tmp/aalie-ci-runtime.env
+          chmod 600 /tmp/aalie-ci-tag.env /tmp/aalie-ci-runtime.env
+          APP_DIR=/tmp \
+          COMPOSE_FILE="$GITHUB_WORKSPACE/infra/compose.prod.yml" \
+          ENV_FILE=/tmp/aalie-ci-tag.env \
+          RUNTIME_ENV_FILE=/tmp/aalie-ci-runtime.env \
+          bash infra/oci/scripts/postgres-runtime-smoke.sh /tmp/aalie-ci-backups/aalie.dump
+
+      - name: Verify production runtime contracts
         run: |
           test "$(docker inspect -f '{{.Config.User}}' aalie-web)" = "nextjs"
           test "$(docker inspect -f '{{.Config.User}}' aalie-api)" = "aalie"
           test "$(docker inspect -f '{{len .Mounts}}' aalie-web)" = "0"
           test "$(docker inspect -f '{{len .Mounts}}' aalie-api)" = "0"
-          docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://api:8000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-          docker compose -f infra/docker-compose.prod.yml exec -T web node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+          docker compose -f infra/compose.prod.yml exec -T web node -e \
+            "fetch('http://api:8000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+          docker compose -f infra/compose.prod.yml exec -T web node -e \
+            "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
       - name: Run critical production smoke
         run: python3 scripts/smoke_prod.py
+
+      - name: Smoke auth session and JWKS endpoints
+        run: |
+          python3 - <<'PY'
+          import json
+          import urllib.error
+          import urllib.request
+
+          with urllib.request.urlopen("http://127.0.0.1:3000/api/auth/jwks", timeout=5) as response:
+              keys = json.load(response)["keys"]
+          assert keys and all(k["alg"] == "EdDSA" and k["crv"] == "Ed25519" for k in keys)
+
+          with urllib.request.urlopen("http://127.0.0.1:3000/api/auth/get-session", timeout=5) as response:
+              assert json.load(response) is None
+
+          try:
+              urllib.request.urlopen("http://127.0.0.1:3000/api/auth/token", timeout=5)
+          except urllib.error.HTTPError as error:
+              assert error.code == 401
+          else:
+              raise AssertionError("Unauthenticated token minting must be rejected")
+          PY
 
       - name: Validate SIGTERM during PDF export
         run: python3 scripts/test_sigterm_pdf.py
 
       - name: Stop production stack
         if: always()
-        run: docker compose -f infra/docker-compose.prod.yml down -v --remove-orphans
+        run: docker compose -f infra/compose.prod.yml down --remove-orphans

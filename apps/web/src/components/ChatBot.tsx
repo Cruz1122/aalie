@@ -9,6 +9,7 @@ import {
   type AssistantAvailabilityState,
   useAssistantAvailability,
 } from "@/hooks/useAssistantAvailability";
+import { Link } from "@/i18n/navigation";
 import type { AssistantContext, ChatMessage } from "@/lib/assistant/types";
 import {
   createBotMessage,
@@ -370,14 +371,12 @@ export default function ChatBot({
               </h4>
               <p className="text-slate-300 text-sm text-center leading-relaxed">
                 {t("apiKeyRequired")}{" "}
-                <a
-                  href="https://aistudio.google.com/apikey"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/help/api-key"
                   className="text-blue-400 hover:text-blue-300 underline"
                 >
-                  {tFooter("googleAIStudio")}
-                </a>
+                  {t("apiKeyLink")}
+                </Link>
                 .
               </p>
               <div className="flex items-center gap-2 w-full max-w-[70%]">

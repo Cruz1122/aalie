@@ -3,29 +3,31 @@ Punto de entrada principal de la aplicación FastAPI.
 
 Configura la aplicación FastAPI, middlewares (CORS por entorno),
 y registra los routers de los módulos principales.
-
-Author: Juan Felipe Henao (@Pipe-1z)
 """
 
 import os
 import shutil
 from pathlib import Path
+from time import perf_counter
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .core.config import get_cors_allowed_origins, get_cors_enabled
 from .modules.analysis.router import router as analyze_router
+from .modules.auth.router import router as auth_router
 from .modules.classification.router import router as classify_router
 from .modules.export.asset_registry import resolve_latex_asset_registry
 from .modules.export.router import router as export_router
 from .modules.llm.router import router as llm_router
 from .modules.parsing.router import router as parse_router
 from .modules.quizzes.router import router as quizzes_router
+from .modules.rate_limits.router import router as rate_limits_router
+from .modules.studies.router import router as studies_router
+from .modules.studies.telemetry import event_for_path, record_request_event
 
-# Cargar variables de entorno desde .env
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
 
 
@@ -34,7 +36,6 @@ def create_app() -> FastAPI:
 
     app = FastAPI(title="algorithmic-analysis API", version="0.1.0")
 
-    # --- CORS configurado por entorno ---
     if get_cors_enabled():
         app.add_middleware(
             CORSMiddleware,
@@ -42,11 +43,43 @@ def create_app() -> FastAPI:
             allow_credentials=False,
             allow_methods=["*"],
             allow_headers=["*"],
-            expose_headers=["Content-Disposition", "X-Snapshot-Id", "X-Content-Hash"],
+            expose_headers=[
+                "Content-Disposition",
+                "X-Snapshot-Id",
+                "X-Content-Hash",
+                "Retry-After",
+            ],
             max_age=600,
         )
 
-    # --- Rutas ---
+    @app.middleware("http")
+    async def study_telemetry_middleware(request: Request, call_next):
+        event_name = event_for_path(request.url.path)
+        if event_name is None:
+            return await call_next(request)
+
+        started = perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            record_request_event(
+                request,
+                event_name=event_name,
+                success=False,
+                duration_ms=int((perf_counter() - started) * 1000),
+                error_code="UNHANDLED_EXCEPTION",
+            )
+            raise
+
+        record_request_event(
+            request,
+            event_name=event_name,
+            success=response.status_code < 400,
+            duration_ms=int((perf_counter() - started) * 1000),
+            error_code=None if response.status_code < 400 else f"HTTP_{response.status_code}",
+        )
+        return response
+
     @app.get("/health/live")
     def health_live():
         return JSONResponse({"ok": True, "status": "live"})
@@ -85,6 +118,14 @@ def create_app() -> FastAPI:
             checks["quizzes"] = False
 
         checks["pdflatex"] = shutil.which("pdflatex") is not None
+
+        try:
+            from .core.database import check_database_connection
+
+            checks["postgresql"] = check_database_connection()
+        except Exception:
+            checks["postgresql"] = False
+
         ready = all(checks.values())
         return JSONResponse(
             {"ok": ready, "status": "ready" if ready else "not_ready", "checks": checks},
@@ -93,23 +134,17 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     def health():
-        """
-        Endpoint de health check para verificar el estado del servidor.
-
-        Returns:
-            JSONResponse con {"status": "ok"}
-
-        Author: Juan Felipe Henao (@Pipe-1z)
-        """
-        # Respeta tu forma actual (JSON con {"status":"ok"})
         return JSONResponse({"status": "ok"})
 
     app.include_router(parse_router)
     app.include_router(analyze_router)
+    app.include_router(auth_router)
     app.include_router(classify_router)
     app.include_router(llm_router)
     app.include_router(export_router)
     app.include_router(quizzes_router)
+    app.include_router(rate_limits_router)
+    app.include_router(studies_router)
 
     return app
 

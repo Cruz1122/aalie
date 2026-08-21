@@ -38,7 +38,7 @@ def request_result(result: dict[str, object]) -> None:
 
 def main() -> None:
     subprocess.run(
-        ["docker", "compose", "-f", "infra/docker-compose.prod.yml", "up", "-d", "--wait"],
+        ["docker", "compose", "-f", "infra/compose.prod.yml", "up", "-d", "--wait"],
         check=True,
     )
     result: dict[str, object] = {}
@@ -56,11 +56,11 @@ def main() -> None:
     assert inspect == "0 false", inspect
 
     subprocess.run(
-        ["docker", "compose", "-f", "infra/docker-compose.prod.yml", "up", "-d", "--wait", "--force-recreate"],
+        ["docker", "compose", "-f", "infra/compose.prod.yml", "up", "-d", "--wait", "--force-recreate"],
         check=True,
     )
     orphan_check = subprocess.run(
-        ["docker", "compose", "-f", "infra/docker-compose.prod.yml", "exec", "-T", "api", "sh", "-c", "pgrep -x pdflatex"],
+        ["docker", "compose", "-f", "infra/compose.prod.yml", "exec", "-T", "api", "sh", "-c", "pgrep -x pdflatex"],
         capture_output=True,
         text=True,
     )

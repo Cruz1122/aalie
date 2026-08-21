@@ -6,27 +6,31 @@ La fuente de verdad operacional para reconstruir y administrar la producción OC
 
 ```text
 Browser → aalie-web → Next BFF → aalie-api
+                                      ↘ PostgreSQL (red Docker privada)
 ```
 
 El navegador solo conoce `aalie-web`. Las operaciones de análisis, trace, quizzes, LLM y exportación atraviesan Route Handlers de Next bajo `/api/*`. FastAPI no necesita exponerse públicamente para que funcione la aplicación.
 
 ## Desarrollo vs producción
 
-Desarrollo conserva `infra/docker-compose.yml`: usa bind mounts, instalación de dependencias y hot reload.
+Desarrollo conserva `infra/compose.yml`: usa bind mounts, instalación de dependencias y hot reload.
 
-Producción usa `infra/docker-compose.prod.yml`: no usa bind mounts, no instala dependencias al arrancar y ejecuta Next standalone y Uvicorn sin reload.
+Producción usa `infra/compose.prod.yml`: no usa bind mounts, no instala dependencias al arrancar y ejecuta Next standalone y Uvicorn sin reload.
 
 OCI usa `infra/oci/compose.yml`: consume imágenes ARM64 ya publicadas en GHCR, mantiene web/API privadas y expone solo Caddy en 80/443.
 
 ```bash
 # Producción local
-docker compose -f infra/docker-compose.prod.yml build
-docker compose -f infra/docker-compose.prod.yml up -d --wait
+docker compose -f infra/compose.prod.yml build
+docker compose -f infra/compose.prod.yml up -d --wait
+docker compose -f infra/compose.prod.yml run --rm --no-deps api alembic upgrade head
 python scripts/smoke_prod.py
 
 # Detener
-docker compose -f infra/docker-compose.prod.yml down -v
+docker compose -f infra/compose.prod.yml down
 ```
+
+`docker compose down` conserva el volumen nombrado de PostgreSQL. `docker compose down -v` elimina los volúmenes y, por tanto, los datos persistentes; no debe usarse en producción.
 
 El host solo necesita Docker y Compose.
 
@@ -47,6 +51,8 @@ El host solo necesita Docker y Compose.
 - `CORS_ENABLED` y `CORS_ALLOWED_ORIGINS`.
 - `QUIZ_DATA_DIR`.
 - `AALIE_EXPORTER_ASSETS_DIR`.
+- `DATABASE_URL` del API usa `postgresql+psycopg://...`; la web recibe una URL `postgresql://...` reservada para Better Auth.
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `API_DATABASE_URL` y `WEB_DATABASE_URL` provienen del runtime, nunca de una imagen.
 - `LLM_PROVIDER`, `LLM_MODEL_*`, `LLM_TIMEOUT_SECONDS`.
 
 ### Secretos
@@ -59,7 +65,7 @@ El host solo necesita Docker y Compose.
 API:
 
 - `/health/live`: proceso HTTP vivo; no consulta dependencias.
-- `/health/ready`: parser, assets de export, quizzes y `pdflatex` disponibles. No genera PDF.
+- `/health/ready`: parser, assets de export, quizzes, `pdflatex` y PostgreSQL disponibles. No genera PDF.
 
 Web:
 
@@ -70,6 +76,14 @@ El gate Docker de CI construye las imágenes, arranca Compose, espera health, ej
 
 ## PDF
 
+## Migraciones y bootstrap OCI
+
+Alembic es el Ãºnico migrador de producciÃ³n. Las migraciones de autenticaciÃ³n siguen expand/contract y el rollback de imÃ¡genes nunca ejecuta un downgrade del schema.
+
+Antes del primer deploy de esta microfase, copiar manualmente `infra/oci/compose.yml`, `infra/oci/deploy/aalie-deploy`, los scripts OCI y crear `.env.runtime` con modo `0600`. No se amplÃ­a el comando SSH restringido de CI para automatizar ese bootstrap.
+
+El primer usuario entra como `USER`. DespuÃ©s de confirmar su identidad, el operador puede ejecutar `infra/oci/scripts/promote-admin.sh <user-id>`.
+
 La imagen API incluye TeX Live, `pdflatex`, estilos, templates y logos. El proceso corre como usuario `aalie`; los temporales se crean fuera del código de la aplicación.
 
 El pipeline mantiene dos pasadas de `pdflatex`: la primera prepara referencias auxiliares y la segunda produce el PDF final. El profiling del pipeline registra snapshot, modelo documental, assets de trace, renderer LaTeX, preparación temporal, ambas pasadas, lectura del PDF y cleanup.
@@ -79,7 +93,7 @@ El pipeline mantiene dos pasadas de `pdflatex`: la primera prepara referencias a
 Ejecutado dentro de `aalie-api:prod` con el caso real `triangular(n)`, un PDF con diagramas de trace:
 
 ```bash
-docker compose -f infra/docker-compose.prod.yml exec -T api \
+docker compose -f infra/compose.prod.yml exec -T api \
   python scripts/benchmark_pdf.py --warm 5 --concurrency 1,2,5
 ```
 

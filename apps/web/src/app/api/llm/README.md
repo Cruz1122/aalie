@@ -80,7 +80,7 @@ fetch("/api/llm/status")
 
 ### Contexto estructurado del asistente embebido
 
-- Cuando el chat se usa desde el iframe embebido, el frontend envía `assistantContext` con la superficie (`home`, `analyzer`, `examples`, `user-guide`, `course`, `quizzes`, `about`, `privacy`), metadatos de la vista y, si aplica, un resumen formal curado. En **quizzes** puede incluir `quizDashboard` (áreas a reforzar, fortalezas, intentos recientes con puntuación) y, tras enviar respuestas, `quizSessionReview` (todas las preguntas del intento con respuestas del usuario, corrección y feedback serializado).
+- Cuando el chat se usa desde el iframe embebido, el frontend envía `assistantContext` con la superficie (`home`, `analyzer`, `examples`, `user-guide`, `course`, `quizzes`, `about`, `privacy`, `terms`), metadatos de la vista y, si aplica, un resumen formal curado. En **quizzes** puede incluir `quizDashboard` (áreas a reforzar, fortalezas, intentos recientes con puntuación) y, tras enviar respuestas, `quizSessionReview` (todas las preguntas del intento con respuestas del usuario, corrección y feedback serializado).
 - El endpoint transforma ese contexto en un preámbulo determinista y agrega reglas explícitas para que el asistente trate el análisis formal como fuente de verdad.
 - Si existe un panel o modal en foco, ese bloque se serializa antes que el análisis formal para darle prioridad semántica en preguntas ambiguas.
 - En `analyzer` el contexto puede incluir seguimiento de ejecución con resumen curado del diagrama visible, parámetros iniciales, paso activo y patrón estructural detectado.

@@ -7,6 +7,7 @@ import {
 } from "next-intl/server";
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
 import { AnalysisProgressProvider } from "@/contexts/AnalysisProgressContext";
 import { GlobalLoaderProvider } from "@/contexts/GlobalLoaderContext";
@@ -46,7 +47,9 @@ export default async function LocaleLayout({ children, params }: Props) {
       <GlobalLoaderProvider>
         <AnalysisProgressProvider>
           <NavigationProvider>
-            <NavigationLoadingWrapper>{children}</NavigationLoadingWrapper>
+            <NavigationLoadingWrapper>
+              <AppErrorBoundary locale={locale}>{children}</AppErrorBoundary>
+            </NavigationLoadingWrapper>
           </NavigationProvider>
           <GlobalLoaderOverlay />
         </AnalysisProgressProvider>

@@ -1,14 +1,67 @@
 name: aalie
 
 services:
+  postgres:
+    image: postgres:18.4-bookworm@sha256:1961f96e6029a02c3812d7cb329a3b03a3ac2bb067058dec17b0f5596aca9296
+    container_name: aalie-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    expose:
+      - "5432"
+    healthcheck:
+      test:
+        ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    networks:
+      - aalie-internal
+
   api:
     image: ghcr.io/cruz1122/aalie-api:${AALIE_TAG:?AALIE_TAG must be set}
     container_name: aalie-api
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     expose:
       - "8000"
+    environment:
+      DATABASE_URL: ${API_DATABASE_URL:?API_DATABASE_URL must be set}
+      AUTH_JWKS_URL: ${AUTH_JWKS_URL:?AUTH_JWKS_URL must be set}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:?AUTH_JWT_ISSUER must be set}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:?AUTH_JWT_AUDIENCE must be set}
+      AALIE_BUILD_SHA: ${AALIE_TAG:?AALIE_TAG must be set}
+      AALIE_STUDY_TELEMETRY_ENABLED: ${AALIE_STUDY_TELEMETRY_ENABLED:-false}
+      PDF_EXPORT_MAX_CONCURRENCY: ${PDF_EXPORT_MAX_CONCURRENCY:-1}
+      AALIE_RATE_LIMIT_PARSE_ANON: ${AALIE_RATE_LIMIT_PARSE_ANON:-120}
+      AALIE_RATE_LIMIT_PARSE_AUTH: ${AALIE_RATE_LIMIT_PARSE_AUTH:-300}
+      AALIE_RATE_LIMIT_ANALYSIS_ANON: ${AALIE_RATE_LIMIT_ANALYSIS_ANON:-30}
+      AALIE_RATE_LIMIT_ANALYSIS_AUTH: ${AALIE_RATE_LIMIT_ANALYSIS_AUTH:-120}
+      AALIE_RATE_LIMIT_TRACE_ANON: ${AALIE_RATE_LIMIT_TRACE_ANON:-10}
+      AALIE_RATE_LIMIT_TRACE_AUTH: ${AALIE_RATE_LIMIT_TRACE_AUTH:-40}
+      AALIE_RATE_LIMIT_QUIZ_ANON: ${AALIE_RATE_LIMIT_QUIZ_ANON:-20}
+      AALIE_RATE_LIMIT_QUIZ_AUTH: ${AALIE_RATE_LIMIT_QUIZ_AUTH:-60}
+      AALIE_RATE_LIMIT_EXPORT_TEXT_ANON: ${AALIE_RATE_LIMIT_EXPORT_TEXT_ANON:-10}
+      AALIE_RATE_LIMIT_EXPORT_TEXT_AUTH: ${AALIE_RATE_LIMIT_EXPORT_TEXT_AUTH:-30}
+      AALIE_RATE_LIMIT_EXPORT_PDF_ANON: ${AALIE_RATE_LIMIT_EXPORT_PDF_ANON:-2}
+      AALIE_RATE_LIMIT_EXPORT_PDF_AUTH: ${AALIE_RATE_LIMIT_EXPORT_PDF_AUTH:-8}
+      AALIE_RATE_LIMIT_LLM_ANON: ${AALIE_RATE_LIMIT_LLM_ANON:-5}
+      AALIE_RATE_LIMIT_LLM_AUTH: ${AALIE_RATE_LIMIT_LLM_AUTH:-20}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=3)"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=3)",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -28,10 +81,40 @@ services:
       HOSTNAME: "0.0.0.0"
       PORT: "3000"
       API_INTERNAL_BASE_URL: "http://api:8000"
+      DATABASE_URL: ${WEB_DATABASE_URL:?WEB_DATABASE_URL must be set}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL must be set}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET must be set}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID must be set}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET must be set}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:?AUTH_JWT_ISSUER must be set}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:?AUTH_JWT_AUDIENCE must be set}
+      # GitHub Actions gets an ephemeral test-only key; production still requires the dedicated runtime secret.
+      RATE_LIMIT_HMAC_SECRET: ${RATE_LIMIT_HMAC_SECRET:-ci-${GITHUB_RUN_ID:?RATE_LIMIT_HMAC_SECRET must be set outside GitHub Actions}}
+      AALIE_RATE_LIMITS_ENABLED: ${AALIE_RATE_LIMITS_ENABLED:-true}
+      AALIE_RATE_LIMIT_PARSE_ANON: ${AALIE_RATE_LIMIT_PARSE_ANON:-120}
+      AALIE_RATE_LIMIT_PARSE_AUTH: ${AALIE_RATE_LIMIT_PARSE_AUTH:-300}
+      AALIE_RATE_LIMIT_ANALYSIS_ANON: ${AALIE_RATE_LIMIT_ANALYSIS_ANON:-30}
+      AALIE_RATE_LIMIT_ANALYSIS_AUTH: ${AALIE_RATE_LIMIT_ANALYSIS_AUTH:-120}
+      AALIE_RATE_LIMIT_TRACE_ANON: ${AALIE_RATE_LIMIT_TRACE_ANON:-10}
+      AALIE_RATE_LIMIT_TRACE_AUTH: ${AALIE_RATE_LIMIT_TRACE_AUTH:-40}
+      AALIE_RATE_LIMIT_QUIZ_ANON: ${AALIE_RATE_LIMIT_QUIZ_ANON:-20}
+      AALIE_RATE_LIMIT_QUIZ_AUTH: ${AALIE_RATE_LIMIT_QUIZ_AUTH:-60}
+      AALIE_RATE_LIMIT_EXPORT_TEXT_ANON: ${AALIE_RATE_LIMIT_EXPORT_TEXT_ANON:-10}
+      AALIE_RATE_LIMIT_EXPORT_TEXT_AUTH: ${AALIE_RATE_LIMIT_EXPORT_TEXT_AUTH:-30}
+      AALIE_RATE_LIMIT_EXPORT_PDF_ANON: ${AALIE_RATE_LIMIT_EXPORT_PDF_ANON:-2}
+      AALIE_RATE_LIMIT_EXPORT_PDF_AUTH: ${AALIE_RATE_LIMIT_EXPORT_PDF_AUTH:-8}
+      AALIE_RATE_LIMIT_LLM_ANON: ${AALIE_RATE_LIMIT_LLM_ANON:-5}
+      AALIE_RATE_LIMIT_LLM_AUTH: ${AALIE_RATE_LIMIT_LLM_AUTH:-20}
     expose:
       - "3000"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -61,5 +144,6 @@ networks:
     driver: bridge
 
 volumes:
+  postgres-data:
   caddy-data:
   caddy-config:

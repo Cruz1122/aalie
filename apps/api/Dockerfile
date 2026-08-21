@@ -5,7 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PATH=/usr/src/app/apps/api/.venv/bin:$PATH
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH=/opt/venv/bin:$PATH
 
 # --- System dependencies (TeX toolchain) ---
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -42,7 +43,8 @@ FROM base AS dev
 
 COPY apps/api/requirements-dev.txt /tmp/requirements-dev.txt
 
-RUN pip install -r /tmp/requirements-dev.txt
+RUN /opt/venv/bin/python -m ensurepip --upgrade \
+  && /opt/venv/bin/python -m pip install -r /tmp/requirements-dev.txt
 
 WORKDIR /usr/src/app/apps/api
 
