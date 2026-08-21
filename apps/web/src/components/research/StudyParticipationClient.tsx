@@ -42,20 +42,32 @@ export function StudyParticipationClient({
 
   const load = useCallback(async () => {
     setError(null);
-    const studyResponse = await fetch(`/api/studies/${encodeURIComponent(slug)}`, {
-      cache: "no-store",
-    });
+    const studyResponse = await fetch(
+      `/api/studies/${encodeURIComponent(slug)}`,
+      {
+        cache: "no-store",
+      },
+    );
     if (!studyResponse.ok) {
-      setError(spanish ? "El estudio no está disponible." : "The study is not available.");
+      setError(
+        spanish
+          ? "El estudio no está disponible."
+          : "The study is not available.",
+      );
       return;
     }
     const currentStudy = (await studyResponse.json()) as Study;
     setStudy(currentStudy);
     if (session?.user) {
-      const meResponse = await fetch(`/api/studies/${encodeURIComponent(slug)}/me`, {
-        cache: "no-store",
-      });
-      if (meResponse.ok) setMe((await meResponse.json()) as StudyMe);
+      const meResponse = await fetch(
+        `/api/studies/${encodeURIComponent(slug)}/me`,
+        {
+          cache: "no-store",
+        },
+      );
+      if (meResponse.ok) {
+        setMe((await meResponse.json()) as StudyMe);
+      }
     }
   }, [session?.user, slug, spanish]);
 
@@ -75,7 +87,9 @@ export function StudyParticipationClient({
         const payload = (await response.json().catch(() => null)) as
           | { error?: string; detail?: string }
           | null;
-        throw new Error(payload?.error ?? payload?.detail ?? `HTTP ${response.status}`);
+        throw new Error(
+          payload?.error ?? payload?.detail ?? `HTTP ${response.status}`,
+        );
       }
       await load();
     } catch (cause) {
@@ -86,7 +100,11 @@ export function StudyParticipationClient({
   };
 
   if (!study && !error) {
-    return <p className="text-sm text-slate-400">{spanish ? "Cargando…" : "Loading…"}</p>;
+    return (
+      <p className="text-sm text-slate-400">
+        {spanish ? "Cargando…" : "Loading…"}
+      </p>
+    );
   }
 
   return (
@@ -116,14 +134,18 @@ export function StudyParticipationClient({
               </h2>
               <ul className="mt-4 space-y-2 text-sm leading-6 text-dark-text">
                 <li>• participant ID + experimental condition</li>
-                <li>• quiz question IDs, versions, fingerprints and grades</li>
+                <li>
+                  • quiz question IDs, versions, fingerprints and grades
+                </li>
                 <li>• allowlisted feature usage and durations</li>
                 <li>• consent history and registered measurements</li>
               </ul>
             </section>
             <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-6">
               <h2 className="font-semibold text-white">
-                {spanish ? "No entra al dataset académico" : "Not in the academic dataset"}
+                {spanish
+                  ? "No entra al dataset académico"
+                  : "Not in the academic dataset"}
               </h2>
               <ul className="mt-4 space-y-2 text-sm leading-6 text-dark-text">
                 <li>• name or email</li>
@@ -145,7 +167,9 @@ export function StudyParticipationClient({
               }
               className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950"
             >
-              {spanish ? "Iniciar sesión para participar" : "Sign in to participate"}
+              {spanish
+                ? "Iniciar sesión para participar"
+                : "Sign in to participate"}
             </button>
           ) : null}
 
@@ -163,7 +187,8 @@ export function StudyParticipationClient({
           {me?.consented ? (
             <div className="flex flex-wrap items-center gap-4">
               <span className="text-sm text-emerald-300">
-                {spanish ? "Consentimiento registrado" : "Consent recorded"} · {me.participant?.participantCode}
+                {spanish ? "Consentimiento registrado" : "Consent recorded"} ·{" "}
+                {me.participant?.participantCode}
               </span>
               <button
                 type="button"
