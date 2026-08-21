@@ -1,0 +1,32 @@
+name: MF3 format diagnostic
+
+on:
+  pull_request:
+    branches: [develop]
+
+concurrency:
+  group: mf3-format-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prettier-diff:
+    name: Final Prettier diff
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: pnpm
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Render exact formatting delta
+        run: |
+          pnpm -C apps/web exec prettier --write src/components/research/ResearchAdminClient.tsx src/lib/bff/__tests__/bff-proxy-gate.test.ts src/lib/bff/__tests__/bff-rate-limit.test.ts
+          git diff --check
+          git diff --exit-code -- apps/web/src/components/research/ResearchAdminClient.tsx apps/web/src/lib/bff/__tests__/bff-proxy-gate.test.ts apps/web/src/lib/bff/__tests__/bff-rate-limit.test.ts
