@@ -50,11 +50,13 @@ def _csv_bytes(headers: list[str], rows: list[list[object]]) -> bytes:
 def build_study_export(study_id: UUID) -> StudyExport:
     engine = get_engine()
     generated_at = datetime.now(timezone.utc)
+    study_slug = ""
     with engine.connect().execution_options(isolation_level="REPEATABLE READ") as connection:
         with Session(bind=connection) as db, db.begin():
             study = db.get(Study, study_id)
             if study is None:
                 raise ValueError("Study not found")
+            study_slug = study.slug
 
             participants = list(
                 db.scalars(
@@ -367,7 +369,7 @@ def build_study_export(study_id: UUID) -> StudyExport:
             archive.writestr(name, payloads[name])
     archive_bytes = archive_io.getvalue()
     archive_sha = hashlib.sha256(archive_bytes).hexdigest()
-    filename = f"aalie-study-{study.slug}-{generated_at.date().isoformat()}.zip"
+    filename = f"aalie-study-{study_slug}-{generated_at.date().isoformat()}.zip"
     return StudyExport(
         archive=archive_bytes,
         sha256=archive_sha,
