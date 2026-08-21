@@ -260,8 +260,13 @@ def _validate_current_question(item: StudyQuizAttemptItem, locale: str) -> QuizQ
 
 
 def _sanitize_result_for_storage(result: QuizSessionResult) -> QuizSessionResult:
+    """Keep the idempotent study result without persisting answer-key/explanation prose."""
+
     for item in result.results:
         item.correctAnswer = None
+        item.optionFeedback = []
+        item.explanation.blocks = []
+        item.contentRefs = []
     return result
 
 
