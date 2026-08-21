@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
 
 import SignInForm from "./SignInForm";
@@ -17,6 +17,7 @@ export default function AuthControls({
 }: Readonly<AuthControlsProps>) {
   const isFooter = variant === "footer";
   const t = useTranslations("auth");
+  const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const [isSignInFormOpen, setIsSignInFormOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -27,7 +28,11 @@ export default function AuthControls({
     setSignOutError(false);
     try {
       const result = await authClient.signOut();
-      if (result.error) setSignOutError(true);
+      if (result.error) {
+        setSignOutError(true);
+      } else {
+        router.replace("/");
+      }
     } catch {
       setSignOutError(true);
     } finally {
@@ -79,12 +84,12 @@ export default function AuthControls({
       >
         <Link
           href="/profile"
-          className="group inline-flex items-center gap-1.5 rounded-lg px-1 text-slate-200 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+          className={`group inline-flex items-center gap-1.5 rounded-lg px-1 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${isFooter ? "text-dark-text" : "text-slate-200"}`}
           aria-label={t("myProfile")}
           title={t("myProfile")}
         >
           <span
-            className={`material-symbols-outlined leading-none text-slate-200 ${isFooter ? "footer-icon" : ""}`}
+            className={`material-symbols-outlined leading-none ${isFooter ? "footer-icon text-dark-text" : "text-slate-200"}`}
             style={isFooter ? undefined : { fontSize: "20px" }}
             aria-hidden
           >

@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import AuthControls from "@/components/AuthControls";
 
-const { mockSignInSocial, mockSignOut, mockUseSession } = vi.hoisted(() => ({
-  mockSignInSocial: vi.fn(),
-  mockSignOut: vi.fn(),
-  mockUseSession: vi.fn(),
-}));
+const { mockSignInSocial, mockSignOut, mockUseSession, mockReplace } =
+  vi.hoisted(() => ({
+    mockSignInSocial: vi.fn(),
+    mockSignOut: vi.fn(),
+    mockUseSession: vi.fn(),
+    mockReplace: vi.fn(),
+  }));
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) =>
@@ -45,6 +47,7 @@ vi.mock("@/i18n/navigation", () => ({
       {children}
     </a>
   ),
+  useRouter: () => ({ replace: mockReplace }),
 }));
 
 vi.mock("@/lib/auth-client", () => ({
@@ -59,6 +62,7 @@ describe("AuthControls", () => {
   beforeEach(() => {
     mockSignInSocial.mockReset();
     mockSignOut.mockReset();
+    mockReplace.mockReset();
     mockUseSession.mockReturnValue({ data: null, isPending: false });
   });
 
@@ -113,6 +117,22 @@ describe("AuthControls", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Sign-out failed.",
     );
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it("redirects to home after a successful sign-out", async () => {
+    mockUseSession.mockReturnValue({
+      data: { user: { name: "Ada", email: "ada@example.com" } },
+      isPending: false,
+    });
+    mockSignOut.mockResolvedValue({ error: null });
+
+    render(<AuthControls variant="footer" />);
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith("/");
+    });
   });
 
   it("opens the sign-in form without calling the authentication API", () => {

@@ -104,6 +104,7 @@ export default function ProfileView() {
                     src="/ucaldas.svg"
                     width={24}
                     height={24}
+                    className="scale-110"
                     alt={t("universityBadge")}
                   />
                 </span>

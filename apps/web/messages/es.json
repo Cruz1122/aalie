@@ -1573,8 +1573,25 @@
     "placeholder": "Describe el algoritmo que necesitas...",
     "suggestions": {
       "notation": "¿Qué es la notación asintótica?",
+      "countOperations": "¿Cómo cuento las operaciones elementales de un algoritmo?",
+      "bigO": "¿Cuál es la diferencia entre O, Ω y Θ?",
+      "loops": "¿Cómo analizo un bucle?",
+      "nestedLoops": "¿Qué pasa cuando tengo bucles anidados?",
+      "recursion": "¿Cómo se analiza una función recursiva?",
+      "recurrence": "¿Cómo construyo una recurrencia?",
+      "masterTheorem": "¿Cuándo puedo usar el Teorema Maestro?",
+      "divideAndConquer": "¿Qué es dividir y conquistar?",
+      "binarySearch": "¿Por qué la búsqueda binaria es O(log n)?",
       "bubbleSort": "¿Cómo funciona bubble sort?",
-      "mergesort": "Dame el código de mergesort"
+      "mergesort": "¿Por qué mergesort es O(n log n)?",
+      "dynamicProgramming": "¿Cómo reconozco programación dinámica?",
+      "greedy": "¿Cuándo conviene usar un algoritmo voraz?",
+      "backtracking": "¿Cómo funciona el backtracking?",
+      "invariant": "¿Qué es un invariante de ciclo?",
+      "bestWorstCase": "¿Cuál es la diferencia entre mejor y peor caso?",
+      "spaceComplexity": "¿Cómo analizo el uso de memoria?",
+      "traceAlgorithm": "¿Puedes mostrarme la ejecución paso a paso?",
+      "compareAlgorithms": "¿Cómo comparo dos algoritmos?"
     }
   },
   "about": {

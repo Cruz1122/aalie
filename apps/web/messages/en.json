@@ -1552,8 +1552,25 @@
     "placeholder": "Describe the algorithm you need...",
     "suggestions": {
       "notation": "What is asymptotic notation?",
+      "countOperations": "How do I count an algorithm's elementary operations?",
+      "bigO": "What is the difference between O, Ω, and Θ?",
+      "loops": "How do I analyze a loop?",
+      "nestedLoops": "What happens with nested loops?",
+      "recursion": "How do I analyze a recursive function?",
+      "recurrence": "How do I build a recurrence?",
+      "masterTheorem": "When can I use the Master Theorem?",
+      "divideAndConquer": "What is divide and conquer?",
+      "binarySearch": "Why is binary search O(log n)?",
       "bubbleSort": "How does bubble sort work?",
-      "mergesort": "Give me the mergesort code"
+      "mergesort": "Why is mergesort O(n log n)?",
+      "dynamicProgramming": "How do I recognize dynamic programming?",
+      "greedy": "When should I use a greedy algorithm?",
+      "backtracking": "How does backtracking work?",
+      "invariant": "What is a loop invariant?",
+      "bestWorstCase": "What is the difference between best and worst case?",
+      "spaceComplexity": "How do I analyze memory usage?",
+      "traceAlgorithm": "Can you show the execution step by step?",
+      "compareAlgorithms": "How do I compare two algorithms?"
     }
   },
   "about": {
