@@ -463,15 +463,13 @@
   },
   "errorPages": {
     "notFound": {
-      "eyebrow": "ERROR 404",
-      "title": "Page not found",
-      "description": "The route you are looking for does not exist or is no longer available.",
+      "eyebrow": "PAGE NOT FOUND",
+      "title": "We couldn't find what you were looking for",
       "homeLabel": "Back to home"
     },
     "error": {
-      "eyebrow": "ERROR",
-      "title": "Something went wrong",
-      "description": "The application encountered an unexpected problem. You can try loading this view again.",
+      "eyebrow": "SOMETHING WENT WRONG",
+      "title": "We're working to fix it",
       "homeLabel": "Back to home",
       "retryLabel": "Try again"
     }

@@ -18,7 +18,6 @@ export default function LocalizedErrorState({
   const copy = t.raw(kind) as {
     eyebrow: string;
     title: string;
-    description: string;
     homeLabel: string;
     retryLabel?: string;
   };

@@ -463,15 +463,13 @@
   },
   "errorPages": {
     "notFound": {
-      "eyebrow": "ERROR 404",
-      "title": "Página no encontrada",
-      "description": "La ruta que buscas no existe o ya no está disponible.",
+      "eyebrow": "PÁGINA NO ENCONTRADA",
+      "title": "No encontramos lo que buscabas",
       "homeLabel": "Volver al inicio"
     },
     "error": {
-      "eyebrow": "ERROR",
-      "title": "Algo salió mal",
-      "description": "La aplicación encontró un problema inesperado. Puedes intentar cargar esta vista de nuevo.",
+      "eyebrow": "ALGO SALIÓ MAL",
+      "title": "Estamos trabajando para solucionarlo",
       "homeLabel": "Volver al inicio",
       "retryLabel": "Intentar de nuevo"
     }

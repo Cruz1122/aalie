@@ -3,7 +3,6 @@
 interface ErrorStateCopy {
   readonly eyebrow: string;
   readonly title: string;
-  readonly description: string;
   readonly homeLabel: string;
   readonly retryLabel?: string;
 }
@@ -27,10 +26,13 @@ export default function ErrorState({
     <main className="flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#101a23] px-6 py-12 text-center text-white">
       <div className="error-state-content flex w-full max-w-xl flex-col items-center">
         <div
-          className={`error-state-icon mb-8 flex h-32 w-32 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] ${accentClass}`}
+          className={`error-state-icon mb-8 ${accentClass}`}
           aria-hidden="true"
         >
-          <span className="material-symbols-outlined text-[5rem] leading-none">
+          <span
+            className="material-symbols-outlined leading-none"
+            style={{ fontSize: "clamp(5rem, 12vw, 8rem)" }}
+          >
             {icon}
           </span>
         </div>
@@ -42,9 +44,6 @@ export default function ErrorState({
         <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-5xl">
           {copy.title}
         </h1>
-        <p className="max-w-md text-sm leading-6 text-slate-300 sm:text-base">
-          {copy.description}
-        </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a
             href={homeHref}
