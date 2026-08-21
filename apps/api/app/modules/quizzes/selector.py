@@ -3,7 +3,13 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from .schemas import QuizDifficulty, QuizQuestion, QuizSelectionItem, QuizSelectionRequest, QuizSelectionResult
+from .schemas import (
+    QuizDifficulty,
+    QuizQuestion,
+    QuizSelectionItem,
+    QuizSelectionRequest,
+    QuizSelectionResult,
+)
 
 
 @dataclass(frozen=True)
