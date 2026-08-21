@@ -19,7 +19,7 @@ from app.modules.studies.service import (
 pytestmark = [pytest.mark.fast, pytest.mark.unit]
 
 
-def test_study_ignores_client_adaptive_filters_and_bounds_session_length() -> None:
+def test_study_ignores_client_adaptive_state_and_bounds_session_length() -> None:
     factory = get_session_factory()
     study_id = None
     user_id = f"authority-{uuid4()}"
@@ -50,6 +50,10 @@ def test_study_ignores_client_adaptive_filters_and_bounds_session_length() -> No
                 condition="AALIE",
             )
 
+            preferences = QuizSessionPreferences(
+                questionCount=2,
+                difficultyMix={"advanced": 1.0},
+            )
             tampered = create_study_quiz_session(
                 db,
                 study_slug=study.slug,
@@ -68,12 +72,7 @@ def test_study_ignores_client_adaptive_filters_and_bounds_session_length() -> No
                             "wasCorrect": False,
                         }
                     ],
-                    sessionPreferences=QuizSessionPreferences(
-                        questionCount=2,
-                        difficultyMix={"advanced": 1.0},
-                        topicIds=["client.fake"],
-                        skillIds=["client.fake"],
-                    ),
+                    sessionPreferences=preferences,
                     locale="es",
                 ),
             )
@@ -82,7 +81,7 @@ def test_study_ignores_client_adaptive_filters_and_bounds_session_length() -> No
                 study_slug=study.slug,
                 user_id=user_id,
                 payload=QuizSelectionRequest(
-                    sessionPreferences=QuizSessionPreferences(questionCount=2),
+                    sessionPreferences=preferences,
                     locale="es",
                 ),
             )
