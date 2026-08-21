@@ -49,14 +49,20 @@ export function ResearchStudiesList({ locale }: { locale: string }) {
         return (await response.json()) as Study[];
       })
       .then(setStudies)
-      .catch((cause) => setError(cause instanceof Error ? cause.message : "Request failed"));
+      .catch((cause) =>
+        setError(cause instanceof Error ? cause.message : "Request failed"),
+      );
   }, []);
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">ADMIN · RESEARCH</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Studies</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+          ADMIN · RESEARCH
+        </p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
+          Studies
+        </h1>
       </div>
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
       <div className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.025]">
@@ -68,9 +74,13 @@ export function ResearchStudiesList({ locale }: { locale: string }) {
           >
             <div>
               <div className="font-semibold text-white">{study.title}</div>
-              <div className="mt-1 text-xs text-slate-500">{study.slug} · {study.protocolVersion}</div>
+              <div className="mt-1 text-xs text-slate-500">
+                {study.slug} · {study.protocolVersion}
+              </div>
             </div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-cyan-200">{study.status}</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-cyan-200">
+              {study.status}
+            </span>
           </Link>
         ))}
       </div>
@@ -89,20 +99,29 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
     const encoded = encodeURIComponent(studyId);
     const [summaryResponse, participantsResponse] = await Promise.all([
       fetch(`/api/admin/studies/${encoded}/summary`, { cache: "no-store" }),
-      fetch(`/api/admin/studies/${encoded}/participants`, { cache: "no-store" }),
+      fetch(`/api/admin/studies/${encoded}/participants`, {
+        cache: "no-store",
+      }),
     ]);
     if (!summaryResponse.ok || !participantsResponse.ok) {
-      throw new Error(`Research API error ${summaryResponse.status}/${participantsResponse.status}`);
+      throw new Error(
+        `Research API error ${summaryResponse.status}/${participantsResponse.status}`,
+      );
     }
     setSummary((await summaryResponse.json()) as Summary);
     setParticipants((await participantsResponse.json()) as Participant[]);
   }, [studyId]);
 
   useEffect(() => {
-    void load().catch((cause) => setError(cause instanceof Error ? cause.message : "Request failed"));
+    void load().catch((cause) =>
+      setError(cause instanceof Error ? cause.message : "Request failed"),
+    );
   }, [load]);
 
-  const assign = async (participantId: string, condition: "AALIE" | "CONTROL") => {
+  const assign = async (
+    participantId: string,
+    condition: "AALIE" | "CONTROL",
+  ) => {
     const response = await fetch(
       `/api/admin/studies/${encodeURIComponent(studyId)}/participants/${encodeURIComponent(participantId)}/condition`,
       {
@@ -111,11 +130,15 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
         body: JSON.stringify({ condition }),
       },
     );
-    if (!response.ok) throw new Error(`Condition update failed: HTTP ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Condition update failed: HTTP ${response.status}`);
+    }
     await load();
   };
 
-  if (!summary && !error) return <p className="text-sm text-slate-400">Loading…</p>;
+  if (!summary && !error) {
+    return <p className="text-sm text-slate-400">Loading…</p>;
+  }
 
   return (
     <div className="space-y-8">
@@ -124,8 +147,12 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
         <>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{summary.study.status}</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">{summary.study.title}</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                {summary.study.status}
+              </p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
+                {summary.study.title}
+              </h1>
             </div>
             <a
               href={`/api/admin/studies/${encodeURIComponent(studyId)}/export`}
@@ -144,9 +171,14 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
               ["CONTROL", summary.control],
               ["Unassigned", summary.unassigned],
             ].map(([label, value]) => (
-              <div key={String(label)} className="rounded-xl border border-white/10 bg-white/[0.025] p-4">
+              <div
+                key={String(label)}
+                className="rounded-xl border border-white/10 bg-white/[0.025] p-4"
+              >
                 <div className="text-xs text-slate-500">{label}</div>
-                <div className="mt-1 text-2xl font-bold text-white">{value}</div>
+                <div className="mt-1 text-2xl font-bold text-white">
+                  {value}
+                </div>
               </div>
             ))}
           </div>
@@ -156,7 +188,11 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
             <Metric label="Completed" value={summary.completedQuizAttempts} />
             <Metric
               label="Mean accuracy"
-              value={summary.meanAccuracy == null ? "—" : `${(summary.meanAccuracy * 100).toFixed(1)}%`}
+              value={
+                summary.meanAccuracy == null
+                  ? "—"
+                  : `${(summary.meanAccuracy * 100).toFixed(1)}%`
+              }
             />
           </div>
 
@@ -174,9 +210,15 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
               <tbody className="divide-y divide-white/10">
                 {participants.map((participant) => (
                   <tr key={participant.participantId}>
-                    <td className="px-4 py-3 font-mono text-xs text-white">{participant.participantCode}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-white">
+                      {participant.participantCode}
+                    </td>
                     <td className="px-4 py-3 text-dark-text">
-                      {participant.withdrawnAt ? "WITHDRAWN" : participant.excludedAt ? "EXCLUDED" : "ACTIVE"}
+                      {participant.withdrawnAt
+                        ? "WITHDRAWN"
+                        : participant.excludedAt
+                          ? "EXCLUDED"
+                          : "ACTIVE"}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
@@ -186,8 +228,15 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
                             type="button"
                             disabled={participant.condition === condition}
                             onClick={() =>
-                              void assign(participant.participantId, condition).catch((cause) =>
-                                setError(cause instanceof Error ? cause.message : "Update failed"),
+                              void assign(
+                                participant.participantId,
+                                condition,
+                              ).catch((cause) =>
+                                setError(
+                                  cause instanceof Error
+                                    ? cause.message
+                                    : "Update failed",
+                                ),
                               )
                             }
                             className="rounded-lg border border-white/10 px-2.5 py-1 text-xs text-slate-200 disabled:bg-white/10 disabled:text-white"
@@ -197,9 +246,13 @@ export function ResearchStudyDetail({ studyId }: { studyId: string }) {
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-dark-text">{participant.attempts}</td>
                     <td className="px-4 py-3 text-dark-text">
-                      {participant.averageAccuracy == null ? "—" : `${(participant.averageAccuracy * 100).toFixed(1)}%`}
+                      {participant.attempts}
+                    </td>
+                    <td className="px-4 py-3 text-dark-text">
+                      {participant.averageAccuracy == null
+                        ? "—"
+                        : `${(participant.averageAccuracy * 100).toFixed(1)}%`}
                     </td>
                   </tr>
                 ))}
