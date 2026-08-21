@@ -5,7 +5,9 @@ import { POLICIES } from "../policies";
 import { enforceRateLimit } from "../rate-limit";
 import type { BffRequestContext } from "../request-context";
 
-function context(overrides: Partial<BffRequestContext> = {}): BffRequestContext {
+function context(
+  overrides: Partial<BffRequestContext> = {},
+): BffRequestContext {
   return {
     requestId: `request-${crypto.randomUUID()}`,
     authenticated: false,
@@ -93,7 +95,10 @@ describe("MF3 BFF quota and identity gates", () => {
     vi.stubEnv("RATE_LIMIT_HMAC_SECRET", "test-only-hmac-secret");
     vi.stubEnv("AALIE_RATE_LIMITS_ENABLED", "true");
     vi.stubEnv("AALIE_RATE_LIMIT_ANALYSIS_ANON", "2");
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("database unavailable")));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("database unavailable")),
+    );
     const requestContext = context();
 
     const first = await enforceRateLimit(requestContext, POLICIES.analysis);
@@ -107,9 +112,14 @@ describe("MF3 BFF quota and identity gates", () => {
   it("fails closed for expensive scopes when quota cannot be determined", async () => {
     vi.stubEnv("RATE_LIMIT_HMAC_SECRET", "test-only-hmac-secret");
     vi.stubEnv("AALIE_RATE_LIMITS_ENABLED", "true");
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("database unavailable")));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("database unavailable")),
+    );
 
-    await expect(enforceRateLimit(context(), POLICIES.llm)).rejects.toMatchObject({
+    await expect(
+      enforceRateLimit(context(), POLICIES.llm),
+    ).rejects.toMatchObject({
       status: 503,
       code: "RATE_LIMIT_UNAVAILABLE",
       headers: { "Retry-After": "5" },
