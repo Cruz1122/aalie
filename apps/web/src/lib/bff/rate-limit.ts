@@ -83,7 +83,11 @@ export async function enforceRateLimit(
   context: BffRequestContext,
   policy: BffPolicy,
 ): Promise<Decision> {
-  if (!enabled()) return { allowed: true, retryAfterSeconds: 0 };
+  if (policy.rateScope === null || !enabled()) {
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  const scope = policy.rateScope;
   const subjectHash = hashRateLimitSubject(context.subject);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 2_500);
@@ -95,7 +99,7 @@ export async function enforceRateLimit(
         "x-request-id": context.requestId,
       },
       body: JSON.stringify({
-        scope: policy.rateScope,
+        scope,
         subjectHash,
         authenticated: context.authenticated,
       }),
@@ -122,11 +126,7 @@ export async function enforceRateLimit(
         { "Retry-After": "5" },
       );
     }
-    return fallbackDecision(
-      policy.rateScope,
-      subjectHash,
-      context.authenticated,
-    );
+    return fallbackDecision(scope, subjectHash, context.authenticated);
   } finally {
     clearTimeout(timer);
   }
