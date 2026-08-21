@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 
 import { useAssistantAvailability } from "@/hooks/useAssistantAvailability";
 import { setApiKey, validateApiKey } from "@/hooks/useApiKey";
+import { Link } from "@/i18n/navigation";
 import type { AssistantContext } from "@/lib/assistant/types";
 
 import AALIEEmotionIcon from "./AALIEEmotionIcon";
@@ -443,13 +444,12 @@ export default function AIModeView({
             {apiKeyUnavailable ? (
               <>
                 {t("apiKeyPromptPrefix")}
-                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                <a
+                <Link
                   href="/help/api-key"
                   className="text-amber-300 underline decoration-amber-300/60 underline-offset-4 transition-colors hover:text-amber-200"
                 >
                   {t("apiKeyPromptLink")}
-                </a>
+                </Link>
                 {t("apiKeyPromptSuffix")}
               </>
             ) : (

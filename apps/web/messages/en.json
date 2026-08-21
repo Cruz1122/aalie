@@ -446,6 +446,12 @@
       "googleAIStudio": "Google AI Studio"
     }
   },
+  "apiKeyHelp": {
+    "meta": {
+      "title": "API key setup guide | AALIE",
+      "description": "Learn how to connect AI providers to AALIE, choose models, and control spending."
+    }
+  },
   "metadata": {
     "title": "AALIE",
     "description": "AALIE: live algorithmic complexity analysis with expert assistant (Algorithm Analysis Learning Interactive Environment)"

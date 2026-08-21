@@ -9,6 +9,7 @@ import {
   type AssistantAvailabilityState,
   useAssistantAvailability,
 } from "@/hooks/useAssistantAvailability";
+import { Link } from "@/i18n/navigation";
 import type { AssistantContext, ChatMessage } from "@/lib/assistant/types";
 import {
   createBotMessage,
@@ -370,13 +371,12 @@ export default function ChatBot({
               </h4>
               <p className="text-slate-300 text-sm text-center leading-relaxed">
                 {t("apiKeyRequired")}{" "}
-                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                <a
+                <Link
                   href="/help/api-key"
                   className="text-blue-400 hover:text-blue-300 underline"
                 >
                   {t("apiKeyLink")}
-                </a>
+                </Link>
                 .
               </p>
               <div className="flex items-center gap-2 w-full max-w-[70%]">

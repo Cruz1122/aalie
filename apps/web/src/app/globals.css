@@ -425,6 +425,70 @@ body {
 }
 
 /* Cards de documentación - altura fija para alineación */
+.api-help-key-icon {
+  animation: apiHelpKeyPulse 3.2s ease-in-out infinite;
+}
+
+.api-help-reveal {
+  animation: apiHelpReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.api-help-delay-1 {
+  animation-delay: 100ms;
+}
+
+.api-help-delay-2 {
+  animation-delay: 180ms;
+}
+
+.api-help-delay-3 {
+  animation-delay: 260ms;
+}
+
+.api-help-provider {
+  animation: apiHelpCardIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes apiHelpReveal {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes apiHelpCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes apiHelpKeyPulse {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(-5deg) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .api-help-key-icon,
+  .api-help-reveal,
+  .api-help-provider {
+    animation: none;
+  }
+}
+
 .documentation-card {
   min-height: 320px;
   height: 100%;
