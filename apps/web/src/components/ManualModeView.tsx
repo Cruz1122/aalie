@@ -19,6 +19,9 @@ import {
   type EditorContext,
   type ManualEditorActions,
 } from "@/features/analyzer/manual-guidance";
+import type {
+  GuidanceRecommendation,
+} from "@/features/analyzer/manual-guidance/recommendations";
 import { ManualGuidancePanel } from "@/features/analyzer/manual-guidance/ui";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
@@ -176,6 +179,8 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         cursor: { line: 1, column: 0, offset: 0 },
       }),
     );
+    const [activeRecommendation, setActiveRecommendation] =
+      useState<GuidanceRecommendation | null>(null);
     const editorActions = useMemo<ManualEditorActions>(
       () => ({
         insertSnippet: (snippetId) => {
@@ -188,6 +193,9 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           editorRef.current?.wrapSelection(snippetId),
         focusEditor: () => editorRef.current?.focus(),
         focusAlgorithmBody: () => editorRef.current?.focusAlgorithmBody(),
+        prepareAlgorithmBlockInsertion: () =>
+          editorRef.current?.prepareAlgorithmBlockInsertion(),
+        prepareReturnInsertion: () => editorRef.current?.prepareReturnInsertion(),
         insertTextAtCursor: (text) =>
           editorRef.current?.insertTextAtCursor(text),
         insertParameterAtProcedure: (parameter) =>
@@ -560,6 +568,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                   canViewAst={localParseOk && ast != null}
                   hasCode={code.trim() !== ""}
                   verifyParseResult={verifyParseResult}
+                  activeRecommendation={activeRecommendation}
                   showAIHelpButton={
                     showAIHelpButton && !!backendParseError && hasValidApiKey
                   }
@@ -678,6 +687,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                   context={editorContext}
                   editorActions={editorActions}
                   onAnalyze={handleAnalyzeComplexity}
+                  onActiveRecommendationChange={setActiveRecommendation}
                 />
               </div>
             </div>

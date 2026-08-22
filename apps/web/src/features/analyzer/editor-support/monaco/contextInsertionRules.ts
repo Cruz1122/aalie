@@ -92,75 +92,285 @@ export function resolveSnippetPlainText(snippetText: string): string {
     .replace(/\$(\d+)/g, "");
 }
 
-export function insertSnippetIntoEditor(
-  editor: Monaco.editor.IStandaloneCodeEditor,
-  snippet: SnippetDefinition,
-  locale = "es",
-) {
-  const model = editor.getModel();
-  if (!model) return;
+const selectedPlaceholderBySnippetId: Partial<Record<string, number>> = {
+  assign: 1,
+  call: 1,
+  "return-value": 1,
+  if: 1,
+  "if-else": 1,
+  while: 1,
+  for: 1,
+  "repeat-until": 2,
+};
 
-  const selection = editor.getSelection();
-  const position = editor.getPosition();
-  const targetRange = selection ?? {
-    startLineNumber: position?.lineNumber ?? 1,
-    startColumn: position?.column ?? 1,
-    endLineNumber: position?.lineNumber ?? 1,
-    endColumn: position?.column ?? 1,
+function getSnippetSelectionOffsets(
+  snippet: LocalizedSnippetDefinition,
+  insertionText: string,
+): { start: number; end: number } | null {
+  const placeholderIndex = selectedPlaceholderBySnippetId[snippet.id];
+  if (!placeholderIndex) return null;
+
+  const placeholderPattern = new RegExp(
+    "\\$\\{" + placeholderIndex + "(?::([^}]*))?\\}",
+  );
+  const placeholderMatch = placeholderPattern.exec(snippet.insertText);
+  const defaultValue = placeholderMatch?.[1];
+  if (!defaultValue) return null;
+
+  const escapedDefaultValue = defaultValue.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&",
+  );
+  const semanticPrefixBySnippetId: Partial<Record<string, string>> = {
+    if: "IF\\s*\\(\\s*",
+    "if-else": "IF\\s*\\(\\s*",
+    while: "WHILE\\s*\\(\\s*",
+    "repeat-until": "UNTIL\\s*\\(\\s*",
   };
-  const selectedText = model.getValueInRange(targetRange);
-  const localizedSnippet = localizeSnippet(snippet, locale);
+  const semanticPrefix = semanticPrefixBySnippetId[snippet.id];
+  const semanticMatch = semanticPrefix
+    ? new RegExp(semanticPrefix + escapedDefaultValue, "i").exec(
+        insertionText,
+      )
+    : null;
+  const start = semanticMatch
+    ? semanticMatch.index + semanticMatch[0].length - defaultValue.length
+    : insertionText.indexOf(defaultValue);
+  if (start < 0) return null;
+
+  return { start, end: start + defaultValue.length };
+}
+
+interface SnippetSelection {
+  readonly startLineNumber: number;
+  readonly startColumn: number;
+  readonly endLineNumber: number;
+  readonly endColumn: number;
+  readonly positionLineNumber: number;
+  readonly positionColumn: number;
+}
+
+interface PreparedSnippetInsertion {
+  readonly targetRange: {
+    startLineNumber: number;
+    startColumn: number;
+    endLineNumber: number;
+    endColumn: number;
+  };
+  readonly insertionText: string;
+  readonly startOffset: number;
+  readonly rangeStartOffset: number;
+  readonly rangeEndOffset: number;
+}
+
+function prepareSnippetInsertion(
+  model: Monaco.editor.ITextModel,
+  snippet: SnippetDefinition,
+  localizedSnippet: LocalizedSnippetDefinition,
+  selection: SnippetSelection,
+): PreparedSnippetInsertion {
+  const position = {
+    lineNumber: selection.positionLineNumber,
+    column: selection.positionColumn,
+  };
+  let targetRange = {
+    startLineNumber: selection.startLineNumber,
+    startColumn: selection.startColumn,
+    endLineNumber: selection.endLineNumber,
+    endColumn: selection.endColumn,
+  };
+  let selectedText = model.getValueInRange(targetRange);
+  if (snippet.id === "return-value" && selectedText.trim()) {
+    targetRange = {
+      startLineNumber: position.lineNumber,
+      startColumn: position.column,
+      endLineNumber: position.lineNumber,
+      endColumn: position.column,
+    };
+    selectedText = "";
+  }
+
   const snippetText = buildSnippetInsertionText(localizedSnippet, selectedText);
   const startLinePrefix = model
     .getLineContent(targetRange.startLineNumber)
     .slice(0, Math.max(0, targetRange.startColumn - 1));
   const baseIndent = /^\s*$/.test(startLinePrefix) ? startLinePrefix : "";
-  const insertionText = applyContextIndentation(
+  let insertionText = applyContextIndentation(
     resolveSnippetPlainText(snippetText),
     baseIndent,
   );
-  const startOffset = model.getOffsetAt({
+  let startOffset = model.getOffsetAt({
     lineNumber: targetRange.startLineNumber,
     column: targetRange.startColumn,
   });
 
+  const isLineBasedSnippet =
+    snippet.insertKind === "block" ||
+    snippet.contextRules.includes("lineStart");
+  if (!selectedText.trim() && isLineBasedSnippet) {
+    const lineNumber = targetRange.startLineNumber;
+    const lineContent = model.getLineContent(lineNumber);
+    const cursorIndex = Math.max(0, targetRange.startColumn - 1);
+    const linePrefix = lineContent.slice(0, cursorIndex);
+    const lineSuffix = lineContent.slice(cursorIndex);
+    const lineIndent = lineContent.match(/^[ \t]*/)?.[0] ?? "";
+    const plainSnippet = resolveSnippetPlainText(snippetText);
+    const lineStartOffset = model.getOffsetAt({
+      lineNumber,
+      column: 1,
+    });
+    const cursorOffset = model.getOffsetAt({
+      lineNumber,
+      column: targetRange.startColumn,
+    });
+
+    if (linePrefix.trim()) {
+      insertionText =
+        lineIndent + applyContextIndentation(plainSnippet, lineIndent);
+      insertionText = `\n${insertionText}`;
+      if (lineSuffix.trim()) insertionText += `\n${lineIndent}`;
+    } else {
+      targetRange = {
+        startLineNumber: lineNumber,
+        startColumn: 1,
+        endLineNumber: lineNumber,
+        endColumn: targetRange.startColumn,
+      };
+      startOffset = lineStartOffset;
+
+      if (/^END\b/i.test(lineSuffix.trim())) {
+        insertionText =
+          indentBlock(plainSnippet, `${lineIndent}  `) +
+          `\n${lineIndent}`;
+      } else {
+        insertionText = indentBlock(plainSnippet, lineIndent);
+        if (lineSuffix.trim()) insertionText += `\n${lineIndent}`;
+      }
+    }
+
+    if (linePrefix.trim()) {
+      startOffset = cursorOffset;
+    }
+  }
+
+  return {
+    targetRange,
+    insertionText,
+    startOffset,
+    rangeStartOffset: model.getOffsetAt({
+      lineNumber: targetRange.startLineNumber,
+      column: targetRange.startColumn,
+    }),
+    rangeEndOffset: model.getOffsetAt({
+      lineNumber: targetRange.endLineNumber,
+      column: targetRange.endColumn,
+    }),
+  };
+}
+
+export function insertSnippetIntoEditor(
+  editor: Monaco.editor.IStandaloneCodeEditor,
+  snippet: SnippetDefinition,
+  locale = "es",
+  insertTextOverride?: string,
+) {
+  const model = editor.getModel();
+  if (!model) return;
+
+  const localizedSnippet = localizeSnippet(snippet, locale);
+  const insertionSnippet = insertTextOverride
+    ? { ...localizedSnippet, insertText: insertTextOverride }
+    : localizedSnippet;
+  const rawSelections = editor.getSelections() ?? [];
+  const fallbackPosition = editor.getPosition() ?? {
+    lineNumber: 1,
+    column: 1,
+  };
+  const selections: SnippetSelection[] =
+    rawSelections.length > 0
+      ? rawSelections.map((selection) => ({
+          startLineNumber: selection.startLineNumber,
+          startColumn: selection.startColumn,
+          endLineNumber: selection.endLineNumber,
+          endColumn: selection.endColumn,
+          positionLineNumber: selection.positionLineNumber,
+          positionColumn: selection.positionColumn,
+        }))
+      : [
+          {
+            startLineNumber: fallbackPosition.lineNumber,
+            startColumn: fallbackPosition.column,
+            endLineNumber: fallbackPosition.lineNumber,
+            endColumn: fallbackPosition.column,
+            positionLineNumber: fallbackPosition.lineNumber,
+            positionColumn: fallbackPosition.column,
+          },
+        ];
+  const prepared = selections.map((selection) =>
+    prepareSnippetInsertion(model, snippet, insertionSnippet, selection),
+  );
+
   editor.focus();
-  editor.executeEdits("editor-support", [
-    {
-      range: targetRange,
-      text: insertionText,
+  editor.executeEdits(
+    "editor-support",
+    prepared.map((insertion) => ({
+      range: insertion.targetRange,
+      text: insertion.insertionText,
       forceMoveMarkers: true,
-    },
-  ]);
+    })),
+  );
 
   const procedureName =
     snippet.id === "algorithm-header"
-      ? localizedSnippet.insertText.match(/^\$\{1:([^}]+)\}/)?.[1]
+      ? insertionSnippet.insertText.match(/^\$\{1:([^}]+)\}/)?.[1]
       : undefined;
+  const finalSelections = prepared.map((insertion, index) => {
+    const placeholderOffsets = procedureName
+      ? null
+      : getSnippetSelectionOffsets(insertionSnippet, insertion.insertionText);
+    const relativeStart = procedureName
+      ? insertion.insertionText.startsWith(procedureName)
+        ? 0
+        : insertion.insertionText.length
+      : placeholderOffsets?.start ?? insertion.insertionText.length;
+    const relativeEnd = procedureName
+      ? insertion.insertionText.startsWith(procedureName)
+        ? procedureName.length
+        : insertion.insertionText.length
+      : placeholderOffsets?.end ?? insertion.insertionText.length;
+    const originalStart = insertion.startOffset + relativeStart;
+    const originalEnd = insertion.startOffset + relativeEnd;
+    const shiftBefore = (originalOffset: number) =>
+      prepared.reduce((shift, other, otherIndex) => {
+        if (otherIndex === index) return shift;
+        const otherStart = other.rangeStartOffset;
+        if (otherStart >= originalOffset) return shift;
+        return (
+          shift +
+          other.insertionText.length -
+          (other.rangeEndOffset - other.rangeStartOffset)
+        );
+      }, 0);
+    const finalStart = model.getPositionAt(
+      originalStart + shiftBefore(originalStart),
+    );
+    const finalEnd = model.getPositionAt(
+      originalEnd + shiftBefore(originalEnd),
+    );
+    return {
+      selectionStartLineNumber: finalStart.lineNumber,
+      selectionStartColumn: finalStart.column,
+      positionLineNumber: finalEnd.lineNumber,
+      positionColumn: finalEnd.column,
+    };
+  });
 
-  if (procedureName && insertionText.startsWith(procedureName)) {
-    const nameStart = model.getPositionAt(startOffset);
-    const nameEnd = model.getPositionAt(
-      startOffset + procedureName.length,
-    );
-    editor.setSelection({
-      startLineNumber: nameStart.lineNumber,
-      startColumn: nameStart.column,
-      endLineNumber: nameEnd.lineNumber,
-      endColumn: nameEnd.column,
+  editor.setSelections(finalSelections);
+  const lastSelection = finalSelections[finalSelections.length - 1];
+  if (lastSelection) {
+    editor.revealPositionInCenterIfOutsideViewport({
+      lineNumber: lastSelection.positionLineNumber,
+      column: lastSelection.positionColumn,
     });
-    editor.revealPositionInCenterIfOutsideViewport(nameEnd);
-  } else {
-    const endPosition = model.getPositionAt(
-      startOffset + insertionText.length,
-    );
-    editor.setPosition(endPosition);
-    editor.setSelection({
-      startLineNumber: endPosition.lineNumber,
-      startColumn: endPosition.column,
-      endLineNumber: endPosition.lineNumber,
-      endColumn: endPosition.column,
-    });
-    editor.revealPositionInCenterIfOutsideViewport(endPosition);
   }
 }

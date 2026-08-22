@@ -50,6 +50,7 @@ export function TutorialWelcome({
         onBack={onBack}
         onNext={onNext}
         onSkip={onSkip}
+        skipLabel={t("welcome.knowHow")}
       />
     </section>
   );

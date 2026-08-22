@@ -124,54 +124,103 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
     },
   });
 
-  // Configurar tema oscuro consistente con la paleta del sitio (primary #0d7ff2, dark.bg #101a23)
-  const pseudocodeTheme = {
+  // Los editores principales usan azul; los ejemplos conservan cyan. Ambos
+  // comparten fondo y tipografía, pero no sus elementos de acento.
+  const createPseudocodeTheme = (accent: {
+    readonly token: string;
+    readonly selection: string;
+    readonly selectionInactive: string;
+    readonly selectionHighlight: string;
+    readonly lineNumber: string;
+    readonly bracketBackground: string;
+    readonly bracketBorder: string;
+    readonly scrollbar: string;
+    readonly scrollbarHover: string;
+    readonly scrollbarActive: string;
+    readonly indentGuide: string;
+    readonly widgetBorder: string;
+  }) => ({
     base: "vs-dark" as const,
     inherit: true,
     rules: [
-      { token: "keyword", foreground: "67e8f9", fontStyle: "bold" }, // cyan - palabras clave
-      { token: "identifier", foreground: "ffffff" }, // identificadores en blanco
-      { token: "number", foreground: "ffffff" }, // valores en blanco
-      { token: "string", foreground: "ffffff" }, // strings en blanco
+      { token: "keyword", foreground: accent.token, fontStyle: "bold" },
+      { token: "identifier", foreground: "ffffff" },
+      { token: "number", foreground: "ffffff" },
+      { token: "string", foreground: "ffffff" },
       { token: "string.quote", foreground: "ffffff" },
       { token: "string.escape", foreground: "ffffff" },
-      { token: "operator", foreground: "67e8f9" }, // cyan - operadores
-      { token: "delimiter", foreground: "67e8f9" }, // cyan - delimitadores
+      { token: "operator", foreground: accent.token },
+      { token: "delimiter", foreground: accent.token },
       { token: "comment", foreground: "64748b", fontStyle: "italic" },
       { token: "white", foreground: "ffffff" },
     ],
     colors: {
       "editor.foreground": "#ffffff",
-      "editor.background": "#101a23", // dark.bg
-      "editor.lineHighlightBackground": "transparent", // sin resaltado al hover/focus
+      "editor.background": "#101a23",
+      "editor.lineHighlightBackground": "transparent",
 
-      "editor.selectionBackground": "#0d7ff230",
-      "editor.inactiveSelectionBackground": "#0d7ff220",
-      "editor.selectionHighlightBackground": "#0d7ff215",
+      "editor.selectionBackground": accent.selection,
+      "editor.inactiveSelectionBackground": accent.selectionInactive,
+      "editor.selectionHighlightBackground": accent.selectionHighlight,
 
-      "editorLineNumber.foreground": "#475569",
-      "editorLineNumber.activeForeground": "#0d7ff2", // primary
+      "editorLineNumber.foreground": accent.lineNumber,
+      "editorLineNumber.activeForeground": `#${accent.token}`,
+      "editorCursor.foreground": `#${accent.token}`,
+      "editorGhostText.foreground": `#${accent.token}b3`,
+      "editorGhostText.background": `#${accent.token}14`,
 
-      "editorCursor.foreground": "#0d7ff2",
+      "editorBracketMatch.background": accent.bracketBackground,
+      "editorBracketMatch.border": accent.bracketBorder,
 
-      "editorBracketMatch.background": "#0d7ff220",
-      "editorBracketMatch.border": "#0d7ff260",
-
-      "scrollbarSlider.background": "#ffffff15",
-      "scrollbarSlider.hoverBackground": "#ffffff20",
-      "scrollbarSlider.activeBackground": "#ffffff25",
+      "scrollbarSlider.background": accent.scrollbar,
+      "scrollbarSlider.hoverBackground": accent.scrollbarHover,
+      "scrollbarSlider.activeBackground": accent.scrollbarActive,
+      "editorOverviewRuler.border": accent.widgetBorder,
+      "editorOverviewRuler.errorForeground": accent.scrollbar,
+      "editorOverviewRuler.warningForeground": accent.scrollbarHover,
+      "editorOverviewRuler.infoForeground": accent.scrollbarActive,
 
       "editorIndentGuide.background": "#ffffff08",
-      "editorIndentGuide.activeBackground": "#0d7ff230",
+      "editorIndentGuide.activeBackground": accent.indentGuide,
 
       "editorWidget.background": "#182431",
-      "editorWidget.border": "#ffffff10",
+      "editorWidget.border": accent.widgetBorder,
       "editorSuggestWidget.background": "#182431",
-      "editorSuggestWidget.border": "#ffffff10",
+      "editorSuggestWidget.border": accent.widgetBorder,
       "editorHoverWidget.background": "#182431",
-      "editorHoverWidget.border": "#0d7ff240",
+      "editorHoverWidget.border": accent.widgetBorder,
     },
-  };
-  monaco.editor.defineTheme("pseudocode-theme", pseudocodeTheme);
-  monaco.editor.defineTheme("pseudocode-example-theme", pseudocodeTheme);
+  });
+
+  const blueTheme = createPseudocodeTheme({
+    token: "60a5fa",
+    selection: "#0d7ff250",
+    selectionInactive: "#0d7ff235",
+    selectionHighlight: "#0d7ff225",
+    lineNumber: "#0d7ff2",
+    bracketBackground: "#0d7ff225",
+    bracketBorder: "#0d7ff280",
+    scrollbar: "#0d7ff240",
+    scrollbarHover: "#0d7ff270",
+    scrollbarActive: "#0d7ff2a0",
+    indentGuide: "#0d7ff250",
+    widgetBorder: "#0d7ff250",
+  });
+  const cyanTheme = createPseudocodeTheme({
+    token: "67e8f9",
+    selection: "#06b6d450",
+    selectionInactive: "#06b6d435",
+    selectionHighlight: "#06b6d425",
+    lineNumber: "#67e8f9",
+    bracketBackground: "#06b6d425",
+    bracketBorder: "#06b6d480",
+    scrollbar: "#06b6d440",
+    scrollbarHover: "#06b6d470",
+    scrollbarActive: "#06b6d4a0",
+    indentGuide: "#06b6d450",
+    widgetBorder: "#06b6d450",
+  });
+
+  monaco.editor.defineTheme("pseudocode-theme", blueTheme);
+  monaco.editor.defineTheme("pseudocode-example-theme", cyanTheme);
 }

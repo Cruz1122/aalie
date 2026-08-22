@@ -742,10 +742,15 @@
         "title": "Let's build an algorithm together!",
         "description": "We will guide you step by step from the function to the analysis.",
         "next": "Next",
+        "knowHow": "I know how to do this",
         "skip": "Skip"
       },
-      "context": {
+        "context": {
         "eyebrow": "Contextual guidance",
+        "intro": {
+          "title": "Your next step starts here",
+          "description": "As you write, learning-focused recommendations will appear here based on what you are trying to do."
+        },
         "empty": { "title": "Start your algorithm" },
         "topLevel": { "title": "Structure the algorithm" },
         "signature": { "title": "Complete the signature" },
@@ -784,15 +789,15 @@
           },
           "firstAction": {
             "title": "Bring the algorithm to life",
-            "description": "This is where the algorithm starts doing something: add a first operation inside BEGIN. It can transform data, store a result, or prepare the next step; later you can combine it with decisions, loops, and returns."
+            "description": "Give the algorithm a first action to transform data or prepare a result."
           },
           "controlFlow": {
             "title": "Control the path",
-            "description": "Use a condition to decide or a loop to repeat."
+            "description": "Choose a condition or a loop to decide how the algorithm moves forward."
           },
           "output": {
             "title": "Produce a result",
-            "description": "RETURN expresses the result produced by the procedure."
+            "description": "Use RETURN to deliver the result of a path."
           },
           "review": {
             "title": "Review and analyze",
@@ -804,16 +809,29 @@
           "parameters": "search(n) BEGIN\n  ...\nEND",
           "firstAction": "result <- 0;",
           "controlFlow": "IF (n > 0) THEN BEGIN\n  ...\nEND",
+          "controlFlowOptions": {
+            "if": "IF (condition) THEN BEGIN\n  ...\nEND",
+            "ifElse": "IF (condition) THEN BEGIN\n  ...\nEND ELSE BEGIN\n  ...\nEND",
+            "for": "FOR i <- 1 TO n DO BEGIN\n  ...\nEND",
+            "while": "WHILE (condition) DO BEGIN\n  ...\nEND",
+            "repeatUntil": "REPEAT\n  ...\nUNTIL (condition);"
+          },
           "output": "RETURN result;",
           "review": "Analyze → O(n)"
         }
       },
       "actions": {
         "insert": "Insert example",
+        "applyWithTab": "Press Tab to apply",
         "scalarParameter": "Scalar",
         "arrayParameter": "Array",
         "rangeParameter": "Range",
         "objectParameter": "Object",
+        "if": "IF condition",
+        "ifElse": "IF / ELSE condition",
+        "for": "FOR loop",
+        "while": "WHILE loop",
+        "repeatUntil": "REPEAT / UNTIL loop",
         "focus": "Focus editor",
         "analyze": "Analyze"
       },
@@ -833,6 +851,38 @@
         "object": {
           "label": "Object parameter",
           "definition": "Represents a compound value created from a class, including its properties and methods. In Clase objeto, Clase is the type and objeto is the instance name received by the procedure."
+        }
+      },
+      "tutorialTerms": {
+        "action": {
+          "term": "action",
+          "label": "Action",
+          "definition": "An instruction that transforms data, stores a value, or prepares the algorithm's next step."
+        },
+        "condition": {
+          "term": "condition",
+          "label": "Condition",
+          "definition": "An expression evaluated as true or false to choose which path to follow."
+        },
+        "loop": {
+          "term": "loop",
+          "label": "Loop",
+          "definition": "A structure that repeats a block of instructions while a rule holds or across a range."
+        },
+        "return": {
+          "term": "RETURN",
+          "label": "Return",
+          "definition": "The instruction that ends one procedure path and sends a value back to its caller."
+        },
+        "result": {
+          "term": "result",
+          "label": "Result",
+          "definition": "The data that the procedure produces and communicates when its work is complete."
+        },
+        "path": {
+          "term": "path",
+          "label": "Execution path",
+          "definition": "The sequence of instructions that runs according to the algorithm's conditions and loops."
         }
       },
       "cards": {
@@ -875,76 +925,76 @@
       },
       "recommendations": {
         "algorithm-header": {
-          "title": "Create header",
-          "description": "Insert the minimum procedure structure."
+          "title": "Give your algorithm a structure",
+          "description": "Start with the header every procedure needs."
         },
         "comment": {
-          "title": "Add comment",
-          "description": "Document the intention before continuing."
+          "title": "Clarify the intention",
+          "description": "Leave a clue about what your algorithm should solve."
         },
         "assign": {
-          "title": "Add assignment",
-          "description": "Store a value in a variable."
+          "title": "Give it a first action",
+          "description": "Store a value so the algorithm can start working."
         },
         "if": {
-          "title": "Add IF",
-          "description": "Create a decision with a ready-to-complete block."
+          "title": "Make the algorithm choose",
+          "description": "Add a condition to choose between different paths."
         },
         "for": {
-          "title": "Add FOR",
-          "description": "Repeat a block with a counter."
+          "title": "Make the algorithm repeat a step",
+          "description": "Traverse a range with a counter."
         },
         "while": {
-          "title": "Add WHILE",
-          "description": "Repeat while a condition is true."
+          "title": "Repeat while it is needed",
+          "description": "Keep the block active while a condition holds."
         },
         "repeat-until": {
-          "title": "Add REPEAT",
-          "description": "Repeat until a condition is met."
+          "title": "Define when it should stop",
+          "description": "Repeat the block until an exit condition is reached."
         },
         "begin-end": {
-          "title": "Wrap in block",
-          "description": "Group the selection inside BEGIN/END."
+          "title": "Organize this block",
+          "description": "Group the selection inside BEGIN/END to give it structure."
         },
         "call": {
-          "title": "Add call",
-          "description": "Call another procedure."
+          "title": "Connect another procedure",
+          "description": "Reuse part of the algorithm by calling another function."
         },
         "return-value": {
-          "title": "Add RETURN",
-          "description": "Return an expression as the result."
+          "title": "Deliver the result",
+          "description": "Return the value that represents the procedure's solution."
         },
         "comparison": {
-          "title": "Compare values",
-          "description": "Complete a condition with a comparison operator."
+          "title": "Clarify the condition",
+          "description": "Compare values so the algorithm knows which path to take."
         },
         "and": {
-          "title": "Combine with AND",
-          "description": "Join two conditions."
+          "title": "Combine two conditions",
+          "description": "Make both rules hold at the same time."
         },
         "or": {
-          "title": "Combine with OR",
-          "description": "Accept either of two conditions."
+          "title": "Choose between two conditions",
+          "description": "Continue when either rule is satisfied."
         },
         "not": {
-          "title": "Negate condition",
-          "description": "Invert the logical result."
+          "title": "Invert the condition",
+          "description": "Change the logical result from true to false or the other way around."
         },
         "symbols": {
-          "title": "Use a symbol",
-          "description": "Continue with an available parameter or variable."
+          "title": "Continue with available data",
+          "description": "Use a parameter or variable that already exists in your algorithm."
         },
         "array-index": {
-          "title": "Index array",
-          "description": "Access an array element."
+          "title": "Look inside the array",
+          "description": "Access the position you need to continue."
         },
         "parameter-symbols": {
-          "title": "Choose parameter",
-          "description": "Use a clear, consistent parameter name."
+          "title": "Choose the right parameter",
+          "description": "Use a clear, consistent name to explain the input."
         },
         "analyze": {
-          "title": "Analyze complexity",
-          "description": "Run formal analysis on the valid program."
+          "title": "Your algorithm looks ready",
+          "description": "Run formal analysis to understand its complexity."
         }
       }
     },

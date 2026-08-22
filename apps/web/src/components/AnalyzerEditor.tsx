@@ -16,15 +16,16 @@ import {
 
 import {
   getSnippetById,
-  localizeSnippet,
   type SnippetDefinition,
 } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
 import {
-  buildSnippetInsertionText,
   insertSnippetIntoEditor,
 } from "@/features/analyzer/editor-support/monaco/contextInsertionRules";
 import { registerPseudocodeCommands } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCommands";
 import { registerPseudocodeCompletionProvider } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCompletionProvider";
+import {
+  registerPseudocodeInlineCompletionProvider,
+} from "@/features/analyzer/editor-support/monaco/registerPseudocodeInlineCompletionProvider";
 import { useDebouncedSyntaxHints } from "@/features/analyzer/editor-support/parser/validateSourceDebounced";
 import {
   resolveEditorContext,
@@ -32,6 +33,9 @@ import {
   type EditorCursor,
   type EditorSelection,
 } from "@/features/analyzer/manual-guidance";
+import type {
+  GuidanceRecommendation,
+} from "@/features/analyzer/manual-guidance/recommendations";
 import { AlgorithmTechniqueCard } from "@/features/analyzer/technique-detection/AlgorithmTechniqueCard";
 import { AlgorithmTechniqueModal } from "@/features/analyzer/technique-detection/AlgorithmTechniqueModal";
 import { detectTechniqueFromAst } from "@/features/analyzer/technique-detection/detectTechniqueFromAst";
@@ -68,6 +72,7 @@ interface AnalyzerEditorProps {
   readonly showAIHelpButton?: boolean;
   readonly onAIHelpClick?: () => void;
   readonly onAnalyze?: () => void;
+  readonly activeRecommendation?: GuidanceRecommendation | null;
   readonly topRightActions?: ReactNode;
 }
 
@@ -78,7 +83,107 @@ export interface AnalyzerEditorHandle {
   insertTextAtCursor: (text: string) => void;
   insertParameterAtProcedure: (parameter: string) => void;
   focusAlgorithmBody: () => void;
+  prepareAlgorithmBlockInsertion: () => void;
+  prepareReturnInsertion: () => void;
   focus: () => void;
+}
+
+function findMatchingEndOffset(source: string, beginOffset: number) {
+  const blockTokenPattern = /\bBEGIN\b|\bEND\b/gi;
+  blockTokenPattern.lastIndex = beginOffset;
+  let depth = 0;
+  let match = blockTokenPattern.exec(source);
+
+  while (match) {
+    if (match[0].toUpperCase() === "BEGIN") {
+      depth += 1;
+    } else {
+      depth -= 1;
+      if (depth === 0) return match.index;
+    }
+    match = blockTokenPattern.exec(source);
+  }
+
+  return null;
+}
+
+interface BlockRange {
+  readonly beginOffset: number;
+  readonly endOffset: number;
+  readonly endEndOffset: number;
+}
+
+function findBlockRanges(source: string): BlockRange[] {
+  const tokenPattern = /\bBEGIN\b|\bEND\b/gi;
+  const openBlocks: number[] = [];
+  const ranges: BlockRange[] = [];
+  let match = tokenPattern.exec(source);
+
+  while (match) {
+    if (match[0].toUpperCase() === "BEGIN") {
+      openBlocks.push(match.index);
+    } else {
+      const beginOffset = openBlocks.pop();
+      if (beginOffset !== undefined) {
+        ranges.push({
+          beginOffset,
+          endOffset: match.index,
+          endEndOffset: match.index + match[0].length,
+        });
+      }
+    }
+    match = tokenPattern.exec(source);
+  }
+
+  return ranges;
+}
+
+function findSelectedBlock(
+  source: string,
+  selectionStart: number,
+  selectionEnd: number,
+): BlockRange | null {
+  const ranges = findBlockRanges(source);
+  const selectionLineStart = source.lastIndexOf("\n", selectionStart - 1) + 1;
+  const headerBlock = ranges
+    .filter((block) => {
+      const blockLineStart = source.lastIndexOf("\n", block.beginOffset - 1) + 1;
+      return (
+        blockLineStart === selectionLineStart &&
+        block.beginOffset >= selectionEnd
+      );
+    })
+    .sort((left, right) => left.beginOffset - right.beginOffset)[0];
+  if (headerBlock) return headerBlock;
+
+  const containingSelection = ranges
+    .filter(
+      (block) =>
+        block.beginOffset <= selectionStart &&
+        block.endEndOffset >= selectionEnd,
+    )
+    .sort(
+      (left, right) =>
+        left.endEndOffset - left.beginOffset -
+        (right.endEndOffset - right.beginOffset),
+    );
+  if (containingSelection[0]) return containingSelection[0];
+
+  return (
+    ranges
+      .filter(
+        (block) =>
+          block.beginOffset >= selectionStart &&
+          block.endEndOffset <= selectionEnd,
+      )
+      .sort(
+        (left, right) =>
+          Math.abs(left.beginOffset - selectionStart) +
+          Math.abs(left.endEndOffset - selectionEnd) -
+          (Math.abs(right.beginOffset - selectionStart) +
+            Math.abs(right.endEndOffset - selectionEnd)),
+      )[0] ?? null
+  );
 }
 
 function getAlgorithmBodyPosition(
@@ -103,6 +208,100 @@ function getAlgorithmBodyPosition(
   const leadingWhitespace = firstBodyLine.match(/^[ \t]*/)?.[0] ?? "";
 
   return model.getPositionAt(firstBodyLineStart + leadingWhitespace.length);
+}
+
+function getAlgorithmBodyEndPosition(
+  model: Monaco.editor.ITextModel,
+): { lineNumber: number; column: number } | null {
+  const source = model.getValue();
+  const beginMatch = /\bBEGIN\b/i.exec(source);
+  if (!beginMatch || beginMatch.index === undefined) return null;
+
+  const closingOffset = findMatchingEndOffset(source, beginMatch.index);
+  if (closingOffset === null) return null;
+
+  const closingPosition = model.getPositionAt(closingOffset);
+  const beginPosition = model.getPositionAt(beginMatch.index);
+  for (
+    let lineNumber = closingPosition.lineNumber - 1;
+    lineNumber >= beginPosition.lineNumber;
+    lineNumber -= 1
+  ) {
+    const lineContent = model.getLineContent(lineNumber);
+    if (lineContent.trim()) {
+      return {
+        lineNumber,
+        column: lineContent.length + 1,
+      };
+    }
+  }
+
+  return closingPosition;
+}
+
+function getElseBranchBlocks(
+  source: string,
+  selectedBlock: BlockRange,
+): BlockRange[] {
+  const ranges = findBlockRanges(source).sort(
+    (left, right) => left.beginOffset - right.beginOffset,
+  );
+  const selectedIndex = ranges.findIndex(
+    (range) =>
+      range.beginOffset === selectedBlock.beginOffset &&
+      range.endOffset === selectedBlock.endOffset,
+  );
+  if (selectedIndex < 0) return [selectedBlock];
+
+  const isElsePair = (left: BlockRange, right: BlockRange) =>
+    /^\s*ELSE\s*$/i.test(
+      source.slice(left.endEndOffset, right.beginOffset),
+    );
+
+  const nextRange = ranges
+    .slice(selectedIndex + 1)
+    .find((range) => isElsePair(selectedBlock, range));
+  if (nextRange) return [selectedBlock, nextRange];
+
+  const previousRange = [...ranges.slice(0, selectedIndex)]
+    .reverse()
+    .find((range) => isElsePair(range, selectedBlock));
+  if (previousRange) return [previousRange, selectedBlock];
+
+  return [selectedBlock];
+}
+
+function getBlockBodyEndPosition(
+  model: Monaco.editor.ITextModel,
+  block: BlockRange,
+): { lineNumber: number; column: number } {
+  const closingPosition = model.getPositionAt(block.endOffset);
+  const beginPosition = model.getPositionAt(block.beginOffset);
+
+  for (
+    let lineNumber = closingPosition.lineNumber - 1;
+    lineNumber > beginPosition.lineNumber;
+    lineNumber -= 1
+  ) {
+    const lineContent = model.getLineContent(lineNumber);
+    if (lineContent.trim()) {
+      return {
+        lineNumber,
+        column: lineContent.length + 1,
+      };
+    }
+  }
+
+  if (closingPosition.lineNumber > beginPosition.lineNumber) {
+    const firstBodyLine = beginPosition.lineNumber + 1;
+    const firstBodyContent = model.getLineContent(firstBodyLine);
+    return {
+      lineNumber: firstBodyLine,
+      column: (firstBodyContent.match(/^[ \t]*/)?.[0].length ?? 0) + 1,
+    };
+  }
+
+  return closingPosition;
 }
 
 /**
@@ -147,6 +346,7 @@ export const AnalyzerEditor = forwardRef<
     showAIHelpButton = false,
     onAIHelpClick,
     topRightActions,
+    activeRecommendation = null,
   } = props;
   const fillHeight = height === undefined || height === "100%";
   const [code, setCode] = useState(initialValue);
@@ -171,6 +371,9 @@ export const AnalyzerEditor = forwardRef<
   const [editorSelection, setEditorSelection] = useState<EditorSelection>();
   const onAnalyzeRef = useRef(props.onAnalyze);
   onAnalyzeRef.current = props.onAnalyze;
+  const editorContextRef = useRef<EditorContext | null>(null);
+  const activeRecommendationRef =
+    useRef<GuidanceRecommendation | null>(null);
 
   useEffect(() => {
     const syncViewport = () => {
@@ -249,6 +452,11 @@ export const AnalyzerEditor = forwardRef<
   }, [editorContext, onEditorContextChange]);
 
   useEffect(() => {
+    editorContextRef.current = editorContext;
+    activeRecommendationRef.current = activeRecommendation;
+  }, [activeRecommendation, editorContext]);
+
+  useEffect(() => {
     return () => {
       for (const listener of editorListenersRef.current) listener.dispose();
       editorListenersRef.current = [];
@@ -308,6 +516,45 @@ export const AnalyzerEditor = forwardRef<
     registerPseudocodeCompletionProvider(monacoRef.current, locale);
   }, [isEditorReady, locale]);
 
+  useEffect(() => {
+    if (!isEditorReady || !monacoRef.current) return;
+
+    const disposable = registerPseudocodeInlineCompletionProvider(
+      monacoRef.current,
+      () => ({
+        context: editorContextRef.current,
+        recommendation: activeRecommendationRef.current,
+        locale,
+      }),
+    );
+    return () => disposable.dispose();
+  }, [isEditorReady, locale]);
+
+  useEffect(() => {
+    if (!isEditorReady || !editorRef.current) return;
+
+    const editor = editorRef.current;
+    editor.trigger("editor-support", "editor.action.inlineSuggest.hide", {});
+    if (!activeRecommendation) return;
+
+    const frame = globalThis.window.requestAnimationFrame(() => {
+      editor.trigger("editor-support", "editor.action.inlineSuggest.trigger", {});
+    });
+    return () => globalThis.window.cancelAnimationFrame(frame);
+  }, [
+    activeRecommendation?.action,
+    activeRecommendation?.id,
+    activeRecommendation?.intent,
+    activeRecommendation?.priority,
+    activeRecommendation?.reason,
+    activeRecommendation?.snippetId,
+    code,
+    editorContext.cursor.offset,
+    editorContext.location.primary,
+    isEditorReady,
+    locale,
+  ]);
+
   /**
    * Maneja el montaje del editor y configura el lenguaje pseudocódigo.
    * @param editor - Instancia del editor de Monaco
@@ -365,7 +612,11 @@ export const AnalyzerEditor = forwardRef<
     // Mantener el proveedor actualizado también durante HMR/remontajes.
     registerPseudocodeLanguage(monaco);
     registerPseudocodeCompletionProvider(monaco, locale);
-    registerPseudocodeCommands(editor, monaco, onAnalyzeRef);
+    registerPseudocodeCommands(
+      editor,
+      monaco,
+      onAnalyzeRef,
+    );
 
     // Aplicar tema
     monaco.editor.setTheme("pseudocode-theme");
@@ -471,16 +722,9 @@ export const AnalyzerEditor = forwardRef<
     },
     wrapSelection(snippetId) {
       const editor = editorRef.current;
-      const model = editor?.getModel();
-      const selection = editor?.getSelection();
       const snippet = getSnippetById(snippetId);
-      if (!editor || !model || !selection || !snippet) return;
-      const localized = localizeSnippet(snippet, locale);
-      const selectedText = model.getValueInRange(selection);
-      editor.focus();
-      editor.trigger("manual-guidance", "editor.action.insertSnippet", {
-        snippet: buildSnippetInsertionText(localized, selectedText),
-      });
+      if (!editor || !snippet) return;
+      insertSnippetIntoEditor(editor, snippet, locale);
     },
     insertTextAtCursor(text) {
       const editor = editorRef.current;
@@ -593,6 +837,116 @@ export const AnalyzerEditor = forwardRef<
         endColumn: position.column,
       });
       editor.revealPositionInCenterIfOutsideViewport(position);
+    },
+    prepareAlgorithmBlockInsertion() {
+      const editor = editorRef.current;
+      const model = editor?.getModel();
+      if (!editor || !model || !model.getValue().trim()) return;
+
+      // El efecto del tutorial puede ejecutarse más de una vez en desarrollo.
+      // Si ya estamos en una línea vacía, no agregamos otra ni desplazamos el
+      // punto de inserción.
+      const currentPosition = editor.getPosition();
+      if (currentPosition) {
+        const currentLine = model.getLineContent(currentPosition.lineNumber);
+        const beforeCursor = currentLine.slice(0, currentPosition.column - 1);
+        const afterCursor = currentLine.slice(currentPosition.column - 1);
+        if (!beforeCursor.trim() && !afterCursor.trim()) {
+          editor.focus();
+          editor.setSelection({
+            startLineNumber: currentPosition.lineNumber,
+            startColumn: currentPosition.column,
+            endLineNumber: currentPosition.lineNumber,
+            endColumn: currentPosition.column,
+          });
+          return;
+        }
+      }
+
+      const position = getAlgorithmBodyEndPosition(model);
+      if (!position) return;
+
+      const lineContent = model.getLineContent(position.lineNumber);
+      const lineIndent = lineContent.match(/^[ \t]*/)?.[0] ?? "";
+      const positionOffset = model.getOffsetAt(position);
+      const isClosingLine = /^END\b/i.test(lineContent.trim());
+      const insertionText = isClosingLine
+        ? `\n${lineIndent}  `
+        : `\n${lineIndent}`;
+
+      editor.focus();
+      editor.executeEdits("manual-guidance", [
+        {
+          range: {
+            startLineNumber: position.lineNumber,
+            startColumn: position.column,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          },
+          text: insertionText,
+          forceMoveMarkers: true,
+        },
+      ]);
+
+      const nextPosition = model.getPositionAt(
+        positionOffset + insertionText.length,
+      );
+      editor.setPosition(nextPosition);
+      editor.setSelection({
+        startLineNumber: nextPosition.lineNumber,
+        startColumn: nextPosition.column,
+        endLineNumber: nextPosition.lineNumber,
+        endColumn: nextPosition.column,
+      });
+      editor.revealPositionInCenterIfOutsideViewport(nextPosition);
+    },
+    prepareReturnInsertion() {
+      const editor = editorRef.current;
+      const model = editor?.getModel();
+      if (!editor || !model || !model.getValue().trim()) return;
+
+      const source = model.getValue();
+      const selection = editor.getSelection();
+      const selectionStart = selection
+        ? model.getOffsetAt({
+            lineNumber: selection.startLineNumber,
+            column: selection.startColumn,
+          })
+        : source.length;
+      const selectionEnd = selection
+        ? model.getOffsetAt({
+            lineNumber: selection.endLineNumber,
+            column: selection.endColumn,
+          })
+        : selectionStart;
+      const selectedBlock = findSelectedBlock(
+        source,
+        selectionStart,
+        selectionEnd,
+      );
+      const positions = selectedBlock
+        ? getElseBranchBlocks(source, selectedBlock).map((block) =>
+            getBlockBodyEndPosition(model, block),
+          )
+        : [getAlgorithmBodyEndPosition(model)].filter(
+            (position): position is { lineNumber: number; column: number } =>
+              position !== null,
+          );
+      if (positions.length === 0) return;
+
+      // Preparar RETURN debe preservar el modelo: solo ubicamos los cursores.
+      // La inserción line-based de `return-value` creará una línea por rama
+      // al pulsar el botón, evitando reemplazar cualquier selección existente.
+      editor.focus();
+      editor.setSelections(
+        positions.map((position) => ({
+          selectionStartLineNumber: position.lineNumber,
+          selectionStartColumn: position.column,
+          positionLineNumber: position.lineNumber,
+          positionColumn: position.column,
+        })),
+      );
+      editor.revealPositionInCenterIfOutsideViewport(positions[0]!);
     },
     focus() {
       editorRef.current?.focus();
@@ -745,6 +1099,10 @@ export const AnalyzerEditor = forwardRef<
             },
             renderLineHighlight: "none",
             wordBasedSuggestions: "off",
+            inlineSuggest: {
+              enabled: true,
+              suppressSuggestions: false,
+            },
             suggestFontSize,
             suggestLineHeight,
             suggest: {

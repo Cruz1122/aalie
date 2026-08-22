@@ -61,8 +61,10 @@ function normalizeCompletionText(value: string): string {
 }
 
 function matchesPrefix(value: string, prefix: string): boolean {
+  const normalizedPrefix = normalizeCompletionText(prefix);
   return (
-    prefix.length === 0 || normalizeCompletionText(value).startsWith(prefix)
+    normalizedPrefix.length === 0 ||
+    normalizeCompletionText(value).startsWith(normalizedPrefix)
   );
 }
 

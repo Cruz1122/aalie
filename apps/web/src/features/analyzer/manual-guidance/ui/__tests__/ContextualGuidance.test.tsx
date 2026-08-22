@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 
 import { resolveEditorContext } from "../../context/resolveEditorContext";
@@ -14,6 +14,7 @@ const messages = {
         unknown: { title: "Unknown", description: "Unknown context" },
       },
       tutorial: { return: "Back to tutorial" },
+      actions: { analyze: "Analyze", applyWithTab: "Press Tab to apply" },
       recommendations: {
         assign: { title: "Add assignment", description: "Store a value" },
         if: { title: "Add IF", description: "Choose a path" },
@@ -34,26 +35,26 @@ describe("ContextualGuidance", () => {
       parseResult: { status: "invalid", errors: [] },
     });
     const recommendations = getContextualRecommendations(context, { limit: 4 });
-    const actions = {
-      insertSnippet: vi.fn(),
-      insertSnippetAtCursor: vi.fn(),
-      wrapSelection: vi.fn(),
-      focusEditor: vi.fn(),
-    };
+    const onActiveRecommendationChange = vi.fn();
 
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <ContextualGuidance
           context={context}
           recommendations={recommendations}
-          actions={actions}
           onAnalyze={vi.fn()}
           onTutorial={vi.fn()}
+          onActiveRecommendationChange={onActiveRecommendationChange}
         />
       </NextIntlClientProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Add assignment/i }));
-    expect(actions.insertSnippetAtCursor).toHaveBeenCalledWith("assign");
+    expect(screen.getByText("Press Tab to apply")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Add assignment/i }),
+    ).not.toBeInTheDocument();
+    expect(onActiveRecommendationChange).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "assign" }),
+    );
   });
 });

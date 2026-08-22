@@ -743,10 +743,15 @@
         "title": "¡Construyamos un algoritmo juntos!",
         "description": "Te guiaremos paso a paso desde la función hasta el análisis.",
         "next": "Siguiente",
+        "knowHow": "Ya sé cómo hacerlo",
         "skip": "Omitir"
       },
-      "context": {
+        "context": {
         "eyebrow": "Guía contextual",
+        "intro": {
+          "title": "Tu próximo paso está aquí",
+          "description": "Mientras escribes, aquí aparecerán recomendaciones pedagógicas según lo que estés intentando hacer."
+        },
         "empty": { "title": "Empieza tu algoritmo" },
         "topLevel": { "title": "Estructura el algoritmo" },
         "signature": { "title": "Completa la firma" },
@@ -785,15 +790,15 @@
           },
           "firstAction": {
             "title": "Dale vida al algoritmo",
-            "description": "Aquí el algoritmo empieza a hacer algo: añade una primera operación dentro de BEGIN. Esa acción puede transformar datos, guardar un resultado o preparar el siguiente paso; después podrás combinarla con decisiones, ciclos y retornos."
+            "description": "Dale una primera acción al algoritmo para transformar datos o preparar un resultado."
           },
           "controlFlow": {
             "title": "Controla el camino",
-            "description": "Usa una condición para decidir o un ciclo para repetir."
+            "description": "Elige una condición o un ciclo para decidir cómo avanza el algoritmo."
           },
           "output": {
             "title": "Entrega un resultado",
-            "description": "RETURN expresa qué resultado produce el procedimiento."
+            "description": "Usa RETURN para entregar el resultado de un camino."
           },
           "review": {
             "title": "Revisa y analiza",
@@ -805,16 +810,29 @@
           "parameters": "buscar(n) BEGIN\n  ...\nEND",
           "firstAction": "resultado <- 0;",
           "controlFlow": "IF (n > 0) THEN BEGIN\n  ...\nEND",
+          "controlFlowOptions": {
+            "if": "IF (condicion) THEN BEGIN\n  ...\nEND",
+            "ifElse": "IF (condicion) THEN BEGIN\n  ...\nEND ELSE BEGIN\n  ...\nEND",
+            "for": "FOR i <- 1 TO n DO BEGIN\n  ...\nEND",
+            "while": "WHILE (condicion) DO BEGIN\n  ...\nEND",
+            "repeatUntil": "REPEAT\n  ...\nUNTIL (condicion);"
+          },
           "output": "RETURN resultado;",
           "review": "Analizar → O(n)"
         }
       },
       "actions": {
         "insert": "Insertar ejemplo",
+        "applyWithTab": "Presiona Tab para aplicar",
         "scalarParameter": "Escalar",
         "arrayParameter": "Arreglo",
         "rangeParameter": "Rango",
         "objectParameter": "Objeto",
+        "if": "Condicional IF",
+        "ifElse": "Condicional IF / ELSE",
+        "for": "Bucle FOR",
+        "while": "Bucle WHILE",
+        "repeatUntil": "Bucle REPEAT / UNTIL",
         "focus": "Enfocar editor",
         "analyze": "Analizar"
       },
@@ -834,6 +852,38 @@
         "object": {
           "label": "Parámetro objeto",
           "definition": "Representa un dato compuesto creado a partir de una clase, con sus propiedades y métodos. En Clase objeto, Clase es el tipo y objeto es el nombre de la instancia que recibe el procedimiento."
+        }
+      },
+      "tutorialTerms": {
+        "action": {
+          "term": "acción",
+          "label": "Acción",
+          "definition": "Una instrucción que transforma datos, guarda un valor o prepara el siguiente paso del algoritmo."
+        },
+        "condition": {
+          "term": "condición",
+          "label": "Condición",
+          "definition": "Una expresión que se evalúa como verdadera o falsa para elegir qué camino seguir."
+        },
+        "loop": {
+          "term": "ciclo",
+          "label": "Ciclo",
+          "definition": "Una estructura que repite un bloque de instrucciones mientras se cumple una regla o durante un rango."
+        },
+        "return": {
+          "term": "RETURN",
+          "label": "Retorno",
+          "definition": "La instrucción que termina un camino del procedimiento y entrega un valor al lugar que lo llamó."
+        },
+        "result": {
+          "term": "resultado",
+          "label": "Resultado",
+          "definition": "El dato que el procedimiento produce y comunica al finalizar su trabajo."
+        },
+        "path": {
+          "term": "camino",
+          "label": "Camino de ejecución",
+          "definition": "La secuencia de instrucciones que se ejecuta según las condiciones y ciclos del algoritmo."
         }
       },
       "cards": {
@@ -876,76 +926,76 @@
       },
       "recommendations": {
         "algorithm-header": {
-          "title": "Crear cabecera",
-          "description": "Inserta la estructura mínima de un procedimiento."
+          "title": "Dale una estructura a tu algoritmo",
+          "description": "Empieza con la cabecera que necesita cualquier procedimiento."
         },
         "comment": {
-          "title": "Añadir comentario",
-          "description": "Documenta la intención antes de continuar."
+          "title": "Aclara la intención",
+          "description": "Deja una pista sobre lo que tu algoritmo debe resolver."
         },
         "assign": {
-          "title": "Añadir asignación",
-          "description": "Guarda un valor en una variable."
+          "title": "Dale una primera acción",
+          "description": "Guarda un valor para que el algoritmo empiece a trabajar."
         },
         "if": {
-          "title": "Añadir IF",
-          "description": "Crea una decisión con un bloque listo para completar."
+          "title": "Haz que el algoritmo tome decisiones",
+          "description": "Añade una condición para elegir entre distintos caminos."
         },
         "for": {
-          "title": "Añadir FOR",
-          "description": "Repite un bloque con un contador."
+          "title": "Haz que el algoritmo repita un paso",
+          "description": "Recorre un rango con un contador."
         },
         "while": {
-          "title": "Añadir WHILE",
-          "description": "Repite mientras la condición sea verdadera."
+          "title": "Repite mientras sea necesario",
+          "description": "Mantén el bloque activo mientras se cumpla una condición."
         },
         "repeat-until": {
-          "title": "Añadir REPEAT",
-          "description": "Repite hasta que se cumpla una condición."
+          "title": "Define cuándo debe detenerse",
+          "description": "Repite el bloque hasta alcanzar una condición de salida."
         },
         "begin-end": {
-          "title": "Envolver en bloque",
-          "description": "Agrupa la selección dentro de BEGIN/END."
+          "title": "Ordena este bloque",
+          "description": "Agrupa la selección dentro de BEGIN/END para darle estructura."
         },
         "call": {
-          "title": "Añadir llamada",
-          "description": "Llama a otro procedimiento."
+          "title": "Conecta otro procedimiento",
+          "description": "Reutiliza una parte del algoritmo llamando a otra función."
         },
         "return-value": {
-          "title": "Añadir RETURN",
-          "description": "Devuelve una expresión como resultado."
+          "title": "Entrega el resultado",
+          "description": "Devuelve el valor que representa la solución del procedimiento."
         },
         "comparison": {
-          "title": "Comparar valores",
-          "description": "Completa una condición con un operador de comparación."
+          "title": "Aclara la condición",
+          "description": "Compara valores para que el algoritmo sepa qué camino tomar."
         },
         "and": {
-          "title": "Combinar con AND",
-          "description": "Une dos condiciones."
+          "title": "Combina dos condiciones",
+          "description": "Haz que ambas reglas se cumplan al mismo tiempo."
         },
         "or": {
-          "title": "Combinar con OR",
-          "description": "Acepta cualquiera de dos condiciones."
+          "title": "Elige entre dos condiciones",
+          "description": "Permite avanzar cuando se cumpla cualquiera de las dos reglas."
         },
         "not": {
-          "title": "Negar condición",
-          "description": "Invierte el resultado lógico."
+          "title": "Invierte la condición",
+          "description": "Cambia el resultado lógico de verdadero a falso o al contrario."
         },
         "symbols": {
-          "title": "Usar un símbolo",
-          "description": "Continúa con un parámetro o variable disponible."
+          "title": "Continúa con un dato disponible",
+          "description": "Usa un parámetro o variable que ya existe en tu algoritmo."
         },
         "array-index": {
-          "title": "Indexar arreglo",
-          "description": "Accede a un elemento del arreglo."
+          "title": "Busca dentro del arreglo",
+          "description": "Accede a la posición que necesitas para continuar."
         },
         "parameter-symbols": {
-          "title": "Elegir parámetro",
-          "description": "Usa un nombre claro y consistente para el parámetro."
+          "title": "Elige el parámetro correcto",
+          "description": "Usa un nombre claro y consistente para explicar la entrada."
         },
         "analyze": {
-          "title": "Analizar complejidad",
-          "description": "Ejecuta el análisis formal del programa válido."
+          "title": "Tu algoritmo parece estar listo",
+          "description": "Ejecuta el análisis formal para conocer su complejidad."
         }
       }
     },

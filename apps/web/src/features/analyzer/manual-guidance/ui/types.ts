@@ -4,6 +4,8 @@ export interface ManualEditorActions {
   wrapSelection(snippetId: string): void;
   focusEditor(): void;
   focusAlgorithmBody?(): void;
+  prepareAlgorithmBlockInsertion?(): void;
+  prepareReturnInsertion?(): void;
   insertTextAtCursor?(text: string): void;
   insertParameterAtProcedure?(parameter: string): void;
 }

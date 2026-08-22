@@ -54,4 +54,10 @@ describe("completion candidates", () => {
       candidates.length,
     );
   });
+
+  it("matches identifier prefixes continuously without case sensitivity", () => {
+    expect(
+      extractIdentifierCandidates(source, "LEF").map((item) => item.label),
+    ).toEqual(["left"]);
+  });
 });

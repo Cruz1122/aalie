@@ -5,6 +5,11 @@ export {
   MAX_RECOMMENDATIONS,
 } from "./rankRecommendations";
 export { recommendationRules } from "./rules";
+export {
+  isRecommendationCurrent,
+  resolveRecommendationInsertion,
+  type RecommendationInsertion,
+} from "./resolveRecommendationInsertion";
 export type {
   GuidanceAction,
   GuidanceIntent,

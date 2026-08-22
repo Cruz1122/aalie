@@ -6,6 +6,7 @@ interface TutorialNavigationProps {
   readonly onBack: () => void;
   readonly onNext: () => void;
   readonly onSkip: () => void;
+  readonly skipLabel?: string;
 }
 
 export function TutorialNavigation({
@@ -14,6 +15,7 @@ export function TutorialNavigation({
   onBack,
   onNext,
   onSkip,
+  skipLabel,
 }: Readonly<TutorialNavigationProps>) {
   const t = useTranslations("analyzer.manualGuidance");
   return (
@@ -31,7 +33,7 @@ export function TutorialNavigation({
         onClick={onSkip}
         className="justify-self-center text-sm text-slate-400 hover:text-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-200"
       >
-        {t("tutorial.skipStep")}
+        {skipLabel ?? t("tutorial.skipStep")}
       </button>
       <button
         type="button"

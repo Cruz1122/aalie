@@ -56,6 +56,12 @@ export function registerPseudocodeCompletionProvider(
           endColumn: word.endColumn,
         };
         const prefix = word.word;
+        // Do not open a catalog on every first character (or with an empty
+        // prefix). Suggestions become useful only after a continuous token
+        // has started; matching itself remains case-insensitive.
+        if (prefix.trim().length < 2) {
+          return { suggestions: [] };
+        }
         const candidates = buildCompletionCandidates(
           model.getValue(),
           prefix,

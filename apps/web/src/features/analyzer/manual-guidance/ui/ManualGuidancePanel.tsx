@@ -5,12 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { EditorContext } from "../context/types";
 import { getContextualRecommendations } from "../recommendations";
+import type { GuidanceRecommendation } from "../recommendations";
 import {
   createInitialTutorialState,
   readTutorialState,
   nextTutorialStep,
   previousTutorialStep,
-  skipCurrentTutorialStep,
+  skipTutorial,
   startTutorial,
   TUTORIAL_STEP_IDS,
   writeTutorialState,
@@ -21,30 +22,67 @@ import { TutorialGuide } from "./TutorialGuide";
 import { TutorialWelcome } from "./TutorialWelcome";
 import type { ManualEditorActions } from "./types";
 
+const RECOMMENDATION_DEBOUNCE_MS = 220;
+
 interface ManualGuidancePanelProps {
   readonly context: EditorContext;
   readonly editorActions: ManualEditorActions;
   readonly onAnalyze: () => void;
+  readonly onActiveRecommendationChange?: (
+    recommendation: GuidanceRecommendation | null,
+  ) => void;
 }
 
 export function ManualGuidancePanel({
   context,
   editorActions,
   onAnalyze,
+  onActiveRecommendationChange,
 }: Readonly<ManualGuidancePanelProps>) {
   const t = useTranslations("analyzer.manualGuidance");
   const [tutorialState, setTutorialState] = useState<ManualTutorialState>(() =>
     createInitialTutorialState(),
   );
-  useEffect(() => setTutorialState(readTutorialState()), []);
-  useEffect(() => writeTutorialState(tutorialState), [tutorialState]);
+  const [isTutorialStateHydrated, setIsTutorialStateHydrated] = useState(false);
+  useEffect(() => {
+    setTutorialState(readTutorialState());
+    setIsTutorialStateHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!isTutorialStateHydrated) return;
+    writeTutorialState(tutorialState);
+  }, [isTutorialStateHydrated, tutorialState]);
+  const previousContextRef = useRef(context);
+  const [debouncedContext, setDebouncedContext] = useState(context);
+  const [isRecommendationDebouncing, setIsRecommendationDebouncing] =
+    useState(false);
+  useEffect(() => {
+    if (previousContextRef.current === context) return;
+
+    previousContextRef.current = context;
+    setIsRecommendationDebouncing(true);
+    onActiveRecommendationChange?.(null);
+
+    const timeout = globalThis.window.setTimeout(() => {
+      setDebouncedContext(context);
+      setIsRecommendationDebouncing(false);
+    }, RECOMMENDATION_DEBOUNCE_MS);
+
+    return () => globalThis.window.clearTimeout(timeout);
+  }, [context, onActiveRecommendationChange]);
   const recommendations = useMemo(
-    () => getContextualRecommendations(context, { limit: 4 }),
-    [context],
+    () =>
+      isRecommendationDebouncing
+        ? []
+        : getContextualRecommendations(debouncedContext, { limit: 4 }),
+    [debouncedContext, isRecommendationDebouncing],
   );
   const showTutorial =
     tutorialState.status === "not_started" ||
     tutorialState.status === "in_progress";
+  useEffect(() => {
+    if (showTutorial) onActiveRecommendationChange?.(null);
+  }, [onActiveRecommendationChange, showTutorial]);
   const openTutorial = useCallback(
     () =>
       setTutorialState((state) =>
@@ -66,9 +104,21 @@ export function ManualGuidancePanel({
     previousStepIndexRef.current = currentStepIndex;
   }, [currentStepIndex]);
 
+  if (!isTutorialStateHydrated) {
+    return (
+      <div
+        aria-busy="true"
+        className="h-full min-h-0 rounded-xl border border-white/10 bg-[#101a23]"
+      />
+    );
+  }
+
   if (showTutorial)
     return (
-      <div className="relative flex h-full min-h-0 flex-col items-center overflow-x-hidden overflow-y-auto rounded-xl border border-white/10 bg-[#101a23] text-white">
+      <div
+        key="manual-tutorial"
+        className="manual-guidance-panel-transition relative flex h-full min-h-0 flex-col items-center overflow-x-hidden overflow-y-auto rounded-xl border border-white/10 bg-[#101a23] text-white"
+      >
         <div
           className="sticky top-0 z-10 h-1.5 w-full shrink-0 bg-white/10"
           role="progressbar"
@@ -107,7 +157,7 @@ export function ManualGuidancePanel({
                   )
                 }
                 onSkip={() =>
-                  setTutorialState((state) => skipCurrentTutorialStep(state))
+                  setTutorialState((state) => skipTutorial(state))
                 }
               />
             ) : (
@@ -124,13 +174,16 @@ export function ManualGuidancePanel({
       </div>
     );
   return (
-    <div className="flex h-full min-h-0 items-center justify-center overflow-y-auto rounded-xl border border-white/10 bg-[#101a23] text-white">
+    <div
+      key="manual-contextual-guidance"
+      className="manual-guidance-panel-transition flex h-full min-h-0 items-center justify-center overflow-y-auto rounded-xl border border-white/10 bg-[#101a23] text-white"
+    >
       <ContextualGuidance
         context={context}
         recommendations={recommendations}
-        actions={editorActions}
         onAnalyze={onAnalyze}
         onTutorial={openTutorial}
+        onActiveRecommendationChange={onActiveRecommendationChange}
       />
     </div>
   );

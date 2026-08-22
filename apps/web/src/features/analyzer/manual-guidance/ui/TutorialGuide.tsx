@@ -36,6 +36,10 @@ export function TutorialGuide({
   useEffect(() => {
     if (step.id === "FIRST_ACTION") {
       actions.focusAlgorithmBody?.();
+    } else if (step.id === "CONTROL_FLOW") {
+      actions.prepareAlgorithmBlockInsertion?.();
+    } else if (step.id === "OUTPUT") {
+      actions.prepareReturnInsertion?.();
     }
   }, [actions, step.id]);
   const next = () => onStateChange(nextTutorialStep(state));
@@ -48,10 +52,7 @@ export function TutorialGuide({
   };
   const parameterPreview = (parameter: string) =>
     t(step.exampleKey).replace(/\([^)]*\)/, "(" + parameter + ")");
-  const parameterOption = (
-    parameter: string,
-    actionKey: string,
-  ) => ({
+  const parameterOption = (parameter: string, actionKey: string) => ({
     label: t(actionKey),
     onAction: () => insertParameter(parameter),
     preview: parameterPreview(parameter),
@@ -65,19 +66,123 @@ export function TutorialGuide({
           parameterOption("Clase objeto", "actions.objectParameter"),
         ]
       : undefined;
+  const snippetOption = (
+    snippetId: string,
+    actionKey: string,
+    previewPath: string,
+  ) => ({
+    label: t(actionKey),
+    onAction: () => actions.insertSnippetAtCursor(snippetId),
+    preview: t(previewPath),
+  });
+  const controlFlowOptions =
+    step.id === "CONTROL_FLOW"
+      ? [
+          snippetOption(
+            "if",
+            "actions.if",
+            "tutorial.examples.controlFlowOptions.if",
+          ),
+          snippetOption(
+            "if-else",
+            "actions.ifElse",
+            "tutorial.examples.controlFlowOptions.ifElse",
+          ),
+          snippetOption(
+            "for",
+            "actions.for",
+            "tutorial.examples.controlFlowOptions.for",
+          ),
+          snippetOption(
+            "while",
+            "actions.while",
+            "tutorial.examples.controlFlowOptions.while",
+          ),
+          snippetOption(
+            "repeat-until",
+            "actions.repeatUntil",
+            "tutorial.examples.controlFlowOptions.repeatUntil",
+          ),
+        ]
+      : undefined;
+  const actionOptions =
+    parameterOptions ?? controlFlowOptions;
   const renderDescription = (): ReactNode => {
     const description = t(step.descriptionKey);
-    if (step.id !== "PARAMETERS") return description;
+    const termEntries =
+      step.id === "PARAMETERS"
+        ? [
+            {
+              text: t("actions.scalarParameter"),
+              label: t("parameterTerms.scalar.label"),
+              definition: t("parameterTerms.scalar.definition"),
+            },
+            {
+              text: t("actions.arrayParameter"),
+              label: t("parameterTerms.array.label"),
+              definition: t("parameterTerms.array.definition"),
+            },
+            {
+              text: t("actions.rangeParameter"),
+              label: t("parameterTerms.range.label"),
+              definition: t("parameterTerms.range.definition"),
+            },
+            {
+              text: t("actions.objectParameter"),
+              label: t("parameterTerms.object.label"),
+              definition: t("parameterTerms.object.definition"),
+            },
+          ]
+        : step.id === "FIRST_ACTION"
+          ? [
+              {
+                text: t("tutorialTerms.action.term"),
+                label: t("tutorialTerms.action.label"),
+                definition: t("tutorialTerms.action.definition"),
+              },
+              {
+                text: t("tutorialTerms.result.term"),
+                label: t("tutorialTerms.result.label"),
+                definition: t("tutorialTerms.result.definition"),
+              },
+            ]
+          : step.id === "CONTROL_FLOW"
+            ? [
+                {
+                  text: t("tutorialTerms.condition.term"),
+                  label: t("tutorialTerms.condition.label"),
+                  definition: t("tutorialTerms.condition.definition"),
+                },
+                {
+                  text: t("tutorialTerms.loop.term"),
+                  label: t("tutorialTerms.loop.label"),
+                  definition: t("tutorialTerms.loop.definition"),
+                },
+              ]
+            : step.id === "OUTPUT"
+              ? [
+                  {
+                    text: t("tutorialTerms.return.term"),
+                    label: t("tutorialTerms.return.label"),
+                    definition: t("tutorialTerms.return.definition"),
+                  },
+                  {
+                    text: t("tutorialTerms.result.term"),
+                    label: t("tutorialTerms.result.label"),
+                    definition: t("tutorialTerms.result.definition"),
+                  },
+                  {
+                    text: t("tutorialTerms.path.term"),
+                    label: t("tutorialTerms.path.label"),
+                    definition: t("tutorialTerms.path.definition"),
+                  },
+                ]
+              : [];
+    if (termEntries.length === 0) return description;
 
-    const termEntries = [
-      { label: t("actions.scalarParameter"), termKey: "scalar" },
-      { label: t("actions.arrayParameter"), termKey: "array" },
-      { label: t("actions.rangeParameter"), termKey: "range" },
-      { label: t("actions.objectParameter"), termKey: "object" },
-    ];
     const termPattern = new RegExp(
       "(" +
-        termEntries.map((entry) => entry.label).join("|") +
+        termEntries.map((entry) => entry.text).join("|") +
         ")",
       "gi",
     );
@@ -85,17 +190,17 @@ export function TutorialGuide({
     return description.split(termPattern).map((part, index) => {
       const entry = termEntries.find(
         (candidate) =>
-          candidate.label.toLocaleLowerCase() === part.toLocaleLowerCase(),
+          candidate.text.toLocaleLowerCase() === part.toLocaleLowerCase(),
       );
       if (!entry) return part;
 
       return (
         <TermInline
-          key={"parameter-term-" + index}
+          key={"description-term-" + index}
           text={part}
           term={{
-            label: t("parameterTerms." + entry.termKey + ".label"),
-            definition: t("parameterTerms." + entry.termKey + ".definition"),
+            label: entry.label,
+            definition: entry.definition,
           }}
         />
       );
@@ -103,6 +208,10 @@ export function TutorialGuide({
   };
   const onAction = () => {
     if (step.id === "REVIEW") return onAnalyze();
+    if (step.id === "OUTPUT") {
+      actions.prepareReturnInsertion?.();
+      return actions.insertSnippetAtCursor("return-value");
+    }
     if (step.snippetId) return actions.insertSnippetAtCursor(step.snippetId);
     insertParameter("n");
   };
@@ -128,7 +237,7 @@ export function TutorialGuide({
             example={t(step.exampleKey)}
             actionLabel={t(step.actionKey)}
             onAction={onAction}
-            actionOptions={parameterOptions}
+            actionOptions={actionOptions}
           />
         </div>
       </div>
