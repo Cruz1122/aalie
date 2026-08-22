@@ -14,8 +14,15 @@ import {
   type ReactNode,
 } from "react";
 
-import type { SnippetDefinition } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
-import { insertSnippetIntoEditor } from "@/features/analyzer/editor-support/monaco/contextInsertionRules";
+import {
+  getSnippetById,
+  localizeSnippet,
+  type SnippetDefinition,
+} from "@/features/analyzer/editor-support/catalog/snippetCatalog";
+import {
+  buildSnippetInsertionText,
+  insertSnippetIntoEditor,
+} from "@/features/analyzer/editor-support/monaco/contextInsertionRules";
 import { registerPseudocodeCommands } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCommands";
 import { registerPseudocodeCompletionProvider } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCompletionProvider";
 import { useDebouncedSyntaxHints } from "@/features/analyzer/editor-support/parser/validateSourceDebounced";
@@ -66,7 +73,36 @@ interface AnalyzerEditorProps {
 
 export interface AnalyzerEditorHandle {
   insertSnippet: (snippet: SnippetDefinition) => void;
+  insertSnippetAtCursor: (snippetId: string) => void;
+  wrapSelection: (snippetId: string) => void;
+  insertTextAtCursor: (text: string) => void;
+  insertParameterAtProcedure: (parameter: string) => void;
+  focusAlgorithmBody: () => void;
   focus: () => void;
+}
+
+function getAlgorithmBodyPosition(
+  model: Monaco.editor.ITextModel,
+): { lineNumber: number; column: number } | null {
+  const source = model.getValue();
+  const beginMatch = /\bBEGIN\b/i.exec(source);
+  if (!beginMatch || beginMatch.index === undefined) return null;
+
+  const beginEndOffset = beginMatch.index + beginMatch[0].length;
+  const firstBodyLineBreak = source.indexOf("\n", beginEndOffset);
+  if (firstBodyLineBreak < 0) {
+    return model.getPositionAt(beginEndOffset);
+  }
+
+  const firstBodyLineStart = firstBodyLineBreak + 1;
+  const nextLineBreak = source.indexOf("\n", firstBodyLineStart);
+  const firstBodyLine = source.slice(
+    firstBodyLineStart,
+    nextLineBreak < 0 ? source.length : nextLineBreak,
+  );
+  const leadingWhitespace = firstBodyLine.match(/^[ \t]*/)?.[0] ?? "";
+
+  return model.getPositionAt(firstBodyLineStart + leadingWhitespace.length);
 }
 
 /**
@@ -326,7 +362,7 @@ export const AnalyzerEditor = forwardRef<
     ];
     syncEditorPosition();
 
-    // Registrar lenguaje pseudocódigo
+    // Mantener el proveedor actualizado también durante HMR/remontajes.
     registerPseudocodeLanguage(monaco);
     registerPseudocodeCompletionProvider(monaco, locale);
     registerPseudocodeCommands(editor, monaco, onAnalyzeRef);
@@ -345,6 +381,12 @@ export const AnalyzerEditor = forwardRef<
         }
       });
     });
+  }
+
+  function handleEditorWillMount(monaco: MonacoReact) {
+    // Registrar el lenguaje antes de crear el modelo para que Monaco
+    // tokenice correctamente desde el primer render.
+    registerPseudocodeLanguage(monaco);
   }
 
   // Recalcula el layout del editor cuando el tamaño del contenedor cambia.
@@ -420,6 +462,137 @@ export const AnalyzerEditor = forwardRef<
     insertSnippet(snippet) {
       if (!editorRef.current) return;
       insertSnippetIntoEditor(editorRef.current, snippet, locale);
+    },
+    insertSnippetAtCursor(snippetId) {
+      const editor = editorRef.current;
+      const snippet = getSnippetById(snippetId);
+      if (!editor || !snippet) return;
+      insertSnippetIntoEditor(editor, snippet, locale);
+    },
+    wrapSelection(snippetId) {
+      const editor = editorRef.current;
+      const model = editor?.getModel();
+      const selection = editor?.getSelection();
+      const snippet = getSnippetById(snippetId);
+      if (!editor || !model || !selection || !snippet) return;
+      const localized = localizeSnippet(snippet, locale);
+      const selectedText = model.getValueInRange(selection);
+      editor.focus();
+      editor.trigger("manual-guidance", "editor.action.insertSnippet", {
+        snippet: buildSnippetInsertionText(localized, selectedText),
+      });
+    },
+    insertTextAtCursor(text) {
+      const editor = editorRef.current;
+      const model = editor?.getModel();
+      const selection = editor?.getSelection();
+      if (!editor || !model || !selection) return;
+      editor.focus();
+      editor.executeEdits("manual-guidance", [
+        { range: selection, text, forceMoveMarkers: true },
+      ]);
+    },
+    insertParameterAtProcedure(parameter) {
+      const editor = editorRef.current;
+      const model = editor?.getModel();
+      if (!editor || !model || !parameter.trim()) return;
+
+      const source = model.getValue();
+      const procedureMatch = /^\s*[A-Za-z_][A-Za-z0-9_]*\s*\(/gm.exec(
+        source,
+      );
+      if (!procedureMatch || procedureMatch.index === undefined) {
+        return;
+      }
+
+      const openingOffset = source.indexOf("(", procedureMatch.index);
+      const closingOffset = source.indexOf(")", openingOffset + 1);
+      if (openingOffset < 0 || closingOffset < 0) return;
+
+      const parameterSection = source.slice(
+        openingOffset + 1,
+        closingOffset,
+      );
+      const trailingWhitespace =
+        parameterSection.match(/\s*$/)?.[0] ?? "";
+      const existingParameters = parameterSection.slice(
+        0,
+        parameterSection.length - trailingWhitespace.length,
+      );
+      const insertionOffset = closingOffset - trailingWhitespace.length;
+      const normalizedParameters = existingParameters
+        .trim()
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+      const replacesDefaultPlaceholder = [
+        "parametro",
+        "parametros",
+        "parameter",
+        "parameters",
+        "params",
+      ].includes(normalizedParameters);
+      const separator =
+        existingParameters.trim() && !replacesDefaultPlaceholder ? ", " : "";
+      const editStartOffset = replacesDefaultPlaceholder
+        ? openingOffset + 1
+        : insertionOffset;
+      const editEndOffset = replacesDefaultPlaceholder
+        ? closingOffset
+        : insertionOffset;
+      const insertionText = replacesDefaultPlaceholder
+        ? parameter
+        : separator + parameter + trailingWhitespace;
+      const insertionPosition = model.getPositionAt(editStartOffset);
+      const editEndPosition = model.getPositionAt(editEndOffset);
+
+      editor.focus();
+      editor.executeEdits("manual-guidance", [
+        {
+          range: {
+            startLineNumber: insertionPosition.lineNumber,
+            startColumn: insertionPosition.column,
+            endLineNumber: editEndPosition.lineNumber,
+            endColumn: editEndPosition.column,
+          },
+          text: insertionText,
+          forceMoveMarkers: true,
+        },
+      ]);
+
+      const parameterStart = model.getPositionAt(
+        editStartOffset + (replacesDefaultPlaceholder ? 0 : separator.length),
+      );
+      const parameterEnd = model.getPositionAt(
+        editStartOffset +
+          (replacesDefaultPlaceholder ? 0 : separator.length) +
+          parameter.length,
+      );
+      editor.setSelection({
+        startLineNumber: parameterStart.lineNumber,
+        startColumn: parameterStart.column,
+        endLineNumber: parameterEnd.lineNumber,
+        endColumn: parameterEnd.column,
+      });
+      editor.revealPositionInCenterIfOutsideViewport(parameterEnd);
+    },
+    focusAlgorithmBody() {
+      const editor = editorRef.current;
+      const model = editor?.getModel();
+      if (!editor || !model || !model.getValue().trim()) return;
+
+      const position = getAlgorithmBodyPosition(model);
+      if (!position) return;
+
+      editor.focus();
+      editor.setPosition(position);
+      editor.setSelection({
+        startLineNumber: position.lineNumber,
+        startColumn: position.column,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column,
+      });
+      editor.revealPositionInCenterIfOutsideViewport(position);
     },
     focus() {
       editorRef.current?.focus();
@@ -527,6 +700,7 @@ export const AnalyzerEditor = forwardRef<
           height={monacoHeightProp}
           defaultLanguage="pseudocode"
           defaultValue={initialValue}
+          beforeMount={handleEditorWillMount}
           onChange={handleEditorChange}
           onMount={handleEditorDidMount}
           loading={

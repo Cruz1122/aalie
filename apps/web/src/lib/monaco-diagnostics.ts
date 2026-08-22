@@ -30,13 +30,22 @@ export function errorsToMarkers(
  */
 export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
   // Registrar lenguaje
-  monaco.languages.register({ id: "pseudocode" });
+  if (
+    !monaco.languages
+      .getLanguages()
+      .some((language) => language.id === "pseudocode")
+  ) {
+    monaco.languages.register({ id: "pseudocode" });
+  }
 
   // Configurar tokens
   monaco.languages.setMonarchTokensProvider("pseudocode", {
+    // Hace que @keywords compare sin distinguir mayúsculas/minúsculas.
+    ignoreCase: true,
     keywords: [
       "BEGIN",
       "END",
+      "CLASS",
       "IF",
       "THEN",
       "ELSE",
@@ -57,7 +66,7 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
       "TRUE",
       "FALSE",
       "NULL",
-      "length",
+      "LENGTH",
     ],
 
     operators: [
@@ -88,12 +97,6 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
         // Strings - usar estado stringState para manejar correctamente
         [/"/, { token: "string.quote", next: "@stringState" }],
 
-        // Keywords
-        [
-          /\b(BEGIN|END|IF|THEN|ELSE|FOR|TO|DO|WHILE|REPEAT|UNTIL|RETURN|CALL|PRINT|AND|OR|NOT|DIV|MOD|TRUE|FALSE|NULL|length)\b/i,
-          "keyword",
-        ],
-
         // Numbers
         [/\d+/, "number"],
 
@@ -104,8 +107,11 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
         // Delimiters
         [/[(){}[\];,.]/, "delimiter"],
 
-        // Identifiers - debe ir después de keywords para que no capture las palabras clave
-        [/[a-zA-Z_]\w*/, "identifier"],
+        // Identifiers / keywords. @keywords respeta ignoreCase.
+        [
+          /[a-zA-Z_]\w*/,
+          { cases: { "@keywords": "keyword", "@default": "identifier" } },
+        ],
 
         // Whitespace
         [/\s+/, "white"],
@@ -119,23 +125,23 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
   });
 
   // Configurar tema oscuro consistente con la paleta del sitio (primary #0d7ff2, dark.bg #101a23)
-  monaco.editor.defineTheme("pseudocode-theme", {
-    base: "vs-dark",
+  const pseudocodeTheme = {
+    base: "vs-dark" as const,
     inherit: true,
     rules: [
-      { token: "keyword", foreground: "0d7ff2", fontStyle: "bold" }, // primary - palabras clave
-      { token: "identifier", foreground: "cbd5e1" }, // identificadores en gris claro
-      { token: "number", foreground: "34d399" }, // Emerald-400 - números en verde
-      { token: "string", foreground: "fbbf24" }, // Amber-400 - strings en amarillo
-      { token: "string.quote", foreground: "fbbf24" },
-      { token: "string.escape", foreground: "fbbf24" },
-      { token: "operator", foreground: "0d7ff2" }, // primary - operadores
-      { token: "delimiter", foreground: "94a3b8" }, // delimitadores en gris
+      { token: "keyword", foreground: "67e8f9", fontStyle: "bold" }, // cyan - palabras clave
+      { token: "identifier", foreground: "ffffff" }, // identificadores en blanco
+      { token: "number", foreground: "ffffff" }, // valores en blanco
+      { token: "string", foreground: "ffffff" }, // strings en blanco
+      { token: "string.quote", foreground: "ffffff" },
+      { token: "string.escape", foreground: "ffffff" },
+      { token: "operator", foreground: "67e8f9" }, // cyan - operadores
+      { token: "delimiter", foreground: "67e8f9" }, // cyan - delimitadores
       { token: "comment", foreground: "64748b", fontStyle: "italic" },
       { token: "white", foreground: "ffffff" },
     ],
     colors: {
-      "editor.foreground": "#cbd5e1",
+      "editor.foreground": "#ffffff",
       "editor.background": "#101a23", // dark.bg
       "editor.lineHighlightBackground": "transparent", // sin resaltado al hover/focus
 
@@ -165,5 +171,7 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
       "editorHoverWidget.background": "#182431",
       "editorHoverWidget.border": "#0d7ff240",
     },
-  });
+  };
+  monaco.editor.defineTheme("pseudocode-theme", pseudocodeTheme);
+  monaco.editor.defineTheme("pseudocode-example-theme", pseudocodeTheme);
 }

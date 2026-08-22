@@ -5,15 +5,21 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import ReactDOM from "react-dom";
 
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
-import type { SnippetDefinition } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
+import { getSnippetById } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
 import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-support/parser/normalizeImportSuggestions";
-import { EditorSupportPanel } from "@/features/analyzer/editor-support/ui/EditorSupportPanel";
+import {
+  resolveEditorContext,
+  type EditorContext,
+  type ManualEditorActions,
+} from "@/features/analyzer/manual-guidance";
+import { ManualGuidancePanel } from "@/features/analyzer/manual-guidance/ui";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import {
@@ -107,7 +113,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     const tCommon = useTranslations("common");
     const tLoader = useTranslations("analyzer.loader");
 
-    const defaultCode = tManual("defaultCode");
+    const defaultCode = "";
     const isControlled = initialCode !== undefined;
     const [internalCode, setInternalCode] = useState(defaultCode);
     const code = isControlled ? initialCode : internalCode;
@@ -164,6 +170,31 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     );
     const [hasValidApiKey, setHasValidApiKey] = useState<boolean>(false);
     const editorRef = useRef<AnalyzerEditorHandle | null>(null);
+    const [editorContext, setEditorContext] = useState<EditorContext>(() =>
+      resolveEditorContext({
+        source: code,
+        cursor: { line: 1, column: 0, offset: 0 },
+      }),
+    );
+    const editorActions = useMemo<ManualEditorActions>(
+      () => ({
+        insertSnippet: (snippetId) => {
+          const snippet = getSnippetById(snippetId);
+          if (snippet) editorRef.current?.insertSnippet(snippet);
+        },
+        insertSnippetAtCursor: (snippetId) =>
+          editorRef.current?.insertSnippetAtCursor(snippetId),
+        wrapSelection: (snippetId) =>
+          editorRef.current?.wrapSelection(snippetId),
+        focusEditor: () => editorRef.current?.focus(),
+        focusAlgorithmBody: () => editorRef.current?.focusAlgorithmBody(),
+        insertTextAtCursor: (text) =>
+          editorRef.current?.insertTextAtCursor(text),
+        insertParameterAtProcedure: (parameter) =>
+          editorRef.current?.insertParameterAtProcedure(parameter),
+      }),
+      [],
+    );
 
     const { state: analysisState } = useAnalysisProgressContext();
     const { runAnalysis } = useRunAnalysis({
@@ -522,6 +553,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                   onChange={setCode}
                   onAstChange={setAst}
                   onParseStatusChange={handleParseStatusChange}
+                  onEditorContextChange={setEditorContext}
                   onVerifyParse={handleAnalyzeCode}
                   onViewAst={() => setShowAstModal(true)}
                   isVerifyingParse={isVerifyingParse}
@@ -641,11 +673,11 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                   onChange={handleTxtImport}
                 />
               </div>
-              <div className="hidden min-h-0 shrink-0 overflow-hidden md:flex md:min-h-0 md:w-[360px] md:flex-col md:self-stretch lg:w-[500px] xl:w-[500px]">
-                <EditorSupportPanel
-                  onInsert={(snippet: SnippetDefinition) => {
-                    editorRef.current?.insertSnippet(snippet);
-                  }}
+              <div className="flex min-h-0 max-h-[52vh] shrink-0 overflow-hidden md:min-h-0 md:max-h-none md:w-[360px] md:flex-col md:self-stretch lg:w-[500px] xl:w-[500px]">
+                <ManualGuidancePanel
+                  context={editorContext}
+                  editorActions={editorActions}
+                  onAnalyze={handleAnalyzeComplexity}
                 />
               </div>
             </div>

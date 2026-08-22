@@ -80,7 +80,11 @@ export interface EditorContext {
     readonly hasProcedure: boolean;
     readonly procedureName?: string;
     readonly hasStatements: boolean;
+    readonly statementCount: number;
     readonly hasReturn: boolean;
+    readonly hasOutput: boolean;
+    readonly hasConditional: boolean;
+    readonly hasLoop: boolean;
   };
   readonly symbols: {
     readonly parameters: readonly EditorSymbol[];

@@ -411,7 +411,7 @@ const CustomPre = (props: any) => {
     if (!isPseudocode) return codeContent;
 
     const keywordRe =
-      /\b(BEGIN|END|IF|THEN|ELSE|WHILE|FOR|TO|DO|REPEAT|UNTIL|RETURN|CALL|MOD|DIV|AND|OR|print)\b/g;
+      /\b(CLASS|BEGIN|END|IF|THEN|ELSE|WHILE|FOR|TO|DO|REPEAT|UNTIL|RETURN|CALL|PRINT|MOD|DIV|AND|OR|NOT|TRUE|FALSE|NULL|LENGTH)\b/gi;
     const numberRe = /\b\d+(\.\d+)?\b/g;
     const stringRe = /"([^"\\]|\\.)*"/g;
 
@@ -467,19 +467,19 @@ const CustomPre = (props: any) => {
         switch (t.kind) {
           case "keyword":
             return (
-              <span key={key} className="text-fuchsia-300 font-semibold">
+              <span key={key} className="text-cyan-300 font-semibold">
                 {t.value}
               </span>
             );
           case "string":
             return (
-              <span key={key} className="text-emerald-300">
+              <span key={key} className="text-white">
                 {t.value}
               </span>
             );
           case "number":
             return (
-              <span key={key} className="text-amber-300">
+              <span key={key} className="text-white">
                 {t.value}
               </span>
             );
@@ -520,7 +520,7 @@ const CustomPre = (props: any) => {
         ref={scrollRef}
         className="bg-slate-900/80 border border-cyan-500/20 rounded-md p-3 max-h-[320px] overflow-y-auto overflow-x-auto mb-1.5 max-w-[min(100%,420px)] min-w-0"
       >
-        <pre className="text-slate-100 text-[11px] font-mono whitespace-pre leading-relaxed m-0 [tab-size:4]">
+        <pre className="text-white text-[11px] font-mono whitespace-pre leading-relaxed m-0 [tab-size:4]">
           {renderedCode}
         </pre>
       </div>

@@ -135,6 +135,158 @@
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Los ejemplos escalan la tipografía según el ancho real de su contenedor. */
+.manual-guidance-monaco {
+  container-type: inline-size;
+}
+
+.manual-guidance-monaco > pre {
+  font-size: clamp(14px, 4cqw, 22px);
+  line-height: 1.45;
+}
+
+/* Los ejemplos mantienen el tema global de Monaco y solo recolorean su propia superficie. */
+.manual-guidance-monaco .view-lines span[class*="mtk"] {
+  color: #67e8f9 !important;
+}
+
+.manual-guidance-monaco .line-numbers,
+.manual-guidance-monaco .active-line-number {
+  color: rgba(103, 232, 249, 0.7) !important;
+}
+
+.manual-guidance-monaco .scrollbar .slider {
+  background: rgba(103, 232, 249, 0.28) !important;
+}
+
+.manual-guidance-monaco .scrollbar .slider:hover {
+  background: rgba(103, 232, 249, 0.45) !important;
+}
+
+.manual-waving-hand {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  animation: manualWavingHand 2.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes manualWavingHand {
+  0%,
+  62%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  68% {
+    transform: rotate(-14deg);
+  }
+
+  74% {
+    transform: rotate(11deg);
+  }
+
+  80% {
+    transform: rotate(-13deg);
+  }
+
+  86% {
+    transform: rotate(8deg);
+  }
+
+  92% {
+    transform: rotate(-3deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manual-waving-hand {
+    animation: none;
+  }
+}
+
+.manual-tutorial-step {
+  overflow-x: hidden;
+}
+
+.manual-tutorial-step-forward .manual-tutorial-step-content,
+.manual-tutorial-step-backward .manual-tutorial-step-content {
+  animation: manualTutorialStepReveal 560ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.manual-tutorial-step-forward .manual-tutorial-step-illustration,
+.manual-tutorial-step-backward .manual-tutorial-step-illustration {
+  animation: manualTutorialIllustrationReveal 500ms
+    cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.manual-tutorial-step-card {
+  animation: manualTutorialStepCard 620ms
+    cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
+}
+
+.manual-tutorial-step-content {
+  transform-origin: center center;
+  will-change: opacity, transform, filter;
+}
+
+@keyframes manualTutorialStepReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  60% {
+    opacity: 0.92;
+    transform: translateY(1px) scale(0.998);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes manualTutorialIllustrationReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.88);
+  }
+
+  65% {
+    opacity: 1;
+    transform: translateY(0) scale(1.02);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes manualTutorialStepCard {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manual-tutorial-step,
+  .manual-tutorial-step-content,
+  .manual-tutorial-step-illustration,
+  .manual-tutorial-step-card {
+    animation: none;
+    filter: none;
+    transform: none;
+  }
+}
+
 @media (max-width: 767px) {
   .glass-card-editor .monaco-editor .suggest-widget {
     width: 50% !important;

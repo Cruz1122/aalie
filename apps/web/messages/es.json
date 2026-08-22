@@ -738,6 +738,217 @@
         "other": "Otros"
       }
     },
+    "manualGuidance": {
+      "welcome": {
+        "title": "¡Construyamos un algoritmo juntos!",
+        "description": "Te guiaremos paso a paso desde la función hasta el análisis.",
+        "next": "Siguiente",
+        "skip": "Omitir"
+      },
+      "context": {
+        "eyebrow": "Guía contextual",
+        "empty": { "title": "Empieza tu algoritmo" },
+        "topLevel": { "title": "Estructura el algoritmo" },
+        "signature": { "title": "Completa la firma" },
+        "parameters": { "title": "Define los parámetros" },
+        "body": { "title": "Construye el cuerpo" },
+        "condition": { "title": "Completa la condición" },
+        "expression": { "title": "Completa la expresión" },
+        "ifBody": { "title": "Escribe la rama" },
+        "loopBody": { "title": "Escribe el ciclo" },
+        "return": { "title": "Completa el resultado" },
+        "selection": { "title": "Transforma tu selección" },
+        "unknown": {
+          "title": "Sigue escribiendo",
+          "description": "Aún no hay evidencia suficiente para sugerir una estructura concreta."
+        }
+      },
+      "tutorial": {
+        "eyebrow": "Ruta guiada",
+        "return": "Volver al tutorial",
+        "close": "Salir de la guía",
+        "skipStep": "Omitir paso",
+        "previous": "Anterior",
+        "next": "Continuar",
+        "noParameters": "No necesita parámetros",
+        "progress": "Paso {current} de {total}",
+        "satisfied": "Paso detectado en tu código.",
+        "pending": "Completa este paso en el editor para continuar.",
+        "steps": {
+          "header": {
+            "title": "Define la función",
+            "description": "Empieza con un nombre y un bloque BEGIN/END."
+          },
+          "parameters": {
+            "title": "Decide qué recibe",
+            "description": "Un parámetro puede ser escalar, arreglo, rango u objeto. También puedes declarar que no necesitas parámetros."
+          },
+          "firstAction": {
+            "title": "Dale vida al algoritmo",
+            "description": "Aquí el algoritmo empieza a hacer algo: añade una primera operación dentro de BEGIN. Esa acción puede transformar datos, guardar un resultado o preparar el siguiente paso; después podrás combinarla con decisiones, ciclos y retornos."
+          },
+          "controlFlow": {
+            "title": "Controla el camino",
+            "description": "Usa una condición para decidir o un ciclo para repetir."
+          },
+          "output": {
+            "title": "Entrega un resultado",
+            "description": "RETURN expresa qué resultado produce el procedimiento."
+          },
+          "review": {
+            "title": "Revisa y analiza",
+            "description": "Cuando la gramática está completa puedes ejecutar el análisis formal."
+          }
+        },
+        "examples": {
+          "header": "buscar(n) BEGIN\n  ...\nEND",
+          "parameters": "buscar(n) BEGIN\n  ...\nEND",
+          "firstAction": "resultado <- 0;",
+          "controlFlow": "IF (n > 0) THEN BEGIN\n  ...\nEND",
+          "output": "RETURN resultado;",
+          "review": "Analizar → O(n)"
+        }
+      },
+      "actions": {
+        "insert": "Insertar ejemplo",
+        "scalarParameter": "Escalar",
+        "arrayParameter": "Arreglo",
+        "rangeParameter": "Rango",
+        "objectParameter": "Objeto",
+        "focus": "Enfocar editor",
+        "analyze": "Analizar"
+      },
+      "parameterTerms": {
+        "scalar": {
+          "label": "Parámetro escalar",
+          "definition": "Representa un solo valor, como n, inicio o límite. Se usa cuando el procedimiento necesita una entrada individual, no una colección. Por ejemplo, n puede indicar el tamaño del problema."
+        },
+        "array": {
+          "label": "Parámetro arreglo",
+          "definition": "Representa una colección de valores que se consulta mediante índices. En A[n], A es el arreglo y n indica la posición o dimensión que se quiere utilizar."
+        },
+        "range": {
+          "label": "Parámetro rango",
+          "definition": "Representa un tramo delimitado por un inicio y un final. La notación A[n]..[m] indica que se trabaja desde la posición n hasta la posición m, normalmente para recorrer o analizar una parte del arreglo."
+        },
+        "object": {
+          "label": "Parámetro objeto",
+          "definition": "Representa un dato compuesto creado a partir de una clase, con sus propiedades y métodos. En Clase objeto, Clase es el tipo y objeto es el nombre de la instancia que recibe el procedimiento."
+        }
+      },
+      "cards": {
+        "header": {
+          "title": "Cabecera",
+          "description": "Un procedimiento tiene nombre, parámetros opcionales y BEGIN/END."
+        },
+        "scalar": {
+          "title": "Parámetro escalar",
+          "description": "Un valor como n, inicio o límite."
+        },
+        "array": {
+          "title": "Arreglo o rango",
+          "description": "Un arreglo puede incluir una o varias dimensiones y un rango."
+        },
+        "assignment": {
+          "title": "Asignación",
+          "description": "Guarda un valor usando <- y termina la instrucción."
+        },
+        "if": {
+          "title": "Decisión IF",
+          "description": "Ejecuta un bloque cuando una condición es verdadera."
+        },
+        "loop": {
+          "title": "Ciclo",
+          "description": "Repite un bloque con FOR, WHILE o REPEAT."
+        },
+        "output": {
+          "title": "Salida",
+          "description": "Devuelve el valor que representa la solución."
+        },
+        "review": {
+          "title": "Análisis formal",
+          "description": "El analizador calcula costos y comportamiento del algoritmo."
+        }
+      },
+      "families": {
+        "loop": "Ver variantes de ciclo",
+        "decision": "Ver variantes de decisión"
+      },
+      "recommendations": {
+        "algorithm-header": {
+          "title": "Crear cabecera",
+          "description": "Inserta la estructura mínima de un procedimiento."
+        },
+        "comment": {
+          "title": "Añadir comentario",
+          "description": "Documenta la intención antes de continuar."
+        },
+        "assign": {
+          "title": "Añadir asignación",
+          "description": "Guarda un valor en una variable."
+        },
+        "if": {
+          "title": "Añadir IF",
+          "description": "Crea una decisión con un bloque listo para completar."
+        },
+        "for": {
+          "title": "Añadir FOR",
+          "description": "Repite un bloque con un contador."
+        },
+        "while": {
+          "title": "Añadir WHILE",
+          "description": "Repite mientras la condición sea verdadera."
+        },
+        "repeat-until": {
+          "title": "Añadir REPEAT",
+          "description": "Repite hasta que se cumpla una condición."
+        },
+        "begin-end": {
+          "title": "Envolver en bloque",
+          "description": "Agrupa la selección dentro de BEGIN/END."
+        },
+        "call": {
+          "title": "Añadir llamada",
+          "description": "Llama a otro procedimiento."
+        },
+        "return-value": {
+          "title": "Añadir RETURN",
+          "description": "Devuelve una expresión como resultado."
+        },
+        "comparison": {
+          "title": "Comparar valores",
+          "description": "Completa una condición con un operador de comparación."
+        },
+        "and": {
+          "title": "Combinar con AND",
+          "description": "Une dos condiciones."
+        },
+        "or": {
+          "title": "Combinar con OR",
+          "description": "Acepta cualquiera de dos condiciones."
+        },
+        "not": {
+          "title": "Negar condición",
+          "description": "Invierte el resultado lógico."
+        },
+        "symbols": {
+          "title": "Usar un símbolo",
+          "description": "Continúa con un parámetro o variable disponible."
+        },
+        "array-index": {
+          "title": "Indexar arreglo",
+          "description": "Accede a un elemento del arreglo."
+        },
+        "parameter-symbols": {
+          "title": "Elegir parámetro",
+          "description": "Usa un nombre claro y consistente para el parámetro."
+        },
+        "analyze": {
+          "title": "Analizar complejidad",
+          "description": "Ejecuta el análisis formal del programa válido."
+        }
+      }
+    },
     "loopInvariant": {
       "title": "Loop Invariant Determinista",
       "modal": {
@@ -1847,7 +2058,9 @@
         },
         {
           "title": "Información que puede tratarse",
-          "paragraphs": ["Dependiendo de las funciones que utilices, AALIE puede trabajar con:"],
+          "paragraphs": [
+            "Dependiendo de las funciones que utilices, AALIE puede trabajar con:"
+          ],
           "items": [
             "Pseudocódigo que escribas o cargues para analizar.",
             "Archivos .txt que decidas abrir mediante el editor.",
@@ -1859,7 +2072,9 @@
             "Resultados, costos, trazas, recurrencias, advertencias y reportes derivados del análisis.",
             "Cualquier otra información que voluntariamente introduzcas en una función que claramente la solicite."
           ],
-          "paragraphsAfter": ["No necesitas proporcionar información sensible para utilizar normalmente AALIE."]
+          "paragraphsAfter": [
+            "No necesitas proporcionar información sensible para utilizar normalmente AALIE."
+          ]
         },
         {
           "title": "Cuenta e inicio de sesión con Google",
@@ -1907,7 +2122,9 @@
         },
         {
           "title": "Actividad educativa y quizzes",
-          "paragraphs": ["AALIE puede registrar información relacionada con tu actividad educativa, como:"],
+          "paragraphs": [
+            "AALIE puede registrar información relacionada con tu actividad educativa, como:"
+          ],
           "items": [
             "Quizzes iniciados o completados.",
             "Preguntas presentadas.",
@@ -1982,7 +2199,9 @@
         },
         {
           "title": "Finalidades del tratamiento",
-          "paragraphs": ["La información tratada mediante AALIE puede utilizarse para:"],
+          "paragraphs": [
+            "La información tratada mediante AALIE puede utilizarse para:"
+          ],
           "items": [
             "Ofrecer las funciones educativas de la plataforma.",
             "Analizar algoritmos y generar sus resultados.",
@@ -1995,7 +2214,9 @@
             "Cumplir obligaciones legales.",
             "Desarrollar estudios académicos únicamente cuando exista una participación válida para ese propósito."
           ],
-          "paragraphsAfter": ["No utilizaremos la información para una finalidad sustancialmente diferente sin cumplir previamente las obligaciones de información y autorización que resulten aplicables."]
+          "paragraphsAfter": [
+            "No utilizaremos la información para una finalidad sustancialmente diferente sin cumplir previamente las obligaciones de información y autorización que resulten aplicables."
+          ]
         },
         {
           "title": "Investigación y uso ordinario",
@@ -2014,7 +2235,9 @@
         },
         {
           "title": "Datos que puede utilizar un estudio",
-          "paragraphs": ["Dependiendo del estudio, pueden utilizarse datos como:"],
+          "paragraphs": [
+            "Dependiendo del estudio, pueden utilizarse datos como:"
+          ],
           "items": [
             "Condición o grupo del estudio.",
             "Resultados de quizzes.",
@@ -2031,7 +2254,9 @@
         },
         {
           "title": "Datos excluidos del conjunto académico",
-          "paragraphs": ["Como regla general, los conjuntos de datos destinados al análisis académico no deben incluir directamente:"],
+          "paragraphs": [
+            "Como regla general, los conjuntos de datos destinados al análisis académico no deben incluir directamente:"
+          ],
           "items": [
             "Tu nombre.",
             "Tu correo electrónico.",
@@ -2043,7 +2268,9 @@
             "Preguntas completas enviadas a un asistente de IA.",
             "Respuestas completas generadas por ese asistente."
           ],
-          "paragraphsAfter": ["Si una investigación futura necesitara utilizar alguna información diferente, deberá informarlo específicamente y obtener las autorizaciones o aprobaciones que correspondan."]
+          "paragraphsAfter": [
+            "Si una investigación futura necesitara utilizar alguna información diferente, deberá informarlo específicamente y obtener las autorizaciones o aprobaciones que correspondan."
+          ]
         },
         {
           "title": "Seudonimización y protección de la identidad",
@@ -2096,7 +2323,9 @@
         },
         {
           "title": "Derechos del titular",
-          "paragraphs": ["Como titular de tus datos personales, tienes los derechos reconocidos por la legislación colombiana, entre ellos:"],
+          "paragraphs": [
+            "Como titular de tus datos personales, tienes los derechos reconocidos por la legislación colombiana, entre ellos:"
+          ],
           "items": [
             "Conocer los datos personales que se encuentren bajo tratamiento.",
             "Actualizar información que haya cambiado.",
@@ -2109,7 +2338,9 @@
             "Presentar consultas o reclamos.",
             "Acudir ante la Superintendencia de Industria y Comercio cuando se cumplan los requisitos legales."
           ],
-          "paragraphsAfter": ["Estos derechos se encuentran reconocidos en la Ley 1581 de 2012. La eliminación o revocación puede estar limitada cuando exista una obligación legal o una razón legítima que exija conservar determinada información."]
+          "paragraphsAfter": [
+            "Estos derechos se encuentran reconocidos en la Ley 1581 de 2012. La eliminación o revocación puede estar limitada cuando exista una obligación legal o una razón legítima que exija conservar determinada información."
+          ]
         },
         {
           "title": "Solicitudes y verificación de identidad",

@@ -15,6 +15,8 @@ export {
   rankRecommendations,
   recommendationRules,
 } from "./recommendations";
+export * from "./tutorial";
+export type { ManualEditorActions } from "./ui/types";
 export type {
   GuidanceAction,
   GuidanceIntent,

@@ -12,7 +12,7 @@ export class GrammarApiService {
    *
    * @param input - Código fuente a analizar
    * @returns Promesa que resuelve con la respuesta del parser incluyendo ok, ast, errors
-   * @throws Error si la petición HTTP falla
+   * Devuelve una respuesta con ok=false si la petición HTTP falla.
    * @author Juan Camilo Cruz Parra (@Cruz1122)
    *
    * @example
@@ -34,10 +34,22 @@ export class GrammarApiService {
       body: JSON.stringify(req),
     });
 
+    const payload = (await response.json().catch(() => null)) as
+      | Partial<GrammarParseResponse>
+      | null;
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const message =
+        payload?.error || `HTTP error! status: ${response.status}`;
+      return {
+        ok: false,
+        error: message,
+        errors: payload?.errors ?? [{ line: 0, column: 0, message }],
+        available: payload?.available,
+        runtime: payload?.runtime,
+      };
     }
 
-    return response.json();
+    return payload as GrammarParseResponse;
   }
 }

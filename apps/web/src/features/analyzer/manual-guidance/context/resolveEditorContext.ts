@@ -89,7 +89,11 @@ export function resolveEditorContext(
       structure: {
         hasProcedure: false,
         hasStatements: false,
+        statementCount: 0,
         hasReturn: false,
+        hasOutput: false,
+        hasConditional: false,
+        hasLoop: false,
       },
       symbols: { parameters: [], variables: [] },
     } as const;
@@ -132,8 +136,18 @@ export function resolveEditorContext(
   const structure = {
     hasProcedure: astContext.hasProcedure || Boolean(partial.procedureName),
     procedureName: astContext.procedureName ?? partial.procedureName,
-    hasStatements: astContext.hasStatements,
+    hasStatements:
+      astContext.hasStatements ||
+      /\b(?:RETURN|PRINT|IF|FOR|WHILE|REPEAT|CALL)\b|<-|:=/i.test(source),
+    statementCount:
+      astContext.statementCount ||
+      (source.match(/^\s*(?:RETURN|PRINT|IF|FOR|WHILE|REPEAT|CALL)\b|<-|:=/gim)
+        ?.length ??
+        0),
     hasReturn: astContext.hasReturn,
+    hasOutput: astContext.hasOutput || /\b(?:RETURN|PRINT)\b/i.test(source),
+    hasConditional: astContext.hasConditional || /\bIF\b/i.test(source),
+    hasLoop: astContext.hasLoop || /\b(?:FOR|WHILE|REPEAT)\b/i.test(source),
   };
 
   return {

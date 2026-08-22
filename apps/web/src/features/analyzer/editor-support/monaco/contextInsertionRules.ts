@@ -133,13 +133,34 @@ export function insertSnippetIntoEditor(
     },
   ]);
 
-  const endPosition = model.getPositionAt(startOffset + insertionText.length);
-  editor.setPosition(endPosition);
-  editor.setSelection({
-    startLineNumber: endPosition.lineNumber,
-    startColumn: endPosition.column,
-    endLineNumber: endPosition.lineNumber,
-    endColumn: endPosition.column,
-  });
-  editor.revealPositionInCenterIfOutsideViewport(endPosition);
+  const procedureName =
+    snippet.id === "algorithm-header"
+      ? localizedSnippet.insertText.match(/^\$\{1:([^}]+)\}/)?.[1]
+      : undefined;
+
+  if (procedureName && insertionText.startsWith(procedureName)) {
+    const nameStart = model.getPositionAt(startOffset);
+    const nameEnd = model.getPositionAt(
+      startOffset + procedureName.length,
+    );
+    editor.setSelection({
+      startLineNumber: nameStart.lineNumber,
+      startColumn: nameStart.column,
+      endLineNumber: nameEnd.lineNumber,
+      endColumn: nameEnd.column,
+    });
+    editor.revealPositionInCenterIfOutsideViewport(nameEnd);
+  } else {
+    const endPosition = model.getPositionAt(
+      startOffset + insertionText.length,
+    );
+    editor.setPosition(endPosition);
+    editor.setSelection({
+      startLineNumber: endPosition.lineNumber,
+      startColumn: endPosition.column,
+      endLineNumber: endPosition.lineNumber,
+      endColumn: endPosition.column,
+    });
+    editor.revealPositionInCenterIfOutsideViewport(endPosition);
+  }
 }

@@ -51,7 +51,7 @@ function normalizeAaliePseudocodeIndentation(source: string): string {
 
 function renderAaliePseudocodeHighlighted(source: string): ReactNode[] {
   const keywordRe =
-    /\b(BEGIN|END|IF|THEN|ELSE|WHILE|FOR|TO|DO|REPEAT|UNTIL|RETURN|CALL|MOD|DIV|AND|OR|print)\b/g;
+    /\b(CLASS|BEGIN|END|IF|THEN|ELSE|WHILE|FOR|TO|DO|REPEAT|UNTIL|RETURN|CALL|PRINT|MOD|DIV|AND|OR|NOT|TRUE|FALSE|NULL|LENGTH)\b/gi;
   const numberRe = /\b\d+(\.\d+)?\b/g;
   const stringRe = /"([^"\\]|\\.)*"/g;
 
@@ -106,19 +106,19 @@ function renderAaliePseudocodeHighlighted(source: string): ReactNode[] {
       switch (token.kind) {
         case "keyword":
           return (
-            <span key={key} className="font-semibold text-fuchsia-300">
+            <span key={key} className="font-semibold text-cyan-300">
               {token.value}
             </span>
           );
         case "string":
           return (
-            <span key={key} className="text-emerald-300">
+            <span key={key} className="text-white">
               {token.value}
             </span>
           );
         case "number":
           return (
-            <span key={key} className="text-amber-300">
+            <span key={key} className="text-white">
               {token.value}
             </span>
           );
@@ -163,7 +163,7 @@ export default function RenderableContent({ content, className }: Props) {
           return (
             <pre
               key={index}
-              className={`${blockSpacingClass} overflow-x-auto whitespace-pre rounded border border-cyan-500/20 bg-slate-900/80 p-3 font-mono text-[11px] leading-relaxed text-slate-100 [tab-size:4]`}
+              className={`${blockSpacingClass} overflow-x-auto whitespace-pre rounded border border-cyan-500/20 bg-slate-900/80 p-3 font-mono text-[11px] leading-relaxed text-white [tab-size:4]`}
             >
               <code className="block whitespace-pre">{renderedCode}</code>
             </pre>

@@ -6,7 +6,11 @@ export interface AstContextResolution {
   readonly hasProcedure: boolean;
   readonly procedureName?: string;
   readonly hasStatements: boolean;
+  readonly statementCount: number;
   readonly hasReturn: boolean;
+  readonly hasOutput: boolean;
+  readonly hasConditional: boolean;
+  readonly hasLoop: boolean;
   readonly hasIf: boolean;
   readonly hasFor: boolean;
   readonly hasWhile: boolean;
@@ -169,7 +173,11 @@ export function resolveAstContext(
     return {
       hasProcedure: false,
       hasStatements: false,
+      statementCount: 0,
       hasReturn: false,
+      hasOutput: false,
+      hasConditional: false,
+      hasLoop: false,
       hasIf: false,
       hasFor: false,
       hasWhile: false,
@@ -189,12 +197,27 @@ export function resolveAstContext(
     : ast.type === "Program" && ast.body.some((node) => node.type !== "ProcDef")
       ? true
       : false;
+  const statementCount =
+    procedure?.body.body.length ??
+    (ast.type === "Program"
+      ? ast.body.filter((node) => node.type !== "ProcDef").length
+      : 0);
+  const hasConditional = containsNode(procedureScope, "If");
+  const hasLoop = ["For", "While", "Repeat"].some((type) =>
+    containsNode(procedureScope, type as AstNode["type"]),
+  );
 
   return {
     hasProcedure,
     procedureName: procedure?.name,
     hasStatements,
+    statementCount,
     hasReturn: containsNode(procedureScope, "Return"),
+    hasOutput:
+      containsNode(procedureScope, "Return") ||
+      containsNode(procedureScope, "Print"),
+    hasConditional,
+    hasLoop,
     ...collectAstEvidence(procedureScope, source, cursorOffset),
   };
 }
