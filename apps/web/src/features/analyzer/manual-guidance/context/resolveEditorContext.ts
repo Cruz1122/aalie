@@ -39,6 +39,7 @@ function normalizeSelection(
     text,
     startOffset,
     endOffset,
+    origin: selection?.origin ?? "user",
   };
 }
 
@@ -117,7 +118,10 @@ export function resolveEditorContext(
     astContext.procedureName ?? partial.procedureName,
   );
   const selectionInsideCode =
-    selection.active && selection.text.trim().length > 0;
+    selection.active &&
+    selection.text.trim().length > 0 &&
+    selection.origin !== "placeholder" &&
+    selection.origin !== "parameters";
   const primary =
     selectionInsideCode && (partial.insideBlock || partial.insideProcedure)
       ? "SELECTION"

@@ -207,7 +207,11 @@ export function resolvePartialSyntaxContext(
     ?.toLowerCase();
   const returnExpression =
     /\breturn\b/i.test(lastStatement) && !/\bend\s*$/i.test(lastStatement);
-  const assignmentExpression = /(?:<-|:=)\s*[^;]*$/i.test(lastStatement);
+  const incompleteAssignment = /(?:<-|:=)\s*$/i.test(lastStatement);
+  const endsWithOperator =
+    incompleteAssignment ||
+    /(?:<=|>=|!=|=|<|>|\+|\*|\/|-)\s*$/u.test(lastStatement) ||
+    /\b(?:and|or|not)\s*$/iu.test(lastStatement);
   const incompleteFor = /\bfor\s+[A-Za-z_][A-Za-z0-9_]*\s*<-.*$/i.test(
     lastStatement,
   );
@@ -262,10 +266,7 @@ export function resolvePartialSyntaxContext(
   ) {
     primary = "CONDITION";
     insideCondition = true;
-  } else if (
-    assignmentExpression ||
-    /\b(?:and|or|not)\b|[+*/<>=-]/i.test(lastStatement)
-  ) {
+  } else if (endsWithOperator) {
     primary = "EXPRESSION";
     insideExpression = true;
   } else if (loopHeader && /\bdo\s*$/i.test(lastStatement)) {

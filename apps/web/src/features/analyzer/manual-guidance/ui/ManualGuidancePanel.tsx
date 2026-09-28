@@ -31,6 +31,7 @@ interface ManualGuidancePanelProps {
   readonly onActiveRecommendationChange?: (
     recommendation: GuidanceRecommendation | null,
   ) => void;
+  readonly onApplyRecommendation?: () => void;
 }
 
 export function ManualGuidancePanel({
@@ -38,6 +39,7 @@ export function ManualGuidancePanel({
   editorActions,
   onAnalyze,
   onActiveRecommendationChange,
+  onApplyRecommendation,
 }: Readonly<ManualGuidancePanelProps>) {
   const t = useTranslations("analyzer.manualGuidance");
   const [tutorialState, setTutorialState] = useState<ManualTutorialState>(() =>
@@ -156,9 +158,7 @@ export function ManualGuidancePanel({
                     nextTutorialStep(startTutorial(state)),
                   )
                 }
-                onSkip={() =>
-                  setTutorialState((state) => skipTutorial(state))
-                }
+                onSkip={() => setTutorialState((state) => skipTutorial(state))}
               />
             ) : (
               <TutorialGuide
@@ -184,6 +184,7 @@ export function ManualGuidancePanel({
         onAnalyze={onAnalyze}
         onTutorial={openTutorial}
         onActiveRecommendationChange={onActiveRecommendationChange}
+        onApplyRecommendation={onApplyRecommendation}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { resolveEditorContext } from "../../context/resolveEditorContext";
-import { startTutorial } from "../tutorialState";
+import { firstPendingTutorialStep, startTutorial } from "../tutorialState";
 import { getTutorialStep } from "../tutorialSteps";
 
 function context(source: string) {
@@ -32,6 +32,21 @@ describe("tutorialSteps", () => {
         skippedSteps: ["PARAMETERS"],
       }),
     ).toBe(true);
+  });
+
+  it("skips steps the current code already satisfies", () => {
+    const source = "buscar(n) BEGIN\n  x <- n;\nEND";
+    const bodyOffset = source.indexOf("x <-");
+    const pending = firstPendingTutorialStep(
+      resolveEditorContext({
+        source,
+        cursor: { line: 2, column: 2, offset: bodyOffset },
+        parseResult: { status: "invalid", errors: [] },
+      }),
+      startTutorial(),
+    );
+
+    expect(pending).toBe("CONTROL_FLOW");
   });
 
   it("detects control flow and output from the pure context", () => {

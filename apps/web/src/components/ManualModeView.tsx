@@ -19,9 +19,7 @@ import {
   type EditorContext,
   type ManualEditorActions,
 } from "@/features/analyzer/manual-guidance";
-import type {
-  GuidanceRecommendation,
-} from "@/features/analyzer/manual-guidance/recommendations";
+import type { GuidanceRecommendation } from "@/features/analyzer/manual-guidance/recommendations";
 import { ManualGuidancePanel } from "@/features/analyzer/manual-guidance/ui";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
@@ -195,7 +193,8 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         focusAlgorithmBody: () => editorRef.current?.focusAlgorithmBody(),
         prepareAlgorithmBlockInsertion: () =>
           editorRef.current?.prepareAlgorithmBlockInsertion(),
-        prepareReturnInsertion: () => editorRef.current?.prepareReturnInsertion(),
+        prepareReturnInsertion: () =>
+          editorRef.current?.prepareReturnInsertion(),
         insertTextAtCursor: (text) =>
           editorRef.current?.insertTextAtCursor(text),
         insertParameterAtProcedure: (parameter) =>
@@ -568,7 +567,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                   canViewAst={localParseOk && ast != null}
                   hasCode={code.trim() !== ""}
                   verifyParseResult={verifyParseResult}
-                  activeRecommendation={activeRecommendation}
+                  forcedRecommendation={activeRecommendation}
                   showAIHelpButton={
                     showAIHelpButton && !!backendParseError && hasValidApiKey
                   }
@@ -688,6 +687,9 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                   editorActions={editorActions}
                   onAnalyze={handleAnalyzeComplexity}
                   onActiveRecommendationChange={setActiveRecommendation}
+                  onApplyRecommendation={() =>
+                    editorRef.current?.applyActiveRecommendation()
+                  }
                 />
               </div>
             </div>

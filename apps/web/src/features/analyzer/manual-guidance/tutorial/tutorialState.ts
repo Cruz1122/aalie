@@ -1,8 +1,10 @@
+import { getTutorialStep } from "./tutorialSteps";
 import {
   TUTORIAL_STEP_IDS,
   type ManualTutorialState,
   type TutorialStepId,
 } from "./types";
+import type { EditorContext } from "../context/types";
 
 export const MANUAL_TUTORIAL_VERSION = 2;
 
@@ -66,6 +68,17 @@ export function skipTutorial(
 
 export function restartTutorial(): ManualTutorialState {
   return startTutorial(createInitialTutorialState());
+}
+
+export function firstPendingTutorialStep(
+  context: EditorContext,
+  state: ManualTutorialState,
+): TutorialStepId {
+  for (const id of TUTORIAL_STEP_IDS) {
+    if (id === "WELCOME") continue;
+    if (!getTutorialStep(id).isSatisfied(context, state)) return id;
+  }
+  return "REVIEW";
 }
 
 export function setTutorialStep(

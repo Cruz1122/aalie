@@ -39,6 +39,8 @@ export interface EditorSelection {
   readonly text: string;
   readonly startOffset: number;
   readonly endOffset: number;
+  /** A placeholder inserted by guidance stays selected so the user can replace it. */
+  readonly origin?: "user" | "placeholder" | "parameters";
 }
 
 export interface EditorParseStateInput {

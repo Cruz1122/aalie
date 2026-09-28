@@ -822,7 +822,8 @@
       },
       "actions": {
         "insert": "Insert example",
-        "applyWithTab": "Press Tab to apply",
+        "applyWithTabBefore": "Press",
+        "applyWithTabAfter": "to apply",
         "scalarParameter": "Scalar",
         "arrayParameter": "Array",
         "rangeParameter": "Range",
@@ -991,6 +992,22 @@
         "parameter-symbols": {
           "title": "Choose the right parameter",
           "description": "Use a clear, consistent name to explain the input."
+        },
+        "scalar-parameter": {
+          "title": "Use a scalar parameter",
+          "description": "A single value, such as n, when the procedure needs one input."
+        },
+        "array-parameter": {
+          "title": "Use an array",
+          "description": "An indexed collection, such as A[n], for walking several elements."
+        },
+        "range-parameter": {
+          "title": "Use a range",
+          "description": "An interval A[n]..[m] when the procedure works between two bounds."
+        },
+        "object-parameter": {
+          "title": "Use an object",
+          "description": "An instance, such as Clase objeto, when the input is a structure."
         },
         "analyze": {
           "title": "Your algorithm looks ready",

@@ -1,4 +1,5 @@
 import { extractTextualSymbols } from "@/features/analyzer/manual-guidance/context/extractSymbols";
+import type { EditorLocation } from "@/features/analyzer/manual-guidance/context/types";
 
 import { resolveSnippetAlias } from "../catalog/snippetAliases";
 import {
@@ -143,18 +144,63 @@ function isAlgorithmSnippet(snippet: SnippetDefinition): boolean {
   return snippet.id.startsWith("catalog-");
 }
 
+const EXPRESSION_LOCATIONS = new Set<EditorLocation>([
+  "CONDITION",
+  "EXPRESSION",
+  "RETURN_EXPRESSION",
+  "PARAMETER_LIST",
+]);
+
+function isStructuralSnippet(snippet: SnippetDefinition): boolean {
+  return (
+    snippet.insertKind === "block" ||
+    snippet.insertKind === "wrap-selection" ||
+    snippet.contextRules.includes("lineStart")
+  );
+}
+
+const BODY_SNIPPET_ORDER = [
+  "assign",
+  "if",
+  "for",
+  "while",
+  "repeat-until",
+  "call",
+  "return-value",
+];
+
+function contextSnippetRank(
+  snippet: SnippetDefinition,
+  location: EditorLocation | undefined,
+): number {
+  if (
+    !location ||
+    !["PROCEDURE_BODY", "IF_BODY", "LOOP_BODY"].includes(location)
+  ) {
+    return snippet.priority;
+  }
+  const index = BODY_SNIPPET_ORDER.indexOf(snippet.id);
+  return index === -1 ? snippet.priority : 10_000 - index;
+}
+
 export function buildSnippetCandidates(
   prefix: string,
   locale: SupportedLocale,
+  location?: EditorLocation,
 ): SnippetCompletionCandidate[] {
   const normalizedPrefix = normalizeCompletionText(prefix);
   const exactSnippet = normalizedPrefix
     ? resolveSnippetAlias(normalizedPrefix, locale)
     : null;
+  const locationSnippets = EXPRESSION_LOCATIONS.has(location ?? "UNKNOWN")
+    ? completionSnippetCatalog.filter(
+        (snippet) => !isStructuralSnippet(snippet),
+      )
+    : completionSnippetCatalog;
   const matchingSnippets =
     normalizedPrefix.length === 0
-      ? completionSnippetCatalog
-      : completionSnippetCatalog.filter((snippet) =>
+      ? locationSnippets
+      : locationSnippets.filter((snippet) =>
           getSnippetSearchTerms(snippet, locale).some((term) =>
             term.startsWith(normalizedPrefix),
           ),
@@ -173,7 +219,9 @@ export function buildSnippetCandidates(
       return leftIsExact ? -1 : 1;
     }
 
-    return right.priority - left.priority;
+    return (
+      contextSnippetRank(right, location) - contextSnippetRank(left, location)
+    );
   });
 
   const dedupedCandidates: SnippetCompletionCandidate[] = [];
@@ -202,10 +250,11 @@ export function buildCompletionCandidates(
   prefix: string,
   locale: string,
   limit = 5,
+  location?: EditorLocation,
 ): CompletionCandidate[] {
   const normalizedLocale: SupportedLocale = locale === "en" ? "en" : "es";
   const identifiers = extractIdentifierCandidates(sourceCode, prefix);
-  const snippets = buildSnippetCandidates(prefix, normalizedLocale);
+  const snippets = buildSnippetCandidates(prefix, normalizedLocale, location);
 
   return [...identifiers, ...snippets].slice(0, limit);
 }

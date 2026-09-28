@@ -1,5 +1,7 @@
 import type * as Monaco from "monaco-editor";
 
+import { resolvePartialSyntaxContext } from "@/features/analyzer/manual-guidance/context/resolvePartialSyntaxContext";
+
 import { buildMonacoSnippet } from "./buildMonacoSnippet";
 import {
   buildCompletionCandidates,
@@ -62,10 +64,16 @@ export function registerPseudocodeCompletionProvider(
         if (prefix.trim().length < 2) {
           return { suggestions: [] };
         }
+        const location = resolvePartialSyntaxContext(
+          model.getValue(),
+          model.getOffsetAt(position),
+        ).primary;
         const candidates = buildCompletionCandidates(
           model.getValue(),
           prefix,
           locale,
+          5,
+          location,
         );
 
         return {

@@ -18,14 +18,19 @@ import {
   getSnippetById,
   type SnippetDefinition,
 } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
+import { insertSnippetIntoEditor } from "@/features/analyzer/editor-support/monaco/contextInsertionRules";
 import {
-  insertSnippetIntoEditor,
-} from "@/features/analyzer/editor-support/monaco/contextInsertionRules";
+  applyRecommendationInlineEdit,
+  buildRecommendationInlineEdit,
+  resolveGhostSuggestion,
+} from "@/features/analyzer/editor-support/monaco/recommendationInlineEdit";
 import { registerPseudocodeCommands } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCommands";
 import { registerPseudocodeCompletionProvider } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCompletionProvider";
 import {
   registerPseudocodeInlineCompletionProvider,
+  type DismissedGhostSuggestion,
 } from "@/features/analyzer/editor-support/monaco/registerPseudocodeInlineCompletionProvider";
+import { findUnresolvedPlaceholders } from "@/features/analyzer/editor-support/monaco/unresolvedPlaceholders";
 import { useDebouncedSyntaxHints } from "@/features/analyzer/editor-support/parser/validateSourceDebounced";
 import {
   resolveEditorContext,
@@ -33,8 +38,9 @@ import {
   type EditorCursor,
   type EditorSelection,
 } from "@/features/analyzer/manual-guidance";
-import type {
-  GuidanceRecommendation,
+import {
+  isRecommendationCurrent,
+  type GuidanceRecommendation,
 } from "@/features/analyzer/manual-guidance/recommendations";
 import { AlgorithmTechniqueCard } from "@/features/analyzer/technique-detection/AlgorithmTechniqueCard";
 import { AlgorithmTechniqueModal } from "@/features/analyzer/technique-detection/AlgorithmTechniqueModal";
@@ -72,7 +78,11 @@ interface AnalyzerEditorProps {
   readonly showAIHelpButton?: boolean;
   readonly onAIHelpClick?: () => void;
   readonly onAnalyze?: () => void;
-  readonly activeRecommendation?: GuidanceRecommendation | null;
+  /** Snippet the tutorial wants the ghost text to teach, when one is active. */
+  readonly forcedRecommendation?: GuidanceRecommendation | null;
+  readonly onUnresolvedPlaceholdersChange?: (
+    placeholders: ReturnType<typeof findUnresolvedPlaceholders>,
+  ) => void;
   readonly topRightActions?: ReactNode;
 }
 
@@ -86,6 +96,9 @@ export interface AnalyzerEditorHandle {
   prepareAlgorithmBlockInsertion: () => void;
   prepareReturnInsertion: () => void;
   focus: () => void;
+  applyRecommendation: (recommendation: GuidanceRecommendation) => void;
+  applyActiveRecommendation: () => void;
+  revealPosition: (line: number, column: number) => void;
 }
 
 function findMatchingEndOffset(source: string, beginOffset: number) {
@@ -147,7 +160,8 @@ function findSelectedBlock(
   const selectionLineStart = source.lastIndexOf("\n", selectionStart - 1) + 1;
   const headerBlock = ranges
     .filter((block) => {
-      const blockLineStart = source.lastIndexOf("\n", block.beginOffset - 1) + 1;
+      const blockLineStart =
+        source.lastIndexOf("\n", block.beginOffset - 1) + 1;
       return (
         blockLineStart === selectionLineStart &&
         block.beginOffset >= selectionEnd
@@ -164,7 +178,8 @@ function findSelectedBlock(
     )
     .sort(
       (left, right) =>
-        left.endEndOffset - left.beginOffset -
+        left.endEndOffset -
+        left.beginOffset -
         (right.endEndOffset - right.beginOffset),
     );
   if (containingSelection[0]) return containingSelection[0];
@@ -254,9 +269,7 @@ function getElseBranchBlocks(
   if (selectedIndex < 0) return [selectedBlock];
 
   const isElsePair = (left: BlockRange, right: BlockRange) =>
-    /^\s*ELSE\s*$/i.test(
-      source.slice(left.endEndOffset, right.beginOffset),
-    );
+    /^\s*ELSE\s*$/i.test(source.slice(left.endEndOffset, right.beginOffset));
 
   const nextRange = ranges
     .slice(selectedIndex + 1)
@@ -346,7 +359,8 @@ export const AnalyzerEditor = forwardRef<
     showAIHelpButton = false,
     onAIHelpClick,
     topRightActions,
-    activeRecommendation = null,
+    forcedRecommendation = null,
+    onUnresolvedPlaceholdersChange,
   } = props;
   const fillHeight = height === undefined || height === "100%";
   const [code, setCode] = useState(initialValue);
@@ -372,8 +386,74 @@ export const AnalyzerEditor = forwardRef<
   const onAnalyzeRef = useRef(props.onAnalyze);
   onAnalyzeRef.current = props.onAnalyze;
   const editorContextRef = useRef<EditorContext | null>(null);
-  const activeRecommendationRef =
-    useRef<GuidanceRecommendation | null>(null);
+  const forcedRecommendationRef = useRef<GuidanceRecommendation | null>(null);
+  const dismissedGhostRef = useRef<DismissedGhostSuggestion | null>(null);
+  const inSnippetRef = useRef(false);
+  const ghostIdleTimerRef = useRef<number | null>(null);
+  const onDismissInlineSuggestionRef = useRef<(() => void) | undefined>(
+    undefined,
+  );
+  const placeholderSessionRef = useRef<{
+    startOffset: number;
+    endOffset: number;
+    origin: "placeholder" | "parameters";
+  } | null>(null);
+  const applyVisibleRecommendationRef = useRef<(() => boolean) | undefined>(
+    undefined,
+  );
+  const applyRecommendation = useCallback(
+    (recommendation: GuidanceRecommendation): boolean => {
+      const editor = editorRef.current;
+      const context = editorContextRef.current;
+      const model = editor?.getModel();
+      const position = editor?.getPosition();
+      if (!editor || !model || !position || !context) return false;
+      if (
+        model.getValue() !== context.document.source ||
+        model.getOffsetAt(position) !== context.cursor.offset ||
+        !isRecommendationCurrent(recommendation, context)
+      ) {
+        return false;
+      }
+
+      const edit = buildRecommendationInlineEdit(
+        model,
+        recommendation,
+        context,
+        locale,
+        position,
+      );
+      if (!edit) return false;
+
+      const insertionStart = model.getOffsetAt({
+        lineNumber: edit.range.startLineNumber,
+        column: edit.range.startColumn,
+      });
+      const plainLength = edit.text.replace(/\$\{\d+:([^}]+)\}/gu, "$1").length;
+      placeholderSessionRef.current =
+        edit.selectionStart === edit.selectionEnd
+          ? null
+          : {
+              startOffset: insertionStart + edit.selectionStart,
+              endOffset:
+                insertionStart + Math.min(edit.selectionEnd, plainLength),
+              origin:
+                recommendation.id === "algorithm-header" ||
+                recommendation.id.endsWith("-parameter")
+                  ? "parameters"
+                  : "placeholder",
+            };
+      dismissedGhostRef.current = null;
+      applyRecommendationInlineEdit(editor, edit);
+      return true;
+    },
+    [locale],
+  );
+  applyVisibleRecommendationRef.current = () => {
+    const recommendation = forcedRecommendationRef.current;
+    if (!recommendation) return false;
+    return applyRecommendation(recommendation);
+  };
 
   useEffect(() => {
     const syncViewport = () => {
@@ -452,9 +532,29 @@ export const AnalyzerEditor = forwardRef<
   }, [editorContext, onEditorContextChange]);
 
   useEffect(() => {
+    onUnresolvedPlaceholdersChange?.(findUnresolvedPlaceholders(code));
+  }, [code, onUnresolvedPlaceholdersChange]);
+
+  const scheduleGhostText = useCallback(() => {
+    if (ghostIdleTimerRef.current != null) {
+      globalThis.window.clearTimeout(ghostIdleTimerRef.current);
+    }
+    ghostIdleTimerRef.current = globalThis.window.setTimeout(() => {
+      ghostIdleTimerRef.current = null;
+      if (inSnippetRef.current) return;
+      editorRef.current?.trigger(
+        "editor-support",
+        "editor.action.inlineSuggest.trigger",
+        {},
+      );
+    }, 700);
+  }, []);
+
+  useEffect(() => {
     editorContextRef.current = editorContext;
-    activeRecommendationRef.current = activeRecommendation;
-  }, [activeRecommendation, editorContext]);
+    forcedRecommendationRef.current = forcedRecommendation ?? null;
+    scheduleGhostText();
+  }, [editorContext, forcedRecommendation, scheduleGhostText]);
 
   useEffect(() => {
     return () => {
@@ -523,37 +623,22 @@ export const AnalyzerEditor = forwardRef<
       monacoRef.current,
       () => ({
         context: editorContextRef.current,
-        recommendation: activeRecommendationRef.current,
         locale,
+        forcedRecommendation: forcedRecommendationRef.current,
+        dismissed: dismissedGhostRef.current,
+        inSnippet: inSnippetRef.current,
       }),
     );
     return () => disposable.dispose();
   }, [isEditorReady, locale]);
 
   useEffect(() => {
-    if (!isEditorReady || !editorRef.current) return;
-
-    const editor = editorRef.current;
-    editor.trigger("editor-support", "editor.action.inlineSuggest.hide", {});
-    if (!activeRecommendation) return;
-
-    const frame = globalThis.window.requestAnimationFrame(() => {
-      editor.trigger("editor-support", "editor.action.inlineSuggest.trigger", {});
-    });
-    return () => globalThis.window.cancelAnimationFrame(frame);
-  }, [
-    activeRecommendation?.action,
-    activeRecommendation?.id,
-    activeRecommendation?.intent,
-    activeRecommendation?.priority,
-    activeRecommendation?.reason,
-    activeRecommendation?.snippetId,
-    code,
-    editorContext.cursor.offset,
-    editorContext.location.primary,
-    isEditorReady,
-    locale,
-  ]);
+    return () => {
+      if (ghostIdleTimerRef.current != null) {
+        globalThis.window.clearTimeout(ghostIdleTimerRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Maneja el montaje del editor y configura el lenguaje pseudocódigo.
@@ -595,12 +680,35 @@ export const AnalyzerEditor = forwardRef<
         lineNumber: selection.endLineNumber,
         column: selection.endColumn,
       });
+      const normalizedStart = Math.min(startOffset, endOffset);
+      const normalizedEnd = Math.max(startOffset, endOffset);
+      const snippetController = editor.getContribution(
+        "snippetController2",
+      ) as {
+        isInSnippet?: () => boolean;
+      } | null;
+      const inSnippet = Boolean(snippetController?.isInSnippet?.());
+      inSnippetRef.current = inSnippet;
+      const session = placeholderSessionRef.current;
+      const matchesPlaceholder =
+        session != null &&
+        normalizedStart === session.startOffset &&
+        normalizedEnd === session.endOffset;
+      if (!matchesPlaceholder && !inSnippet)
+        placeholderSessionRef.current = null;
+      else editor.trigger("editor-support", "hideSuggest", {});
       setEditorSelection({
         active: startOffset !== endOffset,
         text: model.getValueInRange(selection),
-        startOffset: Math.min(startOffset, endOffset),
-        endOffset: Math.max(startOffset, endOffset),
+        startOffset: normalizedStart,
+        endOffset: normalizedEnd,
+        origin: inSnippet
+          ? "placeholder"
+          : matchesPlaceholder
+            ? session.origin
+            : "user",
       });
+      scheduleGhostText();
     };
 
     editorListenersRef.current = [
@@ -612,10 +720,34 @@ export const AnalyzerEditor = forwardRef<
     // Mantener el proveedor actualizado también durante HMR/remontajes.
     registerPseudocodeLanguage(monaco);
     registerPseudocodeCompletionProvider(monaco, locale);
+    onDismissInlineSuggestionRef.current = () => {
+      const current = editorContextRef.current;
+      const model = editor.getModel();
+      const position = editor.getPosition();
+      if (!current || !model || !position) return;
+      const line = model.getLineContent(position.lineNumber);
+      const suggestion = resolveGhostSuggestion(
+        current,
+        line.slice(0, position.column - 1),
+        line.slice(position.column - 1),
+        {
+          forced: forcedRecommendationRef.current,
+          locale,
+        },
+      );
+      if (!suggestion) return;
+      dismissedGhostRef.current = {
+        id: suggestion.id,
+        lineNumber: position.lineNumber,
+        lineContent: line,
+      };
+    };
     registerPseudocodeCommands(
       editor,
       monaco,
       onAnalyzeRef,
+      onDismissInlineSuggestionRef,
+      applyVisibleRecommendationRef,
     );
 
     // Aplicar tema
@@ -702,11 +834,12 @@ export const AnalyzerEditor = forwardRef<
     (value = "") => {
       isInternalChangeRef.current = true;
       setCode(value);
+      scheduleGhostText();
       if (onChange) {
         onChange(value);
       }
     },
-    [onChange],
+    [onChange, scheduleGhostText],
   );
 
   useImperativeHandle(ref, () => ({
@@ -742,9 +875,7 @@ export const AnalyzerEditor = forwardRef<
       if (!editor || !model || !parameter.trim()) return;
 
       const source = model.getValue();
-      const procedureMatch = /^\s*[A-Za-z_][A-Za-z0-9_]*\s*\(/gm.exec(
-        source,
-      );
+      const procedureMatch = /^\s*[A-Za-z_][A-Za-z0-9_]*\s*\(/gm.exec(source);
       if (!procedureMatch || procedureMatch.index === undefined) {
         return;
       }
@@ -753,12 +884,8 @@ export const AnalyzerEditor = forwardRef<
       const closingOffset = source.indexOf(")", openingOffset + 1);
       if (openingOffset < 0 || closingOffset < 0) return;
 
-      const parameterSection = source.slice(
-        openingOffset + 1,
-        closingOffset,
-      );
-      const trailingWhitespace =
-        parameterSection.match(/\s*$/)?.[0] ?? "";
+      const parameterSection = source.slice(openingOffset + 1, closingOffset);
+      const trailingWhitespace = parameterSection.match(/\s*$/)?.[0] ?? "";
       const existingParameters = parameterSection.slice(
         0,
         parameterSection.length - trailingWhitespace.length,
@@ -951,6 +1078,21 @@ export const AnalyzerEditor = forwardRef<
     focus() {
       editorRef.current?.focus();
     },
+    applyRecommendation,
+    applyActiveRecommendation() {
+      applyVisibleRecommendationRef.current?.();
+    },
+    revealPosition(line, column) {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const position = {
+        lineNumber: Math.max(1, line),
+        column: Math.max(1, column + 1),
+      };
+      editor.focus();
+      editor.setPosition(position);
+      editor.revealPositionInCenter(position);
+    },
   }));
 
   return (
@@ -1083,6 +1225,7 @@ export const AnalyzerEditor = forwardRef<
             automaticLayout: true,
             tabSize: 4,
             insertSpaces: true,
+            autoIndent: "advanced",
             renderWhitespace: "selection",
             smoothScrolling: true,
             cursorBlinking: "smooth",
@@ -1102,10 +1245,12 @@ export const AnalyzerEditor = forwardRef<
             inlineSuggest: {
               enabled: true,
               suppressSuggestions: false,
+              minShowDelay: 0,
             },
             suggestFontSize,
             suggestLineHeight,
             suggest: {
+              preview: true,
               showWords: false,
             },
           }}

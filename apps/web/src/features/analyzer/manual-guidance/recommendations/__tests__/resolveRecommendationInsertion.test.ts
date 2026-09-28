@@ -1,6 +1,6 @@
 import { resolveEditorContext } from "../../context/resolveEditorContext";
-import type { GuidanceRecommendation } from "../types";
 import { resolveRecommendationInsertion } from "../resolveRecommendationInsertion";
+import type { GuidanceRecommendation } from "../types";
 
 function recommendation(
   id: string,
@@ -39,7 +39,7 @@ describe("resolveRecommendationInsertion", () => {
     expect(insertion).toMatchObject({
       recommendationId: "assign",
       snippetId: "assign",
-      snippetText: "${1:variable} <- ${2:value};",
+      snippetText: "${1:variable} <- ${2:n};",
     });
   });
 
@@ -80,7 +80,7 @@ describe("resolveRecommendationInsertion", () => {
       "IF (n ",
     );
 
-    expect(insertion?.snippetText).toBe(" = ${1:value}");
+    expect(insertion?.snippetText).toBe(" <= ${1:limite}");
   });
 
   it("suggests a complete comparison when no operand exists", () => {
@@ -91,7 +91,7 @@ describe("resolveRecommendationInsertion", () => {
       "IF (",
     );
 
-    expect(insertion?.snippetText).toBe("${1:left} = ${2:right}");
+    expect(insertion?.snippetText).toBe("${1:n} <= ${2:limite}");
   });
 
   it.each([
@@ -121,14 +121,38 @@ describe("resolveRecommendationInsertion", () => {
   });
 
   it("provides an editable parameter placeholder", () => {
-    const insertion = resolveRecommendationInsertion(
-      recommendation("parameter-symbols"),
-      contextFor("suma("),
-      "es",
-      "suma(",
-    );
-
-    expect(insertion?.snippetText).toBe("${1:parameter}");
+    expect(
+      resolveRecommendationInsertion(
+        recommendation("scalar-parameter"),
+        contextFor("suma("),
+        "es",
+        "suma(",
+      )?.snippetText,
+    ).toBe("n");
+    expect(
+      resolveRecommendationInsertion(
+        recommendation("array-parameter"),
+        contextFor("suma("),
+        "es",
+        "suma(",
+      )?.snippetText,
+    ).toBe("A[n]");
+    expect(
+      resolveRecommendationInsertion(
+        recommendation("range-parameter"),
+        contextFor("suma("),
+        "es",
+        "suma(",
+      )?.snippetText,
+    ).toBe("A[n]..[m]");
+    expect(
+      resolveRecommendationInsertion(
+        recommendation("object-parameter"),
+        contextFor("suma("),
+        "es",
+        "suma(",
+      )?.snippetText,
+    ).toBe("Clase objeto");
   });
 
   it("does not resolve an analysis recommendation as inline text", () => {

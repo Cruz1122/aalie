@@ -1,7 +1,8 @@
-import { getSnippetById } from "../catalog/snippetCatalog";
+import { getSnippetById, localizeSnippet } from "../catalog/snippetCatalog";
 import {
   applyContextIndentation,
   buildSnippetInsertionText,
+  getSnippetSelectionOffsets,
   resolveSnippetPlainText,
 } from "../monaco/contextInsertionRules";
 
@@ -32,5 +33,15 @@ describe("context insertion rules", () => {
         "  ",
       ),
     ).toBe("WHILE (condicion) DO BEGIN\n    \n  END");
+  });
+
+  it("selects the loop counter instead of a letter inside END", () => {
+    const snippet = getSnippetById("for");
+    expect(snippet).toBeTruthy();
+    const localized = localizeSnippet(snippet!, "es");
+    const plain = resolveSnippetPlainText(localized.insertText);
+    const selection = getSnippetSelectionOffsets(localized, plain);
+
+    expect(plain.slice(selection?.start, selection?.end)).toBe("i");
   });
 });

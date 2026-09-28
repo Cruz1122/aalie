@@ -1,6 +1,127 @@
 import { getSnippetById } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
 
 import type { RecommendationRule } from "./types";
+import type { EditorContext, EditorLocation } from "../context/types";
+
+const ACTIVE_WRITING_LOCATIONS = new Set<EditorLocation>([
+  "PARAMETER_LIST",
+  "CONDITION",
+  "EXPRESSION",
+  "RETURN_EXPRESSION",
+  "PROCEDURE_BODY",
+  "IF_BODY",
+  "LOOP_BODY",
+]);
+
+function isOnClosingEndLine(context: EditorContext): boolean {
+  const line =
+    context.document.source.split("\n")[context.cursor.line - 1] ?? "";
+  return /^\s*END\b/i.test(line);
+}
+
+function isAtProcedureBodyTail(context: EditorContext): boolean {
+  if (context.location.primary !== "PROCEDURE_BODY") return false;
+  if (isOnClosingEndLine(context)) return true;
+
+  const lines = context.document.source.split("\n");
+  const lineIndex = context.cursor.line - 1;
+  const current = lines[lineIndex] ?? "";
+  const next = lines[lineIndex + 1] ?? "";
+  return /^\s*$/u.test(current) && /^\s*END\b/i.test(next);
+}
+
+export function adjustRecommendationPriority(
+  recommendation: { readonly id: string; readonly priority: number },
+  context: EditorContext,
+): number {
+  let priority = recommendation.priority;
+
+  if (!context.structure.hasStatements && recommendation.id === "assign") {
+    priority += 40;
+  }
+
+  if (
+    recommendation.id === "return-value" &&
+    context.structure.hasStatements &&
+    !context.structure.hasOutput &&
+    isAtProcedureBodyTail(context)
+  ) {
+    priority += 120;
+  }
+
+  if (
+    context.location.primary === "LOOP_BODY" &&
+    recommendation.id === "assign"
+  ) {
+    priority += 30;
+  }
+
+  if (
+    context.structure.hasLoop &&
+    (recommendation.id === "for" ||
+      recommendation.id === "while" ||
+      recommendation.id === "repeat-until")
+  ) {
+    priority -= 40;
+  }
+
+  if (recommendation.id === recentConstruct(context)) {
+    priority -= 80;
+  }
+
+  return priority;
+}
+
+function recentConstruct(context: EditorContext): string | null {
+  const lines = context.document.source.split("\n");
+  const index = Math.max(0, context.cursor.line - 1);
+  const current = lines[index] ?? "";
+  const currentKind = completedConstruct(current);
+  const start =
+    currentKind && context.cursor.column >= current.trimEnd().length
+      ? index
+      : index - 1;
+
+  for (let line = start; line >= 0; line -= 1) {
+    const kind = completedConstruct(lines[line] ?? "");
+    if (kind) return kind;
+    const trimmed = (lines[line] ?? "").trim();
+    if (trimmed && !/^END\b/i.test(trimmed)) return null;
+  }
+  return null;
+}
+
+function completedConstruct(line: string): string | null {
+  const trimmed = line.trim();
+  if (!trimmed || /^END\b/i.test(trimmed)) return null;
+  if (/^FOR\b/i.test(trimmed)) return "for";
+  if (/^WHILE\b/i.test(trimmed)) return "while";
+  if (/^REPEAT\b/i.test(trimmed)) return "repeat-until";
+  if (/^IF\b/i.test(trimmed)) return "if";
+  if (/^CALL\b/i.test(trimmed)) return "call";
+  if (/^RETURN\b|^PRINT\b/i.test(trimmed)) return "return-value";
+  if (/(?:<-|:=)/.test(trimmed) && /;\s*$/u.test(trimmed)) return "assign";
+  return null;
+}
+
+function isReadyToAnalyze(context: EditorContext): boolean {
+  if (!context.capabilities.canAnalyze) return false;
+  if (!context.structure.hasStatements || !context.structure.hasOutput)
+    return false;
+  if (
+    context.location.primary === "PROCEDURE_SIGNATURE" ||
+    context.location.primary === "SELECTION" ||
+    context.location.primary === "UNKNOWN" ||
+    context.location.primary === "EMPTY_DOCUMENT"
+  ) {
+    return false;
+  }
+
+  return (
+    !ACTIVE_WRITING_LOCATIONS.has(context.location.primary) ||
+    isOnClosingEndLine(context)
+  );
+}
 
 function candidate(
   id: string,
@@ -81,10 +202,31 @@ export const recommendationRules: readonly RecommendationRule[] = [
     matches: (context) => context.location.primary === "PARAMETER_LIST",
     recommendations: [
       candidate(
-        "parameter-symbols",
+        "scalar-parameter",
         "parameter",
         "insert",
         1000,
+        "inside-expression",
+      ),
+      candidate(
+        "array-parameter",
+        "parameter",
+        "insert",
+        990,
+        "inside-expression",
+      ),
+      candidate(
+        "range-parameter",
+        "parameter",
+        "insert",
+        980,
+        "inside-expression",
+      ),
+      candidate(
+        "object-parameter",
+        "parameter",
+        "insert",
+        970,
         "inside-expression",
       ),
     ],
@@ -153,7 +295,8 @@ export const recommendationRules: readonly RecommendationRule[] = [
   {
     id: "top-level",
     order: 7,
-    matches: (context) => context.location.primary === "TOP_LEVEL",
+    matches: (context) =>
+      context.location.primary === "TOP_LEVEL" && !isOnClosingEndLine(context),
     recommendations: [
       candidate(
         "algorithm-header",
@@ -168,7 +311,7 @@ export const recommendationRules: readonly RecommendationRule[] = [
   {
     id: "valid-program",
     order: 8,
-    matches: (context) => context.capabilities.canAnalyze,
+    matches: isReadyToAnalyze,
     recommendations: [
       candidate("analyze", "analysis", "analyze", 1200, "valid-program"),
     ],

@@ -1,117 +1,159 @@
 import type * as Monaco from "monaco-editor";
 import type { MutableRefObject } from "react";
 
-function hasRenderableGhostText(value: unknown): boolean {
-  if (!value) return false;
-  if (
-    typeof value === "object" &&
-    "isEmpty" in value &&
-    typeof value.isEmpty === "function"
-  ) {
-    return !value.isEmpty();
+function lineEndsWithBegin(beforeCursor: string): string | null {
+  const match = /^([ \t]*)(.*\bBEGIN)\s*$/i.exec(beforeCursor);
+  return match ? (match[1] ?? "") : null;
+}
+
+function blockDepth(source: string): number {
+  let depth = 0;
+  for (const match of source.matchAll(/\bBEGIN\b|\bEND\b/gi)) {
+    if (match[0].toUpperCase() === "BEGIN") depth += 1;
+    else depth = Math.max(0, depth - 1);
   }
-  return true;
+  return depth;
+}
+
+function statementIndent(textBeforeLine: string, linePrefix: string): string {
+  const current = /^[ \t]*/u.exec(linePrefix)?.[0] ?? "";
+  const trimmed = linePrefix.trim();
+  const depth = blockDepth(textBeforeLine);
+  const structuralDepth = /^END\b/i.test(trimmed)
+    ? Math.max(0, depth - 1)
+    : depth;
+  const structural = "  ".repeat(structuralDepth);
+  if (/^END\b/i.test(trimmed)) return structural;
+  return current.length > structural.length ? current : structural;
+}
+
+export function resolveBlockEnter(
+  beforeCursor: string,
+  textAfterCursor: string,
+  textBeforeLine = "",
+): { readonly text: string; readonly cursorColumn: number } | null {
+  const restOfLine = textAfterCursor.split(/\r?\n/u, 1)[0] ?? "";
+  if (restOfLine.trim()) return null;
+
+  const indent = lineEndsWithBegin(beforeCursor);
+  if (indent !== null) {
+    const bodyIndent = `${indent}  `;
+    const alreadyClosed = /\bEND\b/i.test(textAfterCursor);
+    return {
+      text: alreadyClosed ? `\n${bodyIndent}` : `\n${bodyIndent}\n${indent}END`,
+      cursorColumn: bodyIndent.length + 1,
+    };
+  }
+
+  const nextIndent = statementIndent(textBeforeLine, beforeCursor);
+  return {
+    text: `\n${nextIndent}`,
+    cursorColumn: nextIndent.length + 1,
+  };
 }
 
 export function registerPseudocodeCommands(
   editor: Monaco.editor.IStandaloneCodeEditor,
   monaco: typeof Monaco,
   onAnalyzeRef?: MutableRefObject<(() => void) | undefined>,
+  onDismissInlineSuggestionRef?: MutableRefObject<(() => void) | undefined>,
+  applyRecommendationRef?: MutableRefObject<(() => boolean) | undefined>,
 ) {
-  editor.addCommand(monaco.KeyCode.Tab, () => {
-    const suggestState = editor.getContribution(
-      "editor.contrib.suggestController",
-    ) as {
-      model?: { state?: number };
-      widget?: { value?: { state?: number; isExpanded?: boolean } };
-    } | null;
-
-    // The native completion widget must win over the contextual ghost. This
-    // prevents Tab from inserting a panel recommendation when Monaco has a
-    // concrete completion selected for the same cursor position.
-    const suggestWidgetState = suggestState?.widget?.value?.state ?? 0;
-    if (suggestWidgetState >= 3) {
-      editor.trigger("editor-support", "acceptSelectedSuggestion", {});
-      return;
-    }
-
-    const snippetController = editor.getContribution("snippetController2") as {
-      isInSnippet?: () => boolean;
-    } | null;
-
-    // A snippet placeholder is a real editing session in Monaco. Let it own
-    // Tab so parameter navigation never gets swallowed by the ghost command.
-    if (snippetController?.isInSnippet?.()) {
+  // Weight of dynamic commands is higher than Monaco's built-in Tab handler,
+  // so this only claims Tab while a ghost is actually visible. Suggest widgets
+  // and snippet placeholders keep the native Tab behavior.
+  editor.addCommand(
+    monaco.KeyCode.Tab,
+    () => {
       editor.trigger(
         "editor-support",
-        "jumpToNextSnippetPlaceholder",
+        "editor.action.inlineSuggest.commit",
         {},
       );
-      return;
-    }
+    },
+    "inlineSuggestionVisible && !suggestWidgetVisible && !inSnippetMode",
+  );
 
-    const inlineController = editor.getContribution(
-      "editor.contrib.inlineCompletionsController",
-    ) as {
-      model?: {
-        get?: () => {
-          state?: { ghostText?: unknown };
-          primaryGhostText?: { get?: () => unknown };
-        };
-        state?: { ghostText?: unknown };
-        primaryGhostText?: { get?: () => unknown };
-      };
-      commitCurrentSuggestion?: () => void;
-    } | null;
+  editor.addCommand(
+    monaco.KeyMod.Shift | monaco.KeyCode.Tab,
+    () => {
+      if (applyRecommendationRef?.current?.()) return;
+      editor.trigger("editor-support", "outdent", {});
+    },
+    "!inSnippetMode && !suggestWidgetVisible",
+  );
 
-    const inlineModel =
-      inlineController?.model?.get?.() ?? inlineController?.model;
-    const ghostText =
-      inlineModel?.primaryGhostText?.get?.() ?? inlineModel?.state?.ghostText;
-    if (hasRenderableGhostText(ghostText)) {
-      if (inlineController.commitCurrentSuggestion) {
-        inlineController.commitCurrentSuggestion();
-      } else {
-        editor.trigger("editor-support", "editor.action.inlineSuggest.commit", {});
+  editor.addCommand(
+    monaco.KeyCode.Escape,
+    () => {
+      onDismissInlineSuggestionRef?.current?.();
+      editor.trigger("editor-support", "editor.action.inlineSuggest.hide", {});
+    },
+    "inlineSuggestionVisible && !suggestWidgetVisible",
+  );
+
+  editor.addCommand(
+    monaco.KeyCode.Enter,
+    () => {
+      editor.trigger("editor-support", "editor.action.inlineSuggest.hide", {});
+
+      const model = editor.getModel();
+      const position = editor.getPosition();
+      const selection = editor.getSelection();
+      if (
+        !model ||
+        !position ||
+        (selection &&
+          (selection.startLineNumber !== selection.endLineNumber ||
+            selection.startColumn !== selection.endColumn))
+      ) {
+        editor.trigger("editor-support", "type", { text: "\n" });
+        return;
       }
-      return;
-    }
 
-    editor.trigger("editor-support", "tab", {});
-  });
-
-  editor.addCommand(monaco.KeyCode.RightArrow, () => {
-    const inlineController = editor.getContribution(
-      "editor.contrib.inlineCompletionsController",
-    ) as {
-      model?: {
-        get?: () => {
-          state?: { ghostText?: unknown };
-          primaryGhostText?: { get?: () => unknown };
-        };
-        state?: { ghostText?: unknown };
-        primaryGhostText?: { get?: () => unknown };
-      };
-      commitCurrentSuggestion?: () => void;
-    } | null;
-
-    const inlineModel =
-      inlineController?.model?.get?.() ?? inlineController?.model;
-    const ghostText =
-      inlineModel?.primaryGhostText?.get?.() ?? inlineModel?.state?.ghostText;
-    if (hasRenderableGhostText(ghostText)) {
-      if (inlineController.commitCurrentSuggestion) {
-        inlineController.commitCurrentSuggestion();
-      } else {
-        editor.trigger("editor-support", "editor.action.inlineSuggest.commit", {});
+      const line = model.getLineContent(position.lineNumber);
+      const offset = model.getOffsetAt(position);
+      const lineStart = model.getOffsetAt({
+        lineNumber: position.lineNumber,
+        column: 1,
+      });
+      const insertion = resolveBlockEnter(
+        line.slice(0, position.column - 1),
+        model.getValue().slice(offset),
+        model.getValue().slice(0, lineStart),
+      );
+      if (!insertion) {
+        editor.trigger("editor-support", "type", { text: "\n" });
+        return;
       }
-      return;
-    }
 
-    editor.trigger("editor-support", "cursorRight", {});
-  });
+      editor.executeEdits("editor-support", [
+        {
+          range: {
+            startLineNumber: position.lineNumber,
+            startColumn: position.column,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          },
+          text: insertion.text,
+          forceMoveMarkers: true,
+        },
+      ]);
+      const cursor = {
+        lineNumber: position.lineNumber + 1,
+        column: insertion.cursorColumn,
+      };
+      editor.setPosition(cursor);
+      editor.setSelection({
+        startLineNumber: cursor.lineNumber,
+        startColumn: cursor.column,
+        endLineNumber: cursor.lineNumber,
+        endColumn: cursor.column,
+      });
+    },
+    "!suggestWidgetVisible",
+  );
 
-  // Ctrl+Enter (or Cmd+Enter on Mac) to trigger analysis
   if (onAnalyzeRef) {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       onAnalyzeRef.current?.();

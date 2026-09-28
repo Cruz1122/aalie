@@ -25,6 +25,10 @@ const RECOMMENDATION_ICONS: Record<string, string> = {
   not: "rule",
   symbols: "data_object",
   "parameter-symbols": "variable_add",
+  "scalar-parameter": "variable_add",
+  "array-parameter": "data_array",
+  "range-parameter": "straighten",
+  "object-parameter": "category",
   "array-index": "data_array",
 };
 
@@ -43,6 +47,7 @@ interface ContextualGuidanceProps {
   readonly onActiveRecommendationChange?: (
     recommendation: GuidanceRecommendation | null,
   ) => void;
+  readonly onApplyRecommendation?: () => void;
 }
 
 export function ContextualGuidance({
@@ -51,6 +56,7 @@ export function ContextualGuidance({
   onAnalyze,
   onTutorial,
   onActiveRecommendationChange,
+  onApplyRecommendation,
 }: Readonly<ContextualGuidanceProps>) {
   const t = useTranslations("analyzer.manualGuidance");
   const isEmptyDocument = context.location.primary === "EMPTY_DOCUMENT";
@@ -77,11 +83,7 @@ export function ContextualGuidance({
     }, 4200);
 
     return () => globalThis.window.clearInterval(interval);
-  }, [
-    carouselRecommendations.length,
-    isCarouselPaused,
-    recommendationKey,
-  ]);
+  }, [carouselRecommendations.length, isCarouselPaused, recommendationKey]);
 
   const renderedRecommendations =
     carouselRecommendations.length > 1
@@ -260,12 +262,22 @@ export function ContextualGuidance({
                         {t("actions.analyze")}
                       </button>
                     ) : (
-                      <p className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cyan-200">
+                      <button
+                        type="button"
+                        onClick={onApplyRecommendation}
+                        aria-label={`${title}: ${t("actions.applyWithTabBefore")} Shift+Tab ${t("actions.applyWithTabAfter")}`}
+                        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                      >
+                        {`${t("actions.applyWithTabBefore")} `}
+                        <kbd className="rounded border border-cyan-300/50 bg-cyan-300/10 px-2 py-1 font-mono text-xs text-cyan-100">
+                          Shift
+                        </kbd>
+                        <span aria-hidden="true">+</span>
                         <kbd className="rounded border border-cyan-300/50 bg-cyan-300/10 px-2 py-1 font-mono text-xs text-cyan-100">
                           Tab
                         </kbd>
-                        {t("actions.applyWithTab")}
-                      </p>
+                        {` ${t("actions.applyWithTabAfter")}`}
+                      </button>
                     )}
                   </article>
                 );

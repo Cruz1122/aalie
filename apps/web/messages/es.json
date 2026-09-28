@@ -823,7 +823,8 @@
       },
       "actions": {
         "insert": "Insertar ejemplo",
-        "applyWithTab": "Presiona Tab para aplicar",
+        "applyWithTabBefore": "Presiona",
+        "applyWithTabAfter": "para aplicar",
         "scalarParameter": "Escalar",
         "arrayParameter": "Arreglo",
         "rangeParameter": "Rango",
@@ -992,6 +993,22 @@
         "parameter-symbols": {
           "title": "Elige el parámetro correcto",
           "description": "Usa un nombre claro y consistente para explicar la entrada."
+        },
+        "scalar-parameter": {
+          "title": "Usa un parámetro escalar",
+          "description": "Un solo valor, como n, cuando el procedimiento necesita una entrada individual."
+        },
+        "array-parameter": {
+          "title": "Usa un arreglo",
+          "description": "Una colección indexada, como A[n], para recorrer varios elementos."
+        },
+        "range-parameter": {
+          "title": "Usa un rango",
+          "description": "Un intervalo A[n]..[m] cuando el procedimiento trabaja entre dos límites."
+        },
+        "object-parameter": {
+          "title": "Usa un objeto",
+          "description": "Una instancia, como Clase objeto, cuando la entrada es una estructura."
         },
         "analyze": {
           "title": "Tu algoritmo parece estar listo",

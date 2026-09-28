@@ -1,6 +1,6 @@
 import { getSnippetById } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
 
-import { recommendationRules } from "./rules";
+import { adjustRecommendationPriority, recommendationRules } from "./rules";
 import type {
   GuidanceRecommendation,
   RecommendationCandidate,
@@ -31,6 +31,7 @@ export function rankRecommendations(
     rule.recommendations.forEach((recommendation, candidateOrder) => {
       candidates.push({
         ...recommendation,
+        priority: adjustRecommendationPriority(recommendation, context),
         ruleOrder: rule.order,
         candidateOrder,
       });

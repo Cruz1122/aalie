@@ -13,8 +13,15 @@ const messages = {
         body: { title: "Build body" },
         unknown: { title: "Unknown", description: "Unknown context" },
       },
-      tutorial: { return: "Back to tutorial" },
-      actions: { analyze: "Analyze", applyWithTab: "Press Tab to apply" },
+      tutorial: {
+        return: "Back to tutorial",
+        progress: "Step {current} of {total}",
+      },
+      actions: {
+        analyze: "Analyze",
+        applyWithTabBefore: "Press",
+        applyWithTabAfter: "to apply",
+      },
       recommendations: {
         assign: { title: "Add assignment", description: "Store a value" },
         if: { title: "Add IF", description: "Choose a path" },
@@ -49,10 +56,10 @@ describe("ContextualGuidance", () => {
       </NextIntlClientProvider>,
     );
 
-    expect(screen.getByText("Press Tab to apply")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Add assignment/i }),
-    ).not.toBeInTheDocument();
+      screen.getAllByRole("button", { name: /Press Shift\+Tab to apply/i })
+        .length,
+    ).toBeGreaterThan(0);
     expect(onActiveRecommendationChange).toHaveBeenCalledWith(
       expect.objectContaining({ id: "assign" }),
     );

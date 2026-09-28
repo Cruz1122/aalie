@@ -4,9 +4,10 @@ export {
   rankRecommendations,
   MAX_RECOMMENDATIONS,
 } from "./rankRecommendations";
-export { recommendationRules } from "./rules";
+export { adjustRecommendationPriority, recommendationRules } from "./rules";
 export {
   isRecommendationCurrent,
+  personalizeSnippet,
   resolveRecommendationInsertion,
   type RecommendationInsertion,
 } from "./resolveRecommendationInsertion";
@@ -26,5 +27,6 @@ export function getContextualRecommendations(
     readonly rules?: import("./types").RecommendationRule[];
   } = {},
 ) {
+  if (context.selection.origin === "placeholder") return [];
   return rankRecommendations(context, options);
 }
