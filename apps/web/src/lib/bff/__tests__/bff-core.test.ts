@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { readJsonBody } from "../body";
 import {
+  isUcaldasEmail,
   validStudySlug,
   validVisitorId,
   visitorCookieOptions,
@@ -13,6 +14,8 @@ const context: BffRequestContext = {
   requestId: "request-1",
   authenticated: true,
   userId: "user-1",
+  email: "student@ucaldas.edu.co",
+  isUniversityUser: true,
   role: "USER",
   subject: "user:user-1",
   visitorId: "4a7a94e5-1a8e-4c80-a3e8-e1d8e5b7da4c",
@@ -36,6 +39,12 @@ describe("MF3 BFF boundary", () => {
     expect(validStudySlug("../admin")).toBe(false);
   });
 
+  it("matches the institutional email suffix exactly", () => {
+    expect(isUcaldasEmail("Student@UCALDAS.EDU.CO")).toBe(true);
+    expect(isUcaldasEmail("student@ucaldas.edu.co.example")).toBe(false);
+    expect(isUcaldasEmail("student@example.com")).toBe(false);
+  });
+
   it("enforces the actual body size instead of trusting Content-Length", async () => {
     const request = new Request("http://aalie.test/api", {
       method: "POST",
@@ -45,6 +54,25 @@ describe("MF3 BFF boundary", () => {
       },
       body: JSON.stringify({ source: "x".repeat(512) }),
     });
+    await expect(readJsonBody(request, 128)).rejects.toMatchObject({
+      status: 413,
+      code: "PAYLOAD_TOO_LARGE",
+    });
+  });
+
+  it("bounds chunked bodies without relying on Content-Length", async () => {
+    const request = new Request("http://aalie.test/api", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode("x".repeat(512)));
+          controller.close();
+        },
+      }),
+      duplex: "half",
+    } as RequestInit);
+
     await expect(readJsonBody(request, 128)).rejects.toMatchObject({
       status: 413,
       code: "PAYLOAD_TOO_LARGE",

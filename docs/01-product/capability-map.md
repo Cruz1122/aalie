@@ -91,7 +91,7 @@ Cada fila es un compromiso: si la capacidad está implementada, debe existir có
 | LLM: explain | Sí | `llm/config.py` (job=explain) | Explicación pedagógica | Sin control de profundidad | `04-api/llm-api.md` |
 | LLM: parser_assist | Sí | `llm/config.py` (job=parser_assist) | Asistencia de gramática | Latex/no en todos los modelos | `04-api/llm-api.md` |
 | LLM: diagrams | Sí (con limitación) | `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS` | Diagramas en UI | Determinista o LLM según flag | `04-api/llm-api.md` |
-| LLM: providers | Sí (Gemini + OpenAI-compatible) | `llm/providers.py` (GeminiProvider, OpenAICompatibleProvider) | `LLM_PROVIDER` env | Sin soporte para otros | `04-api/llm-api.md` |
+| LLM: providers | Sí (Gemini, OpenAI-compatible, OpenRouter, xAI, Groq y Anthropic) | `llm/providers.py` (GeminiProvider, OpenAICompatibleProvider, AnthropicProvider) | `LLM_PROVIDER` env o detección por key | Endpoint y modelo dependen del proveedor | `04-api/llm-api.md` |
 | LLM: no RAG | Sí (explícito) | No hay pipeline de retrieval | N/A | No implementado | `04-api/llm-api.md` |
 | **Course content** | Sí | `packages/content-catalog/` | `/{locale}/course` | Edición JSON directa | `08-content/content-model.md` |
 | Course space | Sí | `catalog/spaces/course/` | Curricular | 20 módulos por locale | `08-content/content-model.md` |

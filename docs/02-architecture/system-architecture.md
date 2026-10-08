@@ -185,8 +185,8 @@ Los gates del repositorio validan, entre otros:
 
 ## Limitaciones actuales
 
-- Las rutas pedagógicas de FastAPI siguen públicas; el rate limiting por feature todavía no se implementa.
-- Better Auth aplica únicamente límites propios al subsistema de autenticación.
+- Las rutas pedagógicas de FastAPI siguen públicas; el control de abuso específico de LLM sí aplica cuotas y bloqueos temporales.
+- Better Auth aplica sus límites propios al subsistema de autenticación; además, LLM aplica 5 RPM a identidades institucionales autorizadas y límites de abuso backend.
 - No existen todavía `studies`, `study_participants`, `study_measurements` ni telemetría académica persistente.
 - El progreso pedagógico todavía no se sincroniza server-side.
 - PDF requiere `pdflatex` en runtime.

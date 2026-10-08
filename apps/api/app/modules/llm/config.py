@@ -134,7 +134,12 @@ SYSTEM_PROMPTS = {
         ),
         "compare": (
             "Compara el analisis formal recibido con tu estimacion independiente. "
-            "Responde solo JSON valido con analysis y note."
+            "Responde solo JSON valido y compacto con analysis y note. "
+            "Para cada caso iterativo incluye unicamente T_open, T_polynomial, "
+            "big_o, big_omega y big_theta. Para analisis recursivos incluye solo "
+            "los campos necesarios del metodo y big_theta. No incluyas step_by_step, "
+            "walkthrough, teachingNote, payload, audit, template ni explicaciones "
+            "fuera del JSON."
         ),
         "explain": ("Explica conceptos de analisis de complejidad con enfoque pedagico."),
     },
@@ -162,14 +167,36 @@ SYSTEM_PROMPTS = {
         ),
         "compare": (
             "Compare the provided formal analysis with an independent estimate. "
-            "Return only valid JSON with analysis and note."
+            "Return only compact valid JSON with analysis and note. "
+            "For each iterative case include only T_open, T_polynomial, big_o, "
+            "big_omega, and big_theta. For recursive analyses include only the "
+            "method fields required for the result and big_theta. Do not include "
+            "step_by_step, walkthrough, teachingNote, payload, audit, template, "
+            "or explanations outside the JSON."
         ),
         "explain": "Explain complexity-analysis concepts with a teaching-first style.",
     },
 }
 
 
-def get_job_config(job: str, locale: str | None) -> JobConfig:
+PROVIDER_DEFAULT_MODELS = {
+    "openai_compatible": "gpt-6-luna",
+    "openrouter": "openai/gpt-6-luna",
+    "xai": "grok-4.7",
+    "groq": "openai/gpt-oss-120b",
+    "anthropic": "claude-haiku-5-5",
+}
+
+
+def _is_model_compatible_with_provider(provider: str, model: str, inherited_default: str) -> bool:
+    # The job defaults are Gemini models. Replace only that exact inherited
+    # default for another detected provider; preserve any explicit custom
+    # model ID set by an operator for an OpenAI-compatible or self-hosted
+    # endpoint, even when that ID happens to start with ``gemini-``.
+    return provider == "gemini" or model.strip().lower() != inherited_default.strip().lower()
+
+
+def get_job_config(job: str, locale: str | None, provider: str | None = None) -> JobConfig:
     locale_code = _normalize_locale(locale)
     prompts = SYSTEM_PROMPTS[locale_code]
     selected_job = (
@@ -185,11 +212,11 @@ def get_job_config(job: str, locale: str | None) -> JobConfig:
     }[selected_job]
 
     default_model = {
-        "parser_assist": "gemini-2.5-flash",
-        "general": "gemini-2.5-flash",
-        "repair": "gemini-2.5-flash",
-        "compare": "gemini-2.5-flash",
-        "explain": "gemini-2.5-flash",
+        "parser_assist": "gemini-3.8-flash",
+        "general": "gemini-3.8-flash",
+        "repair": "gemini-3.8-flash",
+        "compare": "gemini-3.8-flash",
+        "explain": "gemini-3.8-flash",
     }[selected_job]
 
     default_temperature = {
@@ -222,9 +249,15 @@ def get_job_config(job: str, locale: str | None) -> JobConfig:
     elif selected_job == "compare":
         schema = COMPARE_SCHEMA
 
+    model = _env_str(model_env, default_model)
+    if provider in PROVIDER_DEFAULT_MODELS and not _is_model_compatible_with_provider(
+        provider, model, default_model
+    ):
+        model = PROVIDER_DEFAULT_MODELS[provider]
+
     return JobConfig(
         job=selected_job,
-        model=_env_str(model_env, default_model),
+        model=model,
         temperature=_env_float(f"LLM_TEMPERATURE_{selected_job.upper()}", default_temperature),
         max_tokens=_env_int(f"LLM_MAX_TOKENS_{selected_job.upper()}", default_max_tokens),
         system_prompt=prompts[selected_job],
@@ -236,20 +269,34 @@ def get_job_config(job: str, locale: str | None) -> JobConfig:
     )
 
 
-def get_backend_llm_status() -> Dict[str, Any]:
+def get_backend_llm_status(provider: str | None = None) -> Dict[str, Any]:
     jobs = ["parser_assist", "general", "repair", "compare", "explain"]
-    models = {job: get_job_config(job, "es").model for job in jobs}
+    resolved_provider = get_provider_name(provider)
+    models = {job: get_job_config(job, "es", resolved_provider).model for job in jobs}
     timeout_seconds = _env_int("LLM_TIMEOUT_SECONDS", 30)
 
     return {
-        "provider": _env_str("LLM_PROVIDER", "gemini"),
+        "provider": resolved_provider,
         "timeouts": {"requestSeconds": timeout_seconds},
         "jobs": models,
     }
 
 
-def get_provider_name() -> str:
-    return _env_str("LLM_PROVIDER", "gemini").lower()
+def get_provider_name(key_provider: str | None = None) -> str:
+    """Resolve the provider, allowing a recognized key to select it automatically."""
+
+    configured = key_provider or os.getenv("LLM_PROVIDER", "").strip().lower()
+    aliases = {
+        "openai": "openai_compatible",
+        "openai_compatible": "openai_compatible",
+        "google": "gemini",
+        "gemini": "gemini",
+        "anthropic": "anthropic",
+        "openrouter": "openrouter",
+        "xai": "xai",
+        "groq": "groq",
+    }
+    return aliases.get(configured, configured or "gemini")
 
 
 def get_timeout_seconds() -> int:
@@ -263,8 +310,26 @@ def get_gemini_endpoint_base() -> str:
     )
 
 
-def get_openai_compatible_endpoint_base() -> str:
+def get_anthropic_endpoint_base() -> str:
     return _env_str(
-        "OPENAI_COMPATIBLE_ENDPOINT_BASE",
-        "https://api.openai.com/v1/chat/completions",
+        "ANTHROPIC_ENDPOINT_BASE",
+        "https://api.anthropic.com/v1/messages",
     )
+
+
+def get_openai_compatible_endpoint_base(provider: str = "openai_compatible") -> str:
+    defaults = {
+        "openai_compatible": "https://api.openai.com/v1/chat/completions",
+        "openrouter": "https://openrouter.ai/api/v1/chat/completions",
+        "xai": "https://api.x.ai/v1/chat/completions",
+        "groq": "https://api.groq.com/openai/v1/chat/completions",
+    }
+    env_names = {
+        "openai_compatible": "OPENAI_COMPATIBLE_ENDPOINT_BASE",
+        "openrouter": "OPENROUTER_ENDPOINT_BASE",
+        "xai": "XAI_ENDPOINT_BASE",
+        "groq": "GROQ_ENDPOINT_BASE",
+    }
+    normalized_provider = get_provider_name(provider)
+    env_name = env_names.get(normalized_provider, env_names["openai_compatible"])
+    return _env_str(env_name, defaults.get(normalized_provider, defaults["openai_compatible"]))

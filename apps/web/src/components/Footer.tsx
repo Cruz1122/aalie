@@ -5,14 +5,25 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 import {
+  API_KEY_STORAGE_KEY,
+  LEGACY_API_KEY_STORAGE_KEY,
+  MODEL_PREFERENCES_STORAGE_KEY,
+  detectApiKeyProvider,
   getApiKey,
   setApiKey,
+  setSelectedApiModel,
   validateApiKey,
-  removeApiKey,
   getApiKeyStatus,
+  removeApiKey,
 } from "@/hooks/useApiKey";
+import { useApiKeyModelSelection } from "@/hooks/useApiKeyModelSelection";
 import { Link, usePathname } from "@/i18n/navigation";
+import {
+  CUSTOM_MODEL_VALUE,
+  validateLlmModelId,
+} from "@/lib/llm-model-catalog";
 
+import ApiKeyModelFields from "./ApiKeyModelFields";
 import AuthControls from "./AuthControls";
 import HealthStatus from "./HealthStatus";
 import LocaleSwitcher from "./LocaleSwitcher";
@@ -35,6 +46,15 @@ export default function Footer() {
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(true);
   const [showSettings, setShowSettings] = useState(false);
   const [expandedSetting, setExpandedSetting] = useState<ExpandedSetting>(null);
+  const {
+    provider: detectedProvider,
+    modelChoice,
+    customModel,
+    selectedModel,
+    isSelectedModelValid,
+    setModelChoice,
+    setCustomModel,
+  } = useApiKeyModelSelection(apiKey);
 
   const openSettings = () => {
     setExpandedSetting(null);
@@ -48,7 +68,7 @@ export default function Footer() {
 
   // Función para actualizar el estado de API_KEY (memoizada sin dependencias problemáticas)
   const updateApiKeyStatus = useCallback(async () => {
-    // Verificar localStorage primero (sin hacer request)
+    // Verificar la key del cliente primero (sin hacer request)
     const stored = getApiKey();
     const hasLocal = stored !== null;
     setHasLocalApiKey(hasLocal);
@@ -57,11 +77,11 @@ export default function Footer() {
       setApiKeyValue(stored);
     }
 
-    // Solo verificar servidor si no hay en localStorage
+    // Solo verificar servidor si no hay key del cliente
     setIsCheckingStatus(true);
     try {
       if (!hasLocal) {
-        // Solo hacer request si no hay en localStorage
+        // Solo hacer request si no hay key del cliente
         const status = await getApiKeyStatus();
         setHasServerApiKey(status.hasServer);
 
@@ -79,7 +99,7 @@ export default function Footer() {
           }
         });
       } else {
-        // Si hay en localStorage, no hacer request al servidor
+        // Si hay key del cliente, no hacer request al servidor
         setHasServerApiKey(false);
         setStatus((prevStatus) => {
           if (isEditing || showInput) {
@@ -199,12 +219,17 @@ export default function Footer() {
   }, [pathname]);
   // #endregion
 
-  // Escuchar cambios en localStorage (cuando se guarda API_KEY desde otros componentes)
+  // Escuchar cambios de almacenamiento (cuando se guarda API key/modelo desde otros componentes)
   useEffect(() => {
     // Usar una función estable que no cause re-renders innecesarios
     const handleStorageChange = (e: StorageEvent) => {
       // Verificar si el cambio es en la API_KEY
-      if (e.key === "gemini_api_key" || e.key === null) {
+      if (
+        e.key === API_KEY_STORAGE_KEY ||
+        e.key === LEGACY_API_KEY_STORAGE_KEY ||
+        e.key === MODEL_PREFERENCES_STORAGE_KEY ||
+        e.key === null
+      ) {
         // Solo actualizar si no se está editando
         if (!isEditing && !showInput) {
           updateApiKeyStatus();
@@ -265,20 +290,27 @@ export default function Footer() {
   }, [apiKey, isEditing, showInput]);
 
   const handleSave = () => {
-    if (validateApiKey(apiKey)) {
-      const success = setApiKey(apiKey);
-      if (success) {
-        setIsEditing(false);
-        setShowInput(false);
-        // Actualizar estado local sin hacer request adicional
-        // El evento 'apiKeyChanged' disparará la actualización
-        const stored = getApiKey();
-        setHasLocalApiKey(stored !== null);
-        if (stored) {
-          setApiKeyValue(stored);
-          setStatus("valid");
-        }
-        // No hacer request adicional a getApiKeyStatus aquí
+    const provider = detectApiKeyProvider(apiKey);
+
+    if (
+      !provider ||
+      !validateApiKey(apiKey) ||
+      !validateLlmModelId(selectedModel)
+    ) {
+      return;
+    }
+
+    const keySaved = setApiKey(apiKey);
+    const modelSaved = keySaved && setSelectedApiModel(selectedModel, provider);
+
+    if (modelSaved) {
+      setIsEditing(false);
+      setShowInput(false);
+      const stored = getApiKey();
+      setHasLocalApiKey(stored !== null);
+      if (stored) {
+        setApiKeyValue(stored);
+        setStatus("valid");
       }
     }
   };
@@ -295,9 +327,33 @@ export default function Footer() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (modelChoice === CUSTOM_MODEL_VALUE) {
+      handleCustomModelChange(e.target.value);
+      return;
+    }
+
     setApiKeyValue(e.target.value);
     setIsEditing(true);
   };
+
+  const handleModelChoiceChange = (choice: string) => {
+    setModelChoice(choice);
+    setIsEditing(true);
+    if (choice === CUSTOM_MODEL_VALUE) {
+      window.requestAnimationFrame(() => {
+        document.getElementById("llm-api-key")?.focus();
+      });
+    }
+  };
+
+  const handleCustomModelChange = (model: string) => {
+    setCustomModel(model);
+    setIsEditing(true);
+  };
+
+  const isCustomModelInput = modelChoice === CUSTOM_MODEL_VALUE;
+  const isCustomModelInvalid =
+    isCustomModelInput && customModel.length > 0 && !isSelectedModelValid;
 
   const getStatusText = () => {
     if (isCheckingStatus) {
@@ -332,35 +388,76 @@ export default function Footer() {
       {showInput ? (
         /* Input de API_KEY - reemplaza el contenido del footer cuando está activo */
         <div className="flex flex-col items-center justify-center gap-1">
-          <div className="flex h-5 flex-wrap items-center justify-center gap-1.5 text-xs w-full max-w-2xl min-w-0 px-2 sm:px-0">
+          <div className="flex h-5 w-full max-w-2xl min-w-0 flex-wrap items-center justify-center gap-1.5 px-2 text-xs sm:px-0">
+            <label htmlFor="llm-api-key" className="sr-only">
+              {isCustomModelInput
+                ? tApiKey("customModelLabel")
+                : tApiKey("inputLabel")}
+            </label>
             <input
-              type="password"
-              value={apiKey}
+              id="llm-api-key"
+              type={isCustomModelInput ? "text" : "password"}
+              value={isCustomModelInput ? customModel : apiKey}
               onChange={handleChange}
-              placeholder={tApiKey("placeholder")}
-              className={`px-2 py-1 rounded-lg bg-white/5 border flex-1 min-w-[140px] sm:min-w-[180px] ${
-                status === "invalid"
-                  ? "border-red-500/50 focus:border-red-500"
-                  : status === "valid"
-                    ? "border-green-500/50 focus:border-green-500"
+              placeholder={
+                isCustomModelInput
+                  ? tApiKey("customModelPlaceholder")
+                  : tApiKey("placeholder")
+              }
+              aria-label={
+                isCustomModelInput
+                  ? tApiKey("customModelLabel")
+                  : tApiKey("inputLabel")
+              }
+              aria-invalid={
+                isCustomModelInput ? isCustomModelInvalid : status === "invalid"
+              }
+              className={`h-5 min-w-[140px] flex-1 rounded-lg border bg-white/5 px-2 py-0.5 text-xs text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-1 sm:min-w-[180px] ${
+                isCustomModelInput
+                  ? isCustomModelInvalid
+                    ? "border-red-500/50 focus:border-red-500"
                     : "border-slate-600/50 focus:border-slate-500"
-              } text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 ${
-                status === "invalid"
-                  ? "focus:ring-red-500/50"
-                  : status === "valid"
-                    ? "focus:ring-green-500/50"
+                  : status === "invalid"
+                    ? "border-red-500/50 focus:border-red-500"
+                    : status === "valid"
+                      ? "border-green-500/50 focus:border-green-500"
+                      : "border-slate-600/50 focus:border-slate-500"
+              } ${
+                isCustomModelInput
+                  ? isCustomModelInvalid
+                    ? "focus:ring-red-500/50"
                     : "focus:ring-slate-500/50"
-              } transition-all flex-1 min-w-[180px] h-5`}
+                  : status === "invalid"
+                    ? "focus:ring-red-500/50"
+                    : status === "valid"
+                      ? "focus:ring-green-500/50"
+                      : "focus:ring-slate-500/50"
+              }`}
               autoFocus
             />
+            {detectedProvider && (
+              <ApiKeyModelFields
+                provider={detectedProvider}
+                modelChoice={modelChoice}
+                customModel={customModel}
+                onModelChoiceChange={handleModelChoiceChange}
+                idPrefix="llm"
+                compact
+              />
+            )}
             {isEditing && (
               <button
+                type="button"
                 onClick={handleSave}
-                disabled={status !== "valid"}
-                className={`px-2 py-0.5 rounded-lg text-xs font-medium transition-all h-5 ${
-                  status === "valid"
-                    ? "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
-                    : "bg-slate-500/20 text-slate-500 border border-slate-500/30 cursor-not-allowed"
+                disabled={
+                  status !== "valid" ||
+                  !detectedProvider ||
+                  !isSelectedModelValid
+                }
+                className={`h-5 rounded-lg border px-2 py-0.5 text-xs font-medium transition-all ${
+                  status === "valid" && detectedProvider && isSelectedModelValid
+                    ? "border-green-500/30 bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                    : "cursor-not-allowed border-slate-500/30 bg-slate-500/20 text-slate-500"
                 }`}
               >
                 {tCommon("save")}
@@ -368,21 +465,34 @@ export default function Footer() {
             )}
             {hasLocalApiKey && (
               <button
+                type="button"
                 onClick={handleClear}
-                className="px-2 py-0.5 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all h-5"
+                className="h-5 rounded-lg border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400 transition-all hover:bg-red-500/30"
               >
                 {tCommon("delete")}
               </button>
             )}
             <button
+              type="button"
               onClick={() => setShowInput(false)}
-              className="px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-slate-500/30 transition-all h-5"
+              className="h-5 rounded-lg border border-slate-500/30 bg-slate-500/20 px-2 py-0.5 text-xs font-medium text-slate-400 transition-all hover:bg-slate-500/30"
             >
               {tCommon("close")}
             </button>
           </div>
-          {apiKey && !validateApiKey(apiKey) && (
-            <p className="text-red-400 text-[10px] text-center leading-tight mt-0.5">
+          {isCustomModelInvalid && (
+            <p
+              className="text-center text-[10px] leading-tight text-red-400"
+              role="alert"
+            >
+              {tApiKey("invalidModelHint")}
+            </p>
+          )}
+          {apiKey && !isCustomModelInput && !validateApiKey(apiKey) && (
+            <p
+              className="text-center text-[10px] leading-tight text-red-400"
+              role="alert"
+            >
               {tApiKey("invalidHint")}
             </p>
           )}

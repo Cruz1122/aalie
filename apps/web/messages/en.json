@@ -437,9 +437,22 @@
       "notConfigured": "Configure your API Key",
       "invalid": "Invalid API Key",
       "inEnv": "API Key saved on server",
-      "inLocalStorage": "API Key saved in this browser",
+      "inLocalStorage": "API key saved only for this browser session",
       "placeholder": "Enter your API key",
+      "inputLabel": "Provider API key",
       "invalidHint": "Invalid API Key",
+      "providerDetected": "Detected provider: {provider}",
+      "modelLabel": "Model",
+      "customModelOption": "Custom (enter the exact ID)",
+      "customModelLabel": "Exact model ID",
+      "customModelPlaceholder": "e.g. gpt-6.1-sol",
+      "customModelHint": "The exact model ID is sent to the API. If it is not listed, enter it here.",
+      "invalidModelHint": "Enter a valid model ID.",
+      "tier": {
+        "fast": "Fast / economical",
+        "balanced": "Balanced",
+        "best": "Best quality"
+      },
       "geminiHintPre": "Enter your Gemini API Key to enable AI functions. You can get it at ",
       "geminiHintLinkText": "Google AI Studio",
       "geminiHintPost": ".",
@@ -745,7 +758,7 @@
         "knowHow": "I know how to do this",
         "skip": "Skip"
       },
-        "context": {
+      "context": {
         "eyebrow": "Contextual guidance",
         "intro": {
           "title": "Your next step starts here",
@@ -1584,10 +1597,12 @@
       "parseErrorDetected": "Syntax error detected",
       "verifyError": "Error verifying code",
       "unknownLlmError": "Unknown LLM error",
-      "llmErrorApiKey": "Configure your Gemini API Key in settings to use AI features.",
+      "llmErrorApiKey": "Configure a valid provider API key in settings to use AI features.",
+      "llmErrorModel": "The model ID is invalid. Check the exact name accepted by your provider.",
       "llmErrorQuota": "Usage quota exceeded. Try again later or check your plan.",
       "llmErrorRateLimit": "Too many requests. Wait a few seconds and try again.",
       "llmErrorTimeout": "The request took too long. Please try again.",
+      "llmErrorOutputTruncated": "The model response was too long. Please try again.",
       "llmErrorServer": "Temporary service error. Try again in a few minutes.",
       "llmErrorBlocked": "Content was filtered by safety policies.",
       "llmErrorUnavailable": "Service unavailable. Check your connection.",

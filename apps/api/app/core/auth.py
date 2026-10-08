@@ -27,6 +27,7 @@ _bearer = HTTPBearer(auto_error=False)
 class IdentityClaims:
     user_id: str
     role: str
+    email: str | None = None
 
 
 def _required_env(name: str) -> str:
@@ -166,7 +167,12 @@ def _verify_token(token: str) -> IdentityClaims:
             raise jwt.InvalidTokenError("missing sub")
         if role not in {"USER", "ADMIN"}:
             raise jwt.InvalidTokenError("invalid role")
-        return IdentityClaims(user_id=user_id, role=role)
+        email = payload.get("email")
+        if email is not None:
+            if not isinstance(email, str) or not email.strip() or len(email) > 320:
+                raise jwt.InvalidTokenError("invalid email claim")
+            email = email.strip().casefold()
+        return IdentityClaims(user_id=user_id, role=role, email=email)
     except (jwt.InvalidTokenError, httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
         raise _unauthorized() from exc
 

@@ -391,8 +391,12 @@ pnpm --filter @aa/grammar gen:py
 | `NEXT_PUBLIC_API_BASE_URL` | Web | URL pública del backend para consumo cliente directo |
 | `API_BASE_URL` | BFF | URL base del backend para proxies Next |
 | `API_INTERNAL_BASE_URL` | BFF/Docker | URL interna del backend |
-| `API_KEY` | Backend LLM | API key del proveedor |
-| `GEMINI_ENDPOINT_BASE` | Backend LLM | Endpoint base del proveedor |
+| `API_KEY` | Backend LLM | Clave del proveedor (Gemini, OpenAI, Anthropic, OpenRouter, xAI o Groq), server-side |
+| `OPENAI_API_KEY` | Backend LLM | Clave OpenAI alternativa; tiene prioridad sobre `API_KEY` |
+| `LLM_PROVIDER` | Backend LLM | Detección automática si queda vacío; permite `gemini`, `openai_compatible`, `anthropic`, `openrouter`, `xai` o `groq` |
+| `GEMINI_ENDPOINT_BASE` | Backend LLM | Endpoint base de Gemini |
+| `OPENAI_COMPATIBLE_ENDPOINT_BASE` | Backend LLM | Endpoint base de OpenAI |
+| `OPENROUTER_ENDPOINT_BASE`, `XAI_ENDPOINT_BASE`, `GROQ_ENDPOINT_BASE`, `ANTHROPIC_ENDPOINT_BASE` | Backend LLM | Endpoints opcionales de proveedores adicionales |
 | `LLM_MODEL_GENERAL` | Backend LLM | Modelo general |
 | `LLM_MODEL_REPAIR` | Backend LLM | Modelo de reparación |
 | `LLM_MODEL_COMPARE` | Backend LLM | Modelo de comparación |

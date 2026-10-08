@@ -16,7 +16,7 @@ Checklist mínimo antes de liberar cambios que afectan contratos técnicos, APIs
 ### Compilación
 
 - [ ] `pnpm -r build` — todos los paquetes compilan sin error (types, grammar, content-catalog, web)
-- [ ] `cd infra && docker compose build` — imágenes Docker construyen correctamente (API + web)
+- [ ] `docker compose build` — imágenes Docker construyen correctamente (API + web)
 
 ### Tests
 

@@ -13,9 +13,11 @@
 /** Claves de traducción para errores de LLM (bajo analyzer.messages) */
 export type LlmErrorKey =
   | "llmErrorApiKey"
+  | "llmErrorModel"
   | "llmErrorQuota"
   | "llmErrorRateLimit"
   | "llmErrorTimeout"
+  | "llmErrorOutputTruncated"
   | "llmErrorServer"
   | "llmErrorBlocked"
   | "llmErrorUnavailable"
@@ -29,7 +31,15 @@ const ERROR_PATTERNS: {
   { pattern: /LLM_QUOTA_EXCEEDED/i, key: "llmErrorQuota" },
   { pattern: /LLM_RATE_LIMIT/i, key: "llmErrorRateLimit" },
   { pattern: /LLM_TIMEOUT/i, key: "llmErrorTimeout" },
+  {
+    pattern: /LLM_OUTPUT_TRUNCATED|truncat|token limit|límite de tokens/i,
+    key: "llmErrorOutputTruncated",
+  },
   { pattern: /LLM_SERVER_ERROR/i, key: "llmErrorServer" },
+  {
+    pattern: /LLM_MODEL_INVALID|model.*(identificador|id).*(válido|valid)/i,
+    key: "llmErrorModel",
+  },
   {
     pattern: /API_KEY|API key|api key|invalid.*key|missing.*key/i,
     key: "llmErrorApiKey",

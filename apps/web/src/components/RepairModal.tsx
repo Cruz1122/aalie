@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { AAProgressLoader } from "@/components/AAProgressLoader";
-import { getApiKey } from "@/hooks/useApiKey";
+import { getApiKey, getSelectedApiModel } from "@/hooks/useApiKey";
 import { translateLlmError } from "@/lib/llm-error-translator";
 import {
   getNormalizedLlmStructured,
@@ -347,6 +347,7 @@ Sin texto extra, sin explicaciones, sin markdown.`;
           prompt: finalPrompt,
           locale,
           apiKey: apiKey || undefined,
+          model: getSelectedApiModel() || undefined,
         }),
       });
 

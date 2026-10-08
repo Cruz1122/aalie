@@ -4,7 +4,7 @@
 **Estado:** final
 **Audiencia:** dev
 **Fuente de verdad:** `apps/api/app/modules/llm/` (router.py, service.py, config.py, schemas.py, providers.py)
-**Última revisión:** 2026-05-18
+**Última revisión:** 2026-10-07
 **Relacionado con informe técnico:** Sección 6 — Asistencia externa (LLM)
 
 ## Propósito
@@ -15,10 +15,10 @@ Definir el contrato del subsistema LLM de AALIE: arquitectura, proveedores, tipo
 
 Aplica a:
 - endpoints `/llm` (POST) y `/llm/status` (GET)
-- proveedores Gemini y OpenAI-compatible
+- proveedores Gemini, OpenAI-compatible (OpenAI, OpenRouter, xAI y Groq) y Anthropic
 - los 5 jobs formales (`general`, `repair`, `compare`, `explain`, `parser_assist`)
 - inyección de contexto del asistante (`assistantContext`)
-- resolución de API key (backend > client)
+- resolución de API key (cliente válida primero; clave server-side institucional después)
 - manejo de errores y degradación
 
 No aplica a:
@@ -35,8 +35,7 @@ No aplica a:
 UI (frontend)
   → BFF (backend-for-frontend, apps/web)
     → FastAPI LLM module (apps/api/app/modules/llm/)
-      → GeminiProvider (primary, urllib.request)
-      → OpenAICompatibleProvider (secondary, urllib.request)
+      → GeminiProvider / OpenAICompatibleProvider / AnthropicProvider (urllib.request)
         → External provider API
 ```
 
@@ -44,7 +43,7 @@ El frontend envía requests al BFF, que a su vez llama al backend LLM module. El
 
 ## Proveedores
 
-### Gemini (primario)
+### Gemini
 
 - **Provider class:** `GeminiProvider` en `providers.py`
 - **Endpoint base:** configurable vía `GEMINI_ENDPOINT_BASE` (default: `https://generativelanguage.googleapis.com/v1beta/models`)
@@ -56,7 +55,7 @@ El frontend envía requests al BFF, que a su vez llama al backend LLM module. El
 - **Structured output (JSON):** vía `generationConfig.responseMimeType = "application/json"`
 - **Thinking disable:** vía `generationConfig.thinkingConfig.thinkingBudget = 0`; si el modelo rechaza (HTTP 400), reintenta sin disable_thinking
 
-### OpenAI-compatible (secundario)
+### OpenAI-compatible
 
 - **Provider class:** `OpenAICompatibleProvider` en `providers.py`
 - **Endpoint base:** configurable vía `OPENAI_COMPATIBLE_ENDPOINT_BASE` (default: `https://api.openai.com/v1/chat/completions`)
@@ -65,24 +64,45 @@ El frontend envía requests al BFF, que a su vez llama al backend LLM module. El
 - **Response extraction:** `choices[0].message.content`
 - **Structured output (JSON):** vía `response_format = {"type": "json_object"}`
 
+OpenRouter, xAI y Groq utilizan este mismo adaptador, cada uno con su endpoint
+configurable y con el ID de modelo completo (incluido el namespace cuando aplica).
+
+### Anthropic
+
+- **Provider class:** `AnthropicProvider` en `providers.py`
+- **Endpoint base:** configurable vía `ANTHROPIC_ENDPOINT_BASE` (default: `https://api.anthropic.com/v1/messages`)
+- **API key:** header `x-api-key`
+- **Response extraction:** `content[].text`
+- **Structured output (JSON):** instrucción JSON en el system prompt
+
 ### Selección de proveedor
 
-- `LLM_PROVIDER` env var: `"gemini"` (default) o `"openai_compatible"`
+- `LLM_PROVIDER` env var: `"gemini"`, `"openai_compatible"`, `"anthropic"`, `"openrouter"`, `"xai"` o `"groq"`; si queda vacío, se detecta por el formato de la clave
 - Se construye en `create_provider()` al momento de cada request
 
 ## Variables de entorno
 
 | Variable | Default | Propósito |
 |---|---|---|
-| `LLM_PROVIDER` | `"gemini"` | Proveedor activo: `gemini` o `openai_compatible` |
-| `API_KEY` | — | API key del backend (Gemini) |
+| `LLM_PROVIDER` | vacío | Proveedor activo; una clave reconocida tiene prioridad sobre el default |
+| `API_KEY` | — | API key server-side (`AIza...`, `sk-proj...`, `sk-ant...`, `sk-or-v1...`, `xai...` o `gsk_...`) |
+| `OPENAI_API_KEY` | — | API key OpenAI server-side; tiene prioridad sobre `API_KEY` |
 | `GEMINI_ENDPOINT_BASE` | `https://generativelanguage.googleapis.com/v1beta/models` | Endpoint base para Gemini |
 | `OPENAI_COMPATIBLE_ENDPOINT_BASE` | `https://api.openai.com/v1/chat/completions` | Endpoint para OpenAI-compatible |
-| `LLM_MODEL_GENERAL` | `"gemini-2.5-flash"` | Modelo para job `general` |
-| `LLM_MODEL_REPAIR` | `"gemini-2.5-flash"` | Modelo para job `repair` |
-| `LLM_MODEL_COMPARE` | `"gemini-2.5-flash"` | Modelo para job `compare` |
-| `LLM_MODEL_EXPLAIN` | `"gemini-2.5-flash"` | Modelo para job `explain` |
-| `LLM_MODEL_PARSER_ASSIST` | `"gemini-2.5-flash"` | Modelo para job `parser_assist` |
+| `OPENROUTER_ENDPOINT_BASE` | `https://openrouter.ai/api/v1/chat/completions` | Endpoint para OpenRouter |
+| `XAI_ENDPOINT_BASE` | `https://api.x.ai/v1/chat/completions` | Endpoint para xAI |
+| `GROQ_ENDPOINT_BASE` | `https://api.groq.com/openai/v1/chat/completions` | Endpoint para Groq |
+| `ANTHROPIC_ENDPOINT_BASE` | `https://api.anthropic.com/v1/messages` | Endpoint para Anthropic |
+| `AALIE_RATE_LIMIT_LLM_UCALDAS_AUTH` | `5` | Requests LLM por minuto para cuentas `@ucaldas.edu.co` |
+| `AALIE_RATE_LIMIT_LLM_BACKEND_AUTH` | `5` | Cuota server-side contra bypass directo del API |
+| `AALIE_ABUSE_STRIKES_TO_BAN` | `3` | Excesos LLM antes del bloqueo temporal |
+| `AALIE_ABUSE_STRIKE_WINDOW_SECONDS` | `300` | Ventana para acumular excesos |
+| `AALIE_ABUSE_BAN_SECONDS` | `3600` | Duración del bloqueo temporal |
+| `LLM_MODEL_GENERAL` | `"gemini-3.8-flash"` | Modelo para job `general` |
+| `LLM_MODEL_REPAIR` | `"gemini-3.8-flash"` | Modelo para job `repair` |
+| `LLM_MODEL_COMPARE` | `"gemini-3.8-flash"` | Modelo para job `compare` |
+| `LLM_MODEL_EXPLAIN` | `"gemini-3.8-flash"` | Modelo para job `explain` |
+| `LLM_MODEL_PARSER_ASSIST` | `"gemini-3.8-flash"` | Modelo para job `parser_assist` |
 | `LLM_TIMEOUT_SECONDS` | `30` | Timeout por request al proveedor |
 | `LLM_TEMPERATURE_{JOB}` | (por job, ver tabla) | Temperatura del modelo por job |
 | `LLM_MAX_TOKENS_{JOB}` | (por job, ver tabla) | Máximo de tokens de salida por job |
@@ -173,15 +193,23 @@ Estos jobs consumen el endpoint `/llm` con `job="general"` pero con `system_prom
 
 ## Resolución de API key
 
-1. Si el request incluye `apiKey` y es válida (formato Gemini): se usa la key del cliente.
-2. Si no hay key del cliente o es inválida: se usa `API_KEY` del entorno del backend.
-3. Si ninguna está disponible: el request falla con `LLM_API_KEY_REQUIRED`.
+1. Si el request incluye `apiKey` y es válida (`AIza...` o una key compatible reconocida), se usa la key del cliente.
+2. Si no hay key del cliente, la server key solo se usa con una identidad JWT cuyo correo termine exactamente en `@ucaldas.edu.co`.
+3. Una server key OpenAI para esa identidad fuerza el modelo `gpt-5.4-mini`.
+4. Si hay server key pero la identidad no está autorizada, el request falla con `LLM_SERVER_KEY_RESTRICTED`.
+5. Si ninguna está disponible, el request falla con `LLM_API_KEY_REQUIRED`.
+
+La ruta BFF y el endpoint backend aplican 5 requests por minuto a las identidades
+`@ucaldas.edu.co`. Tres excesos dentro de cinco minutos activan un bloqueo temporal
+persistido; el valor predeterminado es una hora. El endpoint interno que actualiza las
+cuotas exige una credencial privada del BFF y no acepta llamadas anónimas.
 
 ```
-resolve_api_key(request_api_key):
+resolve_api_key(request_api_key, identity):
   1. validate(request_api_key) → usar client key
-  2. os.getenv("API_KEY") → usar server key
-  3. return None → LLM_API_KEY_REQUIRED
+  2. server_key válida + identity.email.endswith("@ucaldas.edu.co") → usar server key
+  3. server_key válida sin autorización → LLM_SERVER_KEY_RESTRICTED
+  4. return None → LLM_API_KEY_REQUIRED
 ```
 
 La respuesta incluye `used_server_key: bool` para trazabilidad.
@@ -212,14 +240,14 @@ La respuesta incluye `used_server_key: bool` para trazabilidad.
   "ok": true,
   "job": "general",
   "provider": "gemini",
-  "model": "gemini-2.5-flash",
+  "model": "gemini-3.8-flash",
   "requestId": "uuid",
   "data": {
     "text": "O(n log n) significa...",
     "structured": null,
     "metadata": {
       "responseId": "...",
-      "modelVersion": "gemini-2.5-flash",
+      "modelVersion": "gemini-3.8-flash",
       "finishReason": "STOP",
       "usage": { ... }
     }
@@ -251,11 +279,11 @@ La respuesta incluye `used_server_key: bool` para trazabilidad.
       "provider": "gemini",
       "timeouts": { "requestSeconds": 30 },
       "jobs": {
-        "parser_assist": "gemini-2.5-flash",
-        "general": "gemini-2.5-flash",
-        "repair": "gemini-2.5-flash",
-        "compare": "gemini-2.5-flash",
-        "explain": "gemini-2.5-flash"
+        "parser_assist": "gemini-3.8-flash",
+        "general": "gemini-3.8-flash",
+        "repair": "gemini-3.8-flash",
+        "compare": "gemini-3.8-flash",
+        "explain": "gemini-3.8-flash"
       }
     },
     "jobs": { ... },
@@ -322,6 +350,7 @@ Para jobs personalizados (`classify`, `recursion_diagram`, `generate_diagram`), 
 | Condición | ErrorCode | HTTP Status | Comportamiento |
 |---|---|---|---|
 | Sin API key | `LLM_API_KEY_REQUIRED` | 400 | Rechazo inmediato |
+| Payload LLM sobre el límite | `LLM_PAYLOAD_TOO_LARGE` | 413 | Rechazo antes de ejecutar el proveedor |
 | Prompt vacío | `LLM_BAD_REQUEST` | 400 | Rechazo inmediato |
 | Timeout de conexión | `LLM_TIMEOUT` | 504 | Reintento (3 para Gemini, 2 para OpenAI) |
 | Rate limit (HTTP 429) | `LLM_RATE_LIMIT` | 429 | Sin reintento |

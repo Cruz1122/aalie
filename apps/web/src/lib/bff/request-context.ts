@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server";
 
 import { getAuth } from "@/lib/auth";
 
-import { resolveStudySlug, resolveVisitor } from "./identity";
+import { isUcaldasEmail, resolveStudySlug, resolveVisitor } from "./identity";
 
 export type OperationalRole = "USER" | "ADMIN";
 
@@ -14,6 +14,8 @@ export interface BffRequestContext {
   requestId: string;
   authenticated: boolean;
   userId: string | null;
+  email: string | null;
+  isUniversityUser: boolean;
   role: OperationalRole | null;
   subject: string;
   visitorId: string;
@@ -30,6 +32,7 @@ export async function buildRequestContext(
     query: { disableCookieCache: true },
   });
   const userId = session?.user?.id ? String(session.user.id) : null;
+  const email = session?.user?.email ? String(session.user.email) : null;
   const rawRole = session?.user?.role;
   const role: OperationalRole | null =
     rawRole === "ADMIN" ? "ADMIN" : rawRole === "USER" ? "USER" : null;
@@ -39,6 +42,8 @@ export async function buildRequestContext(
     requestId: randomUUID(),
     authenticated,
     userId: authenticated ? userId : null,
+    email: authenticated ? (email?.trim().toLowerCase() ?? null) : null,
+    isUniversityUser: authenticated && isUcaldasEmail(email),
     role: authenticated ? role : null,
     subject: authenticated ? `user:${userId}` : `visitor:${visitor.visitorId}`,
     visitorId: visitor.visitorId,

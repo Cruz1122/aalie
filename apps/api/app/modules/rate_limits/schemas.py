@@ -12,6 +12,8 @@ RateLimitScope = Literal[
     "export_text",
     "export_pdf",
     "llm",
+    "llm_ucaldas",
+    "llm_backend",
 ]
 
 
@@ -27,3 +29,5 @@ class RateLimitCheckResponse(BaseModel):
     remaining: int
     retryAfterSeconds: int
     resetAt: str
+    blocked: bool = False
+    reasonCode: str | None = None

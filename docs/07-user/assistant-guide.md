@@ -92,7 +92,7 @@ This allows natural follow-ups like "And what about the best case?" without re-s
 |-------------|---------|
 | API Key | The backend must have a valid API key configured for the LLM provider |
 | Backend | The API must be running and accessible |
-| Provider | Currently configured for Google Gemini (configurable via environment variables) |
+| Provider | Gemini, OpenAI-compatible providers, OpenRouter, xAI, Groq, or Anthropic; selected automatically from a client key or configured server-side |
 | Network | The backend must have outbound internet access to the LLM provider |
 
 ### Without API Key
@@ -119,9 +119,10 @@ This allows natural follow-ups like "And what about the best case?" without re-s
 When you use the assistant:
 
 1. Your pseudocode and analysis results are sent to the backend.
-2. The backend sends them to the configured LLM provider (e.g., Google Gemini).
+2. The backend sends them to the configured LLM provider (for example, Gemini, OpenAI, OpenRouter, xAI, Groq, or Anthropic).
 3. The provider processes and stores the data according to their privacy policy.
-4. The application does not store LLM responses beyond the current session.
+4. A client API key is kept in browser session storage only and is removed when that session is cleared; server-side keys remain in runtime environment configuration.
+5. The application does not store LLM responses beyond the current session.
 
 **Do not use the assistant with proprietary or sensitive code** if you are concerned about data leaving your environment. The analysis engine itself is fully local/deterministic and does not send data externally.
 
@@ -131,9 +132,10 @@ The LLM provider is configured via environment variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `API_KEY` | API key for the LLM provider |
-| `GEMINI_ENDPOINT_BASE` | Base URL for the Gemini API |
-| `LLM_MODEL_GENERAL` | Model for general chat (default: gemini-2.5-pro) |
+| `API_KEY` | Server-side API key for the LLM provider; automatic use is restricted to `@ucaldas.edu.co` |
+| `LLM_PROVIDER` | Optional provider override; a recognized key format is detected automatically |
+| `GEMINI_ENDPOINT_BASE`, `OPENAI_COMPATIBLE_ENDPOINT_BASE`, `OPENROUTER_ENDPOINT_BASE`, `XAI_ENDPOINT_BASE`, `GROQ_ENDPOINT_BASE`, `ANTHROPIC_ENDPOINT_BASE` | Base URL for each provider API |
+| `LLM_MODEL_GENERAL` | Model for general chat (default: gemini-3.8-flash) |
 | `LLM_MODEL_REPAIR` | Model for repair tasks |
 | `LLM_MODEL_COMPARE` | Model for comparison tasks |
 

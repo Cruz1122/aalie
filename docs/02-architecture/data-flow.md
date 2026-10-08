@@ -234,8 +234,8 @@ Reglas:
 
 ## Límites actuales
 
-- No existe rate limiting por feature para analysis/trace/export/LLM.
-- Better Auth mantiene únicamente sus propios límites de autenticación.
+- El BFF aplica rate limiting por scope para `analysis`, `trace`, `export` y `LLM`, con cuotas diferenciadas para tráfico anónimo y autenticado; LLM añade control de abuso backend.
+- Better Auth mantiene sus límites propios de autenticación y la ruta LLM añade 5 RPM para identidades institucionales autorizadas.
 - No existe `visitor_id` persistente para anónimos.
 - No existen `studies`, `study_participants`, `study_measurements` ni event store académico.
 - El progreso pedagógico continúa local al navegador.

@@ -1,0 +1,7 @@
+# Root Compose entrypoint for local development.
+# The service definition remains under infra/; this file keeps the repository
+# root as the Compose project directory so Docker automatically loads .env.
+name: infra
+
+include:
+  - ./infra/compose.yml

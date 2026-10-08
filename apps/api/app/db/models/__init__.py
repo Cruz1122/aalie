@@ -1,6 +1,7 @@
 """Declarative domain models registered for Alembic metadata."""
 
 from .mf3 import (  # noqa: F401
+    AbuseBan,
     RateLimitBucket,
     Study,
     StudyConsent,

@@ -437,9 +437,22 @@
       "notConfigured": "Configura tu API Key",
       "invalid": "API Key inválida",
       "inEnv": "API Key guardada en el servidor",
-      "inLocalStorage": "API Key guardada en este navegador",
+      "inLocalStorage": "API Key guardada solo en esta sesión del navegador",
       "placeholder": "Ingresa tu API key",
+      "inputLabel": "API key del proveedor",
       "invalidHint": "API Key inválida",
+      "providerDetected": "Proveedor detectado: {provider}",
+      "modelLabel": "Modelo",
+      "customModelOption": "Personalizado (escribe el ID exacto)",
+      "customModelLabel": "ID exacto del modelo",
+      "customModelPlaceholder": "Ej. gpt-6.1-sol",
+      "customModelHint": "El valor enviado a la API es el ID exacto del modelo. Si no aparece en la lista, escríbelo aquí.",
+      "invalidModelHint": "Escribe un ID de modelo válido.",
+      "tier": {
+        "fast": "Rápido / económico",
+        "balanced": "Equilibrado",
+        "best": "Mejor calidad"
+      },
       "geminiHintPre": "Ingresa tu API Key de Gemini para habilitar las funciones con IA. Puedes obtenerla en ",
       "geminiHintLinkText": "Google AI Studio",
       "geminiHintPost": ".",
@@ -746,7 +759,7 @@
         "knowHow": "Ya sé cómo hacerlo",
         "skip": "Omitir"
       },
-        "context": {
+      "context": {
         "eyebrow": "Guía contextual",
         "intro": {
           "title": "Tu próximo paso está aquí",
@@ -1584,10 +1597,12 @@
       "parseErrorDetected": "Error de sintaxis detectado",
       "verifyError": "Error al verificar el código",
       "unknownLlmError": "Error desconocido del LLM",
-      "llmErrorApiKey": "Configura tu API Key de Gemini en la configuración para usar las funciones con IA.",
+      "llmErrorApiKey": "Configura una API key válida del proveedor en la configuración para usar las funciones con IA.",
+      "llmErrorModel": "El ID del modelo no es válido. Revisa el nombre exacto que acepta tu proveedor.",
       "llmErrorQuota": "Se ha superado la cuota de uso. Intenta más tarde o revisa tu plan.",
       "llmErrorRateLimit": "Demasiadas solicitudes. Espera unos segundos e inténtalo de nuevo.",
       "llmErrorTimeout": "La solicitud tardó demasiado. Inténtalo de nuevo.",
+      "llmErrorOutputTruncated": "La respuesta del modelo fue demasiado larga. Inténtalo de nuevo.",
       "llmErrorServer": "Error temporal del servicio. Inténtalo de nuevo en unos minutos.",
       "llmErrorBlocked": "El contenido fue filtrado por políticas de seguridad.",
       "llmErrorUnavailable": "El servicio no está disponible. Comprueba tu conexión.",

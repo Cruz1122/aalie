@@ -9,6 +9,8 @@ import type { BffRequestContext } from "./request-context";
 interface Decision {
   allowed: boolean;
   retryAfterSeconds: number;
+  blocked?: boolean;
+  reasonCode?: string;
 }
 
 interface LocalBucket {
@@ -29,6 +31,7 @@ const DEFAULTS: Record<RateLimitScope, [number, number]> = {
   export_text: [10, 30],
   export_pdf: [2, 8],
   llm: [5, 20],
+  llm_ucaldas: [5, 5],
 };
 
 function enabled(): boolean {
@@ -92,11 +95,20 @@ export async function enforceRateLimit(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 2_500);
   try {
+    const serviceToken =
+      process.env.AALIE_RATE_LIMIT_SERVICE_TOKEN?.trim() ||
+      process.env.RATE_LIMIT_HMAC_SECRET?.trim() ||
+      "";
+    if (!serviceToken) {
+      throw new Error("rate-limit service token is not configured");
+    }
+
     const response = await fetch(`${getApiBase()}/internal/rate-limits/check`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
         "x-request-id": context.requestId,
+        "x-aalie-rate-limit-service": serviceToken,
       },
       body: JSON.stringify({
         scope,
@@ -113,6 +125,9 @@ export async function enforceRateLimit(
     return {
       allowed: raw.allowed === true,
       retryAfterSeconds: Math.max(0, Number(raw.retryAfterSeconds ?? 0) || 0),
+      blocked: raw.blocked === true,
+      reasonCode:
+        typeof raw.reasonCode === "string" ? raw.reasonCode : undefined,
     };
   } catch {
     if (policy.failClosedRateLimit) {
