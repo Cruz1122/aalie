@@ -45,6 +45,15 @@ def test_openai_provider_defaults_to_latest_model(monkeypatch):
     assert get_job_config("general", "es", "openai_compatible").model == "gpt-6-luna"
 
 
+def test_code_assistant_prompt_requires_a_markdown_pseudocode_block():
+    parser_prompt = get_job_config("parser_assist", "es").system_prompt
+    general_prompt = get_job_config("general", "es").system_prompt
+
+    assert "```pseudocode" in parser_prompt
+    assert "```pseudocode" in general_prompt
+    assert "misma linea" in parser_prompt
+
+
 @pytest.mark.parametrize(
     ("provider", "expected_model"),
     [
