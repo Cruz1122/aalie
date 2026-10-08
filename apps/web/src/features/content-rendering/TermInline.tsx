@@ -95,7 +95,8 @@ export function TermInline({ text, term, display, href }: TermInlineProps) {
     const triggerRect = trigger.getBoundingClientRect();
     const tooltipRect = tooltipRef.current?.getBoundingClientRect();
     const tooltipWidth =
-      tooltipRect?.width ?? Math.min(288, window.innerWidth - VIEWPORT_MARGIN * 2);
+      tooltipRect?.width ??
+      Math.min(288, window.innerWidth - VIEWPORT_MARGIN * 2);
     const tooltipHeight = tooltipRect?.height ?? 0;
     const triggerCenter = triggerRect.left + triggerRect.width / 2;
     const minLeft = VIEWPORT_MARGIN + tooltipWidth / 2;
@@ -108,9 +109,7 @@ export function TermInline({ text, term, display, href }: TermInlineProps) {
     const placement: TooltipPlacement =
       topCandidate >= VIEWPORT_MARGIN ? "top" : "bottom";
     const top =
-      placement === "top"
-        ? topCandidate
-        : triggerRect.bottom + TOOLTIP_GAP;
+      placement === "top" ? topCandidate : triggerRect.bottom + TOOLTIP_GAP;
 
     setTooltipPosition({ left, top, placement });
   }, []);

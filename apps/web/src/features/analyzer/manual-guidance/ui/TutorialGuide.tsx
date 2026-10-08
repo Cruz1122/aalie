@@ -105,8 +105,7 @@ export function TutorialGuide({
           ),
         ]
       : undefined;
-  const actionOptions =
-    parameterOptions ?? controlFlowOptions;
+  const actionOptions = parameterOptions ?? controlFlowOptions;
   const renderDescription = (): ReactNode => {
     const description = t(step.descriptionKey);
     const termEntries =
@@ -181,9 +180,7 @@ export function TutorialGuide({
     if (termEntries.length === 0) return description;
 
     const termPattern = new RegExp(
-      "(" +
-        termEntries.map((entry) => entry.text).join("|") +
-        ")",
+      "(" + termEntries.map((entry) => entry.text).join("|") + ")",
       "gi",
     );
 

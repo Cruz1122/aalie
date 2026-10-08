@@ -245,8 +245,7 @@
 }
 
 .manual-guidance-panel-transition {
-  animation: manualGuidancePanelIn 360ms
-    cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: manualGuidancePanelIn 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes manualGuidancePanelIn {
@@ -273,8 +272,7 @@
 
 .manual-tutorial-step-forward .manual-tutorial-step-content,
 .manual-tutorial-step-backward .manual-tutorial-step-content {
-  animation: manualTutorialStepReveal 560ms
-    cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: manualTutorialStepReveal 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .manual-tutorial-step-forward .manual-tutorial-step-illustration,
@@ -284,8 +282,8 @@
 }
 
 .manual-tutorial-step-card {
-  animation: manualTutorialStepCard 620ms
-    cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
+  animation: manualTutorialStepCard 620ms cubic-bezier(0.22, 1, 0.36, 1) 140ms
+    both;
 }
 
 .manual-tutorial-step-content {

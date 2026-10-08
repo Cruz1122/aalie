@@ -139,9 +139,7 @@ export function CodeConceptCard({
       </p>
       <div
         className={`manual-guidance-monaco relative mx-auto mt-5 ${
-          actionOptions && actionOptions.length > 4
-            ? "h-[180px]"
-            : "h-[150px]"
+          actionOptions && actionOptions.length > 4 ? "h-[180px]" : "h-[150px]"
         } w-full max-w-md select-none overflow-hidden rounded-xl border border-white/10 bg-[#0F151B] shadow-none`}
       >
         <pre className="h-full overflow-auto p-4 font-mono text-white [tab-size:4]">

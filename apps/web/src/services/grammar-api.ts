@@ -34,9 +34,9 @@ export class GrammarApiService {
       body: JSON.stringify(req),
     });
 
-    const payload = (await response.json().catch(() => null)) as
-      | Partial<GrammarParseResponse>
-      | null;
+    const payload = (await response
+      .json()
+      .catch(() => null)) as Partial<GrammarParseResponse> | null;
 
     if (!response.ok) {
       const message =
