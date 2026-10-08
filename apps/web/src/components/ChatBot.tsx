@@ -17,6 +17,7 @@ import {
 } from "@/hooks/useAssistantAvailability";
 import { Link } from "@/i18n/navigation";
 import type { AssistantContext, ChatMessage } from "@/lib/assistant/types";
+import { normalizeAssistantMarkdown } from "@/lib/assistant-response-format";
 import {
   createBotMessage,
   getLLMResponse,
@@ -631,7 +632,9 @@ export default function ChatBot({
                           </div>
                         ) : (
                           <MarkdownRenderer
-                            content={message.content}
+                            content={normalizeAssistantMarkdown(
+                              message.content,
+                            )}
                             onAnalyzeCode={onAnalyzeCode}
                           />
                         )}
