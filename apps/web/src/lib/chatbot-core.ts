@@ -2,6 +2,7 @@
 
 import { getSelectedApiModel } from "@/hooks/useApiKey";
 import type { AssistantContext, ChatMessage } from "@/lib/assistant/types";
+import { normalizeAssistantMarkdown } from "@/lib/assistant-response-format";
 import { getNormalizedLlmText } from "@/lib/llm-response";
 
 export type LLMIntent = "parser_assist" | "general";
@@ -145,12 +146,12 @@ export async function getLLMResponse(
       throw error;
     }
 
-    const content = getNormalizedLlmText(result);
-    if (!content || String(content).trim().length === 0) {
+    const content = normalizeAssistantMarkdown(getNormalizedLlmText(result));
+    if (!content) {
       throw new Error(t ? t("emptyLlmResponse") : "Empty LLM response");
     }
 
-    return String(content);
+    return content;
   } catch (error) {
     console.error("Error obteniendo respuesta LLM:", error);
     throw error;
