@@ -4,7 +4,7 @@
 **Estado:** final
 **Audiencia:** dev
 **Fuente de verdad:** `package.json`, `apps/web/package.json`, `apps/api/pyproject.toml`, `infra/compose.yml`, `README.md`
-**Última revisión:** 2026-08-19
+**Última revisión:** 2026-10-07
 **Relacionado con informe técnico:** environment-variables, deployment, troubleshooting
 
 ## Requisitos
@@ -93,7 +93,6 @@ Java es necesario solo para este paso. Los artefactos generados ya están commit
 ## Docker
 
 ```bash
-cd infra
 docker compose up --build
 ```
 
@@ -107,7 +106,7 @@ Esto levanta:
 
 **Variables de entorno** en Docker:
 
-Compose carga `apps/api/.env.example` y `apps/web/.env.example` como valores base, y después aplica los `.env` locales si existen. `apps/web/.env` tiene la mayor prioridad para la web. Por compatibilidad, la web también puede leer las credenciales de autenticación existentes en `apps/api/.env`.
+El archivo `compose.yml` de la raíz incluye `infra/compose.yml` y mantiene la raíz como directorio del proyecto Compose, por lo que `.env` se carga automáticamente. Compose carga `apps/api/.env.example` y `apps/web/.env.example` como valores base. Si la clave LLM vive únicamente en `apps/api/.env`, usa `docker compose --env-file .env --env-file apps/api/.env up --build`. `apps/web/.env` puede actuar como override de la web. Las claves LLM se mantienen únicamente en el contenedor API; las variables de autenticación se reenvían explícitamente al servicio web.
 
 | Servicio | Variable | Valor |
 |---|---|---|
@@ -119,6 +118,8 @@ Compose carga `apps/api/.env.example` y `apps/web/.env.example` como valores bas
 La web depende de `api`, por lo que Docker Compose garantiza el orden de inicio.
 
 El servicio PostgreSQL usa el volumen nombrado `postgres-dev-data` y no publica `5432` al host. El contenedor de API ejecuta `alembic upgrade head` automáticamente antes de iniciar Uvicorn, también sobre un volumen nuevo.
+
+El stack local fuerza `DEV_BETTER_AUTH_URL=http://localhost:3000` y `DEV_AUTH_JWT_ISSUER=http://localhost:3000`, aunque el `.env` raíz conserve los valores de producción (`https://aalie.dev`). Esto evita que Better Auth rechace el `callbackURL` del navegador local. El cliente OAuth de Google debe tener también `http://localhost:3000` como origen autorizado y `http://localhost:3000/api/auth/callback/google` como redirect URI.
 
 La URL de la API usa `postgresql+psycopg://`; la web usa `postgresql://`. No hay tablas de negocio en esta microfase.
 

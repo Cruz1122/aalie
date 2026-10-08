@@ -13,7 +13,10 @@ import zipfile
 from io import BytesIO
 
 BASE = os.environ.get("AALIE_BASE_URL", "http://127.0.0.1:3000").rstrip("/")
-API_BASE = os.environ.get("AALIE_API_URL", "http://127.0.0.1:8000").rstrip("/")
+# The production Compose contract keeps FastAPI private and exposes the public
+# surface through Next.js/Caddy. Set AALIE_API_URL explicitly only when the
+# smoke target intentionally publishes the API for an integration environment.
+API_BASE = os.environ.get("AALIE_API_URL", "").rstrip("/")
 SOURCE = """linear(n) BEGIN
   FOR i <- 1 TO n DO BEGIN
     x <- i;

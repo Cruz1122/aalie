@@ -40,7 +40,7 @@ FastAPI no tiene un middleware global de autenticación. Las rutas pedagógicas 
 - `GET /auth/whoami` → requiere `get_identity`; devuelve `{userId, role}`.
 - `GET /auth/admin/ping` → requiere `require_admin`; un `USER` autenticado recibe 403.
 
-Estos endpoints prueban la frontera Better Auth → JWT → FastAPI sin convertir análisis/trace/export en endpoints privados antes de que exista la política de rate limiting de la Microfase 3.
+Estos endpoints prueban la frontera Better Auth → JWT → FastAPI. Las rutas de análisis/trace/export permanecen públicas por diseño, pero el BFF aplica cuotas por scope y la ruta LLM añade controles backend para la cuota institucional y el abuso.
 
 ## Persistencia PostgreSQL
 
@@ -150,11 +150,11 @@ La rama valida:
 
 ## Límites de esta microfase
 
-- No existe rate limiting por feature en FastAPI.
+- FastAPI no convierte análisis/trace/export en rutas privadas; el BFF aplica rate limiting por feature y la ruta LLM aplica cuotas backend y bloqueo temporal de abuso.
 - No existe `visitor_id` estable para anónimos.
 - No existen modelos `studies`, `study_participants` o `study_measurements`.
 - No existe telemetría académica persistente.
-- Las rutas pedagógicas permanecen públicas por diseño hasta definir la política de Microfase 3.
+- Las rutas pedagógicas permanecen públicas por diseño, con cuotas BFF por scope.
 - El cache de quizzes sigue siendo en memoria.
 
 ## Archivos relacionados

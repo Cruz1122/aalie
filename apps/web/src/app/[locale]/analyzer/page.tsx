@@ -39,7 +39,11 @@ import TraceDedicatedView from "@/components/TraceDedicatedView";
 import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-support/parser/normalizeImportSuggestions";
 import { requestTraceRefresh } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
-import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import {
+  getApiKey,
+  getApiKeyStatus,
+  getSelectedApiModel,
+} from "@/hooks/useApiKey";
 import { getApiErrorType } from "@/lib/api-error-translator";
 import {
   buildBundleDetailNotes,
@@ -60,6 +64,7 @@ import {
 } from "@/lib/extract-core-data";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { buildLlmComparisonPayload } from "@/lib/llm-compare-payload";
+import { normalizeLlmComparisonResponse } from "@/lib/llm-comparison-response";
 import { translateLlmError } from "@/lib/llm-error-translator";
 import {
   getNormalizedLlmStructured,
@@ -1328,10 +1333,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               "Apply the appropriate methods (Master Theorem, Iteration, Recursion Tree, Characteristic Equation, etc.)",
             )
       }
-5. **${panelText(safeLocale, "Haz que tu salida coincida con el sistema paso a paso de AALIE", "Make your output match AALIE's step-by-step system")}**:
-   - ${panelText(safeLocale, 'Si reportas un caso iterativo, incluye `step_by_step` con el walkthrough del caso (`method: "iterative_case"`)', 'If you report an iterative case, include `step_by_step` with the case walkthrough (`method: "iterative_case"`)')}
-   - ${panelText(safeLocale, "Si reportas un método recursivo (`characteristic_equation`, `iteration`, `master`, `recursion_tree`), ese objeto DEBE incluir su `step_by_step`", "If you report a recursive method (`characteristic_equation`, `iteration`, `master`, `recursion_tree`), that object MUST include its `step_by_step`")}
-   - ${panelText(safeLocale, "Respeta la estructura de `steps`, `overallStatus`, `summary`, `conceptNote`, `math.primaryLatex` y `math.items`", "Preserve the structure of `steps`, `overallStatus`, `summary`, `conceptNote`, `math.primaryLatex`, and `math.items`")}
+5. **${panelText(safeLocale, "Genera una salida compacta para la comparación", "Generate a compact comparison response")}**:
+   - ${panelText(safeLocale, "Para cada caso iterativo incluye únicamente `T_open`, `T_polynomial`, `big_o`, `big_omega` y `big_theta`", "For each iterative case include only `T_open`, `T_polynomial`, `big_o`, `big_omega`, and `big_theta`")}
+   - ${panelText(safeLocale, "Para un análisis recursivo incluye solo los campos del método necesarios para justificar el resultado y `big_theta`", "For a recursive analysis include only the method fields needed to justify the result and `big_theta`")}
+   - ${panelText(safeLocale, "NO incluyas `step_by_step`, `walkthrough`, `teachingNote`, `payload`, `audit`, `template` ni explicaciones fuera del JSON", "Do NOT include `step_by_step`, `walkthrough`, `teachingNote`, `payload`, `audit`, `template`, or explanations outside the JSON")}
 6. ${panelText(safeLocale, "Proporciona todos los datos core del análisis en formato JSON", "Provide all core analysis data in JSON format")}
 7. **${panelText(safeLocale, "IMPORTANTE", "IMPORTANT")}**: ${panelText(safeLocale, "Compara tu análisis con el análisis propio proporcionado y da una observación REAL y específica (máx. 150 caracteres) sobre:", "Compare your analysis with the provided formal analysis and give a REAL and specific observation (max. 150 characters) about:")}
    - ${panelText(safeLocale, "La precisión del análisis propio", "The accuracy of the formal analysis")}
@@ -1421,6 +1426,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           job: "compare",
           prompt,
           apiKey: apiKey || undefined,
+          model: getSelectedApiModel() || undefined,
           locale,
         }),
       });
@@ -1476,6 +1482,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           throw new Error(tMessages("llmParseError"));
         }
       }
+
+      // Providers can validly wrap the same comparison in time_complexity or
+      // use equivalent case/notation names. Normalize that boundary before
+      // the legacy compatibility parser below maps it to CoreAnalysisData.
+      llmResponse = normalizeLlmComparisonResponse(
+        llmResponse,
+      ) as typeof llmResponse;
 
       // Convertir datos del LLM al formato CoreAnalysisData
       // El LLM puede devolver el análisis de diferentes formas:

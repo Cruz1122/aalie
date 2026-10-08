@@ -1,5 +1,7 @@
 import type * as Monaco from "monaco-editor";
 
+import { resolvePartialSyntaxContext } from "@/features/analyzer/manual-guidance/context/resolvePartialSyntaxContext";
+
 import { buildMonacoSnippet } from "./buildMonacoSnippet";
 import {
   buildCompletionCandidates,
@@ -56,10 +58,22 @@ export function registerPseudocodeCompletionProvider(
           endColumn: word.endColumn,
         };
         const prefix = word.word;
+        // Do not open a catalog on every first character (or with an empty
+        // prefix). Suggestions become useful only after a continuous token
+        // has started; matching itself remains case-insensitive.
+        if (prefix.trim().length < 2) {
+          return { suggestions: [] };
+        }
+        const location = resolvePartialSyntaxContext(
+          model.getValue(),
+          model.getOffsetAt(position),
+        ).primary;
         const candidates = buildCompletionCandidates(
           model.getValue(),
           prefix,
           locale,
+          5,
+          location,
         );
 
         return {

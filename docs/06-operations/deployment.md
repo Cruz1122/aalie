@@ -35,13 +35,12 @@ pnpm dev
 ### 2. Docker Compose (full stack)
 
 ```bash
-cd infra
 docker compose up --build
 ```
 
 Levanta ambos servicios con hot-reload.
 
-El Compose de desarrollo carga automáticamente `apps/api/.env` y `apps/web/.env` cuando existen; no es necesario exportar sus variables en la terminal. Los archivos locales prevalecen sobre sus respectivos `.env.example`, y `apps/web/.env` es el override final para la web.
+El `compose.yml` de la raíz incluye `infra/compose.yml`, así que `docker compose` carga automáticamente el `.env` del proyecto. El Compose de desarrollo usa `apps/api/.env.example` y `apps/web/.env.example` como defaults declarados vía `env_file`; las variables explícitas del servicio, incluidas las claves y endpoints LLM, se interpolan desde el `.env` del proyecto. Si la API key vive únicamente en `apps/api/.env`, ejecútalo desde la raíz con `docker compose --env-file .env --env-file apps/api/.env up --build` para que el archivo local participe en la interpolación.
 
 **Variables necesarias:**
 
@@ -56,12 +55,12 @@ El Compose de desarrollo carga automáticamente `apps/api/.env` y `apps/web/.env
 Para habilitar LLM en Docker:
 
 ```bash
-API_KEY=your-gemini-key docker compose up
+API_KEY=your-gemini-or-openai-key docker compose up --build
 ```
 
 ### 3. Integración productiva local
 
-`infra/compose.prod.yml` construye las imágenes de producción, ejecuta Next.js standalone y Uvicorn sin reload, y publica 3000/8000 únicamente para integración y smoke local/CI:
+`infra/compose.prod.yml` construye las imágenes de producción y ejecuta Next.js standalone y Uvicorn sin reload. Solo publica 3000; el API queda accesible por la red interna de Compose, incluso durante integración y smoke local/CI:
 
 ```bash
 docker compose -f infra/compose.prod.yml build
@@ -115,8 +114,8 @@ La plataforma funciona completamente sin API key. El análisis determinista (par
 
 AALIE tiene estas características relevantes para hosting:
 
-- **PostgreSQL self-hosted:** PostgreSQL corre dentro de Docker Compose en la VM OCI, sin puerto público, con volumen nombrado y migraciones Alembic. Esta fase deja la base vacía; el contenido, progreso y autenticación todavía no se migran.
-- **No tiene autenticación de usuarios:** no hay sesiones, login, registro, ni almacenamiento de usuarios. El progreso de quizzes se persiste en `localStorage` del navegador.
+- **PostgreSQL self-hosted:** PostgreSQL corre dentro de Docker Compose en la VM OCI, sin puerto público, con volumen nombrado y migraciones Alembic. La plataforma ya tiene Better Auth, JWKS y autorización JWT; la base nueva no contiene datos históricos de usuarios, progreso o estudios.
+- **Autenticación y autorización:** Better Auth gestiona sesiones/login/registro en la web y FastAPI valida los JWT. La clave LLM server-side automática requiere una identidad autenticada cuyo correo termine exactamente en `@ucaldas.edu.co`; esas solicitudes tienen cuota de 5 RPM y protección temporal contra abuso. El progreso de quizzes sigue persistido en `localStorage` del navegador.
 - **Contenido file-based:** todo el contenido pedagógico está en `packages/content-data/` dentro del monorepo. Las actualizaciones de contenido requieren un nuevo build/web deploy.
 - **API sin tablas de negocio todavía:** FastAPI puede conectarse a PostgreSQL, pero no se crean modelos ni tablas de negocio automáticamente.
 - **Frontend standalone:** Next.js ejecuta un servidor Node standalone con Route Handlers BFF; no es un sitio puramente estático ni se sirve omitiendo ese runtime.

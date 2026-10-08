@@ -23,6 +23,7 @@ import {
 const GRAMMAR_KEYWORDS = [
   "BEGIN",
   "END",
+  "CLASS",
   "IF",
   "THEN",
   "ELSE",
@@ -40,11 +41,15 @@ const GRAMMAR_KEYWORDS = [
   "AND",
   "OR",
   "NOT",
+  "TRUE",
+  "FALSE",
+  "NULL",
+  "LENGTH",
 ];
 
 const GRAMMAR_TOKEN_REGEX = new RegExp(
   `(\\b(?:${GRAMMAR_KEYWORDS.join("|")})\\b|<-|<=|>=|!=|=|\\+|-|\\*|\\/|\\(|\\)|\\[|\\]|,|;|\\b\\d+\\b)`,
-  "g",
+  "gi",
 );
 
 function renderGrammarLine(line: string): React.ReactNode[] {
@@ -52,21 +57,21 @@ function renderGrammarLine(line: string): React.ReactNode[] {
     if (!token) return null;
     if (/^\d+$/.test(token)) {
       return (
-        <span key={`${token}-${index}`} className="text-amber-300">
+        <span key={`${token}-${index}`} className="text-white">
           {token}
         </span>
       );
     }
-    if (GRAMMAR_KEYWORDS.includes(token)) {
+    if (GRAMMAR_KEYWORDS.includes(token.toUpperCase())) {
       return (
-        <span key={`${token}-${index}`} className="font-semibold text-sky-300">
+        <span key={`${token}-${index}`} className="font-semibold text-cyan-300">
           {token}
         </span>
       );
     }
     if (/^(<-|<=|>=|!=|=|\+|-|\*|\/|\(|\)|\[|\]|,|;)$/.test(token)) {
       return (
-        <span key={`${token}-${index}`} className="text-violet-300">
+        <span key={`${token}-${index}`} className="text-cyan-300">
           {token}
         </span>
       );
@@ -138,7 +143,7 @@ export function ExampleCatalogCard({
               <span className="text-[10px] text-slate-300">Pseudocode</span>
             </div>
             <div className="scrollbar-custom overscroll-contain flex-1 min-h-0 overflow-y-auto overflow-x-auto p-3">
-              <code className="block min-w-min whitespace-pre font-mono text-[11px] leading-relaxed text-slate-100">
+              <code className="block min-w-min whitespace-pre font-mono text-[11px] leading-relaxed text-white">
                 {localizedSource.split("\n").map((line, index) => (
                   <div key={`${example.id}-line-${index}`}>
                     {renderGrammarLine(line)}

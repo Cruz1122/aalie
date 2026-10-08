@@ -40,6 +40,28 @@ class RateLimitBucket(Base):
     __table_args__ = (CheckConstraint("request_count >= 0", name="ck_rate_limit_count_nonnegative"),)
 
 
+class AbuseBan(Base):
+    """Persistent temporary abuse ban keyed by the HMAC subject identity."""
+
+    __tablename__ = "abuse_bans"
+
+    subject_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    strike_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    strike_window_started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    last_violation_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    banned_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reason_code: Mapped[str] = mapped_column(String(64), nullable=False, default="LLM_RATE_SPAM")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow
+    )
+
+    __table_args__ = (
+        CheckConstraint("strike_count >= 0", name="ck_abuse_ban_strikes_nonnegative"),
+    )
+
+
 class Study(Base):
     __tablename__ = "studies"
 

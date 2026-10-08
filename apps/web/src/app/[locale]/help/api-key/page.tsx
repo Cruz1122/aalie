@@ -34,9 +34,18 @@ const providersEs: Provider[] = [
     tone: "from-blue-400/20 to-cyan-300/10 text-cyan-200",
     tagline: "La forma más sencilla de empezar sin pagar",
     models: [
-      { name: "Gemini 3.5 Flash-Lite", price: "USD 0.30 / 2.50 por 1 M" },
-      { name: "Gemini 3.5 Flash", price: "USD 1.50 / 9.00 por 1 M" },
-      { name: "Gemini 3.1 Pro Preview", price: "USD 2.00 / 12.00 por 1 M" },
+      {
+        name: "Gemini 3.1 Flash-Lite (gemini-3.1-flash-lite)",
+        price: "Precio del modelo",
+      },
+      {
+        name: "Gemini 3.8 Flash (gemini-3.8-flash)",
+        price: "USD 0.75 / 3.75 por 1 M hasta 2026-12-31",
+      },
+      {
+        name: "Gemini 3.1 Pro Preview (gemini-3.1-pro-preview)",
+        price: "USD 2.00 / 12.00 por 1 M (<200k tokens)",
+      },
     ],
     steps: [
       "Abre Google AI Studio e inicia sesión.",
@@ -64,9 +73,15 @@ const providersEs: Provider[] = [
     tone: "from-emerald-400/20 to-teal-300/10 text-emerald-200",
     tagline: "Acceso directo a la familia GPT",
     models: [
-      { name: "GPT-5.6 Luna", price: "USD 0.20 / 1.20 por 1 M" },
-      { name: "GPT-5.6 Terra", price: "USD 2.00 / 12.00 por 1 M" },
-      { name: "GPT-5.6 Sol", price: "USD 5.00 / 30.00 por 1 M" },
+      { name: "GPT-6 Luna (gpt-6-luna)", price: "USD 0.10 / 0.50 por 1 M" },
+      {
+        name: "GPT-6.1 Sol (gpt-6.1-sol)",
+        price: "USD 2.00 / 10.00 por 1 M",
+      },
+      {
+        name: "GPT-6 Astra (gpt-6-astra)",
+        price: "USD 10.00 / 50.00 por 1 M",
+      },
     ],
     steps: [
       "Entra en OpenAI Platform y abre API keys.",
@@ -94,9 +109,22 @@ const providersEs: Provider[] = [
     tone: "from-orange-300/20 to-amber-200/10 text-orange-200",
     tagline: "Claude mediante la API oficial",
     models: [
-      { name: "Claude Haiku 4.5", price: "USD 1.00 / 5.00 por 1 M" },
-      { name: "Claude Sonnet 5", price: "USD 2.00 / 10.00 por 1 M" },
-      { name: "Claude Opus 5", price: "USD 5.00 / 25.00 por 1 M" },
+      {
+        name: "Claude Haiku 5.5 (claude-haiku-5-5)",
+        price: "USD 0.10 / 0.50 por 1 M",
+      },
+      {
+        name: "Claude Sonnet 5.5 (claude-sonnet-5-5)",
+        price: "USD 2.00 / 10.00 por 1 M",
+      },
+      {
+        name: "Claude Opus 5.5 (claude-opus-5-5)",
+        price: "USD 4.00 / 20.00 por 1 M",
+      },
+      {
+        name: "Claude Fable 5.1 (claude-fable-5-1)",
+        price: "USD 10.00 / 50.00 por 1 M",
+      },
     ],
     steps: [
       "Crea una cuenta o inicia sesión en Claude Platform.",
@@ -153,8 +181,18 @@ const providersEs: Provider[] = [
     tone: "from-violet-400/20 to-fuchsia-300/10 text-violet-200",
     tagline: "Muchos proveedores con una sola clave",
     models: [
-      { name: "Catálogo OpenAI", price: "Precio del modelo" },
-      { name: "Catálogo Anthropic", price: "Precio del modelo" },
+      {
+        name: "OpenAI / GPT-6.1 Sol (openai/gpt-6.1-sol)",
+        price: "Precio del modelo",
+      },
+      {
+        name: "Google / Gemini 3.8 Flash (google/gemini-3.8-flash)",
+        price: "Precio del modelo",
+      },
+      {
+        name: "Anthropic / Fable 5.1 (anthropic/claude-fable-5.1)",
+        price: "Precio del modelo",
+      },
       { name: "Modelos :free", price: "Sin coste, con límites" },
     ],
     steps: [
@@ -230,14 +268,14 @@ const providersEs: Provider[] = [
     logo: "xai",
     tone: "from-slate-200/20 to-slate-400/10 text-slate-100",
     tagline: "Modelos Grok mediante una API independiente",
-    models: [{ name: "Grok 4.6", price: "USD 2.00 / 6.00 por 1 M" }],
+    models: [{ name: "Grok 4.7 (grok-4.7)", price: "USD 2.00 / 6.00 por 1 M" }],
     steps: [
       "Crea una cuenta y abre xAI Console.",
       "Añade créditos, entra en API Keys y selecciona Create API Key.",
       "Copia la clave y selecciona xAI dentro de AALIE.",
     ],
     pricing:
-      "Para contextos de hasta 200 mil tokens, Grok 4.6 tiene el precio indicado. Los contextos más largos tienen una tarifa superior.",
+      "Para contextos de hasta 200 mil tokens, Grok 4.7 tiene el precio indicado. Los contextos más largos tienen una tarifa superior.",
     recommendation:
       "Recomendado si te interesan específicamente Grok o las herramientas del ecosistema xAI.",
     links: [
@@ -289,9 +327,18 @@ const providersEn: Provider[] = [
     tone: "from-blue-400/20 to-cyan-300/10 text-cyan-200",
     tagline: "The easiest way to start without paying",
     models: [
-      { name: "Gemini 3.5 Flash-Lite", price: "USD 0.30 / 2.50 per 1 M" },
-      { name: "Gemini 3.5 Flash", price: "USD 1.50 / 9.00 per 1 M" },
-      { name: "Gemini 3.1 Pro Preview", price: "USD 2.00 / 12.00 per 1 M" },
+      {
+        name: "Gemini 3.1 Flash-Lite (gemini-3.1-flash-lite)",
+        price: "Model-specific price",
+      },
+      {
+        name: "Gemini 3.8 Flash (gemini-3.8-flash)",
+        price: "USD 0.75 / 3.75 per 1 M through 2026-12-31",
+      },
+      {
+        name: "Gemini 3.1 Pro Preview (gemini-3.1-pro-preview)",
+        price: "USD 2.00 / 12.00 per 1 M (<200k tokens)",
+      },
     ],
     steps: [
       "Open Google AI Studio and sign in.",
@@ -316,9 +363,15 @@ const providersEn: Provider[] = [
     tone: "from-emerald-400/20 to-teal-300/10 text-emerald-200",
     tagline: "Direct access to the GPT family",
     models: [
-      { name: "GPT-5.6 Luna", price: "USD 0.20 / 1.20 per 1 M" },
-      { name: "GPT-5.6 Terra", price: "USD 2.00 / 12.00 per 1 M" },
-      { name: "GPT-5.6 Sol", price: "USD 5.00 / 30.00 per 1 M" },
+      { name: "GPT-6 Luna (gpt-6-luna)", price: "USD 0.10 / 0.50 per 1 M" },
+      {
+        name: "GPT-6.1 Sol (gpt-6.1-sol)",
+        price: "USD 2.00 / 10.00 per 1 M",
+      },
+      {
+        name: "GPT-6 Astra (gpt-6-astra)",
+        price: "USD 10.00 / 50.00 per 1 M",
+      },
     ],
     steps: [
       "Open OpenAI Platform and go to API keys.",
@@ -343,9 +396,22 @@ const providersEn: Provider[] = [
     tone: "from-orange-300/20 to-amber-200/10 text-orange-200",
     tagline: "Claude through the official API",
     models: [
-      { name: "Claude Haiku 4.5", price: "USD 1.00 / 5.00 per 1 M" },
-      { name: "Claude Sonnet 5", price: "USD 2.00 / 10.00 per 1 M" },
-      { name: "Claude Opus 5", price: "USD 5.00 / 25.00 per 1 M" },
+      {
+        name: "Claude Haiku 5.5 (claude-haiku-5-5)",
+        price: "USD 0.10 / 0.50 per 1 M",
+      },
+      {
+        name: "Claude Sonnet 5.5 (claude-sonnet-5-5)",
+        price: "USD 2.00 / 10.00 per 1 M",
+      },
+      {
+        name: "Claude Opus 5.5 (claude-opus-5-5)",
+        price: "USD 4.00 / 20.00 per 1 M",
+      },
+      {
+        name: "Claude Fable 5.1 (claude-fable-5-1)",
+        price: "USD 10.00 / 50.00 per 1 M",
+      },
     ],
     steps: [
       "Create an account or sign in to Claude Platform.",
@@ -399,8 +465,18 @@ const providersEn: Provider[] = [
     tone: "from-violet-400/20 to-fuchsia-300/10 text-violet-200",
     tagline: "Many providers behind one key",
     models: [
-      { name: "OpenAI catalog", price: "Model-specific price" },
-      { name: "Anthropic catalog", price: "Model-specific price" },
+      {
+        name: "OpenAI / GPT-6.1 Sol (openai/gpt-6.1-sol)",
+        price: "Model-specific price",
+      },
+      {
+        name: "Google / Gemini 3.8 Flash (google/gemini-3.8-flash)",
+        price: "Model-specific price",
+      },
+      {
+        name: "Anthropic / Fable 5.1 (anthropic/claude-fable-5.1)",
+        price: "Model-specific price",
+      },
       { name: ":free models", price: "Free, with limits" },
     ],
     steps: [
@@ -476,14 +552,14 @@ const providersEn: Provider[] = [
     logo: "xai",
     tone: "from-slate-200/20 to-slate-400/10 text-slate-100",
     tagline: "Grok models through an independent API",
-    models: [{ name: "Grok 4.6", price: "USD 2.00 / 6.00 per 1 M" }],
+    models: [{ name: "Grok 4.7 (grok-4.7)", price: "USD 2.00 / 6.00 per 1 M" }],
     steps: [
       "Create an account and open xAI Console.",
       "Add credits, open API Keys, and select Create API Key.",
       "Copy it and select xAI inside AALIE.",
     ],
     pricing:
-      "For contexts up to 200k tokens, Grok 4.6 has the listed price. Longer contexts cost more.",
+      "For contexts up to 200k tokens, Grok 4.7 has the listed price. Longer contexts cost more.",
     recommendation:
       "Recommended when Grok or xAI ecosystem tools are specifically what you need.",
     links: [

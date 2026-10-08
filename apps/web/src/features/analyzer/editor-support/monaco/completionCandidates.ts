@@ -1,3 +1,6 @@
+import { extractTextualSymbols } from "@/features/analyzer/manual-guidance/context/extractSymbols";
+import type { EditorLocation } from "@/features/analyzer/manual-guidance/context/types";
+
 import { resolveSnippetAlias } from "../catalog/snippetAliases";
 import {
   completionSnippetCatalog,
@@ -32,10 +35,6 @@ const IDENTIFIER_KEYWORDS = new Set([
   "false",
 ]);
 
-const SIGNATURE_REGEX = /^\s*[A-Za-z_][A-Za-z0-9_]*\s*\(([^)]*)\)\s*BEGIN\b/gm;
-const ASSIGNMENT_REGEX = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(?:\[[^\]]+\])?\s*<-/;
-const FOR_LOOP_REGEX = /^\s*FOR\s+([A-Za-z_][A-Za-z0-9_]*)\s*<-/;
-
 export interface IdentifierCompletionCandidate {
   readonly type: "identifier";
   readonly identifierKind: "parameter" | "variable";
@@ -63,8 +62,10 @@ function normalizeCompletionText(value: string): string {
 }
 
 function matchesPrefix(value: string, prefix: string): boolean {
+  const normalizedPrefix = normalizeCompletionText(prefix);
   return (
-    prefix.length === 0 || normalizeCompletionText(value).startsWith(prefix)
+    normalizedPrefix.length === 0 ||
+    normalizeCompletionText(value).startsWith(normalizedPrefix)
   );
 }
 
@@ -94,41 +95,6 @@ function pushIdentifierCandidate(
   });
 }
 
-function extractSignatureParameters(sourceCode: string): string[] {
-  const parameters: string[] = [];
-
-  for (const match of sourceCode.matchAll(SIGNATURE_REGEX)) {
-    const rawParameters = match[1] ?? "";
-    for (const parameter of rawParameters.split(",")) {
-      const identifier = parameter.match(/[A-Za-z_][A-Za-z0-9_]*/)?.[0];
-      if (identifier) {
-        parameters.push(identifier);
-      }
-    }
-  }
-
-  return parameters;
-}
-
-function extractAssignedVariables(sourceCode: string): string[] {
-  const variables: string[] = [];
-
-  for (const line of sourceCode.split("\n")) {
-    const loopMatch = line.match(FOR_LOOP_REGEX);
-    if (loopMatch?.[1]) {
-      variables.push(loopMatch[1]);
-      continue;
-    }
-
-    const assignmentMatch = line.match(ASSIGNMENT_REGEX);
-    if (assignmentMatch?.[1]) {
-      variables.push(assignmentMatch[1]);
-    }
-  }
-
-  return variables;
-}
-
 export function extractIdentifierCandidates(
   sourceCode: string,
   prefix: string,
@@ -136,22 +102,23 @@ export function extractIdentifierCandidates(
   const normalizedPrefix = normalizeCompletionText(prefix);
   const seen = new Set<string>();
   const candidates: IdentifierCompletionCandidate[] = [];
+  const symbols = extractTextualSymbols(sourceCode, sourceCode.length);
 
-  for (const parameter of extractSignatureParameters(sourceCode)) {
+  for (const parameter of symbols.parameters) {
     pushIdentifierCandidate(
       candidates,
       seen,
-      parameter,
+      parameter.name,
       "parameter",
       normalizedPrefix,
     );
   }
 
-  for (const variable of extractAssignedVariables(sourceCode)) {
+  for (const variable of symbols.variables) {
     pushIdentifierCandidate(
       candidates,
       seen,
-      variable,
+      variable.name,
       "variable",
       normalizedPrefix,
     );
@@ -177,18 +144,63 @@ function isAlgorithmSnippet(snippet: SnippetDefinition): boolean {
   return snippet.id.startsWith("catalog-");
 }
 
+const EXPRESSION_LOCATIONS = new Set<EditorLocation>([
+  "CONDITION",
+  "EXPRESSION",
+  "RETURN_EXPRESSION",
+  "PARAMETER_LIST",
+]);
+
+function isStructuralSnippet(snippet: SnippetDefinition): boolean {
+  return (
+    snippet.insertKind === "block" ||
+    snippet.insertKind === "wrap-selection" ||
+    snippet.contextRules.includes("lineStart")
+  );
+}
+
+const BODY_SNIPPET_ORDER = [
+  "assign",
+  "if",
+  "for",
+  "while",
+  "repeat-until",
+  "call",
+  "return-value",
+];
+
+function contextSnippetRank(
+  snippet: SnippetDefinition,
+  location: EditorLocation | undefined,
+): number {
+  if (
+    !location ||
+    !["PROCEDURE_BODY", "IF_BODY", "LOOP_BODY"].includes(location)
+  ) {
+    return snippet.priority;
+  }
+  const index = BODY_SNIPPET_ORDER.indexOf(snippet.id);
+  return index === -1 ? snippet.priority : 10_000 - index;
+}
+
 export function buildSnippetCandidates(
   prefix: string,
   locale: SupportedLocale,
+  location?: EditorLocation,
 ): SnippetCompletionCandidate[] {
   const normalizedPrefix = normalizeCompletionText(prefix);
   const exactSnippet = normalizedPrefix
     ? resolveSnippetAlias(normalizedPrefix, locale)
     : null;
+  const locationSnippets = EXPRESSION_LOCATIONS.has(location ?? "UNKNOWN")
+    ? completionSnippetCatalog.filter(
+        (snippet) => !isStructuralSnippet(snippet),
+      )
+    : completionSnippetCatalog;
   const matchingSnippets =
     normalizedPrefix.length === 0
-      ? completionSnippetCatalog
-      : completionSnippetCatalog.filter((snippet) =>
+      ? locationSnippets
+      : locationSnippets.filter((snippet) =>
           getSnippetSearchTerms(snippet, locale).some((term) =>
             term.startsWith(normalizedPrefix),
           ),
@@ -207,7 +219,9 @@ export function buildSnippetCandidates(
       return leftIsExact ? -1 : 1;
     }
 
-    return right.priority - left.priority;
+    return (
+      contextSnippetRank(right, location) - contextSnippetRank(left, location)
+    );
   });
 
   const dedupedCandidates: SnippetCompletionCandidate[] = [];
@@ -236,10 +250,11 @@ export function buildCompletionCandidates(
   prefix: string,
   locale: string,
   limit = 5,
+  location?: EditorLocation,
 ): CompletionCandidate[] {
   const normalizedLocale: SupportedLocale = locale === "en" ? "en" : "es";
   const identifiers = extractIdentifierCandidates(sourceCode, prefix);
-  const snippets = buildSnippetCandidates(prefix, normalizedLocale);
+  const snippets = buildSnippetCandidates(prefix, normalizedLocale, location);
 
   return [...identifiers, ...snippets].slice(0, limit);
 }

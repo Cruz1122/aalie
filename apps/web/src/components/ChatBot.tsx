@@ -4,7 +4,13 @@ import { Key, RotateCcw, Send, User } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getApiKey, setApiKey, validateApiKey } from "@/hooks/useApiKey";
+import {
+  getApiKey,
+  setApiKey,
+  setSelectedApiModel,
+  validateApiKey,
+} from "@/hooks/useApiKey";
+import { useApiKeyModelSelection } from "@/hooks/useApiKeyModelSelection";
 import {
   type AssistantAvailabilityState,
   useAssistantAvailability,
@@ -18,8 +24,10 @@ import {
   isGeminiLikeError,
 } from "@/lib/chatbot-core";
 import { translateLlmError } from "@/lib/llm-error-translator";
+import { CUSTOM_MODEL_VALUE } from "@/lib/llm-model-catalog";
 
 import AALIEIcon from "./AALIEIcon";
+import ApiKeyModelFields from "./ApiKeyModelFields";
 import { GlobalLoader } from "./GlobalLoader";
 import MarkdownRenderer from "./MarkdownRenderer";
 
@@ -67,7 +75,39 @@ export default function ChatBot({
   const isCheckingAvailability =
     availability.isChecking && !availability.hasAny;
   const showApiKeyCard = !isCheckingAvailability && !availability.hasAny;
+  const {
+    provider: detectedProvider,
+    modelChoice,
+    customModel,
+    selectedModel,
+    isSelectedModelValid,
+    setModelChoice,
+    setCustomModel,
+  } = useApiKeyModelSelection(apiKeyInput);
+  const isCustomModelInput = modelChoice === CUSTOM_MODEL_VALUE;
+  const isCustomModelInvalid =
+    isCustomModelInput && customModel.length > 0 && !isSelectedModelValid;
   const closeButtonTitle = closeTitle || t("backToHome");
+
+  const handleApiKeyInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (isCustomModelInput) {
+      setCustomModel(event.target.value);
+      return;
+    }
+
+    setApiKeyInput(event.target.value);
+  };
+
+  const handleModelChoiceChange = (choice: string) => {
+    setModelChoice(choice);
+    if (choice === CUSTOM_MODEL_VALUE) {
+      window.requestAnimationFrame(() => {
+        document.getElementById("chat-api-key")?.focus();
+      });
+    }
+  };
 
   const scrollToBottom = (immediate = false) => {
     const delay = immediate ? 50 : 100;
@@ -257,12 +297,20 @@ export default function ChatBot({
   };
 
   const handleSaveApiKey = () => {
-    if (validateApiKey(apiKeyInput)) {
-      const success = setApiKey(apiKeyInput);
-      if (success) {
-        setApiKeyInput("");
-        setMessages([createBotMessage(welcomeMessage)]);
-      }
+    if (
+      !validateApiKey(apiKeyInput) ||
+      !detectedProvider ||
+      !isSelectedModelValid
+    ) {
+      return;
+    }
+
+    const keySaved = setApiKey(apiKeyInput);
+    const modelSaved =
+      keySaved && setSelectedApiModel(selectedModel, detectedProvider);
+    if (modelSaved) {
+      setApiKeyInput("");
+      setMessages([createBotMessage(welcomeMessage)]);
     }
   };
 
@@ -379,29 +427,57 @@ export default function ChatBot({
                 </Link>
                 .
               </p>
-              <div className="flex items-center gap-2 w-full max-w-[70%]">
+              <div className="flex w-full max-w-[70%] flex-wrap items-center gap-2">
                 <input
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={(event) => setApiKeyInput(event.target.value)}
-                  placeholder={tFooter("placeholder")}
-                  className={`flex-1 px-3 py-2 rounded-lg bg-white/5 border ${
-                    apiKeyInput && !validateApiKey(apiKeyInput)
-                      ? "border-red-500/50 focus:border-red-500"
-                      : apiKeyInput && validateApiKey(apiKeyInput)
-                        ? "border-green-500/50 focus:border-green-500"
-                        : "border-slate-600/50 focus:border-slate-500"
-                  } text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-1 ${
-                    apiKeyInput && !validateApiKey(apiKeyInput)
-                      ? "focus:ring-red-500/50"
-                      : apiKeyInput && validateApiKey(apiKeyInput)
-                        ? "focus:ring-green-500/50"
-                        : "focus:ring-slate-500/50"
+                  id="chat-api-key"
+                  type={isCustomModelInput ? "text" : "password"}
+                  value={isCustomModelInput ? customModel : apiKeyInput}
+                  onChange={handleApiKeyInputChange}
+                  placeholder={
+                    isCustomModelInput
+                      ? tFooter("customModelPlaceholder")
+                      : tFooter("placeholder")
+                  }
+                  aria-label={
+                    isCustomModelInput
+                      ? tFooter("customModelLabel")
+                      : tFooter("inputLabel")
+                  }
+                  aria-invalid={
+                    isCustomModelInput
+                      ? isCustomModelInvalid
+                      : Boolean(apiKeyInput && !validateApiKey(apiKeyInput))
+                  }
+                  className={`min-w-[140px] flex-1 rounded-lg border bg-white/5 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 ${
+                    isCustomModelInput
+                      ? isCustomModelInvalid
+                        ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/50"
+                        : "border-slate-600/50 focus:border-slate-500 focus:ring-slate-500/50"
+                      : apiKeyInput && !validateApiKey(apiKeyInput)
+                        ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/50"
+                        : apiKeyInput && validateApiKey(apiKeyInput)
+                          ? "border-green-500/50 focus:border-green-500 focus:ring-green-500/50"
+                          : "border-slate-600/50 focus:border-slate-500 focus:ring-slate-500/50"
                   } transition-all`}
                 />
+                {detectedProvider && (
+                  <ApiKeyModelFields
+                    provider={detectedProvider}
+                    modelChoice={modelChoice}
+                    customModel={customModel}
+                    onModelChoiceChange={handleModelChoiceChange}
+                    idPrefix="chat-api-key"
+                    compact
+                  />
+                )}
                 <button
+                  type="button"
                   onClick={handleSaveApiKey}
-                  disabled={!validateApiKey(apiKeyInput)}
+                  disabled={
+                    !validateApiKey(apiKeyInput) ||
+                    !detectedProvider ||
+                    !isSelectedModelValid
+                  }
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                     validateApiKey(apiKeyInput)
                       ? "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
@@ -411,9 +487,13 @@ export default function ChatBot({
                   {tCommon("save")}
                 </button>
               </div>
-              {apiKeyInput && !validateApiKey(apiKeyInput) && (
+              {isCustomModelInvalid ? (
+                <p className="text-red-400 text-xs">
+                  {tFooter("invalidModelHint")}
+                </p>
+              ) : apiKeyInput && !validateApiKey(apiKeyInput) ? (
                 <p className="text-red-400 text-xs">{tFooter("invalid")}</p>
-              )}
+              ) : null}
             </div>
           </div>
         ) : (

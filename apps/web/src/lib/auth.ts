@@ -86,7 +86,10 @@ function buildAuth() {
           audience: jwtAudience,
           expirationTime: "5m",
           getSubject: (session) => session.user.id,
-          definePayload: ({ user }) => ({ role: user.role }),
+          definePayload: ({ user }) => ({
+            role: user.role,
+            email: user.email,
+          }),
         },
       }),
       nextCookies(),

@@ -5,7 +5,8 @@ export type RateLimitScope =
   | "quiz"
   | "export_text"
   | "export_pdf"
-  | "llm";
+  | "llm"
+  | "llm_ucaldas";
 
 export interface BffPolicy {
   bodyLimitBytes: number;
@@ -48,6 +49,12 @@ export const POLICIES = {
     bodyLimitBytes: 256 * KIB,
     timeoutMs: 60_000,
     rateScope: "llm",
+    failClosedRateLimit: true,
+  },
+  llmUcaldas: {
+    bodyLimitBytes: 256 * KIB,
+    timeoutMs: 60_000,
+    rateScope: "llm_ucaldas",
     failClosedRateLimit: true,
   },
   exportText: {

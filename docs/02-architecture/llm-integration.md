@@ -55,9 +55,10 @@ El asistente embebido vive como una composición frontend:
 
 ### Configuración
 
-- endpoint configurable por `GEMINI_ENDPOINT_BASE`;
+- proveedor configurable por `LLM_PROVIDER` o detectable desde la API key (`gemini`, OpenAI-compatible, OpenRouter, xAI, Groq o Anthropic);
+- endpoint configurable por `GEMINI_ENDPOINT_BASE`, `OPENAI_COMPATIBLE_ENDPOINT_BASE`, `OPENROUTER_ENDPOINT_BASE`, `XAI_ENDPOINT_BASE`, `GROQ_ENDPOINT_BASE` o `ANTHROPIC_ENDPOINT_BASE`;
 - modelos configurables por `LLM_MODEL_CLASSIFY`, `LLM_MODEL_PARSER_ASSIST`, `LLM_MODEL_GENERAL`, `LLM_MODEL_REPAIR`, `LLM_MODEL_COMPARE`, `LLM_MODEL_RECURSION_DIAGRAM`, `LLM_MODEL_GENERATE_DIAGRAM`;
-- disponibilidad de API key por `API_KEY` del servidor o `localStorage` del cliente (reenviada al backend).
+- disponibilidad de API key por `API_KEY` del servidor o `sessionStorage` del cliente (reenviada al backend); una client key válida tiene precedencia y la server key automática queda restringida a `@ucaldas.edu.co`.
 
 ### Contexto estructurado del asistente
 
