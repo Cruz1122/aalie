@@ -12,6 +12,8 @@ function context(
     requestId: `request-${crypto.randomUUID()}`,
     authenticated: false,
     userId: null,
+    email: null,
+    isUniversityUser: false,
     role: null,
     subject: `visitor:${crypto.randomUUID()}`,
     visitorId: crypto.randomUUID(),
@@ -74,6 +76,12 @@ describe("MF3 BFF quota and identity gates", () => {
       rateScope: "llm",
       failClosedRateLimit: true,
     });
+    expect(POLICIES.llmUcaldas).toMatchObject({
+      bodyLimitBytes: 256 * 1024,
+      timeoutMs: 60_000,
+      rateScope: "llm_ucaldas",
+      failClosedRateLimit: true,
+    });
     expect(POLICIES.exportPdf).toMatchObject({
       bodyLimitBytes: 512 * 1024,
       timeoutMs: 130_000,
@@ -130,5 +138,28 @@ describe("MF3 BFF quota and identity gates", () => {
       status: 503,
       code: "RATE_LIMIT_UNAVAILABLE",
     });
+  });
+
+  it("authenticates the BFF request to the internal rate-limit endpoint", async () => {
+    vi.stubEnv("AALIE_RATE_LIMIT_SERVICE_TOKEN", "service-token");
+    vi.stubEnv("RATE_LIMIT_HMAC_SECRET", "test-only-hmac-secret");
+    const backend = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ allowed: true, retryAfterSeconds: 0 }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", backend);
+
+    await expect(
+      enforceRateLimit(context(), POLICIES.llm),
+    ).resolves.toMatchObject({
+      allowed: true,
+    });
+
+    const init = backend.mock.calls[0]?.[1] as RequestInit;
+    expect(new Headers(init.headers).get("x-aalie-rate-limit-service")).toBe(
+      "service-token",
+    );
   });
 });

@@ -8,6 +8,8 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   return proxyJsonRequest(request, {
     path: "/llm",
-    policy: POLICIES.llm,
+    maxBodyBytes: POLICIES.llm.bodyLimitBytes,
+    policy: (_body, context) =>
+      context.isUniversityUser ? POLICIES.llmUcaldas : POLICIES.llm,
   });
 }

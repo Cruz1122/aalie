@@ -21,7 +21,7 @@ La API recibe `postgresql+psycopg://` y Next recibe una URL estándar `postgresq
 
 El volumen `postgres-data` sobrevive a `docker compose down`; `down -v` es destructivo y queda reservado a pruebas con un proyecto/volumen aislado. Los backups `pg_dump -Fc` se guardan inicialmente en el mismo disco de la VM: no son recuperación ante pérdida del host y no se automatiza Object Storage en esta microfase.
 
-La migración Alembic de autenticación crea únicamente el schema `auth` y las tablas de Better Auth/JWKS; no se crean tablas de negocio ni rate limiting. Las migraciones futuras deben ser compatibles con la imagen anterior para que el rollback de imágenes sea seguro.
+La cadena actual de migraciones crea el schema `auth`, las tablas de Better Auth/JWKS y las tablas operativas `rate_limit_buckets` y `abuse_bans`, necesarias para cuotas de producto y bloqueos temporales de abuso LLM. No se crean tablas de negocio ni telemetría académica en esta fase. Las migraciones futuras deben ser compatibles con la imagen anterior para que el rollback de imágenes sea seguro.
 
 ## Alternativas descartadas
 

@@ -142,8 +142,8 @@ Vitest cubre estados de `AuthControls` y `ProfileView`, y forma parte del gate b
 
 ## Límites de esta microfase
 
-- No hay cuotas distintas para anónimo/autenticado en las features pedagógicas.
-- Better Auth solo aplica sus propios límites de autenticación.
+- El BFF aplica cuotas diferenciadas por scope para solicitudes anónimas y autenticadas en las features pedagógicas.
+- Better Auth mantiene sus límites de autenticación; la ruta LLM añade 5 RPM para identidades `@ucaldas.edu.co` autorizadas y protección backend contra bypass/abuso.
 - No hay `visitor_id` de producto para sesiones anónimas.
 - No hay persistencia server-side del progreso académico.
 - No hay enrolamiento de estudio ni UI de consentimiento experimental.

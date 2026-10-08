@@ -314,8 +314,8 @@ El asistente embebido (launcher flotante) no se renderiza en `/analyzer`, `/exam
 
 ### Causa probable
 
-1. No hay `API_KEY` configurada en el backend.
-2. `GEMINI_ENDPOINT_BASE` incorrecto.
+1. No hay una API key válida configurada en el backend o en el cliente.
+2. El endpoint del proveedor configurado es incorrecto (`GEMINI_ENDPOINT_BASE`, `OPENAI_COMPATIBLE_ENDPOINT_BASE`, `OPENROUTER_ENDPOINT_BASE`, `XAI_ENDPOINT_BASE`, `GROQ_ENDPOINT_BASE` o `ANTHROPIC_ENDPOINT_BASE`).
 3. El backend no puede contactar al proveedor LLM.
 
 ### Verificación
@@ -328,10 +328,11 @@ curl http://localhost:8000/llm/status
 ### Solución
 
 ```bash
-# Configurar API key
-export API_KEY="tu-gemini-key"
+# Configurar API key del proveedor elegido
+export API_KEY="tu-provider-key"
 
 # Verificar endpoint
+# Solo para Gemini; usa la variable del proveedor correspondiente para otros servicios.
 export GEMINI_ENDPOINT_BASE="https://generativelanguage.googleapis.com/v1beta/models"
 
 # Reiniciar backend
@@ -365,8 +366,8 @@ curl -X POST http://localhost:8000/llm -H "Content-Type: application/json" -d '{
 
 ### Solución
 
-1. Regenerar API key en la consola del proveedor (Gemini).
-2. Verificar que `GEMINI_ENDPOINT_BASE` es correcto.
+1. Regenerar API key en la consola del proveedor elegido.
+2. Verificar el endpoint correspondiente al proveedor detectado.
 3. Revisar cuota y límites de la cuenta.
 
 ### Prevención

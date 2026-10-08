@@ -8,11 +8,14 @@ import logging
 import re
 import socket
 import time
+from dataclasses import replace
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Tuple
 from uuid import uuid4
 
+from ...core.auth import IdentityClaims
 from .config import (
+    get_anthropic_endpoint_base,
     get_backend_llm_status,
     get_gemini_endpoint_base,
     get_job_config,
@@ -21,6 +24,7 @@ from .config import (
     get_timeout_seconds,
 )
 from .providers import (
+    AnthropicProvider,
     BaseLLMProvider,
     GeminiProvider,
     LLMProviderError,
@@ -30,7 +34,16 @@ from .providers import (
 
 logger = logging.getLogger(__name__)
 
-API_KEY_REGEX = re.compile(r"^AIza[0-9A-Za-z_-]{35,40}$")
+GEMINI_API_KEY_REGEX = re.compile(r"^AIza[0-9A-Za-z_-]{35,40}$")
+OPENAI_API_KEY_REGEX = re.compile(r"^sk-[A-Za-z0-9_-]{20,}$")
+ANTHROPIC_API_KEY_REGEX = re.compile(r"^sk-ant-[A-Za-z0-9_-]{20,}$")
+OPENROUTER_API_KEY_REGEX = re.compile(r"^sk-or-v1-[A-Za-z0-9_-]{20,}$")
+XAI_API_KEY_REGEX = re.compile(r"^xai-[A-Za-z0-9_-]{20,}$")
+GROQ_API_KEY_REGEX = re.compile(r"^gsk_[A-Za-z0-9_-]{20,}$")
+MODEL_ID_REGEX = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+UCALDAS_EMAIL_SUFFIX = "@ucaldas.edu.co"
+UCALDAS_OPENAI_MODEL = "gpt-5.4-mini"
+OPENAI_COMPATIBLE_PROVIDERS = {"openai_compatible", "openrouter", "xai", "groq"}
 
 
 def _redact_assistant_context_for_llm(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -63,10 +76,46 @@ def _redact_assistant_context_for_llm(data: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
-def _validate_api_key(key: str | None) -> bool:
+def detect_api_key_provider(key: str | None) -> str | None:
+    """Return the provider implied by a supported key format without exposing the key."""
+
     if not key or not isinstance(key, str):
-        return False
-    return API_KEY_REGEX.match(key.strip()) is not None
+        return None
+    normalized = key.strip()
+    if GEMINI_API_KEY_REGEX.fullmatch(normalized):
+        return "gemini"
+    if OPENROUTER_API_KEY_REGEX.fullmatch(normalized):
+        return "openrouter"
+    if ANTHROPIC_API_KEY_REGEX.fullmatch(normalized):
+        return "anthropic"
+    if XAI_API_KEY_REGEX.fullmatch(normalized):
+        return "xai"
+    if GROQ_API_KEY_REGEX.fullmatch(normalized):
+        return "groq"
+    if OPENAI_API_KEY_REGEX.fullmatch(normalized):
+        return "openai_compatible"
+    return None
+
+
+def _validate_api_key(key: str | None) -> bool:
+    return detect_api_key_provider(key) is not None
+
+
+def get_server_api_key() -> str | None:
+    """Resolve the server key from runtime-only environment variables."""
+
+    import os
+
+    for name in ("OPENAI_API_KEY", "API_KEY"):
+        value = os.getenv(name, "").strip()
+        if _validate_api_key(value):
+            return value
+    return None
+
+
+def is_ucaldas_identity(identity: IdentityClaims | None) -> bool:
+    email = identity.email.strip().casefold() if identity and identity.email else ""
+    return email.endswith(UCALDAS_EMAIL_SUFFIX)
 
 
 def _append_context(
@@ -123,9 +172,25 @@ def _extract_openai_text(provider_response: Dict[str, Any]) -> str:
     return content if isinstance(content, str) else ""
 
 
+def _extract_anthropic_text(provider_response: Dict[str, Any]) -> str:
+    content = provider_response.get("content")
+    if not isinstance(content, list):
+        return ""
+    text_blocks = [
+        block.get("text")
+        for block in content
+        if isinstance(block, dict)
+        and block.get("type") == "text"
+        and isinstance(block.get("text"), str)
+    ]
+    return "\n".join(text_blocks)
+
+
 def _extract_provider_text(provider_name: str, provider_response: Dict[str, Any]) -> str:
-    if provider_name == "openai_compatible":
+    if provider_name in OPENAI_COMPATIBLE_PROVIDERS:
         return _extract_openai_text(provider_response)
+    if provider_name == "anthropic":
+        return _extract_anthropic_text(provider_response)
     return _extract_gemini_text(provider_response)
 
 
@@ -212,35 +277,47 @@ def _normalize_repair_payload(provider_response: Dict[str, Any]) -> Dict[str, An
     return provider_response
 
 
-def create_provider() -> BaseLLMProvider:
-    provider = get_provider_name()
+def create_provider(provider_name: str | None = None) -> BaseLLMProvider:
+    provider = get_provider_name(provider_name)
     if provider == "gemini":
         return GeminiProvider(get_gemini_endpoint_base())
-    if provider == "openai_compatible":
-        return OpenAICompatibleProvider(get_openai_compatible_endpoint_base())
+    if provider in OPENAI_COMPATIBLE_PROVIDERS:
+        return OpenAICompatibleProvider(get_openai_compatible_endpoint_base(provider))
+    if provider == "anthropic":
+        return AnthropicProvider(get_anthropic_endpoint_base())
     raise ValueError(f"Proveedor LLM no soportado: {provider}")
 
 
-def resolve_api_key(request_api_key: str | None) -> Tuple[str | None, bool]:
-    import os
-
+def resolve_api_key(
+    request_api_key: str | None,
+    identity: IdentityClaims | None = None,
+) -> Tuple[str | None, bool]:
     if _validate_api_key(request_api_key):
         return request_api_key.strip(), False
 
-    server_key = os.getenv("API_KEY")
-    if _validate_api_key(server_key):
+    server_key = get_server_api_key()
+    if server_key and is_ucaldas_identity(identity):
         return server_key, True
     return None, False
 
 
-def get_status_payload() -> Dict[str, Any]:
-    _, has_server_key = resolve_api_key(None)
+def get_status_payload(identity: IdentityClaims | None = None) -> Dict[str, Any]:
+    server_key = get_server_api_key()
+    server_provider = detect_api_key_provider(server_key)
+    server_available = bool(server_key and is_ucaldas_identity(identity))
+    resolved_provider = get_provider_name(server_provider)
+    config = get_backend_llm_status(resolved_provider)
+    if server_available and server_provider == "openai_compatible":
+        config["jobs"] = {job: UCALDAS_OPENAI_MODEL for job in config["jobs"]}
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "config": get_backend_llm_status(),
-        "jobs": get_backend_llm_status().get("jobs", {}),
+        "config": config,
+        "jobs": config.get("jobs", {}),
         "apiKey": {
-            "serverAvailable": has_server_key,
+            "serverAvailable": server_available,
+            "configured": bool(server_key),
+            "provider": server_provider,
+            "serverModel": UCALDAS_OPENAI_MODEL if server_provider == "openai_compatible" else None,
         },
     }
 
@@ -305,11 +382,13 @@ def _normalize_response(
         or provider_response.get("usage_metadata"),
     }
 
-    if provider_name == "openai_compatible":
+    if provider_name in OPENAI_COMPATIBLE_PROVIDERS:
         choices = provider_response.get("choices")
         if isinstance(choices, list) and choices:
             first_choice = choices[0] if isinstance(choices[0], dict) else {}
             metadata["finishReason"] = first_choice.get("finish_reason")
+    elif provider_name == "anthropic":
+        metadata["finishReason"] = provider_response.get("stop_reason")
     else:
         candidates = provider_response.get("candidates")
         if isinstance(candidates, list) and candidates:
@@ -323,19 +402,31 @@ def _normalize_response(
     }
 
 
-def execute_llm_request(payload: Dict[str, Any]) -> Dict[str, Any]:
+def execute_llm_request(
+    payload: Dict[str, Any], identity: IdentityClaims | None = None
+) -> Dict[str, Any]:
     request_id = str(uuid4())
     start = time.perf_counter()
 
     job = payload.get("job", "general")
     locale = payload.get("locale")
     prompt = payload.get("prompt", "")
+    requested_model = payload.get("model")
     chat_history = payload.get("chatHistory")
     context = payload.get("context")
     assistant_context = payload.get("assistantContext")
 
-    api_key, used_server_key = resolve_api_key(payload.get("apiKey"))
+    server_key = get_server_api_key()
+    api_key, used_server_key = resolve_api_key(payload.get("apiKey"), identity)
     if not api_key:
+        if server_key and not is_ucaldas_identity(identity):
+            return {
+                "ok": False,
+                "error": "La API key del servidor está reservada para cuentas @ucaldas.edu.co",
+                "errorCode": "LLM_SERVER_KEY_RESTRICTED",
+                "requestId": request_id,
+                "status": 403,
+            }
         return {
             "ok": False,
             "error": "API key LLM no disponible",
@@ -353,16 +444,33 @@ def execute_llm_request(payload: Dict[str, Any]) -> Dict[str, Any]:
             "status": 400,
         }
 
-    job_config = get_job_config(job, locale)
+    if requested_model is not None:
+        if not isinstance(requested_model, str) or not MODEL_ID_REGEX.fullmatch(
+            requested_model.strip()
+        ):
+            return {
+                "ok": False,
+                "error": "model debe ser un identificador de modelo válido",
+                "errorCode": "LLM_MODEL_INVALID",
+                "requestId": request_id,
+                "status": 400,
+            }
+
+    key_provider = detect_api_key_provider(api_key)
+    provider_name = get_provider_name(key_provider)
+    job_config = get_job_config(job, locale, provider_name)
+    if requested_model and not used_server_key:
+        job_config = replace(job_config, model=requested_model.strip())
+    if used_server_key and provider_name == "openai_compatible":
+        job_config = replace(job_config, model=UCALDAS_OPENAI_MODEL)
     user_prompt = _append_context(prompt.strip(), context, assistant_context)
     messages = _build_messages(
         user_prompt, chat_history if isinstance(chat_history, list) else None
     )
 
-    provider = create_provider()
+    provider = create_provider(provider_name)
 
     try:
-        provider_name = get_provider_name()
         provider_response = provider.generate_content(
             ProviderRequest(
                 model=job_config.model,
@@ -377,13 +485,38 @@ def execute_llm_request(payload: Dict[str, Any]) -> Dict[str, Any]:
             )
         )
         normalized_data = _normalize_response(job_config.job, provider_name, provider_response)
+
+        finish_reason = normalized_data.get("metadata", {}).get("finishReason")
+        if (
+            job_config.schema
+            and normalized_data.get("structured") is None
+            and isinstance(finish_reason, str)
+            and finish_reason.lower() in {"length", "max_tokens"}
+        ):
+            elapsed = int((time.perf_counter() - start) * 1000)
+            logger.warning(
+                "llm_request_truncated request_id=%s job=%s provider=%s model=%s latency_ms=%s used_server_key=%s",
+                request_id,
+                job_config.job,
+                provider_name,
+                job_config.model,
+                elapsed,
+                used_server_key,
+            )
+            return {
+                "ok": False,
+                "error": "La respuesta del proveedor LLM fue truncada por el límite de tokens; intenta generar una respuesta más compacta.",
+                "errorCode": "LLM_OUTPUT_TRUNCATED",
+                "requestId": request_id,
+                "status": 502,
+            }
     except LLMProviderError as exc:
         elapsed = int((time.perf_counter() - start) * 1000)
         logger.warning(
             "llm_request_failed request_id=%s job=%s provider=%s status=%s code=%s latency_ms=%s used_server_key=%s",
             request_id,
             job_config.job,
-            get_provider_name(),
+            provider_name,
             exc.status_code,
             exc.code,
             elapsed,
@@ -434,7 +567,7 @@ def execute_llm_request(payload: Dict[str, Any]) -> Dict[str, Any]:
         "llm_request_ok request_id=%s job=%s provider=%s model=%s latency_ms=%s used_server_key=%s",
         request_id,
         job_config.job,
-        get_provider_name(),
+        provider_name,
         job_config.model,
         elapsed,
         used_server_key,
@@ -443,7 +576,7 @@ def execute_llm_request(payload: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "ok": True,
         "job": job_config.job,
-        "provider": get_provider_name(),
+        "provider": provider_name,
         "model": job_config.model,
         "requestId": request_id,
         "data": normalized_data,

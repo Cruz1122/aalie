@@ -7,7 +7,8 @@
 - `/api/llm` y `/api/llm/status` en Next funcionan como proxy interno.
 - El backend FastAPI (`/llm`, `/llm/status`) es el unico punto autorizado para ejecutar requests al proveedor.
 - Configuracion de provider, modelos, timeouts y API keys vive en `apps/api/app/modules/llm`.
-- El frontend conserva soporte opcional para API key en localStorage, pero solo la reenvia al backend cuando no hay `API_KEY` de servidor.
+- El frontend conserva soporte opcional para una API key propia en `sessionStorage` durante la sesión del navegador y la reenvía al backend cuando el usuario la proporciona.
+- La clave server-side no se copia a localStorage ni se expone al navegador; `GET /api/llm/status` solo reporta disponibilidad contextual para una cuenta `@ucaldas.edu.co` autenticada.
 
 ### Archivos principales
 
@@ -21,7 +22,7 @@
 ### Selección de modelo/job
 
 - La seleccion de modelo/job se resuelve en backend FastAPI.
-- `POST /api/llm` mantiene el contrato de entrada (`job`, `prompt`, `chatHistory`, `assistantContext`, `apiKey`) para no romper la UI.
+- `POST /api/llm` mantiene el contrato de entrada (`job`, `prompt`, `chatHistory`, `assistantContext`, `apiKey`) y acepta `model` opcional con el ID exacto del modelo.
 - El proxy no contiene detalles de proveedor ni prompts.
 
 ### Consumo de status/modelos activos
@@ -38,10 +39,10 @@
       "timestamp": "2025-11-01T12:00:00.000Z",
       "config": { "...": "info extendida" },
       "jobs": {
-        "parser_assist": "gemini-3-flash-preview",
-        "general": "gemini-2.5-flash",
-        "repair": "gemini-3-flash-preview",
-        "compare": "gemini-3-flash-preview"
+        "parser_assist": "gemini-3.8-flash",
+        "general": "gemini-3.8-flash",
+        "repair": "gemini-3.8-flash",
+        "compare": "gemini-3.8-flash"
       }
     }
   }
@@ -50,7 +51,7 @@
 ### Configuracion
 
 - Variables LLM ahora residen en `apps/api/.env`.
-- Variables clave: `API_KEY`, `GEMINI_ENDPOINT_BASE`, `LLM_MODEL_CLASSIFY`, `LLM_MODEL_PARSER_ASSIST`, `LLM_MODEL_GENERAL`, `LLM_MODEL_REPAIR`, `LLM_MODEL_COMPARE`, `LLM_MODEL_RECURSION_DIAGRAM`, `LLM_MODEL_GENERATE_DIAGRAM`.
+- Variables clave del API: `API_KEY`, `OPENAI_API_KEY`, `LLM_PROVIDER`, `GEMINI_ENDPOINT_BASE`, `OPENAI_COMPATIBLE_ENDPOINT_BASE`, `OPENROUTER_ENDPOINT_BASE`, `XAI_ENDPOINT_BASE`, `GROQ_ENDPOINT_BASE`, `ANTHROPIC_ENDPOINT_BASE`, `LLM_MODEL_CLASSIFY`, `LLM_MODEL_PARSER_ASSIST`, `LLM_MODEL_GENERAL`, `LLM_MODEL_REPAIR`, `LLM_MODEL_COMPARE`, `LLM_MODEL_RECURSION_DIAGRAM`, `LLM_MODEL_GENERATE_DIAGRAM`. El BFF usa `AALIE_RATE_LIMIT_SERVICE_TOKEN` (o el fallback `RATE_LIMIT_HMAC_SECRET`) para autenticar sus comprobaciones de cuota.
 
 ### ¿Como agregar o modificar un job/modelo?
 
@@ -103,7 +104,8 @@ llm/
 
 - **¿Dónde están prompts y modelos?** En backend FastAPI.
 - **¿Cómo saber el modelo activo?** Consulta `/api/llm/status` (proxy de `/llm/status`).
-- **¿Dónde se valida la API key?** En backend, con prioridad a `API_KEY` de servidor.
+- **¿Dónde se valida la API key?** En backend. Se detectan formatos Gemini (`AIza...`), OpenAI (`sk-proj...`), Anthropic (`sk-ant...`), OpenRouter (`sk-or-v1...`), xAI (`xai...`) y Groq (`gsk_...`). La server key solo se habilita automáticamente para cuentas autenticadas `@ucaldas.edu.co` y usa `gpt-5.4-mini` cuando es OpenAI.
+- **¿Cómo se elige el modelo?** El frontend muestra un catálogo por proveedor y permite escribir un ID personalizado. El backend valida su forma, deriva el proveedor a partir de la clave y nunca permite que una cuenta externa cambie el modelo de la clave institucional.
 
 ---
 

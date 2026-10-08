@@ -54,4 +54,23 @@ describe("completion candidates", () => {
       candidates.length,
     );
   });
+
+  it("hides statement snippets inside a condition", () => {
+    const candidates = buildSnippetCandidates("wh", "en", "CONDITION");
+
+    expect(candidates.map((candidate) => candidate.snippet.id)).not.toContain(
+      "while",
+    );
+    expect(
+      buildSnippetCandidates("wh", "en", "PROCEDURE_BODY").some(
+        (candidate) => candidate.snippet.id === "while",
+      ),
+    ).toBe(true);
+  });
+
+  it("matches identifier prefixes continuously without case sensitivity", () => {
+    expect(
+      extractIdentifierCandidates(source, "LEF").map((item) => item.label),
+    ).toEqual(["left"]);
+  });
 });

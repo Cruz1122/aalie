@@ -437,9 +437,22 @@
       "notConfigured": "Configure your API Key",
       "invalid": "Invalid API Key",
       "inEnv": "API Key saved on server",
-      "inLocalStorage": "API Key saved in this browser",
+      "inLocalStorage": "API key saved only for this browser session",
       "placeholder": "Enter your API key",
+      "inputLabel": "Provider API key",
       "invalidHint": "Invalid API Key",
+      "providerDetected": "Detected provider: {provider}",
+      "modelLabel": "Model",
+      "customModelOption": "Custom (enter the exact ID)",
+      "customModelLabel": "Exact model ID",
+      "customModelPlaceholder": "e.g. gpt-6.1-sol",
+      "customModelHint": "The exact model ID is sent to the API. If it is not listed, enter it here.",
+      "invalidModelHint": "Enter a valid model ID.",
+      "tier": {
+        "fast": "Fast / economical",
+        "balanced": "Balanced",
+        "best": "Best quality"
+      },
       "geminiHintPre": "Enter your Gemini API Key to enable AI functions. You can get it at ",
       "geminiHintLinkText": "Google AI Studio",
       "geminiHintPost": ".",
@@ -735,6 +748,284 @@
         "functions": "Functions and returns",
         "templates": "Templates",
         "other": "Other"
+      }
+    },
+    "manualGuidance": {
+      "welcome": {
+        "title": "Let's build an algorithm together!",
+        "description": "We will guide you step by step from the function to the analysis.",
+        "next": "Next",
+        "knowHow": "I know how to do this",
+        "skip": "Skip"
+      },
+      "context": {
+        "eyebrow": "Contextual guidance",
+        "intro": {
+          "title": "Your next step starts here",
+          "description": "As you write, learning-focused recommendations will appear here based on what you are trying to do."
+        },
+        "empty": { "title": "Start your algorithm" },
+        "topLevel": { "title": "Structure the algorithm" },
+        "signature": { "title": "Complete the signature" },
+        "parameters": { "title": "Define the parameters" },
+        "body": { "title": "Build the body" },
+        "condition": { "title": "Complete the condition" },
+        "expression": { "title": "Complete the expression" },
+        "ifBody": { "title": "Write the branch" },
+        "loopBody": { "title": "Write the loop" },
+        "return": { "title": "Complete the result" },
+        "selection": { "title": "Transform your selection" },
+        "unknown": {
+          "title": "Keep writing",
+          "description": "There is not enough evidence yet to suggest a concrete structure."
+        }
+      },
+      "tutorial": {
+        "eyebrow": "Guided path",
+        "return": "Back to tutorial",
+        "close": "Exit guide",
+        "skipStep": "Skip step",
+        "previous": "Previous",
+        "next": "Continue",
+        "noParameters": "It needs no parameters",
+        "progress": "Step {current} of {total}",
+        "satisfied": "This step is detected in your code.",
+        "pending": "Complete this step in the editor to continue.",
+        "steps": {
+          "header": {
+            "title": "Define the function",
+            "description": "Start with a name and a BEGIN/END block."
+          },
+          "parameters": {
+            "title": "Decide what it receives",
+            "description": "A parameter can be scalar, an array, a range, or an object. You can also say that no parameters are needed."
+          },
+          "firstAction": {
+            "title": "Bring the algorithm to life",
+            "description": "Give the algorithm a first action to transform data or prepare a result."
+          },
+          "controlFlow": {
+            "title": "Control the path",
+            "description": "Choose a condition or a loop to decide how the algorithm moves forward."
+          },
+          "output": {
+            "title": "Produce a result",
+            "description": "Use RETURN to deliver the result of a path."
+          },
+          "review": {
+            "title": "Review and analyze",
+            "description": "When the grammar is complete you can run the formal analysis."
+          }
+        },
+        "examples": {
+          "header": "search(n) BEGIN\n  ...\nEND",
+          "parameters": "search(n) BEGIN\n  ...\nEND",
+          "firstAction": "result <- 0;",
+          "controlFlow": "IF (n > 0) THEN BEGIN\n  ...\nEND",
+          "controlFlowOptions": {
+            "if": "IF (condition) THEN BEGIN\n  ...\nEND",
+            "ifElse": "IF (condition) THEN BEGIN\n  ...\nEND ELSE BEGIN\n  ...\nEND",
+            "for": "FOR i <- 1 TO n DO BEGIN\n  ...\nEND",
+            "while": "WHILE (condition) DO BEGIN\n  ...\nEND",
+            "repeatUntil": "REPEAT\n  ...\nUNTIL (condition);"
+          },
+          "output": "RETURN result;",
+          "review": "Analyze → O(n)"
+        }
+      },
+      "actions": {
+        "insert": "Insert example",
+        "applyWithTabBefore": "Press",
+        "applyWithTabAfter": "to apply",
+        "scalarParameter": "Scalar",
+        "arrayParameter": "Array",
+        "rangeParameter": "Range",
+        "objectParameter": "Object",
+        "if": "IF condition",
+        "ifElse": "IF / ELSE condition",
+        "for": "FOR loop",
+        "while": "WHILE loop",
+        "repeatUntil": "REPEAT / UNTIL loop",
+        "focus": "Focus editor",
+        "analyze": "Analyze"
+      },
+      "parameterTerms": {
+        "scalar": {
+          "label": "Scalar parameter",
+          "definition": "Represents one value, such as n, start, or limit. Use it when the procedure needs an individual input rather than a collection. For example, n can indicate the problem size."
+        },
+        "array": {
+          "label": "Array parameter",
+          "definition": "Represents a collection of values accessed through indices. In A[n], A is the array and n identifies the position or dimension to use."
+        },
+        "range": {
+          "label": "Range parameter",
+          "definition": "Represents a segment bounded by a start and an end. The A[n]..[m] notation means working from position n through position m, usually to traverse or analyze part of an array."
+        },
+        "object": {
+          "label": "Object parameter",
+          "definition": "Represents a compound value created from a class, including its properties and methods. In Clase objeto, Clase is the type and objeto is the instance name received by the procedure."
+        }
+      },
+      "tutorialTerms": {
+        "action": {
+          "term": "action",
+          "label": "Action",
+          "definition": "An instruction that transforms data, stores a value, or prepares the algorithm's next step."
+        },
+        "condition": {
+          "term": "condition",
+          "label": "Condition",
+          "definition": "An expression evaluated as true or false to choose which path to follow."
+        },
+        "loop": {
+          "term": "loop",
+          "label": "Loop",
+          "definition": "A structure that repeats a block of instructions while a rule holds or across a range."
+        },
+        "return": {
+          "term": "RETURN",
+          "label": "Return",
+          "definition": "The instruction that ends one procedure path and sends a value back to its caller."
+        },
+        "result": {
+          "term": "result",
+          "label": "Result",
+          "definition": "The data that the procedure produces and communicates when its work is complete."
+        },
+        "path": {
+          "term": "path",
+          "label": "Execution path",
+          "definition": "The sequence of instructions that runs according to the algorithm's conditions and loops."
+        }
+      },
+      "cards": {
+        "header": {
+          "title": "Header",
+          "description": "A procedure has a name, optional parameters, and BEGIN/END."
+        },
+        "scalar": {
+          "title": "Scalar parameter",
+          "description": "A value such as n, start, or limit."
+        },
+        "array": {
+          "title": "Array or range",
+          "description": "An array may include one or several dimensions and a range."
+        },
+        "assignment": {
+          "title": "Assignment",
+          "description": "Store a value with <- and finish the statement."
+        },
+        "if": {
+          "title": "IF decision",
+          "description": "Run a block when a condition is true."
+        },
+        "loop": {
+          "title": "Loop",
+          "description": "Repeat a block with FOR, WHILE, or REPEAT."
+        },
+        "output": {
+          "title": "Output",
+          "description": "Return the value that represents the solution."
+        },
+        "review": {
+          "title": "Formal analysis",
+          "description": "The analyzer computes algorithm costs and behavior."
+        }
+      },
+      "families": {
+        "loop": "See loop variants",
+        "decision": "See decision variants"
+      },
+      "recommendations": {
+        "algorithm-header": {
+          "title": "Give your algorithm a structure",
+          "description": "Start with the header every procedure needs."
+        },
+        "comment": {
+          "title": "Clarify the intention",
+          "description": "Leave a clue about what your algorithm should solve."
+        },
+        "assign": {
+          "title": "Give it a first action",
+          "description": "Store a value so the algorithm can start working."
+        },
+        "if": {
+          "title": "Make the algorithm choose",
+          "description": "Add a condition to choose between different paths."
+        },
+        "for": {
+          "title": "Make the algorithm repeat a step",
+          "description": "Traverse a range with a counter."
+        },
+        "while": {
+          "title": "Repeat while it is needed",
+          "description": "Keep the block active while a condition holds."
+        },
+        "repeat-until": {
+          "title": "Define when it should stop",
+          "description": "Repeat the block until an exit condition is reached."
+        },
+        "begin-end": {
+          "title": "Organize this block",
+          "description": "Group the selection inside BEGIN/END to give it structure."
+        },
+        "call": {
+          "title": "Connect another procedure",
+          "description": "Reuse part of the algorithm by calling another function."
+        },
+        "return-value": {
+          "title": "Deliver the result",
+          "description": "Return the value that represents the procedure's solution."
+        },
+        "comparison": {
+          "title": "Clarify the condition",
+          "description": "Compare values so the algorithm knows which path to take."
+        },
+        "and": {
+          "title": "Combine two conditions",
+          "description": "Make both rules hold at the same time."
+        },
+        "or": {
+          "title": "Choose between two conditions",
+          "description": "Continue when either rule is satisfied."
+        },
+        "not": {
+          "title": "Invert the condition",
+          "description": "Change the logical result from true to false or the other way around."
+        },
+        "symbols": {
+          "title": "Continue with available data",
+          "description": "Use a parameter or variable that already exists in your algorithm."
+        },
+        "array-index": {
+          "title": "Look inside the array",
+          "description": "Access the position you need to continue."
+        },
+        "parameter-symbols": {
+          "title": "Choose the right parameter",
+          "description": "Use a clear, consistent name to explain the input."
+        },
+        "scalar-parameter": {
+          "title": "Use a scalar parameter",
+          "description": "A single value, such as n, when the procedure needs one input."
+        },
+        "array-parameter": {
+          "title": "Use an array",
+          "description": "An indexed collection, such as A[n], for walking several elements."
+        },
+        "range-parameter": {
+          "title": "Use a range",
+          "description": "An interval A[n]..[m] when the procedure works between two bounds."
+        },
+        "object-parameter": {
+          "title": "Use an object",
+          "description": "An instance, such as Clase objeto, when the input is a structure."
+        },
+        "analyze": {
+          "title": "Your algorithm looks ready",
+          "description": "Run formal analysis to understand its complexity."
+        }
       }
     },
     "loopInvariant": {
@@ -1306,10 +1597,12 @@
       "parseErrorDetected": "Syntax error detected",
       "verifyError": "Error verifying code",
       "unknownLlmError": "Unknown LLM error",
-      "llmErrorApiKey": "Configure your Gemini API Key in settings to use AI features.",
+      "llmErrorApiKey": "Configure a valid provider API key in settings to use AI features.",
+      "llmErrorModel": "The model ID is invalid. Check the exact name accepted by your provider.",
       "llmErrorQuota": "Usage quota exceeded. Try again later or check your plan.",
       "llmErrorRateLimit": "Too many requests. Wait a few seconds and try again.",
       "llmErrorTimeout": "The request took too long. Please try again.",
+      "llmErrorOutputTruncated": "The model response was too long. Please try again.",
       "llmErrorServer": "Temporary service error. Try again in a few minutes.",
       "llmErrorBlocked": "Content was filtered by safety policies.",
       "llmErrorUnavailable": "Service unavailable. Check your connection.",
@@ -1826,7 +2119,9 @@
         },
         {
           "title": "Information that may be processed",
-          "paragraphs": ["Depending on the features you use, AALIE may work with:"],
+          "paragraphs": [
+            "Depending on the features you use, AALIE may work with:"
+          ],
           "items": [
             "Pseudocode that you write or upload for analysis.",
             ".txt files that you choose to open through the editor.",
@@ -1838,7 +2133,9 @@
             "Results, costs, traces, recurrences, warnings, and reports derived from the analysis.",
             "Any other information that you voluntarily enter into a feature that clearly requests it."
           ],
-          "paragraphsAfter": ["You do not need to provide sensitive information to use AALIE normally."]
+          "paragraphsAfter": [
+            "You do not need to provide sensitive information to use AALIE normally."
+          ]
         },
         {
           "title": "Account and Google sign-in",
@@ -1886,7 +2183,9 @@
         },
         {
           "title": "Educational activity and quizzes",
-          "paragraphs": ["AALIE may record information related to your educational activity, such as:"],
+          "paragraphs": [
+            "AALIE may record information related to your educational activity, such as:"
+          ],
           "items": [
             "Quizzes started or completed.",
             "Questions presented.",
@@ -1941,7 +2240,9 @@
         },
         {
           "title": "Information AALIE does not need",
-          "paragraphs": ["AALIE does not need the following for its ordinary operation:"],
+          "paragraphs": [
+            "AALIE does not need the following for its ordinary operation:"
+          ],
           "items": [
             "Banking or payment data.",
             "Precise geographic location.",
@@ -1974,7 +2275,9 @@
             "Comply with legal obligations.",
             "Conduct academic studies only when there is valid participation for that purpose."
           ],
-          "paragraphsAfter": ["We will not use the information for a substantially different purpose without first meeting the applicable information and authorization requirements."]
+          "paragraphsAfter": [
+            "We will not use the information for a substantially different purpose without first meeting the applicable information and authorization requirements."
+          ]
         },
         {
           "title": "Research and ordinary use",
@@ -2010,7 +2313,9 @@
         },
         {
           "title": "Data excluded from the academic dataset",
-          "paragraphs": ["As a general rule, datasets intended for academic analysis should not directly include:"],
+          "paragraphs": [
+            "As a general rule, datasets intended for academic analysis should not directly include:"
+          ],
           "items": [
             "Your name.",
             "Your email address.",
@@ -2022,7 +2327,9 @@
             "Complete questions sent to an AI assistant.",
             "Complete answers generated by that assistant."
           ],
-          "paragraphsAfter": ["If future research needed to use different information, it would have to be specifically disclosed and the applicable authorizations or approvals obtained."]
+          "paragraphsAfter": [
+            "If future research needed to use different information, it would have to be specifically disclosed and the applicable authorizations or approvals obtained."
+          ]
         },
         {
           "title": "Pseudonymization and identity protection",
@@ -2075,7 +2382,9 @@
         },
         {
           "title": "Data subject rights",
-          "paragraphs": ["As the data subject, you have the rights recognized by Colombian law, including:"],
+          "paragraphs": [
+            "As the data subject, you have the rights recognized by Colombian law, including:"
+          ],
           "items": [
             "Know which personal data is being processed.",
             "Update information that has changed.",
@@ -2088,7 +2397,9 @@
             "Submit questions or complaints.",
             "Go to the Superintendence of Industry and Commerce when the legal requirements are met."
           ],
-          "paragraphsAfter": ["These rights are recognized in Law 1581 of 2012. Deletion or revocation may be limited when a legal obligation or legitimate reason requires certain information to be retained."]
+          "paragraphsAfter": [
+            "These rights are recognized in Law 1581 of 2012. Deletion or revocation may be limited when a legal obligation or legitimate reason requires certain information to be retained."
+          ]
         },
         {
           "title": "Requests and identity verification",

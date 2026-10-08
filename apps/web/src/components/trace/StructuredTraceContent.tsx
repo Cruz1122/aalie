@@ -4,7 +4,7 @@ import type { Program, ProcDef, ParamNode } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useRef, useEffect, useMemo, useState } from "react";
 
-import { getApiKey } from "@/hooks/useApiKey";
+import { getApiKey, getSelectedApiModel } from "@/hooks/useApiKey";
 import { translateLlmError } from "@/lib/llm-error-translator";
 import { getNormalizedLlmText } from "@/lib/llm-response";
 import type {
@@ -400,6 +400,7 @@ export default function StructuredTraceContent({
           job: "explain",
           prompt,
           locale: safeLocale,
+          model: getSelectedApiModel() || undefined,
           ...(clientApiKey ? { apiKey: clientApiKey } : {}),
         }),
       });

@@ -22,6 +22,7 @@ from .modules.classification.router import router as classify_router
 from .modules.export.asset_registry import resolve_latex_asset_registry
 from .modules.export.router import router as export_router
 from .modules.llm.router import router as llm_router
+from .modules.llm.schemas import MAX_LLM_REQUEST_BYTES
 from .modules.parsing.router import router as parse_router
 from .modules.quizzes.router import router as quizzes_router
 from .modules.rate_limits.router import router as rate_limits_router
@@ -29,12 +30,88 @@ from .modules.studies.router import router as studies_router
 from .modules.studies.telemetry import event_for_path, record_request_event
 
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+root_env_path = str(Path(__file__).resolve().parents[3] / ".env")
+
+
+class LLMBodyLimitMiddleware:
+    """Reject oversized LLM bodies before FastAPI parses or materializes them."""
+
+    def __init__(self, app, max_bytes: int):
+        self.app = app
+        self.max_bytes = max_bytes
+
+    @staticmethod
+    async def _send_too_large(scope, receive, send) -> None:
+        response = JSONResponse(
+            {
+                "ok": False,
+                "error": "LLM request payload is too large",
+                "errorCode": "LLM_PAYLOAD_TOO_LARGE",
+            },
+            status_code=413,
+        )
+        await response(scope, receive, send)
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http" or scope.get("path") != "/llm" or scope.get(
+            "method"
+        ) != "POST":
+            await self.app(scope, receive, send)
+            return
+
+        headers = dict(scope.get("headers", []))
+        raw_content_length = headers.get(b"content-length")
+        if raw_content_length:
+            try:
+                if int(raw_content_length) > self.max_bytes:
+                    await self._send_too_large(scope, receive, send)
+                    return
+            except ValueError:
+                pass
+
+        chunks: list[bytes] = []
+        received_bytes = 0
+        disconnected = False
+        while True:
+            message = await receive()
+            message_type = message.get("type")
+            if message_type == "http.disconnect":
+                disconnected = True
+                break
+            if message_type != "http.request":
+                continue
+
+            chunk = message.get("body", b"")
+            received_bytes += len(chunk)
+            if received_bytes > self.max_bytes:
+                await self._send_too_large(scope, receive, send)
+                return
+            chunks.append(chunk)
+            if not message.get("more_body", False):
+                break
+
+        body = b"".join(chunks)
+        delivered = False
+
+        async def replay_receive():
+            nonlocal delivered
+            if delivered:
+                return {"type": "http.disconnect"}
+            delivered = True
+            if disconnected:
+                return {"type": "http.disconnect"}
+            return {"type": "http.request", "body": body, "more_body": False}
+
+        await self.app(scope, replay_receive, send)
 
 
 def create_app() -> FastAPI:
+    load_dotenv(root_env_path)
     load_dotenv(env_path)
 
     app = FastAPI(title="algorithmic-analysis API", version="0.1.0")
+
+    app.add_middleware(LLMBodyLimitMiddleware, max_bytes=MAX_LLM_REQUEST_BYTES)
 
     if get_cors_enabled():
         app.add_middleware(

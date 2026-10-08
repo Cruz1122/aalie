@@ -437,9 +437,22 @@
       "notConfigured": "Configura tu API Key",
       "invalid": "API Key inválida",
       "inEnv": "API Key guardada en el servidor",
-      "inLocalStorage": "API Key guardada en este navegador",
+      "inLocalStorage": "API Key guardada solo en esta sesión del navegador",
       "placeholder": "Ingresa tu API key",
+      "inputLabel": "API key del proveedor",
       "invalidHint": "API Key inválida",
+      "providerDetected": "Proveedor detectado: {provider}",
+      "modelLabel": "Modelo",
+      "customModelOption": "Personalizado (escribe el ID exacto)",
+      "customModelLabel": "ID exacto del modelo",
+      "customModelPlaceholder": "Ej. gpt-6.1-sol",
+      "customModelHint": "El valor enviado a la API es el ID exacto del modelo. Si no aparece en la lista, escríbelo aquí.",
+      "invalidModelHint": "Escribe un ID de modelo válido.",
+      "tier": {
+        "fast": "Rápido / económico",
+        "balanced": "Equilibrado",
+        "best": "Mejor calidad"
+      },
       "geminiHintPre": "Ingresa tu API Key de Gemini para habilitar las funciones con IA. Puedes obtenerla en ",
       "geminiHintLinkText": "Google AI Studio",
       "geminiHintPost": ".",
@@ -736,6 +749,284 @@
         "functions": "Funciones y retornos",
         "templates": "Plantillas",
         "other": "Otros"
+      }
+    },
+    "manualGuidance": {
+      "welcome": {
+        "title": "¡Construyamos un algoritmo juntos!",
+        "description": "Te guiaremos paso a paso desde la función hasta el análisis.",
+        "next": "Siguiente",
+        "knowHow": "Ya sé cómo hacerlo",
+        "skip": "Omitir"
+      },
+      "context": {
+        "eyebrow": "Guía contextual",
+        "intro": {
+          "title": "Tu próximo paso está aquí",
+          "description": "Mientras escribes, aquí aparecerán recomendaciones pedagógicas según lo que estés intentando hacer."
+        },
+        "empty": { "title": "Empieza tu algoritmo" },
+        "topLevel": { "title": "Estructura el algoritmo" },
+        "signature": { "title": "Completa la firma" },
+        "parameters": { "title": "Define los parámetros" },
+        "body": { "title": "Construye el cuerpo" },
+        "condition": { "title": "Completa la condición" },
+        "expression": { "title": "Completa la expresión" },
+        "ifBody": { "title": "Escribe la rama" },
+        "loopBody": { "title": "Escribe el ciclo" },
+        "return": { "title": "Completa el resultado" },
+        "selection": { "title": "Transforma tu selección" },
+        "unknown": {
+          "title": "Sigue escribiendo",
+          "description": "Aún no hay evidencia suficiente para sugerir una estructura concreta."
+        }
+      },
+      "tutorial": {
+        "eyebrow": "Ruta guiada",
+        "return": "Volver al tutorial",
+        "close": "Salir de la guía",
+        "skipStep": "Omitir paso",
+        "previous": "Anterior",
+        "next": "Continuar",
+        "noParameters": "No necesita parámetros",
+        "progress": "Paso {current} de {total}",
+        "satisfied": "Paso detectado en tu código.",
+        "pending": "Completa este paso en el editor para continuar.",
+        "steps": {
+          "header": {
+            "title": "Define la función",
+            "description": "Empieza con un nombre y un bloque BEGIN/END."
+          },
+          "parameters": {
+            "title": "Decide qué recibe",
+            "description": "Un parámetro puede ser escalar, arreglo, rango u objeto. También puedes declarar que no necesitas parámetros."
+          },
+          "firstAction": {
+            "title": "Dale vida al algoritmo",
+            "description": "Dale una primera acción al algoritmo para transformar datos o preparar un resultado."
+          },
+          "controlFlow": {
+            "title": "Controla el camino",
+            "description": "Elige una condición o un ciclo para decidir cómo avanza el algoritmo."
+          },
+          "output": {
+            "title": "Entrega un resultado",
+            "description": "Usa RETURN para entregar el resultado de un camino."
+          },
+          "review": {
+            "title": "Revisa y analiza",
+            "description": "Cuando la gramática está completa puedes ejecutar el análisis formal."
+          }
+        },
+        "examples": {
+          "header": "buscar(n) BEGIN\n  ...\nEND",
+          "parameters": "buscar(n) BEGIN\n  ...\nEND",
+          "firstAction": "resultado <- 0;",
+          "controlFlow": "IF (n > 0) THEN BEGIN\n  ...\nEND",
+          "controlFlowOptions": {
+            "if": "IF (condicion) THEN BEGIN\n  ...\nEND",
+            "ifElse": "IF (condicion) THEN BEGIN\n  ...\nEND ELSE BEGIN\n  ...\nEND",
+            "for": "FOR i <- 1 TO n DO BEGIN\n  ...\nEND",
+            "while": "WHILE (condicion) DO BEGIN\n  ...\nEND",
+            "repeatUntil": "REPEAT\n  ...\nUNTIL (condicion);"
+          },
+          "output": "RETURN resultado;",
+          "review": "Analizar → O(n)"
+        }
+      },
+      "actions": {
+        "insert": "Insertar ejemplo",
+        "applyWithTabBefore": "Presiona",
+        "applyWithTabAfter": "para aplicar",
+        "scalarParameter": "Escalar",
+        "arrayParameter": "Arreglo",
+        "rangeParameter": "Rango",
+        "objectParameter": "Objeto",
+        "if": "Condicional IF",
+        "ifElse": "Condicional IF / ELSE",
+        "for": "Bucle FOR",
+        "while": "Bucle WHILE",
+        "repeatUntil": "Bucle REPEAT / UNTIL",
+        "focus": "Enfocar editor",
+        "analyze": "Analizar"
+      },
+      "parameterTerms": {
+        "scalar": {
+          "label": "Parámetro escalar",
+          "definition": "Representa un solo valor, como n, inicio o límite. Se usa cuando el procedimiento necesita una entrada individual, no una colección. Por ejemplo, n puede indicar el tamaño del problema."
+        },
+        "array": {
+          "label": "Parámetro arreglo",
+          "definition": "Representa una colección de valores que se consulta mediante índices. En A[n], A es el arreglo y n indica la posición o dimensión que se quiere utilizar."
+        },
+        "range": {
+          "label": "Parámetro rango",
+          "definition": "Representa un tramo delimitado por un inicio y un final. La notación A[n]..[m] indica que se trabaja desde la posición n hasta la posición m, normalmente para recorrer o analizar una parte del arreglo."
+        },
+        "object": {
+          "label": "Parámetro objeto",
+          "definition": "Representa un dato compuesto creado a partir de una clase, con sus propiedades y métodos. En Clase objeto, Clase es el tipo y objeto es el nombre de la instancia que recibe el procedimiento."
+        }
+      },
+      "tutorialTerms": {
+        "action": {
+          "term": "acción",
+          "label": "Acción",
+          "definition": "Una instrucción que transforma datos, guarda un valor o prepara el siguiente paso del algoritmo."
+        },
+        "condition": {
+          "term": "condición",
+          "label": "Condición",
+          "definition": "Una expresión que se evalúa como verdadera o falsa para elegir qué camino seguir."
+        },
+        "loop": {
+          "term": "ciclo",
+          "label": "Ciclo",
+          "definition": "Una estructura que repite un bloque de instrucciones mientras se cumple una regla o durante un rango."
+        },
+        "return": {
+          "term": "RETURN",
+          "label": "Retorno",
+          "definition": "La instrucción que termina un camino del procedimiento y entrega un valor al lugar que lo llamó."
+        },
+        "result": {
+          "term": "resultado",
+          "label": "Resultado",
+          "definition": "El dato que el procedimiento produce y comunica al finalizar su trabajo."
+        },
+        "path": {
+          "term": "camino",
+          "label": "Camino de ejecución",
+          "definition": "La secuencia de instrucciones que se ejecuta según las condiciones y ciclos del algoritmo."
+        }
+      },
+      "cards": {
+        "header": {
+          "title": "Cabecera",
+          "description": "Un procedimiento tiene nombre, parámetros opcionales y BEGIN/END."
+        },
+        "scalar": {
+          "title": "Parámetro escalar",
+          "description": "Un valor como n, inicio o límite."
+        },
+        "array": {
+          "title": "Arreglo o rango",
+          "description": "Un arreglo puede incluir una o varias dimensiones y un rango."
+        },
+        "assignment": {
+          "title": "Asignación",
+          "description": "Guarda un valor usando <- y termina la instrucción."
+        },
+        "if": {
+          "title": "Decisión IF",
+          "description": "Ejecuta un bloque cuando una condición es verdadera."
+        },
+        "loop": {
+          "title": "Ciclo",
+          "description": "Repite un bloque con FOR, WHILE o REPEAT."
+        },
+        "output": {
+          "title": "Salida",
+          "description": "Devuelve el valor que representa la solución."
+        },
+        "review": {
+          "title": "Análisis formal",
+          "description": "El analizador calcula costos y comportamiento del algoritmo."
+        }
+      },
+      "families": {
+        "loop": "Ver variantes de ciclo",
+        "decision": "Ver variantes de decisión"
+      },
+      "recommendations": {
+        "algorithm-header": {
+          "title": "Dale una estructura a tu algoritmo",
+          "description": "Empieza con la cabecera que necesita cualquier procedimiento."
+        },
+        "comment": {
+          "title": "Aclara la intención",
+          "description": "Deja una pista sobre lo que tu algoritmo debe resolver."
+        },
+        "assign": {
+          "title": "Dale una primera acción",
+          "description": "Guarda un valor para que el algoritmo empiece a trabajar."
+        },
+        "if": {
+          "title": "Haz que el algoritmo tome decisiones",
+          "description": "Añade una condición para elegir entre distintos caminos."
+        },
+        "for": {
+          "title": "Haz que el algoritmo repita un paso",
+          "description": "Recorre un rango con un contador."
+        },
+        "while": {
+          "title": "Repite mientras sea necesario",
+          "description": "Mantén el bloque activo mientras se cumpla una condición."
+        },
+        "repeat-until": {
+          "title": "Define cuándo debe detenerse",
+          "description": "Repite el bloque hasta alcanzar una condición de salida."
+        },
+        "begin-end": {
+          "title": "Ordena este bloque",
+          "description": "Agrupa la selección dentro de BEGIN/END para darle estructura."
+        },
+        "call": {
+          "title": "Conecta otro procedimiento",
+          "description": "Reutiliza una parte del algoritmo llamando a otra función."
+        },
+        "return-value": {
+          "title": "Entrega el resultado",
+          "description": "Devuelve el valor que representa la solución del procedimiento."
+        },
+        "comparison": {
+          "title": "Aclara la condición",
+          "description": "Compara valores para que el algoritmo sepa qué camino tomar."
+        },
+        "and": {
+          "title": "Combina dos condiciones",
+          "description": "Haz que ambas reglas se cumplan al mismo tiempo."
+        },
+        "or": {
+          "title": "Elige entre dos condiciones",
+          "description": "Permite avanzar cuando se cumpla cualquiera de las dos reglas."
+        },
+        "not": {
+          "title": "Invierte la condición",
+          "description": "Cambia el resultado lógico de verdadero a falso o al contrario."
+        },
+        "symbols": {
+          "title": "Continúa con un dato disponible",
+          "description": "Usa un parámetro o variable que ya existe en tu algoritmo."
+        },
+        "array-index": {
+          "title": "Busca dentro del arreglo",
+          "description": "Accede a la posición que necesitas para continuar."
+        },
+        "parameter-symbols": {
+          "title": "Elige el parámetro correcto",
+          "description": "Usa un nombre claro y consistente para explicar la entrada."
+        },
+        "scalar-parameter": {
+          "title": "Usa un parámetro escalar",
+          "description": "Un solo valor, como n, cuando el procedimiento necesita una entrada individual."
+        },
+        "array-parameter": {
+          "title": "Usa un arreglo",
+          "description": "Una colección indexada, como A[n], para recorrer varios elementos."
+        },
+        "range-parameter": {
+          "title": "Usa un rango",
+          "description": "Un intervalo A[n]..[m] cuando el procedimiento trabaja entre dos límites."
+        },
+        "object-parameter": {
+          "title": "Usa un objeto",
+          "description": "Una instancia, como Clase objeto, cuando la entrada es una estructura."
+        },
+        "analyze": {
+          "title": "Tu algoritmo parece estar listo",
+          "description": "Ejecuta el análisis formal para conocer su complejidad."
+        }
       }
     },
     "loopInvariant": {
@@ -1306,10 +1597,12 @@
       "parseErrorDetected": "Error de sintaxis detectado",
       "verifyError": "Error al verificar el código",
       "unknownLlmError": "Error desconocido del LLM",
-      "llmErrorApiKey": "Configura tu API Key de Gemini en la configuración para usar las funciones con IA.",
+      "llmErrorApiKey": "Configura una API key válida del proveedor en la configuración para usar las funciones con IA.",
+      "llmErrorModel": "El ID del modelo no es válido. Revisa el nombre exacto que acepta tu proveedor.",
       "llmErrorQuota": "Se ha superado la cuota de uso. Intenta más tarde o revisa tu plan.",
       "llmErrorRateLimit": "Demasiadas solicitudes. Espera unos segundos e inténtalo de nuevo.",
       "llmErrorTimeout": "La solicitud tardó demasiado. Inténtalo de nuevo.",
+      "llmErrorOutputTruncated": "La respuesta del modelo fue demasiado larga. Inténtalo de nuevo.",
       "llmErrorServer": "Error temporal del servicio. Inténtalo de nuevo en unos minutos.",
       "llmErrorBlocked": "El contenido fue filtrado por políticas de seguridad.",
       "llmErrorUnavailable": "El servicio no está disponible. Comprueba tu conexión.",
@@ -1847,7 +2140,9 @@
         },
         {
           "title": "Información que puede tratarse",
-          "paragraphs": ["Dependiendo de las funciones que utilices, AALIE puede trabajar con:"],
+          "paragraphs": [
+            "Dependiendo de las funciones que utilices, AALIE puede trabajar con:"
+          ],
           "items": [
             "Pseudocódigo que escribas o cargues para analizar.",
             "Archivos .txt que decidas abrir mediante el editor.",
@@ -1859,7 +2154,9 @@
             "Resultados, costos, trazas, recurrencias, advertencias y reportes derivados del análisis.",
             "Cualquier otra información que voluntariamente introduzcas en una función que claramente la solicite."
           ],
-          "paragraphsAfter": ["No necesitas proporcionar información sensible para utilizar normalmente AALIE."]
+          "paragraphsAfter": [
+            "No necesitas proporcionar información sensible para utilizar normalmente AALIE."
+          ]
         },
         {
           "title": "Cuenta e inicio de sesión con Google",
@@ -1907,7 +2204,9 @@
         },
         {
           "title": "Actividad educativa y quizzes",
-          "paragraphs": ["AALIE puede registrar información relacionada con tu actividad educativa, como:"],
+          "paragraphs": [
+            "AALIE puede registrar información relacionada con tu actividad educativa, como:"
+          ],
           "items": [
             "Quizzes iniciados o completados.",
             "Preguntas presentadas.",
@@ -1982,7 +2281,9 @@
         },
         {
           "title": "Finalidades del tratamiento",
-          "paragraphs": ["La información tratada mediante AALIE puede utilizarse para:"],
+          "paragraphs": [
+            "La información tratada mediante AALIE puede utilizarse para:"
+          ],
           "items": [
             "Ofrecer las funciones educativas de la plataforma.",
             "Analizar algoritmos y generar sus resultados.",
@@ -1995,7 +2296,9 @@
             "Cumplir obligaciones legales.",
             "Desarrollar estudios académicos únicamente cuando exista una participación válida para ese propósito."
           ],
-          "paragraphsAfter": ["No utilizaremos la información para una finalidad sustancialmente diferente sin cumplir previamente las obligaciones de información y autorización que resulten aplicables."]
+          "paragraphsAfter": [
+            "No utilizaremos la información para una finalidad sustancialmente diferente sin cumplir previamente las obligaciones de información y autorización que resulten aplicables."
+          ]
         },
         {
           "title": "Investigación y uso ordinario",
@@ -2014,7 +2317,9 @@
         },
         {
           "title": "Datos que puede utilizar un estudio",
-          "paragraphs": ["Dependiendo del estudio, pueden utilizarse datos como:"],
+          "paragraphs": [
+            "Dependiendo del estudio, pueden utilizarse datos como:"
+          ],
           "items": [
             "Condición o grupo del estudio.",
             "Resultados de quizzes.",
@@ -2031,7 +2336,9 @@
         },
         {
           "title": "Datos excluidos del conjunto académico",
-          "paragraphs": ["Como regla general, los conjuntos de datos destinados al análisis académico no deben incluir directamente:"],
+          "paragraphs": [
+            "Como regla general, los conjuntos de datos destinados al análisis académico no deben incluir directamente:"
+          ],
           "items": [
             "Tu nombre.",
             "Tu correo electrónico.",
@@ -2043,7 +2350,9 @@
             "Preguntas completas enviadas a un asistente de IA.",
             "Respuestas completas generadas por ese asistente."
           ],
-          "paragraphsAfter": ["Si una investigación futura necesitara utilizar alguna información diferente, deberá informarlo específicamente y obtener las autorizaciones o aprobaciones que correspondan."]
+          "paragraphsAfter": [
+            "Si una investigación futura necesitara utilizar alguna información diferente, deberá informarlo específicamente y obtener las autorizaciones o aprobaciones que correspondan."
+          ]
         },
         {
           "title": "Seudonimización y protección de la identidad",
@@ -2096,7 +2405,9 @@
         },
         {
           "title": "Derechos del titular",
-          "paragraphs": ["Como titular de tus datos personales, tienes los derechos reconocidos por la legislación colombiana, entre ellos:"],
+          "paragraphs": [
+            "Como titular de tus datos personales, tienes los derechos reconocidos por la legislación colombiana, entre ellos:"
+          ],
           "items": [
             "Conocer los datos personales que se encuentren bajo tratamiento.",
             "Actualizar información que haya cambiado.",
@@ -2109,7 +2420,9 @@
             "Presentar consultas o reclamos.",
             "Acudir ante la Superintendencia de Industria y Comercio cuando se cumplan los requisitos legales."
           ],
-          "paragraphsAfter": ["Estos derechos se encuentran reconocidos en la Ley 1581 de 2012. La eliminación o revocación puede estar limitada cuando exista una obligación legal o una razón legítima que exija conservar determinada información."]
+          "paragraphsAfter": [
+            "Estos derechos se encuentran reconocidos en la Ley 1581 de 2012. La eliminación o revocación puede estar limitada cuando exista una obligación legal o una razón legítima que exija conservar determinada información."
+          ]
         },
         {
           "title": "Solicitudes y verificación de identidad",

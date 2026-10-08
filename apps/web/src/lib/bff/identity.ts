@@ -11,6 +11,7 @@ export const VISITOR_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 90;
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const STUDY_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const UCALDAS_EMAIL_SUFFIX = "@ucaldas.edu.co";
 
 export function validVisitorId(value: string | undefined): value is string {
   return Boolean(value && UUID_RE.test(value));
@@ -18,6 +19,10 @@ export function validVisitorId(value: string | undefined): value is string {
 
 export function validStudySlug(value: string | undefined): value is string {
   return Boolean(value && value.length <= 96 && STUDY_SLUG_RE.test(value));
+}
+
+export function isUcaldasEmail(email: string | null | undefined): boolean {
+  return Boolean(email?.trim().toLowerCase().endsWith(UCALDAS_EMAIL_SUFFIX));
 }
 
 export function visitorCookieOptions() {

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ...core.database import get_db
+from .auth import require_rate_limit_service
 from .schemas import RateLimitCheckRequest, RateLimitCheckResponse
 from .service import consume_rate_limit
 
@@ -13,6 +14,7 @@ router = APIRouter(prefix="/internal/rate-limits", tags=["internal-rate-limits"]
 @router.post("/check", response_model=RateLimitCheckResponse)
 def check_rate_limit(
     payload: RateLimitCheckRequest,
+    _service: None = Depends(require_rate_limit_service),
     db: Session = Depends(get_db),
 ) -> RateLimitCheckResponse:
     decision = consume_rate_limit(
@@ -27,4 +29,6 @@ def check_rate_limit(
         remaining=decision.remaining,
         retryAfterSeconds=decision.retry_after_seconds,
         resetAt=decision.reset_at.isoformat(),
+        blocked=decision.blocked,
+        reasonCode=decision.reason_code,
     )

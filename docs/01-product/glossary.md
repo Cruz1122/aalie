@@ -67,7 +67,7 @@ Cada definición es un compromiso de comportamiento. Si el término aparece en U
 | **Evaluación determinista (quiz)** | El backend evalúa respuestas contra respuestas correctas conocidas. No hay IA involucrada en la calificación. |
 | **i18n** | Internacionalización. AALIE soporta español (`es`) e inglés (`en`). Usa `next-intl` para rutas y contenido localizado. |
 | **Locale** | Identificador de idioma. Valores: `"es"` (español), `"en"` (inglés). Controla idioma de UI, contenido curricular y etiquetas de análisis. |
-| **Provider LLM** | Proveedor de modelo de lenguaje configurable. Soportados: `gemini` (Gemini API), `openai_compatible` (cualquier API compatible con OpenAI). Configurable vía `LLM_PROVIDER`. |
+| **Provider LLM** | Proveedor de modelo de lenguaje configurable. Soportados: `gemini`, `openai_compatible` (OpenAI, OpenRouter, xAI y Groq) y `anthropic`. Configurable vía `LLM_PROVIDER` o detección segura del formato de la clave. |
 | **RAG** | Retrieval-Augmented Generation. **No implementado en AALIE.** No hay pipeline de retrieval, embeddings ni vector store. |
 | **GPU vs CPU (heurístico)** | Lectura orientativa de idoneidad estructural para CPU o GPU basada en patrones del algoritmo. No es benchmark científico. Se muestra para discusión didáctica. |
 | **Recurrencia** | Ecuación que describe el costo de un algoritmo recursivo en términos de sí mismo. AALIE detecta dos tipos: `divide_conquer` (T(n) = a·T(n/b) + f(n)) y `linear_shift` (T(n) = c₁T(n-1) + ... + cₖT(n-k) + g(n)). |

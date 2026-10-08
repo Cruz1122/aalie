@@ -76,6 +76,16 @@ def test_valid_jwt_is_verified(signing_material: Ed25519PrivateKey) -> None:
     identity = auth._verify_token(_token(signing_material))
     assert identity.user_id == "user-123"
     assert identity.role == "USER"
+    assert identity.email is None
+
+
+def test_email_claim_is_normalized_for_server_side_authorization(
+    signing_material: Ed25519PrivateKey,
+) -> None:
+    identity = auth._verify_token(
+        _token(signing_material, email=" Student@UCALDAS.EDU.CO ")
+    )
+    assert identity.email == "student@ucaldas.edu.co"
 
 
 @pytest.mark.parametrize(

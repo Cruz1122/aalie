@@ -106,8 +106,10 @@ Cubre FastAPI (backend) y rutas Next `/api/*` (BFF) consumidas por la UI. No cub
 | `CORS_ALLOWED_ORIGINS` | API | Orígenes permitidos (comma-separated) |
 | `DEV_CORS_ENABLED` | API | CORS en desarrollo (default true) |
 | `DEV_ALLOWED_ORIGINS` | API | Orígenes en desarrollo |
-| `API_KEY` | Backend LLM | API key del proveedor (server-side, preferida sobre client key) |
+| `API_KEY` | Backend LLM | API key server-side de respaldo; una client key válida tiene precedencia y la server key automática requiere `@ucaldas.edu.co` |
+| `LLM_PROVIDER` | Backend LLM | Proveedor explícito o detección automática desde el formato de la key |
 | `GEMINI_ENDPOINT_BASE` | Backend LLM | Endpoint base del proveedor Gemini |
+| `OPENAI_COMPATIBLE_ENDPOINT_BASE`, `OPENROUTER_ENDPOINT_BASE`, `XAI_ENDPOINT_BASE`, `GROQ_ENDPOINT_BASE`, `ANTHROPIC_ENDPOINT_BASE` | Backend LLM | Endpoints base opcionales para proveedores adicionales |
 | `LLM_MODEL_CLASSIFY` | Backend LLM | Modelo para clasificación |
 | `LLM_MODEL_PARSER_ASSIST` | Backend LLM | Modelo para asistencia de parseo |
 | `LLM_MODEL_GENERAL` | Backend LLM | Modelo general |

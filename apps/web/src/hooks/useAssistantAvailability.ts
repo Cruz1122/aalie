@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import {
+  API_KEY_STORAGE_KEY,
+  LEGACY_API_KEY_STORAGE_KEY,
+  MODEL_PREFERENCES_STORAGE_KEY,
+  getApiKey,
+  getApiKeyStatus,
+} from "@/hooks/useApiKey";
 
 export interface AssistantAvailabilityState {
   hasAny: boolean;
@@ -116,7 +122,12 @@ export function useAssistantAvailability(enabled = true) {
     }
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "gemini_api_key" || event.key === null) {
+      if (
+        event.key === API_KEY_STORAGE_KEY ||
+        event.key === LEGACY_API_KEY_STORAGE_KEY ||
+        event.key === MODEL_PREFERENCES_STORAGE_KEY ||
+        event.key === null
+      ) {
         void refresh();
       }
     };

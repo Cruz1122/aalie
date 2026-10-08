@@ -4,7 +4,7 @@
 **Estado:** final
 **Audiencia:** dev | operador
 **Fuente de verdad:** `apps/api/app/core/config.py`, `apps/api/.env.example`, `apps/web/.env.example`, `apps/web/src/app/api/`, `apps/web/Dockerfile`, `infra/oci/compose.yml`
-**Última revisión:** 2026-08-19
+**Última revisión:** 2026-10-07
 **Relacionado con informe técnico:** local-development, deployment, troubleshooting
 
 ## Propósito
@@ -26,6 +26,8 @@ Cubre frontend (Next.js), BFF (server-side proxies), backend API (FastAPI), y co
 | `API_INTERNAL_BASE_URL` | BFF/Docker | No | `http://api:8000` | URL interna del backend usada en SSR dentro de Docker | En Docker sin esta var, las llamadas SSR apuntan a localhost en vez de al contenedor api | código |
 | `DOCKER` | Both | No | — | Flag de entorno Docker; cuando está presente activa resolución `http://api:8000` | Ausente en Docker = resuelve contra localhost, no contra el servicio api | código |
 | `NODE_ENV` | Web | No | `development` | Entorno de ejecución Node.js | — | Next.js |
+| `DEV_BETTER_AUTH_URL` | Compose dev | No | `http://localhost:3000` | Origen público local de Better Auth; evita heredar la URL OAuth de producción desde el `.env` raíz | Debe coincidir con el origen desde el que se abre la aplicación local | `infra/compose.yml` |
+| `DEV_AUTH_JWT_ISSUER` | Compose dev/API | No | `http://localhost:3000` | Issuer JWT local coordinado entre Better Auth y FastAPI | Si no coincide, el API rechazará los JWT emitidos por la web | `infra/compose.yml` |
 | `HOSTNAME` | Web runtime | No | `0.0.0.0` en imagen productiva | Dirección de escucha de Next standalone | Otro valor puede impedir acceso desde Caddy/contenedor | `apps/web/Dockerfile` |
 | `PORT` | Web runtime | No | `3000` en imagen productiva | Puerto interno de Next standalone | Debe coincidir con healthcheck y upstream Caddy | `apps/web/Dockerfile` |
 | `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS` | Web | No | `false` | Fuerza diagramas deterministas sin LLM en frontend | Si es `true`, los diagramas LLM se deshabilitan | `.env.example` |
@@ -44,8 +46,21 @@ Cubre frontend (Next.js), BFF (server-side proxies), backend API (FastAPI), y co
 
 | Variable | Capa | Obligatoria | Default | Uso | Riesgo | Fuente |
 |---|---|---|---|---|---|---|
-| `API_KEY` | API LLM | No | — | API key del servidor para proveedor LLM (Gemini). Tiene prioridad sobre key enviada por cliente. | Sin ella, el asistente LLM no se activa en la UI ni el servidor puede hacer jobs LLM | `.env.example` |
+| `API_KEY` | API LLM | No | — | Clave server-side; se detectan Gemini (`AIza...`), OpenAI (`sk-proj...`), Anthropic (`sk-ant...`), OpenRouter (`sk-or-v1...`), xAI (`xai...`) y Groq (`gsk_...`). Solo cuentas `@ucaldas.edu.co` la usan automáticamente. | Es secreta; nunca usar `NEXT_PUBLIC_*` ni registrarla | `.env.example` |
+| `OPENAI_API_KEY` | API LLM | No | — | Clave OpenAI server-side alternativa; tiene prioridad sobre `API_KEY`. La ruta institucional usa `gpt-5.4-mini`. | Es secreta y debe inyectarse solo en runtime | `.env.example` |
+| `LLM_PROVIDER` | API LLM | No | vacío | Fuerza proveedor si no hay detección por clave (`gemini`, `openai_compatible`, `anthropic`, `openrouter`, `xai` o `groq`) | Un valor no soportado rompe las llamadas LLM | `.env.example` |
+| `AALIE_RATE_LIMIT_LLM_UCALDAS_AUTH` | API/BFF | No | `5` | Límite de solicitudes LLM por cuenta universitaria en 60 s | Reducirlo puede afectar UX; aumentarlo incrementa el costo de la clave compartida | `compose*.yml` |
+| `AALIE_RATE_LIMIT_LLM_BACKEND_AUTH` | API | No | `5` | Segundo bucket server-side para impedir bypass directo del API | Debe permanecer alineado con la cuota institucional | `compose*.yml` |
+| `AALIE_RATE_LIMIT_SERVICE_TOKEN` | API/BFF | No* | fallback a `RATE_LIMIT_HMAC_SECRET` | Credencial privada BFF→API para actualizar cuotas; se recomienda un valor separado en producción | Nunca exponerla al navegador; sin credencial, las cuotas LLM fallan cerrado | `compose*.yml` |
+| `AALIE_ABUSE_STRIKES_TO_BAN` | API | No | `3` | Excesos de cuota LLM antes de activar un bloqueo temporal | Umbral demasiado bajo puede bloquear falsos positivos | `compose*.yml` |
+| `AALIE_ABUSE_STRIKE_WINDOW_SECONDS` | API | No | `300` | Ventana para acumular excesos | — | `compose*.yml` |
+| `AALIE_ABUSE_BAN_SECONDS` | API | No | `3600` | Duración del bloqueo persistido por identidad pseudónima | — | `compose*.yml` |
 | `GEMINI_ENDPOINT_BASE` | API LLM | No | `https://generativelanguage.googleapis.com/v1beta/models` | Endpoint base del proveedor Gemini | URL incorrecta = todas las llamadas LLM fallan | `.env.example` |
+| `OPENAI_COMPATIBLE_ENDPOINT_BASE` | API LLM | No | `https://api.openai.com/v1/chat/completions` | Endpoint OpenAI | URL incorrecta = llamadas OpenAI fallan | `.env.example` |
+| `OPENROUTER_ENDPOINT_BASE` | API LLM | No | `https://openrouter.ai/api/v1/chat/completions` | Endpoint OpenRouter | URL incorrecta = llamadas OpenRouter fallan | `.env.example` |
+| `XAI_ENDPOINT_BASE` | API LLM | No | `https://api.x.ai/v1/chat/completions` | Endpoint xAI | URL incorrecta = llamadas xAI fallan | `.env.example` |
+| `GROQ_ENDPOINT_BASE` | API LLM | No | `https://api.groq.com/openai/v1/chat/completions` | Endpoint Groq | URL incorrecta = llamadas Groq fallan | `.env.example` |
+| `ANTHROPIC_ENDPOINT_BASE` | API LLM | No | `https://api.anthropic.com/v1/messages` | Endpoint Anthropic | URL incorrecta = llamadas Anthropic fallan | `.env.example` |
 | `LLM_MODEL_CLASSIFY` | API LLM | No | — | Modelo para clasificación asistida por LLM | Modelo incorrecto = job de clasificación falla | `.env.example` |
 | `LLM_MODEL_PARSER_ASSIST` | API LLM | No | — | Modelo para asistencia al parser | Modelo incorrecto = parser assist falla | `.env.example` |
 | `LLM_MODEL_GENERAL` | API LLM | No | — | Modelo para uso general LLM | Modelo incorrecto = job general falla | `.env.example` |
@@ -90,10 +105,10 @@ En OCI, `AALIE_TAG` vive en `.env` y las cinco variables PostgreSQL viven en `.e
 
 ### AutenticaciÃ³n
 
-- `BETTER_AUTH_URL` debe ser `https://aalie.dev` en producciÃ³n y `http://localhost:3000` local; define el callback OAuth.
+- `BETTER_AUTH_URL` debe ser `https://aalie.dev` en producciÃ³n. En `infra/compose.yml`, `DEV_BETTER_AUTH_URL` define el origen local y por defecto vale `http://localhost:3000`; esa separación evita que el `.env` raíz de producción invalide el `callbackURL` local.
 - `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_SECRET` y las URLs de base de datos son secretos server-side y nunca deben usar el prefijo `NEXT_PUBLIC_`.
 - `GOOGLE_CLIENT_ID` se usa server-side aunque no sea secreto; Google debe tener exactamente `/api/auth/callback/google` como redirect URI.
-- `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE` y `AUTH_JWKS_URL` forman el contrato web â†’ FastAPI. JWKS no es una dependencia de `/health/ready`.
+- `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE` y `AUTH_JWKS_URL` forman el contrato web â†’ FastAPI. En el stack dev, `DEV_AUTH_JWT_ISSUER` controla el issuer compartido. JWKS no es una dependencia de `/health/ready`.
 - En OCI, las variables de autenticaciÃ³n se agregan a `.env.runtime`, junto con las variables PostgreSQL, y el archivo conserva modo `0600`.
 
 - **Superficies:** `/analyzer`, `/examples`, `/user-guide`
@@ -130,7 +145,7 @@ Para orígenes:
 
 ```bash
 # Despliegue Docker con LLM
-API_KEY=your-gemini-key docker compose up
+API_KEY=your-provider-key docker compose up
 
 # Desarrollo local con CORS personalizado
 CORS_ENABLED=true CORS_ALLOWED_ORIGINS="http://localhost:5173" pnpm dev:api

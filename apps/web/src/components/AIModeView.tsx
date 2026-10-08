@@ -3,13 +3,20 @@ import { useTranslations } from "next-intl";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import {
+  setApiKey,
+  setSelectedApiModel,
+  validateApiKey,
+} from "@/hooks/useApiKey";
+import { useApiKeyModelSelection } from "@/hooks/useApiKeyModelSelection";
 import { useAssistantAvailability } from "@/hooks/useAssistantAvailability";
-import { setApiKey, validateApiKey } from "@/hooks/useApiKey";
 import { Link } from "@/i18n/navigation";
 import type { AssistantContext } from "@/lib/assistant/types";
+import { CUSTOM_MODEL_VALUE } from "@/lib/llm-model-catalog";
 
 import AALIEEmotionIcon from "./AALIEEmotionIcon";
 import AALIEIcon from "./AALIEIcon";
+import ApiKeyModelFields from "./ApiKeyModelFields";
 import ChatBot from "./ChatBot";
 
 const suggestionBank = [
@@ -116,6 +123,7 @@ export default function AIModeView({
   assistantContext = null,
 }: AIModeViewProps) {
   const t = useTranslations("home");
+  const tFooter = useTranslations("footer.apiKey");
   const { hasAny: hasApiKey, isChecking: isCheckingApiKey } =
     useAssistantAvailability(!chatOpen);
   const viewRef = useRef<HTMLDivElement>(null);
@@ -134,13 +142,56 @@ export default function AIModeView({
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [apiKeyPromptVisible, setApiKeyPromptVisible] = useState(false);
   const manualPromptVisibleRef = useRef(false);
+  const {
+    provider: detectedProvider,
+    modelChoice,
+    customModel,
+    selectedModel,
+    isSelectedModelValid,
+    setModelChoice,
+    setCustomModel,
+  } = useApiKeyModelSelection(apiKeyInput);
 
   const apiKeyUnavailable =
     apiKeyPromptVisible && !isCheckingApiKey && !hasApiKey;
+  const isCustomModelInput =
+    apiKeyUnavailable && modelChoice === CUSTOM_MODEL_VALUE;
+  const isCustomModelInvalid =
+    isCustomModelInput && customModel.length > 0 && !isSelectedModelValid;
+
+  const handleApiKeyInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (isCustomModelInput) {
+      setCustomModel(event.target.value);
+      return;
+    }
+
+    setApiKeyInput(event.target.value);
+  };
+
+  const handleModelChoiceChange = (choice: string) => {
+    setModelChoice(choice);
+    if (choice === CUSTOM_MODEL_VALUE) {
+      window.requestAnimationFrame(() => {
+        document.getElementById("home-api-key")?.focus();
+      });
+    }
+  };
 
   const handleSaveApiKey = () => {
-    if (!validateApiKey(apiKeyInput)) return;
-    if (setApiKey(apiKeyInput)) {
+    if (
+      !validateApiKey(apiKeyInput) ||
+      !detectedProvider ||
+      !isSelectedModelValid
+    ) {
+      return;
+    }
+
+    const keySaved = setApiKey(apiKeyInput);
+    const modelSaved =
+      keySaved && setSelectedApiModel(selectedModel, detectedProvider);
+    if (modelSaved) {
       setApiKeyInput("");
     }
   };
@@ -450,16 +501,31 @@ export default function AIModeView({
               className={`flex min-w-0 items-center gap-2 rounded-xl border border-slate-600/50 bg-white/5 transition-all focus-within:border-transparent focus-within:ring-2 ${apiKeyUnavailable ? "focus-within:ring-amber-400/60" : "focus-within:ring-purple-500/50"}`}
             >
               <input
-                type="text"
+                id="home-api-key"
+                type={
+                  isCustomModelInput
+                    ? "text"
+                    : apiKeyUnavailable
+                      ? "password"
+                      : "text"
+                }
                 placeholder={
-                  apiKeyUnavailable ? t("apiKeyPlaceholder") : t("placeholder")
+                  isCustomModelInput
+                    ? tFooter("customModelPlaceholder")
+                    : apiKeyUnavailable
+                      ? t("apiKeyPlaceholder")
+                      : t("placeholder")
                 }
                 className="flex-1 min-w-0 bg-transparent px-3 sm:px-4 py-3 sm:py-4 text-white placeholder-slate-400 text-sm focus:outline-none"
-                value={apiKeyUnavailable ? apiKeyInput : inputMessage}
-                onChange={
+                value={
                   apiKeyUnavailable
-                    ? (event) => setApiKeyInput(event.target.value)
-                    : onInputChange
+                    ? isCustomModelInput
+                      ? customModel
+                      : apiKeyInput
+                    : inputMessage
+                }
+                onChange={
+                  apiKeyUnavailable ? handleApiKeyInputChange : onInputChange
                 }
                 onKeyDown={
                   apiKeyUnavailable
@@ -470,7 +536,18 @@ export default function AIModeView({
                 }
                 disabled={isAnimating}
               />
+              {apiKeyUnavailable && detectedProvider && (
+                <ApiKeyModelFields
+                  provider={detectedProvider}
+                  modelChoice={modelChoice}
+                  customModel={customModel}
+                  onModelChoiceChange={handleModelChoiceChange}
+                  idPrefix="home-api-key"
+                  compact
+                />
+              )}
               <button
+                type="button"
                 className="flex-shrink-0 p-2 mr-3 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 flex items-center justify-center text-slate-400 hover:text-white"
                 onClick={
                   apiKeyUnavailable ? handleSaveApiKey : handleMessageSubmit
@@ -478,7 +555,9 @@ export default function AIModeView({
                 disabled={
                   isAnimating ||
                   (apiKeyUnavailable
-                    ? !validateApiKey(apiKeyInput)
+                    ? !validateApiKey(apiKeyInput) ||
+                      !detectedProvider ||
+                      !isSelectedModelValid
                     : !inputMessage.trim())
                 }
               >
@@ -489,6 +568,11 @@ export default function AIModeView({
                 )}
               </button>
             </div>
+            {isCustomModelInvalid && (
+              <p className="mt-1 text-center text-xs text-red-400">
+                {tFooter("invalidModelHint")}
+              </p>
+            )}
           </div>
 
           {/* Sugerencias pedagógicas: se muestran como máximo tres filas del banco */}

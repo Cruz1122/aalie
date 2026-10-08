@@ -1,4 +1,9 @@
+import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { POLICIES } from "../policies";
+import { proxyApiRequest } from "../proxy";
+import type { BffRequestContext } from "../request-context";
 
 const mocks = vi.hoisted(() => ({
   buildRequestContext: vi.fn(),
@@ -19,12 +24,6 @@ vi.mock("../api-base", () => ({
   getApiBase: () => "http://api.test",
 }));
 
-import { NextRequest } from "next/server";
-
-import { POLICIES } from "../policies";
-import { proxyApiRequest } from "../proxy";
-import type { BffRequestContext } from "../request-context";
-
 function context(
   overrides: Partial<BffRequestContext> = {},
 ): BffRequestContext {
@@ -32,6 +31,8 @@ function context(
     requestId: "request-gate",
     authenticated: false,
     userId: null,
+    email: null,
+    isUniversityUser: false,
     role: null,
     subject: "visitor:4a7a94e5-1a8e-4c80-a3e8-e1d8e5b7da4c",
     visitorId: "4a7a94e5-1a8e-4c80-a3e8-e1d8e5b7da4c",
@@ -79,6 +80,31 @@ describe("MF3 common BFF proxy", () => {
     expect(await response.json()).toMatchObject({
       ok: false,
       code: "RATE_LIMITED",
+    });
+  });
+
+  it("returns a temporary-block response when the abuse ban is active", async () => {
+    mocks.enforceRateLimit.mockResolvedValue({
+      allowed: false,
+      blocked: true,
+      retryAfterSeconds: 3600,
+    });
+    const request = new NextRequest("http://aalie.test/api/llm", {
+      method: "POST",
+      body: JSON.stringify({ job: "general", prompt: "spam" }),
+      headers: { "content-type": "application/json" },
+    });
+
+    const response = await proxyApiRequest(request, {
+      path: "/llm",
+      policy: POLICIES.llm,
+    });
+
+    expect(response.status).toBe(403);
+    expect(response.headers.get("Retry-After")).toBe("3600");
+    expect(await response.json()).toMatchObject({
+      ok: false,
+      code: "ACCOUNT_TEMPORARILY_BLOCKED",
     });
   });
 

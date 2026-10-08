@@ -23,12 +23,15 @@ const SAFE_RESPONSE_HEADERS = [
   "retry-after",
 ] as const;
 
-type PolicyResolver = BffPolicy | ((body: unknown) => BffPolicy);
+type PolicyResolver =
+  | BffPolicy
+  | ((body: unknown, context: BffRequestContext) => BffPolicy);
 type ProxyMethod = "GET" | "POST" | "PATCH";
 
 interface ProxyOptions {
   path: string;
   policy: PolicyResolver;
+  maxBodyBytes?: number;
   method?: ProxyMethod;
   transformBody?: (body: unknown) => unknown;
 }
@@ -116,11 +119,12 @@ export async function proxyApiRequest(
     const hasBody = method !== "GET";
     const preliminary =
       typeof options.policy === "function" ? null : options.policy;
-    const maxBytes = preliminary?.bodyLimitBytes ?? 512 * 1024;
+    const maxBytes =
+      options.maxBodyBytes ?? preliminary?.bodyLimitBytes ?? 512 * 1024;
     let body: unknown = hasBody ? await readJsonBody(request, maxBytes) : {};
     const policy =
       typeof options.policy === "function"
-        ? options.policy(body)
+        ? options.policy(body, context)
         : options.policy;
 
     if (hasBody && policy.bodyLimitBytes < maxBytes) {
@@ -152,6 +156,19 @@ export async function proxyApiRequest(
 
     const decision = await enforceRateLimit(context, policy);
     if (!decision.allowed) {
+      if (decision.blocked) {
+        return applyVisitorCookie(
+          jsonError(
+            403,
+            "ACCOUNT_TEMPORARILY_BLOCKED",
+            "Account temporarily blocked",
+            {
+              "Retry-After": String(Math.max(1, decision.retryAfterSeconds)),
+            },
+          ),
+          context,
+        );
+      }
       return applyVisitorCookie(
         jsonError(429, "RATE_LIMITED", "Too many requests", {
           "Retry-After": String(Math.max(1, decision.retryAfterSeconds)),

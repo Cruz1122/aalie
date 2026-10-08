@@ -1,5 +1,6 @@
 "use client";
 
+import { getSelectedApiModel } from "@/hooks/useApiKey";
 import type { AssistantContext, ChatMessage } from "@/lib/assistant/types";
 import { getNormalizedLlmText } from "@/lib/llm-response";
 
@@ -88,6 +89,7 @@ export async function getLLMResponse(
       prompt: string;
       chatHistory: Array<{ role: string; content: string }>;
       apiKey?: string;
+      model?: string;
       locale?: string;
       assistantContext?: AssistantContext;
     } = {
@@ -98,6 +100,10 @@ export async function getLLMResponse(
 
     if (apiKey) {
       body.apiKey = apiKey;
+    }
+    const selectedModel = getSelectedApiModel();
+    if (selectedModel) {
+      body.model = selectedModel;
     }
     if (locale) {
       body.locale = locale;
