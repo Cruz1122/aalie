@@ -21,6 +21,9 @@ import { getAuth } from "@/lib/auth";
 import { isOperatorAdminEmail } from "@/lib/operator-admins";
 import { restrictedAccessEnabled } from "@/lib/restricted-access";
 
+// The access gate is controlled by runtime OCI configuration and request auth.
+export const dynamic = "force-dynamic";
+
 type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
