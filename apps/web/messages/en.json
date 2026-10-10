@@ -10,6 +10,18 @@
     "copyCode": "Copy code",
     "codeCopied": "Copied!"
   },
+  "accessGate": {
+    "restrictedTitle": "AALIE is in restricted access!",
+    "restrictedBody": "Sign in with your institutional account to use the software",
+    "signIn": "Sign in",
+    "signingIn": "Connecting to Google...",
+    "signInError": "Could not sign in. Try again.",
+    "deniedTitle": "We're sorry!",
+    "deniedBody": "You are not one of the selected users",
+    "deniedHelp": "If you think this is a mistake, <contact>contact us</contact> or <signOut>sign out</signOut>.",
+    "mailSubject": "AALIE restricted access",
+    "signOutError": "Could not sign out. Try again."
+  },
   "nav": {
     "home": "Home",
     "analyzer": "Analyzer",
@@ -18,7 +30,39 @@
     "about": "About Us",
     "openMenu": "Open menu",
     "howToUse": "How to use",
-    "quizzes": "Quizzes"
+    "quizzes": "Quizzes",
+    "management": "Management"
+  },
+  "classroom": {
+    "student": "Student",
+    "lastActivity": "Last activity",
+    "analysis": "Analysis",
+    "traces": "Traces",
+    "quizzes": "Quizzes",
+    "assistant": "Assistant",
+    "view": "View",
+    "back": "Back",
+    "emptyActivity": "No activity yet.",
+    "empty": {
+      "title": "No activity yet"
+    },
+    "loadError": {
+      "title": "Could not load activity",
+      "retry": "Try again"
+    },
+    "when": "When",
+    "action": "Action",
+    "result": "Result",
+    "ok": "Yes",
+    "failed": "No",
+    "error": "Could not load activity.",
+    "kinds": {
+      "analysis": "Analysis",
+      "trace": "Trace",
+      "quiz": "Quiz",
+      "export": "Export",
+      "assistant": "Assistant"
+    }
   },
   "auth": {
     "signIn": "Sign in",

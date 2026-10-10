@@ -46,6 +46,7 @@ jobs:
       AUTH_JWKS_URL: http://web:3000/api/auth/jwks
       RATE_LIMIT_HMAC_SECRET: ci-only-rate-limit-hmac
       AALIE_STUDY_TELEMETRY_ENABLED: "false"
+      AALIE_RESTRICTED_ACCESS: "false"
 
     services:
       postgres:

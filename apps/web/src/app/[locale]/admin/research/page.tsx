@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { ResearchStudiesList } from "@/components/research/ResearchAdminClient";
+import { ClassroomRoster } from "@/components/research/ClassroomRoster";
 import { getAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +22,9 @@ export default async function ResearchAdminPage({ params }: Props) {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
       <Header />
-      <main className="z-10 flex-1 px-3 py-8 sm:px-4 lg:px-6">
-        <div className="mx-auto w-full max-w-6xl">
-          <ResearchStudiesList locale={locale} />
+      <main className="z-10 flex flex-1 flex-col px-3 py-8 sm:px-4 lg:px-6">
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col">
+          <ClassroomRoster />
         </div>
       </main>
       <Footer />

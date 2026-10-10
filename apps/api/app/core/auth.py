@@ -177,6 +177,12 @@ def _verify_token(token: str) -> IdentityClaims:
         raise _unauthorized() from exc
 
 
+def verify_access_token(token: str) -> IdentityClaims:
+    """Verify a raw bearer token. Raises HTTPException when it is not valid."""
+
+    return _verify_token(token)
+
+
 def get_identity(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> IdentityClaims:

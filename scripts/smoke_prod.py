@@ -82,6 +82,21 @@ def expect_html(path: str) -> bytes:
     return body
 
 
+def allowlist_blocks_anonymous(path: str, payload: object) -> bool:
+    status, _, body = request(path, payload)
+    if 200 <= status < 300:
+        return False
+    try:
+        code = json.loads(body).get("code")
+    except json.JSONDecodeError:
+        code = None
+    assert status in {401, 403} and code in {"UNAUTHORIZED", "NOT_ALLOWLISTED"}, (
+        f"{path}: HTTP {status}: {body[:500]!r}"
+    )
+    print("production smoke: allowlist gate closed; anonymous product routes skipped")
+    return True
+
+
 def wait_for_public_surface(attempts: int = 5, delay_seconds: int = 3) -> None:
     last_error: Exception | None = None
     for attempt in range(1, attempts + 1):
@@ -114,7 +129,11 @@ def main() -> int:
     health = expect_json("/api/health")
     assert health.get("service") == "api"
 
-    parsed = expect_json("/api/grammar/parse", {"source": SOURCE})
+    if allowlist_blocks_anonymous("/api/grammar/parse", {"source": SOURCE}):
+        print("production smoke: PASS")
+        return 0
+
+    expect_json("/api/grammar/parse", {"source": SOURCE})
     analysis = expect_json("/api/analyze/open", {"source": SOURCE, "mode": "all"})
     assert analysis.get("worst", {}).get("ok") is True
     while_analysis = expect_json("/api/analyze/open", {"source": WHILE_SOURCE, "mode": "all"})

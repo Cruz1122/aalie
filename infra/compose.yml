@@ -66,6 +66,8 @@ services:
       AALIE_ABUSE_STRIKES_TO_BAN: ${AALIE_ABUSE_STRIKES_TO_BAN:-3}
       AALIE_ABUSE_STRIKE_WINDOW_SECONDS: ${AALIE_ABUSE_STRIKE_WINDOW_SECONDS:-300}
       AALIE_ABUSE_BAN_SECONDS: ${AALIE_ABUSE_BAN_SECONDS:-3600}
+      AALIE_RESTRICTED_ACCESS: ${AALIE_RESTRICTED_ACCESS:-true}
+      AALIE_STUDY_TELEMETRY_ENABLED: ${AALIE_STUDY_TELEMETRY_ENABLED:-true}
     volumes:
       # Monta solo el código de la API para recarga en caliente
       - ../apps/api:/usr/src/app/apps/api
@@ -110,6 +112,7 @@ services:
       AALIE_RATE_LIMIT_SERVICE_TOKEN: ${AALIE_RATE_LIMIT_SERVICE_TOKEN:-}
       AALIE_RATE_LIMITS_ENABLED: ${AALIE_RATE_LIMITS_ENABLED:-true}
       AALIE_RATE_LIMIT_LLM_UCALDAS_AUTH: ${AALIE_RATE_LIMIT_LLM_UCALDAS_AUTH:-5}
+      AALIE_RESTRICTED_ACCESS: ${AALIE_RESTRICTED_ACCESS:-true}
       WATCHPACK_POLLING: "true"
       # Configuración LLM                       # LOCAL para LM Studio, REMOTE para GitHub Models
       LM_STUDIO_ENDPOINT: "http://host.docker.internal:1234/v1" # Acceso al host desde Docker

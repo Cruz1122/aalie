@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from .core.access_middleware import RestrictedAccessMiddleware
 from .core.config import get_cors_allowed_origins, get_cors_enabled
 from .modules.analysis.router import router as analyze_router
 from .modules.auth.router import router as auth_router
@@ -53,9 +54,11 @@ class LLMBodyLimitMiddleware:
         await response(scope, receive, send)
 
     async def __call__(self, scope, receive, send):
-        if scope.get("type") != "http" or scope.get("path") != "/llm" or scope.get(
-            "method"
-        ) != "POST":
+        if (
+            scope.get("type") != "http"
+            or scope.get("path") != "/llm"
+            or scope.get("method") != "POST"
+        ):
             await self.app(scope, receive, send)
             return
 
@@ -111,6 +114,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(title="algorithmic-analysis API", version="0.1.0")
 
+    app.add_middleware(RestrictedAccessMiddleware)
     app.add_middleware(LLMBodyLimitMiddleware, max_bytes=MAX_LLM_REQUEST_BYTES)
 
     if get_cors_enabled():

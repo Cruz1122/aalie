@@ -47,6 +47,7 @@ jobs:
       AUTH_JWT_ISSUER: http://localhost:3000
       AUTH_JWT_AUDIENCE: urn:aalie:api
       AUTH_JWKS_URL: http://web:3000/api/auth/jwks
+      AALIE_RESTRICTED_ACCESS: "false"
 
     steps:
       - name: Checkout

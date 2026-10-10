@@ -8,8 +8,11 @@ from sqlalchemy.orm import Session
 from ...core.auth import IdentityClaims, get_identity, require_admin
 from ...core.database import get_db
 from ...db.models.mf3 import Study
+from .classroom import classroom_activity, classroom_roster
 from .export_service import build_study_export, record_export_audit
 from .schemas import (
+    ClassroomActivityItem,
+    ClassroomStudentRow,
     ParticipantAdminRow,
     ParticipantPublic,
     StudyConditionRequest,
@@ -94,11 +97,29 @@ def record_measurement(
     identity: IdentityClaims = Depends(get_identity),
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
-    _, participant = require_recording_participant(
-        db, study_slug=slug, user_id=identity.user_id
-    )
+    _, participant = require_recording_participant(db, study_slug=slug, user_id=identity.user_id)
     measurement = add_measurement(db, participant=participant, payload=payload)
     return {"id": str(measurement.id)}
+
+
+@router.get("/admin/classroom/roster", response_model=list[ClassroomStudentRow])
+def admin_classroom_roster(
+    _: IdentityClaims = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[ClassroomStudentRow]:
+    return classroom_roster(db)
+
+
+@router.get(
+    "/admin/classroom/activity/{email}",
+    response_model=list[ClassroomActivityItem],
+)
+def admin_classroom_activity(
+    email: str,
+    _: IdentityClaims = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[ClassroomActivityItem]:
+    return classroom_activity(db, email)
 
 
 @router.get("/admin/studies", response_model=list[StudyPublic])

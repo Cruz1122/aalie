@@ -5,6 +5,9 @@ import { nextCookies } from "better-auth/next-js";
 import { jwt } from "better-auth/plugins";
 import { Pool } from "pg";
 
+import { isOperatorAdminEmail } from "@/lib/operator-admins";
+import { restrictedAccessEnabled } from "@/lib/restricted-access";
+
 const globalForAuth = globalThis as typeof globalThis & {
   aalieAuth?: AuthInstance;
   aalieAuthPool?: Pool;
@@ -40,6 +43,7 @@ function buildAuth() {
         clientId: requiredEnv("GOOGLE_CLIENT_ID"),
         clientSecret: requiredEnv("GOOGLE_CLIENT_SECRET"),
         prompt: "select_account",
+        ...(restrictedAccessEnabled() ? { hd: "ucaldas.edu.co" } : {}),
       },
     },
     user: {
@@ -50,6 +54,16 @@ function buildAuth() {
           defaultValue: "USER",
           input: false,
           returned: true,
+        },
+      },
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user) => {
+            if (!isOperatorAdminEmail(user.email)) return;
+            return { data: { ...user, role: "ADMIN" } };
+          },
         },
       },
     },
@@ -99,7 +113,7 @@ function buildAuth() {
 
 type AuthInstance = ReturnType<typeof buildAuth>;
 
-function getAuthPool(): Pool {
+export function getAuthPool(): Pool {
   if (!globalForAuth.aalieAuthPool) {
     const pool = new Pool({
       connectionString: authDatabaseUrl(),
