@@ -5,6 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import { jwt } from "better-auth/plugins";
 import { Pool } from "pg";
 
+import { isOperatorAdminEmail } from "@/lib/operator-admins";
 import { restrictedAccessEnabled } from "@/lib/restricted-access";
 
 const globalForAuth = globalThis as typeof globalThis & {
@@ -53,6 +54,16 @@ function buildAuth() {
           defaultValue: "USER",
           input: false,
           returned: true,
+        },
+      },
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user) => {
+            if (!isOperatorAdminEmail(user.email)) return;
+            return { data: { ...user, role: "ADMIN" } };
+          },
         },
       },
     },

@@ -85,3 +85,21 @@ class ParticipantAdminRow(BaseModel):
     excludedAt: datetime | None
     attempts: int
     averageAccuracy: float | None
+
+
+ClassroomActivityKind = Literal["analysis", "trace", "quiz", "export", "assistant"]
+
+
+class ClassroomActivityItem(BaseModel):
+    occurredAt: datetime
+    kind: ClassroomActivityKind
+    success: bool
+
+
+class ClassroomStudentRow(BaseModel):
+    email: str
+    lastActivityAt: datetime | None
+    analysis: int
+    traces: int
+    quizzes: int
+    assistant: int

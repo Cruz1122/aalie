@@ -67,6 +67,7 @@ services:
       AALIE_ABUSE_STRIKE_WINDOW_SECONDS: ${AALIE_ABUSE_STRIKE_WINDOW_SECONDS:-300}
       AALIE_ABUSE_BAN_SECONDS: ${AALIE_ABUSE_BAN_SECONDS:-3600}
       AALIE_RESTRICTED_ACCESS: ${AALIE_RESTRICTED_ACCESS:-true}
+      AALIE_STUDY_TELEMETRY_ENABLED: ${AALIE_STUDY_TELEMETRY_ENABLED:-true}
     volumes:
       # Monta solo el código de la API para recarga en caliente
       - ../apps/api:/usr/src/app/apps/api

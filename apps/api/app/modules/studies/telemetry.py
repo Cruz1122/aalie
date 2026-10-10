@@ -7,6 +7,7 @@ from fastapi import Request
 from ...core.auth import _verify_token
 from ...core.database import get_session_factory
 from ...db.models.mf3 import StudyEvent
+from .classroom import ensure_classroom_participant
 from .service import require_recording_participant
 
 _PATH_EVENTS = {
@@ -56,6 +57,7 @@ def record_request_event(
         identity = _verify_token(token)
         factory = get_session_factory()
         with factory() as db:
+            ensure_classroom_participant(db, user_id=identity.user_id, email=identity.email)
             study, participant = require_recording_participant(
                 db,
                 study_slug=slug,

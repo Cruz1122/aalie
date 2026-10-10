@@ -3,6 +3,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 
 import { isEmailAllowlisted } from "@/lib/access-allowlist";
+import { isOperatorAdminEmail } from "@/lib/operator-admins";
 import { restrictedAccessEnabled } from "@/lib/restricted-access";
 
 import { getApiBase } from "./api-base";
@@ -10,12 +11,15 @@ import { BffHttpError, readJsonBody } from "./body";
 import {
   STUDY_COOKIE_NAME,
   VISITOR_COOKIE_NAME,
+  studyCookieOptions,
   visitorCookieOptions,
 } from "./identity";
 import { mintInternalJwt } from "./jwt";
 import type { BffPolicy } from "./policies";
 import { enforceRateLimit } from "./rate-limit";
 import { buildRequestContext, type BffRequestContext } from "./request-context";
+
+const CLASSROOM_STUDY_SLUG = "2026-2";
 
 const SAFE_RESPONSE_HEADERS = [
   "content-type",
@@ -60,6 +64,13 @@ function applyVisitorCookie(
       VISITOR_COOKIE_NAME,
       context.visitorId,
       visitorCookieOptions(),
+    );
+  }
+  if (context.studySlug === CLASSROOM_STUDY_SLUG) {
+    response.cookies.set(
+      STUDY_COOKIE_NAME,
+      CLASSROOM_STUDY_SLUG,
+      studyCookieOptions(),
     );
   }
   return response;
@@ -174,6 +185,16 @@ export async function proxyApiRequest(
         jsonError(403, "FORBIDDEN", "Admin role required"),
         context,
       );
+    }
+    if (
+      context.authenticated &&
+      context.email &&
+      !isOperatorAdminEmail(context.email)
+    ) {
+      const listed = restrictedAccessEnabled()
+        ? true
+        : await isEmailAllowlisted(context.email);
+      if (listed) context.studySlug = CLASSROOM_STUDY_SLUG;
     }
 
     const decision = await enforceRateLimit(context, policy);

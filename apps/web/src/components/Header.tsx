@@ -10,7 +10,10 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { usePathname } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth-client";
+import { isOperatorAdminEmail } from "@/lib/operator-admins";
 
+import { useAdminNav } from "./AdminNav";
 import NavigationLink from "./NavigationLink";
 
 /**
@@ -60,6 +63,14 @@ const getColorClasses = (_color: string, isActiveItem: boolean) => {
   return "text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/25";
 };
 
+function normalizePath(path: string | null | undefined): string {
+  const withoutLocale = (path || "/").replace(/^\/(es|en)(?=\/|$)/, "") || "/";
+  if (withoutLocale.length > 1 && withoutLocale.endsWith("/")) {
+    return withoutLocale.slice(0, -1);
+  }
+  return withoutLocale;
+}
+
 /**
  * Componente Header principal de la aplicación.
  * Renderiza la navegación principal con soporte responsive.
@@ -76,16 +87,35 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const t = useTranslations("nav");
+  const { data: session } = authClient.useSession();
+  const serverIsAdmin = useAdminNav();
+  const user = session?.user as
+    | { role?: unknown; email?: string | null }
+    | undefined;
+  const isAdmin =
+    serverIsAdmin ||
+    user?.role === "ADMIN" ||
+    isOperatorAdminEmail(user?.email);
+  const items = navItems.map((item) =>
+    item.labelKey === "quizzes" && isAdmin
+      ? {
+          ...item,
+          href: "/admin/research",
+          labelKey: "management",
+          icon: "monitoring",
+        }
+      : item,
+  );
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const isActive = (href: string) => {
-    if (href === "/") {
-      return pathname === "/";
-    }
-    return pathname?.startsWith(href);
+    const current = normalizePath(pathname);
+    const target = normalizePath(href);
+    if (target === "/") return current === "/";
+    return current === target || current.startsWith(`${target}/`);
   };
 
   return (
@@ -94,7 +124,7 @@ export default function Header() {
         {/* Navegación Desktop - Centrada */}
         <div className="hidden min-w-0 flex-1 justify-center lg:flex">
           <nav className="flex items-center gap-2">
-            {navItems.map((item) => {
+            {items.map((item) => {
               const active = isActive(item.href);
 
               return (
@@ -103,7 +133,10 @@ export default function Header() {
                   href={item.href}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${getColorClasses(item.color, active)}`}
                 >
-                  <span className="material-symbols-outlined text-base">
+                  <span
+                    className="material-symbols-outlined text-base"
+                    aria-hidden
+                  >
                     {item.icon}
                   </span>
                   <span>{t(item.labelKey)}</span>
@@ -129,7 +162,7 @@ export default function Header() {
       {isMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 right-0 glass-header border-t border-white/10 z-50 backdrop-blur-sm bg-slate-900/98">
           <nav className="flex flex-col p-3 space-y-2">
-            {navItems.map((item) => {
+            {items.map((item) => {
               const active = isActive(item.href);
 
               return (
@@ -139,7 +172,10 @@ export default function Header() {
                   className={`flex items-center gap-2 py-1.5 px-2 rounded-lg text-sm font-medium transition-all ${getColorClasses(item.color, active)}`}
                   onClick={toggleMenu}
                 >
-                  <span className="material-symbols-outlined text-base">
+                  <span
+                    className="material-symbols-outlined text-base"
+                    aria-hidden
+                  >
                     {item.icon}
                   </span>
                   <span>{t(item.labelKey)}</span>

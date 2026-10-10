@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ...core.database import get_session_factory
 from ...db.models.mf3 import StudyQuizAttempt
+from ..studies.classroom import ensure_classroom_participant
 from ..studies.identity import optional_identity_from_request
 from ..studies.quiz_service import create_study_quiz_session, evaluate_study_quiz_session
 from ..studies.service import require_recording_participant
@@ -34,9 +35,7 @@ def _study_recording_is_eligible(db: Session, *, slug: str, user_id: str) -> boo
 
 def _is_persisted_study_session(db: Session, session_id: str) -> bool:
     return (
-        db.scalar(
-            select(StudyQuizAttempt.id).where(StudyQuizAttempt.session_id == session_id)
-        )
+        db.scalar(select(StudyQuizAttempt.id).where(StudyQuizAttempt.session_id == session_id))
         is not None
     )
 
@@ -78,6 +77,7 @@ def create_quiz_attempt(
             if identity is None:
                 raise HTTPException(status_code=401, detail="Study quiz requires authentication")
             with get_session_factory()() as db:
+                ensure_classroom_participant(db, user_id=identity.user_id, email=identity.email)
                 if _study_recording_is_eligible(
                     db,
                     slug=slug,
@@ -111,6 +111,7 @@ def evaluate_quiz_attempt(
             if identity is None:
                 raise HTTPException(status_code=401, detail="Study quiz requires authentication")
             with get_session_factory()() as db:
+                ensure_classroom_participant(db, user_id=identity.user_id, email=identity.email)
                 if _study_recording_is_eligible(
                     db,
                     slug=slug,

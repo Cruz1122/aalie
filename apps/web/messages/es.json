@@ -30,7 +30,39 @@
     "about": "Acerca de",
     "openMenu": "Abrir menú",
     "howToUse": "Cómo usar",
-    "quizzes": "Quizzes"
+    "quizzes": "Quizzes",
+    "management": "Gestión"
+  },
+  "classroom": {
+    "student": "Estudiante",
+    "lastActivity": "Última actividad",
+    "analysis": "Análisis",
+    "traces": "Trazas",
+    "quizzes": "Quizzes",
+    "assistant": "Asistente",
+    "view": "Ver",
+    "back": "Volver",
+    "emptyActivity": "Todavía no hay actividad.",
+    "empty": {
+      "title": "Todavía no hay actividad"
+    },
+    "loadError": {
+      "title": "No se pudo cargar la actividad",
+      "retry": "Intentar de nuevo"
+    },
+    "when": "Fecha",
+    "action": "Acción",
+    "result": "Resultado",
+    "ok": "Sí",
+    "failed": "No",
+    "error": "No se pudo cargar la actividad.",
+    "kinds": {
+      "analysis": "Análisis",
+      "trace": "Traza",
+      "quiz": "Quiz",
+      "export": "Exportación",
+      "assistant": "Asistente"
+    }
   },
   "auth": {
     "signIn": "Iniciar sesión",

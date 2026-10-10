@@ -296,4 +296,56 @@ describe("MF3 common BFF proxy", () => {
       "other@ucaldas.edu.co",
     );
   });
+
+  it("attaches the classroom study to allowlisted students", async () => {
+    vi.stubEnv("AALIE_RESTRICTED_ACCESS", "true");
+    mocks.isEmailAllowlisted.mockResolvedValue(true);
+    mocks.mintInternalJwt.mockResolvedValue("server-minted-jwt");
+    const upstream = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", upstream);
+
+    mocks.buildRequestContext.mockResolvedValue(
+      context({
+        authenticated: true,
+        userId: "student-1",
+        email: "jacobo.arroyave46095@ucaldas.edu.co",
+        role: "USER",
+        subject: "user:student-1",
+      }),
+    );
+    const student = await proxyApiRequest(
+      new NextRequest("http://aalie.test/api/health"),
+      { path: "/health", policy: POLICIES.status, method: "GET" },
+    );
+    expect(student.status).toBe(200);
+    const studentHeaders = new Headers(
+      (upstream.mock.calls[0]?.[1] as RequestInit).headers,
+    );
+    expect(studentHeaders.get("x-aalie-study-slug")).toBe("2026-2");
+    expect(student.cookies.get("aalie_study")?.value).toBe("2026-2");
+
+    mocks.buildRequestContext.mockResolvedValue(
+      context({
+        authenticated: true,
+        userId: "admin-1",
+        email: "juan.cruz37552@ucaldas.edu.co",
+        role: "ADMIN",
+        subject: "user:admin-1",
+      }),
+    );
+    await proxyApiRequest(new NextRequest("http://aalie.test/api/health"), {
+      path: "/health",
+      policy: POLICIES.status,
+      method: "GET",
+    });
+    const operatorHeaders = new Headers(
+      (upstream.mock.calls[1]?.[1] as RequestInit).headers,
+    );
+    expect(operatorHeaders.get("x-aalie-study-slug")).toBeNull();
+  });
 });
