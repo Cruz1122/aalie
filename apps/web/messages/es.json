@@ -10,6 +10,18 @@
     "copyCode": "Copiar código",
     "codeCopied": "¡Copiado!"
   },
+  "accessGate": {
+    "restrictedTitle": "¡AALIE está en acceso restringido!",
+    "restrictedBody": "Inicia sesión con tu cuenta institucional para usar el software",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Conectando con Google...",
+    "signInError": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    "deniedTitle": "¡Lo sentimos!",
+    "deniedBody": "No haces parte de los usuarios seleccionados",
+    "deniedHelp": "Si crees que esto es un error, <contact>contáctanos</contact> o <signOut>cierra sesión</signOut>.",
+    "mailSubject": "AALIE acceso restringido",
+    "signOutError": "No se pudo cerrar sesión. Inténtalo de nuevo."
+  },
   "nav": {
     "home": "Inicio",
     "analyzer": "Analizador",

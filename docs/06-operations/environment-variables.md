@@ -55,6 +55,7 @@ Cubre frontend (Next.js), BFF (server-side proxies), backend API (FastAPI), y co
 | `AALIE_ABUSE_STRIKES_TO_BAN` | API | No | `3` | Excesos de cuota LLM antes de activar un bloqueo temporal | Umbral demasiado bajo puede bloquear falsos positivos | `compose*.yml` |
 | `AALIE_ABUSE_STRIKE_WINDOW_SECONDS` | API | No | `300` | Ventana para acumular excesos | — | `compose*.yml` |
 | `AALIE_ABUSE_BAN_SECONDS` | API | No | `3600` | Duración del bloqueo persistido por identidad pseudónima | — | `compose*.yml` |
+| `AALIE_RESTRICTED_ACCESS` | API/BFF | No | `true` en Compose | Si es `true`, solo los correos de `auth.access_allowlist` entran a la app y a la API. Si falta o es `false`, el acceso queda abierto. Un fallo de base de datos niega el acceso. | Apagarlo reabre AALIE sin borrar la lista | `compose*.yml` |
 | `GEMINI_ENDPOINT_BASE` | API LLM | No | `https://generativelanguage.googleapis.com/v1beta/models` | Endpoint base del proveedor Gemini | URL incorrecta = todas las llamadas LLM fallan | `.env.example` |
 | `OPENAI_COMPATIBLE_ENDPOINT_BASE` | API LLM | No | `https://api.openai.com/v1/chat/completions` | Endpoint OpenAI | URL incorrecta = llamadas OpenAI fallan | `.env.example` |
 | `OPENROUTER_ENDPOINT_BASE` | API LLM | No | `https://openrouter.ai/api/v1/chat/completions` | Endpoint OpenRouter | URL incorrecta = llamadas OpenRouter fallan | `.env.example` |

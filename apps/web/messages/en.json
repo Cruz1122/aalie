@@ -10,6 +10,18 @@
     "copyCode": "Copy code",
     "codeCopied": "Copied!"
   },
+  "accessGate": {
+    "restrictedTitle": "AALIE is in restricted access!",
+    "restrictedBody": "Sign in with your institutional account to use the software",
+    "signIn": "Sign in",
+    "signingIn": "Connecting to Google...",
+    "signInError": "Could not sign in. Try again.",
+    "deniedTitle": "We're sorry!",
+    "deniedBody": "You are not one of the selected users",
+    "deniedHelp": "If you think this is a mistake, <contact>contact us</contact> or <signOut>sign out</signOut>.",
+    "mailSubject": "AALIE restricted access",
+    "signOutError": "Could not sign out. Try again."
+  },
   "nav": {
     "home": "Home",
     "analyzer": "Analyzer",

@@ -2,6 +2,9 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { isEmailAllowlisted } from "@/lib/access-allowlist";
+import { restrictedAccessEnabled } from "@/lib/restricted-access";
+
 import { getApiBase } from "./api-base";
 import { BffHttpError, readJsonBody } from "./body";
 import {
@@ -140,6 +143,25 @@ export async function proxyApiRequest(
       }
     }
     if (options.transformBody) body = options.transformBody(body);
+
+    if (restrictedAccessEnabled()) {
+      if (!context.authenticated) {
+        return applyVisitorCookie(
+          jsonError(401, "UNAUTHORIZED", "Authentication required"),
+          context,
+        );
+      }
+      if (!(await isEmailAllowlisted(context.email))) {
+        return applyVisitorCookie(
+          jsonError(
+            403,
+            "NOT_ALLOWLISTED",
+            "Institutional account is not allowlisted",
+          ),
+          context,
+        );
+      }
+    }
 
     if (policy.requireAuth && !context.authenticated) {
       return applyVisitorCookie(

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   buildRequestContext: vi.fn(),
   enforceRateLimit: vi.fn(),
   mintInternalJwt: vi.fn(),
+  isEmailAllowlisted: vi.fn(),
 }));
 
 vi.mock("../request-context", () => ({
@@ -22,6 +23,9 @@ vi.mock("../jwt", () => ({
 }));
 vi.mock("../api-base", () => ({
   getApiBase: () => "http://api.test",
+}));
+vi.mock("@/lib/access-allowlist", () => ({
+  isEmailAllowlisted: mocks.isEmailAllowlisted,
 }));
 
 function context(
@@ -52,10 +56,12 @@ beforeEach(() => {
     retryAfterSeconds: 0,
   });
   mocks.mintInternalJwt.mockResolvedValue(null);
+  mocks.isEmailAllowlisted.mockResolvedValue(false);
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("MF3 common BFF proxy", () => {
@@ -237,5 +243,57 @@ describe("MF3 common BFF proxy", () => {
       ok: false,
       code: "UPSTREAM_TIMEOUT",
     });
+  });
+
+  it("requires an allowlisted session for every product call", async () => {
+    vi.stubEnv("AALIE_RESTRICTED_ACCESS", "true");
+    const request = new NextRequest("http://aalie.test/api/analyze/open", {
+      method: "POST",
+      body: JSON.stringify({ source: "ALGORITHM Test BEGIN END" }),
+      headers: { "content-type": "application/json" },
+    });
+
+    const anonymous = await proxyApiRequest(request, {
+      path: "/analyze/open",
+      policy: POLICIES.analysis,
+    });
+    expect(anonymous.status).toBe(401);
+    expect(await anonymous.json()).toMatchObject({ code: "UNAUTHORIZED" });
+
+    mocks.buildRequestContext.mockResolvedValue(
+      context({
+        authenticated: true,
+        userId: "user-1",
+        email: "other@ucaldas.edu.co",
+        role: "ADMIN",
+        subject: "user:user-1",
+      }),
+    );
+    const denied = await proxyApiRequest(request, {
+      path: "/analyze/open",
+      policy: POLICIES.analysis,
+    });
+    expect(denied.status).toBe(403);
+    expect(await denied.json()).toMatchObject({ code: "NOT_ALLOWLISTED" });
+
+    mocks.isEmailAllowlisted.mockResolvedValue(true);
+    mocks.mintInternalJwt.mockResolvedValue("server-minted-jwt");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    const allowed = await proxyApiRequest(request, {
+      path: "/analyze/open",
+      policy: POLICIES.analysis,
+    });
+    expect(allowed.status).toBe(200);
+    expect(mocks.isEmailAllowlisted).toHaveBeenCalledWith(
+      "other@ucaldas.edu.co",
+    );
   });
 });

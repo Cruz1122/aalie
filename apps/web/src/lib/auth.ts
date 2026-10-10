@@ -5,6 +5,8 @@ import { nextCookies } from "better-auth/next-js";
 import { jwt } from "better-auth/plugins";
 import { Pool } from "pg";
 
+import { restrictedAccessEnabled } from "@/lib/restricted-access";
+
 const globalForAuth = globalThis as typeof globalThis & {
   aalieAuth?: AuthInstance;
   aalieAuthPool?: Pool;
@@ -40,6 +42,7 @@ function buildAuth() {
         clientId: requiredEnv("GOOGLE_CLIENT_ID"),
         clientSecret: requiredEnv("GOOGLE_CLIENT_SECRET"),
         prompt: "select_account",
+        ...(restrictedAccessEnabled() ? { hd: "ucaldas.edu.co" } : {}),
       },
     },
     user: {
@@ -99,7 +102,7 @@ function buildAuth() {
 
 type AuthInstance = ReturnType<typeof buildAuth>;
 
-function getAuthPool(): Pool {
+export function getAuthPool(): Pool {
   if (!globalForAuth.aalieAuthPool) {
     const pool = new Pool({
       connectionString: authDatabaseUrl(),

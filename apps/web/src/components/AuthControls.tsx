@@ -1,10 +1,11 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
+import { leaveApp } from "@/lib/leave-app";
 
 import SignInForm from "./SignInForm";
 
@@ -17,7 +18,7 @@ export default function AuthControls({
 }: Readonly<AuthControlsProps>) {
   const isFooter = variant === "footer";
   const t = useTranslations("auth");
-  const router = useRouter();
+  const locale = useLocale();
   const { data: session, isPending } = authClient.useSession();
   const [isSignInFormOpen, setIsSignInFormOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -31,7 +32,7 @@ export default function AuthControls({
       if (result.error) {
         setSignOutError(true);
       } else {
-        router.replace("/");
+        leaveApp(locale);
       }
     } catch {
       setSignOutError(true);
