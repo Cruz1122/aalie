@@ -61,6 +61,17 @@ COPY --from=builder --chown=nextjs:nodejs /usr/src/app/apps/web/.next/standalone
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/apps/web/public ./apps/web/public
 
+# The content catalog is loaded from the filesystem by server components and
+# route handlers. Next's standalone trace keeps the package manifest but does
+# not infer these dynamic JSON reads, so preserve both runtime asset trees at
+# the absolute package path embedded in the traced bundle.
+COPY --from=builder --chown=nextjs:nodejs /usr/src/app/packages/content-catalog/catalog /usr/src/app/packages/content-catalog/catalog
+COPY --from=builder --chown=nextjs:nodejs /usr/src/app/packages/content-catalog/schemas /usr/src/app/packages/content-catalog/schemas
+# Catalog validation resolves publicPath resources through the build-time
+# repository root as well; keep the public tree available at that path while
+# the copy above remains the path served by the standalone Next server.
+COPY --from=builder --chown=nextjs:nodejs /usr/src/app/apps/web/public /usr/src/app/apps/web/public
+
 USER nextjs
 EXPOSE 3000
 

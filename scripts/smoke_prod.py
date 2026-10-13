@@ -82,6 +82,35 @@ def expect_html(path: str) -> bytes:
     return body
 
 
+def is_restricted_access_page(body: bytes) -> bool:
+    headings = (
+        "¡AALIE está en acceso restringido!".encode("utf-8"),
+        "AALIE is in restricted access!".encode("utf-8"),
+    )
+    return any(
+        re.search(rb"<h1[^>]*>\s*" + re.escape(heading) + rb"\s*</h1>", body)
+        for heading in headings
+    )
+
+
+def check_user_guide() -> None:
+    guide_html = expect_html("/es/user-guide")
+    if is_restricted_access_page(guide_html):
+        print(
+            "production smoke: user-guide content SKIPPED "
+            "(anonymous access gate is active)"
+        )
+    else:
+        assert "Primer recorrido por AALIE".encode("utf-8") in guide_html
+        module_html = expect_html("/es/user-guide/getting-started")
+        assert "Qué encontrarás en la plataforma".encode("utf-8") in module_html
+
+    with urllib.request.urlopen(
+        f"{BASE}/images/user-guide/es/01-about-page.webp", timeout=30
+    ) as response:
+        assert response.status == 200 and response.read(16)
+
+
 def allowlist_blocks_anonymous(path: str, payload: object) -> bool:
     status, _, body = request(path, payload)
     if 200 <= status < 300:
@@ -128,6 +157,7 @@ def main() -> int:
     expect_json("/api/health/live")
     health = expect_json("/api/health")
     assert health.get("service") == "api"
+    check_user_guide()
 
     if allowlist_blocks_anonymous("/api/grammar/parse", {"source": SOURCE}):
         print("production smoke: PASS")
@@ -194,8 +224,6 @@ def main() -> int:
     html = expect_html("/es/analyzer")
     assert re.search(rb"/_next/static/[^\"']+\.css", html)
     assert re.search(rb"/_next/static/[^\"']+\.js", html)
-    with urllib.request.urlopen(f"{BASE}/images/user-guide/es/01-about-page.webp", timeout=30) as response:
-        assert response.status == 200 and response.read(16)
     print("production smoke: PASS")
     return 0
 
