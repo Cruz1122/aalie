@@ -194,6 +194,10 @@ def main() -> int:
     html = expect_html("/es/analyzer")
     assert re.search(rb"/_next/static/[^\"']+\.css", html)
     assert re.search(rb"/_next/static/[^\"']+\.js", html)
+    guide_html = expect_html("/es/user-guide")
+    assert "Primer recorrido por AALIE".encode() in guide_html
+    module_html = expect_html("/es/user-guide/getting-started")
+    assert "Qué encontrarás en la plataforma".encode() in module_html
     with urllib.request.urlopen(f"{BASE}/images/user-guide/es/01-about-page.webp", timeout=30) as response:
         assert response.status == 200 and response.read(16)
     print("production smoke: PASS")
