@@ -21,15 +21,15 @@ describe("MarkdownRenderer", () => {
     expect(container.textContent).toContain("2n");
   });
 
-  it("renders inline markdown math as a code-styled token", () => {
+  it("renders inline markdown math with KaTeX by default", () => {
     const { container } = render(<MarkdownRenderer content={"$C_x$"} />);
 
-    expect(container.querySelector("code")).not.toBeNull();
-    expect(container.querySelector("sub")).not.toBeNull();
-    expect(container.textContent).toContain("Cx");
+    expect(container.querySelector("code")).toBeNull();
+    expect(container.querySelector(".katex")).not.toBeNull();
+    expect(container.querySelector(".katex .msupsub")).not.toBeNull();
   });
 
-  it("keeps richer inline math as latex in auto mode", () => {
+  it("renders richer inline math with KaTeX by default", () => {
     const { container } = render(
       <MarkdownRenderer content={"$T(n) = 3n + 4$"} />,
     );
@@ -56,13 +56,12 @@ describe("MarkdownRenderer", () => {
     expect(container.querySelector("sub")).toBeNull();
   });
 
-  it("can force latex for compact inline math", () => {
-    const { container } = render(
-      <MarkdownRenderer content={"$C_x$"} inlineMathMode="latex" />,
-    );
+  it("renders simple inline complexity notation as KaTeX", () => {
+    const { container } = render(<MarkdownRenderer content={"$O(n^2)$"} />);
 
     expect(container.querySelector("code")).toBeNull();
     expect(container.querySelector(".katex")).not.toBeNull();
+    expect(container.querySelector(".katex .msupsub")).not.toBeNull();
   });
 
   it("can force plain inline code for math-looking backticks", () => {
