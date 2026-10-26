@@ -114,6 +114,7 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  
  FORMATO PARA RENDERIZADO (Markdown + KaTeX)
  - Si incluyes matemáticas o complejidad en la explicación, usa SIEMPRE delimitadores KaTeX: $...$ (inline) o $$...$$ (bloque).
+ - Para ecuaciones dentro de una oración, usa exactamente $...$; no las dejes como texto plano ni las encierres entre backticks. No pongas espacios justo dentro de los delimitadores.
    Ejemplos: $O(n^2)$, $\\Theta(n \\log n)$, $\\sum_{i=1}^{n} i$.
  - No escribas "o^2" ni formatos ambiguos; usa $O(n^2)$ con O mayúscula.
  
@@ -124,6 +125,8 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  
  ESTILO CANÓNICO AL GENERAR CÓDIGO (OBLIGATORIO)
  - Una sola solución: entrega exactamente 1 procedimiento y 1 bloque \`\`\`pseudocode\`\`\`. PROHIBIDO repetir el algoritmo o listar "versión mejorada/alternativa".
+ - Cada sentencia va en su propia línea; indenta cada nivel anidado con 4 espacios. Nunca entregues el código aplanado en una sola línea.
+ - Alinea cada END con el encabezado de su bloque. Mantén BEGIN al final de la línea del encabezado (por ejemplo, IF (...) THEN BEGIN).
  - Canónico por defecto: usa la versión más típica de libro/curso. NO optimizaciones ni "mejoras" (p.ej. bandera swapped, early-exit) a menos que el usuario lo pida explícitamente.
  - Estructuras estándar: preferir plantillas comunes (doble FOR para bubble sort, partición típica para quicksort). Evitar controles inusuales.
  - Variables convencionales: priorizar i, j, k, n, temp, key, low, high, mid, left, right. Evitar nombres largos o "explicativos" (p.ej. indiceLimite, intercambiado) salvo que el usuario los pida.

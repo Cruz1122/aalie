@@ -515,7 +515,7 @@ const CustomPre = (props: any) => {
   }
 
   return (
-    <div className="relative group w-full max-w-full min-w-0">
+    <div className="relative group w-full max-w-[min(100%,420px)] min-w-0">
       <div
         ref={scrollRef}
         className="bg-slate-900/80 border border-cyan-500/20 rounded-md p-3 max-h-[320px] overflow-y-auto overflow-x-auto mb-1.5 max-w-[min(100%,420px)] min-w-0"
@@ -640,7 +640,7 @@ export default function MarkdownRenderer({
   hideHorizontalRules = false,
   inlineCodeClassName,
   inlineCodeMathMode = "auto",
-  inlineMathMode = "auto",
+  inlineMathMode = "latex",
 }: MarkdownRendererProps) {
   const PreWithAnalyze = createPreWithAnalyze(onAnalyzeCode);
   const CustomCode = createCustomCode(
